@@ -461,18 +461,29 @@ function renderHud(){
 // ---------- 会話 ----------
 let msgResolve=null;
 async function say(who,text){ if(typeof stageSpeaker==='function') await stageSpeaker(who); return say0(who,text); }
+// 文字はゆっくり流れ、2文字ごとに「ピッ」。句読点で少し間を置く。
+// 流れている途中でタップ → その枠の最後まで一気に出す。出し終わると ▼ が点滅し、もう一度タップで次へ
+const MSG_SPEED=42;
+function blip(narr){ if(typeof SIM!=='undefined'&&SIM.on) return; if(typeof soundOn==='function'&&!soundOn()) return; if(typeof tone==='function') tone(narr?740:1240,0.03,narr?'triangle':'square',0.025); }
 function say0(who,text){
   return new Promise(res=>{
-    const el=$('msg'); el.style.display='block'; const center=!!(RT.dark||RT.dream); el.classList.toggle('center',center);
+    const el=$('msg'); el.style.display='block'; const center=!!(RT.dark||RT.dream); el.classList.toggle('center',center); el.classList.remove('done');
     const face=center?null:speakerFace(who);
     const shown=who&&who.includes('|')?who.split('|')[0]:who; // 「？？？|ミナ」＝名前は伏せて、顔はミナ
     el.innerHTML=(face?`<img class="mface" src="${face}">`:'')+(shown?`<div class="who">${shown}</div>`:'')+'<div class="tx"></div><div class="nx">▼</div>';
-    const tx=el.querySelector('.tx'); let i=0; let done=false;
-    const sp = 18;
-    const html=/<[a-z]/i.test(text), plain=html?text.replace(/<[^>]+>/g,''):text;
-    const fin=()=>{ if(html) tx.innerHTML=text.replace(/\n/g,'<br>'); else tx.textContent=text; };
-    const iv=setInterval(()=>{ i+=2; tx.textContent=plain.slice(0,i); if(i>=plain.length){clearInterval(iv);done=true;fin();} }, sp);
-    msgResolve=()=>{ if(!done){clearInterval(iv);fin();done=true;return;} msgResolve=null; el.style.display='none'; sfx('tick'); res(); };
+    const tx=el.querySelector('.tx'); let i=0, done=false, tm=null, voiced=0;
+    const html=/<[a-z]/i.test(text), plain=html?text.replace(/<[^>]+>/g,''):text, chars=[...plain];
+    tx.textContent=''; const shown1=document.createElement('span'), rest=document.createElement('span'); rest.style.visibility='hidden'; rest.textContent=plain; tx.append(shown1,rest);
+    const fin=()=>{ clearTimeout(tm); if(html) tx.innerHTML=text.replace(/\n/g,'<br>'); else tx.textContent=text; done=true; el.classList.add('done'); };
+    const step=()=>{
+      const c=chars[i++]; shown1.textContent=chars.slice(0,i).join(''); rest.textContent=chars.slice(i).join('');
+      if(c && !/[\s、。，．！？!?…・「」『』（）()―ー〜~]/.test(c)){ if(voiced++%2===0) blip(!who); }
+      if(i>=chars.length){ fin(); return; }
+      const wait=/[。！？!?]/.test(c)?MSG_SPEED*5:/[、，]/.test(c)?MSG_SPEED*3:c==='…'?MSG_SPEED*2:(c==='\n'?MSG_SPEED*3:MSG_SPEED);
+      tm=setTimeout(step,wait);
+    };
+    tm=setTimeout(step,60);
+    msgResolve=()=>{ if(!done){ fin(); return; } msgResolve=null; el.classList.remove('done'); el.style.display='none'; sfx('tick'); res(); };
   });
 }
 function advanceMsg(){ if(msgResolve) msgResolve(); }
