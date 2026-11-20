@@ -562,6 +562,10 @@ function decorateTown(m){
   m.npcs.forEach(n=>{ const shopLabel={inn:'宿の主人',item:'道具屋',equip:'武具屋',smith:'錬成屋'}[n.kind]; const tl=(n.role==='flavor'&&typeof townLine==='function')?townLine(id,n):null;
     n.type=npcType(n.nm||shopLabel||(tl&&tl.who)||'', n.seed); });
   if(typeof assignBankNpcs==='function') assignBankNpcs(m);
+  // ソラの村：神父は教会の前に。アルトの家の扉の前はあけておく
+  if(id==='sora' && m.church){ const pr=m.npcs.find(n=>n.nm==='神父'); const at=(x,y)=>m.npcs.find(n=>n.x===x&&n.y===y&&!n.gone);
+    if(pr){ const o=at(m.church.x,m.church.y); if(o&&o!==pr){ o.x=pr.x; o.y=pr.y; } pr.x=m.church.x; pr.y=m.church.y; pr.dir='down'; }
+    const d=at(15,18); if(d){ const c=[[12,19],[7,19],[12,16],[7,16],[17,19]].find(([x,y])=>walkable(m,x,y)); if(c){ d.x=c[0]; d.y=c[1]; } } }
 }
 function npcKey(n){ return `seen_${RT.map.id}_${n.idx}_${G.chapter}`; }
 function npcHasNew(n){ if(n.shop) return false; if(n.role==='side') return SIDE[n.side]&&SIDE[n.side].ok(); if(n.role==='special'&&n.isNew&&n.isNew()) return true; if(n.role==='special'||n.role==='guide') return !G.flags[npcKey(n)]; return false; }

@@ -7,7 +7,7 @@ function sfx(n){ if(typeof SIM!=='undefined' && SIM.on) return; if(!soundOn()) r
   const S={tick:[[880,.04]],ok:[[660,.05],[990,.06]],back:[[440,.06]],hit:[[180,.08,'sawtooth']],crit:[[220,.06,'sawtooth'],[440,.1,'square']],heal:[[523,.08,'sine'],[659,.08,'sine'],[784,.12,'sine']],
    buff:[[600,.06,'triangle'],[800,.08,'triangle']],down:[[300,.08,'triangle'],[150,.14,'triangle']],enc:[[392,.06],[523,.06],[659,.1]],lvup:[[523,.08],[659,.08],[784,.08],[1046,.18]],
    rare:[[784,.08,'triangle'],[988,.08,'triangle'],[1318,.2,'triangle']],rainbow:[[523,.1,'sine'],[659,.1,'sine'],[784,.1,'sine'],[1046,.1,'sine'],[1318,.1,'sine'],[1568,.3,'sine']],
-   join:[[659,.08],[784,.08],[1046,.16]],save:[[784,.1,'sine'],[1046,.2,'sine']],inn:[[523,.15,'sine'],[392,.15,'sine'],[523,.3,'sine']],buy:[[1046,.05],[1318,.08]],equip:[[440,.05],[660,.07]],ult:[[220,.1,'sawtooth'],[330,.1,'sawtooth'],[440,.2,'sawtooth']],
+   join:[[659,.08],[784,.08],[1046,.16]],save:[[784,.1,'sine'],[1046,.2,'sine']],inn:[[523,.15,'sine'],[392,.15,'sine'],[523,.3,'sine']],buy:[[1046,.05],[1318,.08]],equip:[[440,.05],[660,.07]],ult:[[220,.1,'sawtooth'],[330,.1,'sawtooth'],[440,.2,'sawtooth']],rewind:[[1568,.045,'sine'],[1318,.045,'sine'],[1175,.045,'sine'],[988,.045,'sine'],[784,.045,'sine'],[659,.045,'sine'],[523,.05,'sine'],[440,.05,'sine'],[392,.3,'sine']],
    win:[[784,.07],[988,.07],[1318,.22]],mvp:[[1318,.06,'triangle'],[1760,.16,'triangle']],best:[[1568,.05,'sine'],[2093,.05,'sine'],[2637,.14,'sine']],
    pop:[[880,.04,'triangle'],[1175,.06,'triangle']],stairs:[[392,.05,'triangle'],[330,.05,'triangle'],[262,.08,'triangle']],chest:[[330,.05],[494,.05],[659,.1]],
    door:[[110,.12,'sawtooth'],[98,.2,'sawtooth']],quake:[[65,.35,'sawtooth'],[55,.35,'sawtooth'],[49,.6,'sawtooth']],ko:[[392,.08,'triangle'],[311,.08,'triangle'],[233,.2,'triangle']]}[n];
@@ -103,7 +103,7 @@ function showTitle(){
     $('tbtns').querySelectorAll('[data-k]').forEach(x=>x.onclick=()=>{ const k=+x.dataset.k, s=ss[k-1];
       if(mode==='cont'){ if(!s) return; sfx('ok'); return start(async()=>{ RT.slot=k; resumeFrom(s); bgm(RT.mode==='world'?'world':'field'); }); }
       if(s && !x.dataset.conf){ x.dataset.conf=1; sfx('tick'); const e=x.querySelector('.ss'); e.textContent='もう一度タップで消してはじめる'; e.style.color='#ffb3c1'; return; }
-      sfx('ok'); start(async()=>{ RT.slot=k; kvDel(slotKey(k)); kvDel('mzy_suspend'); newGame(); RT.dark=true; enterRoom(); bgm('town'); RT.busy=true; await TRIG.start(); await TRIG.wake(); RT.busy=false; });
+      sfx('ok'); start(async()=>{ RT.slot=k; kvDel(slotKey(k)); kvDel('mzy_suspend'); newGame(); RT.dark=true; enterRoom(); bgm('town'); RT.busy=true; await TRIG.start(); if(TRIG.dream) await TRIG.dream(); await TRIG.wake(); RT.busy=false; });
     });
   };
   main();

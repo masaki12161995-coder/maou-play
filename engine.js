@@ -31,6 +31,7 @@ function newGame(){
   equip('アルト', makeItem('body',1,0,undefined,{mei:false}));
   equip('リリィ', makeItem('weapon',1,0,'m',{ty:FAV['リリィ']}));
   equip('リリィ', makeItem('body',1,0,undefined,{mei:false}));
+  fullHeal();
   META = {gameOvers:0, goPre5:0, run:Date.now()}; saveMeta(META);
 }
 function addMember(name, lv){
@@ -200,6 +201,7 @@ function genTown(id){
     set(bx+2,by+3,6);
     if(kind!=='house'){ npcs.push({x:bx+2,y:by+4,kind,shop:1,seed:hashStr(id+kind)}); objs.push({type:'sign',x:bx+1,y:by+4,kind}); set(bx+1,by+4,0);}
   });
+  let church=null; if(id==='sora'){ const bx=2,by=7; for(let x=bx;x<bx+5;x++){set(x,by,5);set(x,by+1,5);set(x,by+2,4);set(x,by+3,4);} set(bx+2,by+3,6); objs.push({type:'church',x:bx+2,y:by}); church={x:bx+2,y:by+4}; }
   if(L.theme==='port'){ for(let y=17;y<21;y++)for(let x=12;x<19;x++)set(x,y,3); }
   if(L.theme==='village'||L.theme==='snow'){ for(let i=0;i<14;i++){const x=1+Math.floor(rng()*18),y=1+Math.floor(rng()*20); if(t[y*W+x]===0 && Math.abs(x-9.5)>2 && y!==11) set(x,y,2);} }
   objs.push({type:'save',x:12,y:12});
@@ -207,7 +209,7 @@ function genTown(id){
   const free=[]; for(let y=2;y<H-2;y++)for(let x=1;x<W-1;x++){ if(t[y*W+x]===0||t[y*W+x]===9){ if(objs.some(o=>o.x===x&&o.y===y)||npcs.some(n=>Math.abs(n.x-x)+Math.abs(n.y-y)<2)) continue; if((x===9||x===10)&&y>H-4) continue; free.push([x,y]); } }
   let cnt=L.npc;
   for(let i=0;i<cnt&&free.length;i++){ const k=Math.floor(rng()*free.length); const [x,y]=free.splice(k,1)[0]; npcs.push({x,y,idx:i,seed:hashStr(id)+i*131}); }
-  return {id,w:W,h:H,t,objs,npcs,start:{x:9,y:H-2},exitY:H-1,town:1,theme:L.theme};
+  return {id,w:W,h:H,t,objs,npcs,start:{x:9,y:H-2},exitY:H-1,town:1,theme:L.theme,church};
 }
 function genDungeon(id, floor){
   const L=LOCS[id], rng=mulberry(hashStr(id)+floor*977+(L.post?(G.flags.mazeNo||0)*31+(G.mazeEntry||0)*7919:0));
@@ -366,7 +368,7 @@ function drawField(){
   const x0=Math.floor(camX/TS)-1,y0=Math.floor(camY/TS)-1,x1=x0+W/TS+3,y1=y0+H/TS+3;
   for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){ const out=(x<0||y<0||x>=m.w||y>=m.h); if(out&&m.room) continue; const v=out?(m.town?2:1):m.t[y*m.w+x]; drawTile(m,v,x,y,Math.round(x*TS-camX),Math.round(y*TS-camY)); }
   // 物
-  for(const o of m.objs){ if(o.gone) continue; const sx=Math.round(o.x*TS-camX), sy=Math.round(o.y*TS-camY); if(sx<-TS||sy<-TS||sx>W||sy>H) continue; drawObj(o,sx,sy); }
+  for(const o of m.objs){ if(o.gone) continue; const sx=Math.round(o.x*TS-camX), sy=Math.round(o.y*TS-camY); if(sx<-TS*4||sy<-TS*5||sx>W+TS*2||sy>H+TS) continue; drawObj(o,sx,sy); }
   // 出口の目印
   if(m.town){ for(const ex of [9,10]){ const sx=ex*TS-camX, sy=(m.h-1)*TS-camY; cx.fillStyle='#ffffff18'; cx.fillRect(sx,sy,TS,TS);} }
   // 住人
@@ -452,7 +454,7 @@ function renderTop(battleUnits){
 function renderHud(){
   if(!G) return;
   let l=''; if(RT.mode==='world') l='世界地図'; else if(RT.map){ l=RT.map.room?RT.map.room:LOCS[RT.map.id].n; if(RT.map.room){} else if(RT.map.throne) l+='  玉座の間'; else if(RT.map.floor!==undefined && LOCS[RT.map.id].floors>1) l+=`  ${RT.map.floor+1}F`; }
-  $('hud').style.display=(RT.mode==='battle'||$('msg').style.display==='block')?'none':'flex';
+  const intro=!!(RT.dark||RT.dream); $('hud').style.display=(intro||RT.mode==='battle'||$('msg').style.display==='block')?'none':'flex'; $('top').style.visibility=intro?'hidden':''; $('padField').style.visibility=intro?'hidden':'';
   $('hudL').textContent=l; $('hudR').textContent=`${G.gold.toLocaleString()} G`;
 }
 
@@ -460,8 +462,8 @@ function renderHud(){
 let msgResolve=null;
 function say(who,text){
   return new Promise(res=>{
-    const el=$('msg'); el.style.display='block';
-    const face=speakerFace(who);
+    const el=$('msg'); el.style.display='block'; const center=!!(RT.dark||RT.dream); el.classList.toggle('center',center);
+    const face=center?null:speakerFace(who);
     const shown=who&&who.includes('|')?who.split('|')[0]:who; // 「？？？|ミナ」＝名前は伏せて、顔はミナ
     el.innerHTML=(face?`<img class="mface" src="${face}">`:'')+(shown?`<div class="who">${shown}</div>`:'')+'<div class="tx"></div><div class="nx">▼</div>';
     const tx=el.querySelector('.tx'); let i=0; let done=false;
@@ -548,7 +550,7 @@ function stepLoop(){
 }
 setInterval(stepLoop,20);
 
-function frame(){ RT.anim++; if(RT.dark){ cx.fillStyle='#000'; cx.fillRect(0,0,cv.width,cv.height); } else if(RT.mode==='field') drawField(); else if(RT.mode==='world') drawWorld(); else if(RT.mode==='battle' && typeof drawBattle==='function') drawBattle(); renderHud(); requestAnimationFrame(frame); }
+function frame(){ RT.anim++; if(RT.dream&&typeof drawDream==='function'){ drawDream(); } else if(RT.dark){ cx.fillStyle='#000'; cx.fillRect(0,0,cv.width,cv.height); } else if(RT.mode==='field') drawField(); else if(RT.mode==='world') drawWorld(); else if(RT.mode==='battle' && typeof drawBattle==='function') drawBattle(); renderHud(); requestAnimationFrame(frame); }
 
 // ---------- 場所の出入り ----------
 function enterMap(id, floor, pos){
@@ -611,7 +613,8 @@ async function interact(){
       else if(o.say) await say('',o.say);
       else if(o.type==='goal' && !goalDone()) await runTrigger('goal_'+m.id);
       else if(o.type==='sign'){ const n=m.npcs.find(n=>n.kind===o.kind); if(n) await talkNpc(n); }
-    } else { await runTrigger('look_'+m.id); }
+    } else if(m.id==='sora' && m.town && f.x===15 && f.y===17 && typeof enterHome==='function'){ await enterHome(); }
+    else { await runTrigger('look_'+m.id); }
   } finally { RT.busy=false; renderTop(); }
 }
 function bossDone(){ const m=RT.map; if(typeof bossReopen==='function' && bossReopen(m.id)) return false; if(m.id==='maze') return false; return !!G.flags['boss_'+m.id+(m.id==='maze'?'_'+(G.flags.mazeNo||0):'')]; }

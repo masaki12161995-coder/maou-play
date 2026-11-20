@@ -64,6 +64,23 @@ function enterThrone(){
 // 玉座の間の物を描く（drawObj から呼ぶ）。描いたら true
 function drawSceneObj(o,sx,sy){
   const t=RT.anim;
+  if(o.type==='church'){ const L=sx-64, R=sx+96;
+    // 石壁（2段）
+    cx.fillStyle='#d6d3d1'; cx.fillRect(L,sy+64,160,64); cx.fillStyle='#a8a29e'; for(let r=0;r<4;r++)for(let c=0;c<10;c++) cx.fillRect(L+c*16+(r%2?8:0),sy+64+r*16,1,16); for(let r=1;r<4;r++) cx.fillRect(L,sy+64+r*16,160,1);
+    cx.fillStyle='#78716c'; cx.fillRect(L,sy+124,160,4);
+    // 屋根（青灰）
+    cx.fillStyle='#475569'; cx.fillRect(L,sy,160,64); cx.fillStyle='#0003'; for(let i=0;i<8;i++) cx.fillRect(L,sy+i*8+6,160,2);
+    cx.fillStyle='#334155'; cx.fillRect(L,sy+60,160,4);
+    // 中央の破風と鐘楼
+    cx.fillStyle='#e7e5e4'; cx.beginPath(); cx.moveTo(sx-8,sy+64); cx.lineTo(sx+16,sy+10); cx.lineTo(sx+40,sy+64); cx.fill();
+    cx.fillStyle='#57534e'; cx.fillRect(sx+10,sy+30,12,14); cx.fillStyle='#fbbf24'; cx.beginPath(); cx.arc(sx+16,sy+40,4,0,7); cx.fill();
+    cx.fillStyle='#fbbf24'; cx.fillRect(sx+14,sy-4,4,18); cx.fillRect(sx+9,sy+1,14,4);
+    // 窓（ステンドグラス）
+    for(const wx of [L+16,L+40,R-48,R-24]){ cx.fillStyle='#57534e'; cx.fillRect(wx-1,sy+75,10,18); cx.fillStyle='#7dd3fc'; cx.fillRect(wx+1,sy+77,6,7); cx.fillStyle='#f0abfc'; cx.fillRect(wx+1,sy+84,6,7); }
+    // 扉（アーチ）
+    cx.fillStyle='#57534e'; cx.fillRect(sx+4,sy+102,24,26); cx.beginPath(); cx.arc(sx+16,sy+102,12,Math.PI,0); cx.fill();
+    cx.fillStyle='#7c2d12'; cx.fillRect(sx+7,sy+104,18,24); cx.beginPath(); cx.arc(sx+16,sy+104,9,Math.PI,0); cx.fill(); cx.fillStyle='#fbbf24'; cx.fillRect(sx+15,sy+100,2,28);
+    return true; }
   if(RT.map&&RT.map.room&&drawRoomObj(o,sx,sy)) return true;
   if(o.type==='boss' && RT.map.id==='castle' && !RT.map.throne && typeof bossDone==='function' && bossDone() && G.chapter===0 && !G.flags.maou_seen){
     cx.fillStyle='#1a0f24'; cx.fillRect(sx+4,sy+2,24,28); cx.beginPath(); cx.arc(sx+16,sy+4,12,Math.PI,0); cx.fill();
@@ -148,7 +165,7 @@ function bankFaceURL(id){ const im=BANK_IMG[id]; if(!im||!im.naturalWidth) retur
 
 // ---------- アルトの家（はじまりの部屋） ----------
 THEMES.house={floor:'#9a7650',floor2:'#8f6c48',wall:'#5a3d26',path:'#a8845c',sky:['#1a1410','#3a2f26']};
-function buildRoom(){
+function buildRoom(opening){
   const W=9,H=8,t=new Uint8Array(W*H).fill(1), set=(x,y,v)=>{ t[y*W+x]=v; };
   for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++) set(x,y,0);
   set(4,H-1,0);                                   // 出入り口
@@ -160,12 +177,13 @@ function buildRoom(){
     {type:'pot',x:1,y:6,say:'水がめだ。冷たい水がたっぷり入っている。'},
     {type:'rug',x:4,y:5},
     {type:'door',x:4,y:H-1},
-    {type:'sleeper',who:'アルト',x:2,y:2},
   ];
-  return {id:'sora',floor:0,w:W,h:H,t,objs,npcs:[{x:3,y:3,who:'リリィ',nm:'リリィ',dir:'left',role:'scene',idx:900}],start:{x:3,y:2},theme:'house',safe:1,solo:1,room:'アルトの家'};
+  if(opening) objs.push({type:'sleeper',who:'アルト',x:2,y:2});
+  return {id:'sora',floor:0,w:W,h:H,t,objs,npcs:opening?[{x:3,y:3,who:'リリィ',nm:'リリィ',dir:'left',role:'scene',idx:900}]:[],start:{x:3,y:2},theme:'house',safe:1,solo:1,room:'アルトの家'};
 }
+async function enterHome(){ RT.busy=true; sfx('door'); await fade(true); G.loc='sora'; G.floor=0; RT.map=buildRoom(false); G.x=4; G.y=6; G.dir='up'; RT.trail=[0,1,2,3].map(()=>({x:4,y:6,dir:'up'})); RT.mode='field'; renderTop(); await fade(false); RT.busy=false; }
 function enterRoom(){
-  G.loc='sora'; G.floor=0; RT.map=buildRoom(); const p=RT.map.start; G.x=p.x; G.y=p.y; G.dir='down';
+  G.loc='sora'; G.floor=0; RT.map=buildRoom(true); const p=RT.map.start; G.x=p.x; G.y=p.y; G.dir='down';
   RT.trail=[0,1,2,3].map(()=>({x:p.x,y:p.y,dir:'down'})); RT.mode='field'; $('padField').style.display='flex'; hidePanel(); renderTop();
 }
 async function npcWalk(n,path,ms){ n.walk=1; for(const [x,y] of path){ n.dir=x>n.x?'right':x<n.x?'left':y>n.y?'down':'up'; n.x=x; n.y=y; await sleep(ms||200); } n.walk=0; }
@@ -193,3 +211,41 @@ function drawRoomObj(o,sx,sy){
     return true; }
   return false;
 }
+
+// ---------- はじまりの夢（もやの中。何なのかは、まだ分からない） ----------
+function drawDream(){
+  const D=RT.dream, W=cv.width, H=cv.height, t=RT.anim;
+  const g=cx.createRadialGradient(W/2,H*0.42,20,W/2,H*0.5,Math.max(W,H)*0.75); g.addColorStop(0,'#3a3150'); g.addColorStop(1,'#0c0a14'); cx.fillStyle=g; cx.fillRect(0,0,W,H);
+  const S=2; cx.save(); cx.translate(Math.round(W/2),0); cx.scale(S,S); cx.imageSmoothingEnabled=false;
+  const ty=Math.round(H*0.15);
+  cx.fillStyle='#5b1a24'; cx.fillRect(-26,ty+30,52,H); cx.fillStyle='#7a5a1a'; cx.fillRect(-26,ty+30,3,H); cx.fillRect(23,ty+30,3,H);
+  cx.globalAlpha=0.85; drawSceneObj({type:'throne'},-16,ty); cx.globalAlpha=1;
+  // 人影（うしろ姿）。巻き戻るときは残像が残る
+  const lk=LOOK['アルト'];
+  for(const gh of D.ghosts){ cx.globalAlpha=gh.a; drawSprite(-16,Math.round(gh.y/S),lk,0,'up',undefined,1); }
+  cx.globalAlpha=1;
+  if(D.show){ const wf=D.walking?Math.floor(performance.now()/160)%2:0; drawSprite(-16,Math.round(D.y/S),lk,wf,'up',undefined,D.walking?(wf?2:0):1); }
+  cx.restore();
+  // もや
+  for(let i=0;i<14;i++){ const fx=(i*97%W)+Math.sin(t/90+i)*30, fy=(i*53%H)+Math.cos(t/110+i*2)*20, r=60+(i%5)*22;
+    const fg=cx.createRadialGradient(fx,fy,0,fx,fy,r); fg.addColorStop(0,`rgba(225,222,240,${0.13+0.05*Math.sin(t/70+i)})`); fg.addColorStop(1,'rgba(225,222,240,0)'); cx.fillStyle=fg; cx.fillRect(fx-r,fy-r,r*2,r*2); }
+  if(D.glow>0){ const bg=cx.createRadialGradient(W/2,H*0.95,10,W/2,H*0.9,H*D.glow*1.2); bg.addColorStop(0,`rgba(147,197,253,${Math.min(0.95,D.glow)})`); bg.addColorStop(1,'rgba(96,165,250,0)'); cx.fillStyle=bg; cx.fillRect(0,0,W,H); }
+  if(D.white>0){ cx.fillStyle=`rgba(235,242,255,${D.white})`; cx.fillRect(0,0,W,H); }
+  const v=cx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.7); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,.75)'); cx.fillStyle=v; cx.fillRect(0,0,W,H);
+}
+async function dreamTween(ms,fn){ const t0=performance.now(); for(;;){ const k=Math.min(1,(performance.now()-t0)/ms); fn(k); if(k>=1) break; await sleep(16); } }
+TRIG.dream = async()=>{
+  const H=cv.height; RT.dream={show:true,walking:true,y:H*0.88,glow:0,white:0,ghosts:[]};
+  await fade(true); RT.dark=false; await fade(false);
+  const y0=H*0.88, y1=H*0.46; await dreamTween(3400,k=>{ RT.dream.y=y0+(y1-y0)*k; });
+  RT.dream.walking=false; await sleep(700);
+  await say('','……アルト！');
+  await sleep(500);
+  RT.dream.walking=true; const y2=H*0.40; await dreamTween(900,k=>{ RT.dream.y=y1+(y2-y1)*k; }); RT.dream.walking=false;
+  await say('','……おねがい。こっちを、見て。');
+  await sleep(400);
+  sfx('rewind');
+  await dreamTween(1300,k=>{ const D=RT.dream; D.glow=k*1.1; D.y=y2+(H*0.95-y2)*k*k; if(Math.floor(k*20)%3===0) D.ghosts.push({y:D.y,a:0.35}); D.ghosts.forEach(g=>g.a*=0.9); D.ghosts=D.ghosts.filter(g=>g.a>0.03); D.white=Math.max(0,(k-0.6)/0.4); });
+  await sleep(250);
+  RT.dark=true; RT.dream=null; await sleep(700);
+};
