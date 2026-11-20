@@ -54,7 +54,7 @@ TRIG.wake = async()=>{
   sfx('ok'); const s=RT.map.objs.find(o=>o.type==='sleeper'); if(s) s.gone=true; RT.sleeping=false; G.x=3; G.y=2; G.dir='down'; RT.trail=[0,1,2,3].map(()=>({x:3,y:2,dir:'down'}));
   const ly=RT.map.npcs.find(n=>n.who==='リリィ'); if(ly){ ly.dir='up'; await sleep(300);
     await talk([['リリィ','おはよ。……ねぐせ、ついてるよ。'],['リリィ','じゃ、先に外で待ってるね！']]);
-    await npcWalk(ly,[[4,3],[4,4],[4,5],[4,6],[4,7]],190); ly.gone=true; sfx('stairs'); }
+    await npcWalk(ly,[[4,3],[4,4],[4,5],[4,6],[4,7]],150); ly.gone=true; sfx('stairs'); }
 };
 TRIG.enter_sora = async()=>{
   if(G.chapter===0 && !F('s_open')){ setF('s_open');

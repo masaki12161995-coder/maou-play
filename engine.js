@@ -373,7 +373,7 @@ function drawField(){
   if(m.town){ for(const ex of [9,10]){ const sx=ex*TS-camX, sy=(m.h-1)*TS-camY; cx.fillStyle='#ffffff18'; cx.fillRect(sx,sy,TS,TS);} }
   // 住人
   const ents=[];
-  for(const n of m.npcs){ if(n.gone) continue; ents.push({x:n.x,y:n.y,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:n.walk?Math.floor(performance.now()/120)%2:0,col:n.walk?(Math.floor(performance.now()/120)%2?2:0):undefined,dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
+  for(const n of m.npcs){ if(n.gone) continue; let nx=n.x, ny=n.y; if(n.mv){ const k=clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1); nx=n.mv.fx+(n.x-n.mv.fx)*k; ny=n.mv.fy+(n.y-n.mv.fy)*k; } ents.push({x:nx,y:ny,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:n.walk?Math.floor(performance.now()/120)%2:0,col:n.walk?(Math.floor(performance.now()/120)%2?2:0):undefined,dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
   // 仲間（後ろについてくる）
   const pts=[{x:px,y:py,dir:G.dir}];
   const tr=RT.trail, mk=RT.moving?clamp((performance.now()-RT.moving.t0)/RT.moving.dur,0,1):1, wf=Math.floor(performance.now()/120)%2;
@@ -464,7 +464,7 @@ async function say(who,text){ if(typeof stageSpeaker==='function') await stageSp
 // 文字はゆっくり流れ、2文字ごとに「ピッ」。句読点で少し間を置く。
 // 流れている途中でタップ → その枠の最後まで一気に出す。出し終わると ▼ が点滅し、もう一度タップで次へ
 const MSG_SPEED=42;
-function blip(narr){ if(typeof SIM!=='undefined'&&SIM.on) return; if(typeof soundOn==='function'&&!soundOn()) return; if(typeof tone==='function') tone(narr?740:1240,0.03,narr?'triangle':'square',0.025); }
+function blip(narr){ if(typeof SIM!=='undefined'&&SIM.on) return; if(typeof soundOn==='function'&&!soundOn()) return; if(typeof tone==='function') tone(740,0.03,'triangle',0.025); }
 function say0(who,text){
   return new Promise(res=>{
     const el=$('msg'); el.style.display='block'; const center=!!(RT.dark||RT.dream); el.classList.toggle('center',center); el.classList.remove('done');
