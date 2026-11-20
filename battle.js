@@ -148,7 +148,12 @@ function showBattleBar(){
   $('panel').querySelectorAll('[data-spd]').forEach(b=>b.onclick=()=>{ G.settings.speed=+b.dataset.spd; sfx('tick'); showBattleBar(); });
 }
 
-function layoutEnemies(){ const W=cv.width; const n=B.enemies.length; B.enemies.forEach((e,i)=>{ e.x= n>=4 ? W*(i+0.5)/n : W*(i+1)/(n+1); }); }
+function layoutEnemies(){ const W=cv.width; const es=B.enemies, n=es.length;
+  // 絵の幅に合わせて、すき間が均等になるように並べる（大きい敵がとなりに食い込まないように）
+  const ws=es.map(e=>{ const im=ENEMY_PIC[e.dexName||e.nm||e.name]; return im&&im.naturalWidth? im.naturalWidth*2 : 64; });
+  const tot=ws.reduce((a,b)=>a+b,0);
+  if(tot>W*0.98){ let gap=(W-tot)/(n-1||1), x=0; es.forEach((e,i)=>{ e.x=x+ws[i]/2; x+=ws[i]+gap; }); return; }
+  const gap=(W-tot)/(n+1); let x=gap; es.forEach((e,i)=>{ e.x=x+ws[i]/2; x+=ws[i]+gap; }); }
 
 // ---------- 表示 ----------
 async function blog(text, ms){ if(SIM.on) return; const el=$('msg'); el.style.display='block'; el.innerHTML=`<div class="tx">${text}</div>`; await sleep((ms||600)*1.6/G.settings.speed); }
