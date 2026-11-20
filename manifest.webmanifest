@@ -1,6 +1,6 @@
 {
   "name": "魔王は昨日死んだ",
-  "short_name": "魔王は昨日死んだ",
+  "short_name": "魔王は昨日",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -8,8 +8,21 @@
   "background_color": "#0b0f1a",
   "theme_color": "#0b0f1a",
   "icons": [
-    {"src": "img/icon192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "img/icon512.png", "sizes": "512x512", "type": "image/png"},
-    {"src": "img/icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "img/icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "img/icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
