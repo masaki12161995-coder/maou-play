@@ -453,8 +453,7 @@ function showResult(R){
           box.querySelectorAll('[data-rtab]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); RT.resTab=b.dataset.rtab; RT.resOpen=null; box.classList.remove('anim'); box.innerHTML=meterHTML(R,RT.resTab); bindMeter(); sfx('tick'); }); };
         RT.resOpen=null; bindMeter();
         if(!P.sfxDone){ P.sfxDone=1; sfx('win'); const vals=(R.party||[]).map(n=>(R.meter&&R.meter[n]&&R.meter[n].dmg)||0).sort((a,b)=>b-a), top=Math.max(1,vals[0]||0);
-          vals.forEach((v,i)=>{ if(v>0) sfxGauge(v/top, 0.25+i*0.12); }); if(vals[0]>0) setTimeout(()=>sfx('mvp'),(0.25+0.62)*1000);
-          if(R._best&&Object.keys(R._best).length) setTimeout(()=>sfx('best'),(0.25+vals.length*0.12+0.7)*1000);
+          if(vals[0]>0) sfxGauge(1, 0.4);   // バーが伸びる音は1本だけ（人数分重ねるとせわしない）
           if(nDrop) setTimeout(()=>sfx('pop'),(dropDelay+0.15)*1000); }
         // 連打で閉じないよう、出そろうまでは少しだけタップを受け付けない（レアのときは長め）
         const rare=R.dropRes.some(d=>d.it.r>=3);
