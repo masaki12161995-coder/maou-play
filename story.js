@@ -566,6 +566,34 @@ function decorateTown(m){
   if(id==='sora' && m.church){ const pr=m.npcs.find(n=>n.nm==='神父'); const at=(x,y)=>m.npcs.find(n=>n.x===x&&n.y===y&&!n.gone);
     if(pr){ const o=at(m.church.x,m.church.y); if(o&&o!==pr){ o.x=pr.x; o.y=pr.y; } pr.x=m.church.x; pr.y=m.church.y; pr.dir='down'; }
     const d=at(15,18); if(d){ const c=[[12,19],[7,19],[12,16],[7,16],[17,19]].find(([x,y])=>walkable(m,x,y)); if(c){ d.x=c[0]; d.y=c[1]; } } }
+  townReach(m, id==='sora'&&m.church?[[15,18]]:[]);
+}
+// 町の全員（とアルトの家の扉）に、入口から歩いてたどり着けるようにする。
+// ふさいでいる木は切り、ふさいでいる住人は空いている場所へどいてもらう
+function townReach(m,spots){
+  const D=[[1,0],[-1,0],[0,1],[0,-1]], W=m.w, H=m.h, K=(x,y)=>y*W+x;
+  const npcAt=(x,y)=>m.npcs.find(n=>n.x===x&&n.y===y&&!n.gone);
+  const reach=()=>{ const s=new Set([K(m.start.x,m.start.y)]), q=[[m.start.x,m.start.y]]; while(q.length){ const [x,y]=q.shift(); for(const [dx,dy] of D){ const nx=x+dx,ny=y+dy; if(nx<1||ny<1||nx>=W-1||ny>=H||s.has(K(nx,ny))||!walkable(m,nx,ny)) continue; s.add(K(nx,ny)); q.push([nx,ny]); } } return s; };
+  const soft=(x,y)=>{ if(x<1||y<1||x>=W-1||y>=H-1) return -1; const v=tileAt(m,x,y); const n=npcAt(x,y);
+    if(n) return (!n.shop&&(v===0||v===9))?1:-1; if(walkable(m,x,y)) return 0; return v===2?1:-1; };
+  for(let pass=0;pass<12;pass++){
+    const ok=reach();
+    const goals=[...m.npcs.filter(n=>!n.gone).map(n=>({n,adj:D.map(([dx,dy])=>[n.x+dx,n.y+dy])})), ...spots.map(([x,y])=>({spot:[x,y],adj:[[x,y]]}))];
+    const bad=goals.find(g=> g.spot ? !(ok.has(K(...g.spot))) : !g.adj.some(([x,y])=>ok.has(K(x,y))));
+    if(!bad) return;
+    // 0-1幅優先で、いちばん少ない「どかす数」で届く道を探す
+    const dist=new Map(), prev=new Map(), dq=[]; for(const k of ok){ dist.set(k,0); dq.push(k); }
+    const tgt=new Set(bad.adj.filter(([x,y])=>soft(x,y)>=0||(bad.spot)).map(([x,y])=>K(x,y)));
+    let hit=null;
+    while(dq.length){ const k=dq.shift(); if(tgt.has(k)){ hit=k; break; } const x=k%W, y=(k-x)/W;
+      for(const [dx,dy] of D){ const nx=x+dx,ny=y+dy, c=soft(nx,ny); if(c<0) continue; const nk=K(nx,ny), nd=dist.get(k)+c; if(dist.has(nk)&&dist.get(nk)<=nd) continue; dist.set(nk,nd); prev.set(nk,k); c?dq.push(nk):dq.unshift(nk); } }
+    if(hit==null) return;
+    const path=[]; for(let k=hit;prev.has(k);k=prev.get(k)) path.push(k);
+    const used=new Set(path);
+    for(const k of path){ const x=k%W, y=(k-x)/W; if(tileAt(m,x,y)===2) m.t[k]=0;
+      const n=npcAt(x,y); if(n){ const free=[...ok].filter(f=>!used.has(f)&&walkable(m,f%W,(f-f%W)/W)&&!spots.some(([sx,sy])=>K(sx,sy)===f)&&f%W!==9&&f%W!==10);
+        if(free.length){ free.sort((a,b)=>(Math.abs(a%W-x)+Math.abs((a-a%W)/W-y))-(Math.abs(b%W-x)+Math.abs((b-b%W)/W-y))); const f=free[0]; n.x=f%W; n.y=(f-f%W)/W; } } }
+  }
 }
 function npcKey(n){ return `seen_${RT.map.id}_${n.idx}_${G.chapter}`; }
 function npcHasNew(n){ if(n.shop) return false; if(n.role==='side') return SIDE[n.side]&&SIDE[n.side].ok(); if(n.role==='special'&&n.isNew&&n.isNew()) return true; if(n.role==='special'||n.role==='guide') return !G.flags[npcKey(n)]; return false; }
