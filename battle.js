@@ -208,7 +208,7 @@ const ENEMY_PIC={}; for(const n in ENEMY_PIC_FILES){ const im=new Image(); im.on
 function drawEnemyPic(e,im,x,y,s,cx,icon){
   if(icon){ const c=cx.canvas, P=Math.max(1,Math.floor(Math.min(c.width,c.height)/Math.max(im.naturalWidth,im.naturalHeight))), w=im.naturalWidth*P, h=im.naturalHeight*P;
     cx.save(); cx.imageSmoothingEnabled=false; cx.drawImage(im,Math.round((c.width-w)/2),Math.round((c.height-h)/2)+P,w,h); cx.restore(); return; }
-  const P=icon?1:2, w=im.naturalWidth*P, h=im.naturalHeight*P, t=RT.anim, fly=/コウモリ/.test(e.nm||e.dexName||e.name||'');
+  const P=icon?1:2, w=im.naturalWidth*P, h=im.naturalHeight*P, t=RT.anim, fly=/コウモリ|霊|亡霊|ガス/.test(e.nm||e.dexName||e.name||'');
   const bob=icon?0:(fly?Math.round(Math.sin(t/10)*3)-3:Math.round(Math.sin(t/22)*1.2));
   const foot=Math.round(y+36*s), left=Math.round(x-w/2), top=foot-h+2*P+bob;
   cx.save(); if(e.glow){ cx.fillStyle=`rgba(250,204,21,${0.25+0.15*Math.sin(t/6)})`; cx.beginPath(); cx.arc(x,foot-h/2,h*0.55,0,7); cx.fill(); }
