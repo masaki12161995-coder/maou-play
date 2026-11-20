@@ -249,7 +249,7 @@ function tileAt(m,x,y){ if(x<0||y<0||x>=m.w||y>=m.h) return 1; return m.t[y*m.w+
 function walkable(m,x,y){
   const v=tileAt(m,x,y); if(!(v===0||v===9||v===7)) return false;
   if(m.npcs.some(n=>n.x===x&&n.y===y&&!n.gone)) return false;
-  if(m.objs.some(o=>o.x===x&&o.y===y&&['save','chest','boss','goal','sign','spring','throne','torch','body','fallen'].includes(o.type)&&!o.gone)) return false;
+  if(m.objs.some(o=>o.x===x&&o.y===y&&['save','chest','boss','goal','sign','spring','throne','torch','body','fallen','bed','table','shelf','block','pot'].includes(o.type)&&!o.gone)) return false;
   return true;
 }
 
@@ -364,14 +364,14 @@ function drawField(){
   if(RT.quake>0){ RT.quake--; camX+=Math.round((Math.random()-.5)*8); camY+=Math.round((Math.random()-.5)*8); }
   cx.fillStyle='#000'; cx.fillRect(0,0,W,H);
   const x0=Math.floor(camX/TS)-1,y0=Math.floor(camY/TS)-1,x1=x0+W/TS+3,y1=y0+H/TS+3;
-  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){ const v=(x<0||y<0||x>=m.w||y>=m.h)?(m.town?2:1):m.t[y*m.w+x]; drawTile(m,v,x,y,Math.round(x*TS-camX),Math.round(y*TS-camY)); }
+  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){ const out=(x<0||y<0||x>=m.w||y>=m.h); if(out&&m.room) continue; const v=out?(m.town?2:1):m.t[y*m.w+x]; drawTile(m,v,x,y,Math.round(x*TS-camX),Math.round(y*TS-camY)); }
   // 物
   for(const o of m.objs){ if(o.gone) continue; const sx=Math.round(o.x*TS-camX), sy=Math.round(o.y*TS-camY); if(sx<-TS||sy<-TS||sx>W||sy>H) continue; drawObj(o,sx,sy); }
   // 出口の目印
   if(m.town){ for(const ex of [9,10]){ const sx=ex*TS-camX, sy=(m.h-1)*TS-camY; cx.fillStyle='#ffffff18'; cx.fillRect(sx,sy,TS,TS);} }
   // 住人
   const ents=[];
-  for(const n of m.npcs){ if(n.gone) continue; ents.push({x:n.x,y:n.y,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:0,dir:n.dir||'down',bang:npcHasNew(n)}); }
+  for(const n of m.npcs){ if(n.gone) continue; ents.push({x:n.x,y:n.y,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:n.walk?Math.floor(performance.now()/120)%2:0,col:n.walk?(Math.floor(performance.now()/120)%2?2:0):undefined,dir:n.dir||'down',bang:npcHasNew(n)}); }
   // 仲間（後ろについてくる）
   const pts=[{x:px,y:py,dir:G.dir}];
   const tr=RT.trail, mk=RT.moving?clamp((performance.now()-RT.moving.t0)/RT.moving.dur,0,1):1, wf=Math.floor(performance.now()/120)%2;
@@ -380,6 +380,7 @@ function drawField(){
     const dx=to.x-fr.x, dy=to.y-fr.y; const mv=!!RT.moving&&(dx||dy);
     const d=mv?(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')):(to.dir||G.dir); to.dir=d;
     pts.push({x:fr.x+dx*mk,y:fr.y+dy*mk,dir:d,mv}); }
+  if(m.solo) pts.length=1; if(RT.sleeping) pts.length=0;
   pts.forEach((p,i)=>ents.push({x:p.x,y:p.y,look:LOOK[G.party[i]],fr:p.mv?wf:0,col:p.mv?(wf?2:0):1,dir:p.dir,party:i}));
   ents.sort((a,b)=>a.y-b.y||((b.party??9)-(a.party??9)));
   for(const e of ents){ const sx=Math.round(e.x*TS-camX), sy=Math.round(e.y*TS-camY)-4; drawSprite(sx,sy,e.look,e.fr,e.dir,undefined,e.col);
@@ -450,7 +451,7 @@ function renderTop(battleUnits){
 }
 function renderHud(){
   if(!G) return;
-  let l=''; if(RT.mode==='world') l='世界地図'; else if(RT.map){ l=LOCS[RT.map.id].n; if(RT.map.throne) l+='  玉座の間'; else if(RT.map.floor!==undefined && LOCS[RT.map.id].floors>1) l+=`  ${RT.map.floor+1}F`; }
+  let l=''; if(RT.mode==='world') l='世界地図'; else if(RT.map){ l=RT.map.room?RT.map.room:LOCS[RT.map.id].n; if(RT.map.room){} else if(RT.map.throne) l+='  玉座の間'; else if(RT.map.floor!==undefined && LOCS[RT.map.id].floors>1) l+=`  ${RT.map.floor+1}F`; }
   $('hud').style.display=(RT.mode==='battle'||$('msg').style.display==='block')?'none':'flex';
   $('hudL').textContent=l; $('hudR').textContent=`${G.gold.toLocaleString()} G`;
 }
@@ -547,7 +548,7 @@ function stepLoop(){
 }
 setInterval(stepLoop,20);
 
-function frame(){ RT.anim++; if(RT.mode==='field') drawField(); else if(RT.mode==='world') drawWorld(); else if(RT.mode==='battle' && typeof drawBattle==='function') drawBattle(); renderHud(); requestAnimationFrame(frame); }
+function frame(){ RT.anim++; if(RT.dark){ cx.fillStyle='#000'; cx.fillRect(0,0,cv.width,cv.height); } else if(RT.mode==='field') drawField(); else if(RT.mode==='world') drawWorld(); else if(RT.mode==='battle' && typeof drawBattle==='function') drawBattle(); renderHud(); requestAnimationFrame(frame); }
 
 // ---------- 場所の出入り ----------
 function enterMap(id, floor, pos){
@@ -570,6 +571,7 @@ async function onStep(){
   const m=RT.map; G.steps++; if(G.holy>0) G.holy--;
   // 階段
   const o=m.objs.find(o=>o.x===G.x&&o.y===G.y&&!o.gone);
+  if(o && o.type==='door' && m.room && typeof leaveRoom==='function'){ await leaveRoom(); return; }
   if(o && (o.type==='up'||o.type==='down')){
     RT.busy=true;
     // 記憶の迷宮：階段が「持ち帰るか、潜るか」を決める場所。下りは一方通行
@@ -606,6 +608,7 @@ async function interact(){
       else if(o.type==='boss' && m.id==='castle' && !m.throne && bossDone() && G.chapter===0 && !G.flags.maou_seen){ sfx('door'); await fade(true); enterThrone(); await fade(false); }
       else if(o.type==='boss' && !bossDone()) await runTrigger('boss_'+m.id);
       else if(o.type==='body'||o.type==='fallen'){ if(o.ev) await runTrigger(o.ev); else if(o.say) await say('',o.say); }
+      else if(o.say) await say('',o.say);
       else if(o.type==='goal' && !goalDone()) await runTrigger('goal_'+m.id);
       else if(o.type==='sign'){ const n=m.npcs.find(n=>n.kind===o.kind); if(n) await talkNpc(n); }
     } else { await runTrigger('look_'+m.id); }

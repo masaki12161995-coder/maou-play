@@ -103,7 +103,7 @@ function showTitle(){
     $('tbtns').querySelectorAll('[data-k]').forEach(x=>x.onclick=()=>{ const k=+x.dataset.k, s=ss[k-1];
       if(mode==='cont'){ if(!s) return; sfx('ok'); return start(async()=>{ RT.slot=k; resumeFrom(s); bgm(RT.mode==='world'?'world':'field'); }); }
       if(s && !x.dataset.conf){ x.dataset.conf=1; sfx('tick'); const e=x.querySelector('.ss'); e.textContent='もう一度タップで消してはじめる'; e.style.color='#ffb3c1'; return; }
-      sfx('ok'); start(async()=>{ RT.slot=k; kvDel(slotKey(k)); kvDel('mzy_suspend'); newGame(); enterMap('sora',0,{x:9,y:19}); bgm('field'); RT.busy=true; await TRIG.start(); RT.busy=false; await runTrigger('enter_sora'); });
+      sfx('ok'); start(async()=>{ RT.slot=k; kvDel(slotKey(k)); kvDel('mzy_suspend'); newGame(); RT.dark=true; enterRoom(); bgm('town'); RT.busy=true; await TRIG.start(); await TRIG.wake(); RT.busy=false; });
     });
   };
   main();

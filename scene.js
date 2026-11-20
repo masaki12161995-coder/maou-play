@@ -64,6 +64,7 @@ function enterThrone(){
 // 玉座の間の物を描く（drawObj から呼ぶ）。描いたら true
 function drawSceneObj(o,sx,sy){
   const t=RT.anim;
+  if(RT.map&&RT.map.room&&drawRoomObj(o,sx,sy)) return true;
   if(o.type==='boss' && RT.map.id==='castle' && !RT.map.throne && typeof bossDone==='function' && bossDone() && G.chapter===0 && !G.flags.maou_seen){
     cx.fillStyle='#1a0f24'; cx.fillRect(sx+4,sy+2,24,28); cx.beginPath(); cx.arc(sx+16,sy+4,12,Math.PI,0); cx.fill();
     cx.fillStyle='#4a1d2e'; cx.fillRect(sx+7,sy+4,18,26); cx.fillStyle='#d4a017'; cx.fillRect(sx+15,sy+4,2,26); cx.fillRect(sx+12,sy+16,2,3); cx.fillRect(sx+18,sy+16,2,3);
@@ -144,3 +145,51 @@ function assignBankNpcs(m){ for(const n of m.npcs){ if(n.who) continue; const b=
 function bankLook(id){ const im=BANK_IMG[id]; return im&&im.naturalWidth? {img:im} : null; }
 function bankFaceURL(id){ const im=BANK_IMG[id]; if(!im||!im.naturalWidth) return null; const key='bank|'+id; if(SPR_URL[key]) return SPR_URL[key];
   const fw=im.naturalWidth/3, c=document.createElement('canvas'); c.width=fw; c.height=im.naturalHeight/5; const g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(im,fw,0,fw,c.height,0,0,fw,c.height); try{ return SPR_URL[key]=c.toDataURL(); }catch(e){ return null; } }
+
+// ---------- アルトの家（はじまりの部屋） ----------
+THEMES.house={floor:'#9a7650',floor2:'#8f6c48',wall:'#5a3d26',path:'#a8845c',sky:['#1a1410','#3a2f26']};
+function buildRoom(){
+  const W=9,H=8,t=new Uint8Array(W*H).fill(1), set=(x,y,v)=>{ t[y*W+x]=v; };
+  for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++) set(x,y,0);
+  set(4,H-1,0);                                   // 出入り口
+  const objs=[
+    {type:'hwindow',x:2,y:0},{type:'hwindow',x:6,y:0},
+    {type:'bed',x:2,y:2,say:'ふかふかのベッドだ。ゆうべは、なかなか眠れなかった。'},{type:'block',x:2,y:3},
+    {type:'shelf',x:6,y:1,say:'棚に、小さいころの木の剣が飾ってある。'},
+    {type:'table',x:6,y:4,say:'テーブルに、母さんの作ってくれた弁当が置いてある。'},
+    {type:'pot',x:1,y:6,say:'水がめだ。冷たい水がたっぷり入っている。'},
+    {type:'rug',x:4,y:5},
+    {type:'door',x:4,y:H-1},
+    {type:'sleeper',who:'アルト',x:2,y:2},
+  ];
+  return {id:'sora',floor:0,w:W,h:H,t,objs,npcs:[{x:3,y:3,who:'リリィ',nm:'リリィ',dir:'left',role:'scene',idx:900}],start:{x:3,y:2},theme:'house',safe:1,solo:1,room:'アルトの家'};
+}
+function enterRoom(){
+  G.loc='sora'; G.floor=0; RT.map=buildRoom(); const p=RT.map.start; G.x=p.x; G.y=p.y; G.dir='down';
+  RT.trail=[0,1,2,3].map(()=>({x:p.x,y:p.y,dir:'down'})); RT.mode='field'; $('padField').style.display='flex'; hidePanel(); renderTop();
+}
+async function npcWalk(n,path,ms){ n.walk=1; for(const [x,y] of path){ n.dir=x>n.x?'right':x<n.x?'left':y>n.y?'down':'up'; n.x=x; n.y=y; await sleep(ms||200); } n.walk=0; }
+async function leaveRoom(){
+  RT.busy=true; sfx('stairs'); await fade(true);
+  enterMap('sora',0,{x:15,y:18}); G.dir='down'; RT.trail=[0,1,2,3].map(()=>({x:15,y:18,dir:'down'}));
+  await fade(false); RT.busy=false; await runTrigger('enter_sora');
+}
+function drawRoomObj(o,sx,sy){
+  const t=RT.anim;
+  if(o.type==='hwindow'){ cx.fillStyle='#3b2a1a'; cx.fillRect(sx+4,sy+6,24,22); cx.fillStyle='#9fd3ff'; cx.fillRect(sx+7,sy+9,18,16); cx.fillStyle='#d8f0ff'; cx.fillRect(sx+7,sy+9,18,5); cx.fillStyle='#3b2a1a'; cx.fillRect(sx+15,sy+9,2,16); cx.fillRect(sx+7,sy+16,18,2); return true; }
+  if(o.type==='bed'){ cx.fillStyle='#000a'; cx.fillRect(sx+3,sy+60,28,4);
+    cx.fillStyle='#6b4423'; cx.fillRect(sx+2,sy+2,28,60); cx.fillStyle='#8b5a2b'; cx.fillRect(sx+2,sy+2,28,8);
+    cx.fillStyle='#f5f0e6'; cx.fillRect(sx+5,sy+8,22,12);            // まくら
+    cx.fillStyle='#3b6fb0'; cx.fillRect(sx+4,sy+22,24,38); cx.fillStyle='#5a8fd0'; cx.fillRect(sx+4,sy+22,24,4); cx.fillStyle='#2f5a92'; cx.fillRect(sx+4,sy+54,24,6); return true; }
+  if(o.type==='block') return true;
+  if(o.type==='rug'){ cx.fillStyle='#8a2f2f'; cx.fillRect(sx-12,sy+4,56,26); cx.fillStyle='#c2a050'; cx.fillRect(sx-10,sy+6,52,2); cx.fillRect(sx-10,sy+26,52,2); return true; }
+  if(o.type==='shelf'){ cx.fillStyle='#5b3a1e'; cx.fillRect(sx+2,sy-10,28,40); cx.fillStyle='#7a5230'; cx.fillRect(sx+4,sy-8,24,10); cx.fillRect(sx+4,sy+6,24,10); cx.fillStyle='#c9925a'; cx.fillRect(sx+8,sy-4,16,3); cx.fillStyle='#9fb2c8'; cx.fillRect(sx+7,sy+9,4,6); cx.fillStyle='#d97706'; cx.fillRect(sx+14,sy+8,6,7); return true; }
+  if(o.type==='table'){ cx.fillStyle='#000a'; cx.beginPath(); cx.ellipse(sx+16,sy+28,15,4,0,0,7); cx.fill(); cx.fillStyle='#6b4423'; cx.fillRect(sx+5,sy+16,4,12); cx.fillRect(sx+23,sy+16,4,12); cx.fillStyle='#8b5a2b'; cx.fillRect(sx+1,sy+8,30,10); cx.fillStyle='#a8743e'; cx.fillRect(sx+1,sy+8,30,3); cx.fillStyle='#e8dcc0'; cx.fillRect(sx+10,sy+4,12,6); cx.fillStyle='#b91c1c'; cx.fillRect(sx+10,sy+6,12,2); return true; }
+  if(o.type==='pot'){ cx.fillStyle='#000a'; cx.beginPath(); cx.ellipse(sx+16,sy+28,10,3,0,0,7); cx.fill(); cx.fillStyle='#7c5a3a'; cx.beginPath(); cx.ellipse(sx+16,sy+18,10,11,0,0,7); cx.fill(); cx.fillStyle='#5b3f26'; cx.fillRect(sx+9,sy+6,14,4); cx.fillStyle='#4a90d0'; cx.fillRect(sx+11,sy+7,10,2); return true; }
+  if(o.type==='door'){ cx.fillStyle='#3b2a1a'; cx.fillRect(sx+4,sy,24,32); cx.fillStyle='#6b4423'; cx.fillRect(sx+6,sy+2,20,30); cx.fillStyle='#fbbf24'; cx.fillRect(sx+21,sy+16,3,3); cx.fillStyle='#ffffff14'; cx.fillRect(sx+6,sy+2,20,30); return true; }
+  if(o.type==='sleeper'){ const lk=LOOK[o.who]; if(lk&&hasImg(lk)){ const k='sleep|'+o.who; const c=LYING[k]||(LYING[k]=standFrame(lk.img,'line')); cx.imageSmoothingEnabled=false; cx.drawImage(c,sx,sy-4,32,40);
+      cx.fillStyle='#3b6fb0'; cx.fillRect(sx+3,sy+17,26,43); cx.fillStyle='#5a8fd0'; cx.fillRect(sx+3,sy+17,26,4); cx.fillStyle='#e8eef8'; cx.fillRect(sx+3,sy+17,26,2); cx.fillStyle='#2f5a92'; cx.fillRect(sx+3,sy+54,26,6);
+      const z=Math.floor(t/30)%3; cx.fillStyle='#e5e7eb'; cx.font='bold 10px sans-serif'; cx.textAlign='left'; cx.fillText('z'.repeat(z+1),sx+24,sy+4-z*2); }
+    return true; }
+  return false;
+}

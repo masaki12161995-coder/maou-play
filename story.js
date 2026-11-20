@@ -45,14 +45,26 @@ async function fight(idx,extra){ const r=await bossBattle(idx,extra); return r==
 TRIG.start = async()=>{
   await narr('千年のあいだ、この世界には「魔王」がいた。','そして今日、ソラの村の若者が、その魔王を討つために旅立つ。');
 };
+// はじまり：暗いまま声だけ → 目を開けると自分の部屋。リリィに起こされる
+TRIG.wake = async()=>{
+  RT.sleeping=true;
+  await talk([['リリィ','アルト、起きてる？ 今日だよ、旅立ちの日！']]);
+  await fade(true); RT.dark=false; await fade(false);
+  await talk([['リリィ','……もう。まだ寝てる。'],['リリィ','ほら、起きて！ 村のみんなが広場で待ってるよ。…勇者さまのお見送りだって。']]);
+  sfx('ok'); const s=RT.map.objs.find(o=>o.type==='sleeper'); if(s) s.gone=true; RT.sleeping=false; G.x=3; G.y=2; G.dir='down'; RT.trail=[0,1,2,3].map(()=>({x:3,y:2,dir:'down'}));
+  const ly=RT.map.npcs.find(n=>n.who==='リリィ'); if(ly){ ly.dir='up'; await sleep(300);
+    await talk([['リリィ','おはよ。……ねぐせ、ついてるよ。'],['リリィ','じゃ、先に外で待ってるね！']]);
+    await npcWalk(ly,[[4,3],[4,4],[4,5],[4,6],[4,7]],190); ly.gone=true; sfx('stairs'); }
+  await say('','（画面を指でなぞると歩く。タップで話す・調べる。下の扉から外へ出よう）');
+};
 TRIG.enter_sora = async()=>{
   if(G.chapter===0 && !F('s_open')){ setF('s_open');
-    await talk([['リリィ','アルト、起きてる？ 今日だよ、旅立ちの日！'],['リリィ','村のみんなが広場で待ってる。…勇者さまのお見送りだって。'],
+    await talk([
       ['村長','おお、勇者さま。この村はな、千年前から勇者さまをお育てするためにあるんじゃ。'],['村長','北の山を越えれば魔王城。どうか、ご無事で。']]);
     await narr('村の出口で、リリィが胸元の青い石を握っている。');
     await talk([['リリィ','これ、覚えてる？ 小さいころ、アルトがくれた「守り石」。'],['リリィ','ずっと持ってたんだ。…だから、大丈夫。どこまででも、ついていくから。']]);
     unlock('mtpath'); setObj('北の山道を越えて魔王城へ','mtpath');
-    await say('','（下の四角を押したまま指をすべらせると移動。「調べる」で話す・調べる。村を出るには下の出口へ。広場の光る石でセーブできる）');
+    await say('','（画面を指でなぞると歩く。タップで話す・調べる。村を出るには下の出口へ。広場の光る石でセーブできる）');
     doSave();
   }
   if(F('cleared') && G.chapter>=7 && !F('s_post')){ setF('s_post'); }

@@ -50,6 +50,9 @@ font-size:15px;line-height:1.6;display:none;min-height:72px;white-space:pre-wrap
 #bM{flex:0 0 110px}
 #fhint{white-space:nowrap}
 #app.fm #pad{flex:0 0 62px;min-height:0;max-height:none}
+#app.fm #pad{position:absolute;left:0;right:0;bottom:0;height:62px;z-index:5;background:transparent;pointer-events:none}#app.fm #pad>*{pointer-events:auto}
+#app.fm #view{margin-bottom:calc(-1 * env(safe-area-inset-bottom))}#app.fm #cv{border-radius:12px 12px 0 0}
+#app.fm #fhint{background:rgba(0,0,0,.32);border-color:#ffffff38;color:#ffffffb0}#app.fm #bM{background:rgba(28,39,71,.82);backdrop-filter:blur(2px)}
 /* フィールドの会話は画面の上に（下から来る指で隠れないように） */
 #app.fm #msg{top:8px;bottom:auto}
 #joy{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:16px;position:relative;overflow:hidden}
