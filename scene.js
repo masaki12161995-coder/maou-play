@@ -124,8 +124,9 @@ function drawSceneObj(o,sx,sy){
     cx.fillStyle='#0006'; cx.beginPath(); cx.ellipse(sx+16,sy+22,22,7,0,0,7); cx.fill();
     if(MAOU_IMG.naturalWidth){ const c=lyingCanvas(MAOU_IMG,'line','maou'); cx.imageSmoothingEnabled=false; cx.drawImage(c,Math.round(sx+16-c.width/2),Math.round(sy+16-c.height/2)); }
     return true; }
+  if(o.type==='boss' && RT.map && BOSS_WHO[RT.map.id]){ if(bossActorObj(o)) drawBossActor(o,sx,sy); return true; }
   if(o.type==='fallen'){
-    const lk=LOOK[o.who]; if(lk&&hasImg(lk)){ cx.fillStyle='#0006'; cx.beginPath(); cx.ellipse(sx+16,sy+22,22,7,0,0,7); cx.fill();
+    const lk=o.look||LOOK[o.who]; if(lk&&hasImg(lk)){ cx.fillStyle='#0006'; cx.beginPath(); cx.ellipse(sx+16,sy+22,22,7,0,0,7); cx.fill();
       const c=lyingCanvas(lk.img,o.eyes||'line',o.who); cx.imageSmoothingEnabled=false; cx.drawImage(c,Math.round(sx+16-c.width/2),Math.round(sy+16-c.height/2)); }
     return true; }
   return false;
@@ -249,3 +250,102 @@ TRIG.dream = async()=>{
   await sleep(250);
   RT.dark=true; RT.dream=null; await sleep(700);
 };
+
+// ---------- 話す人は、その場に姿を見せてから話す ----------
+// 遠くから声だけで話しかけてこないように：話す前に、その人がこちらへ歩いてくる（いなければ画面の外から来る）。
+// 仲間・名前を伏せた「？？？」の声・暗い場面・家の中などは、そのまま話す。
+const BOSS_WHO={fort1:'ザガン',fort2:'ザガン',tower:'セイル',tomb:'レオン'};
+function speakerSpec(name){
+  const c=CHARS[name]?name:(SPEAKER_CHAR[name]&&CHARS[SPEAKER_CHAR[name]]?SPEAKER_CHAR[name]:null);
+  if(c) return {who:c};
+  if(typeof BANK_SPEAKER!=='undefined'&&BANK_SPEAKER[name]) return {bank:BANK_SPEAKER[name]};
+  return {type:SPEAKER_TYPE[name]||npcType(name,hashStr(name)), seed:hashStr(name)};
+}
+function specLook(sp){ return sp.who?LOOK[sp.who]:npcLookFor(sp); }
+function dirTo(fx,fy,tx,ty){ const dx=tx-fx, dy=ty-fy; return Math.abs(dx)>=Math.abs(dy)?(dx>0?'right':dx<0?'left':(dy>0?'down':'up')):(dy>0?'down':'up'); }
+function bossActorObj(o){ return o.type==='boss' && RT.map && BOSS_WHO[RT.map.id] && !o.hideActor && (!bossDone() || RT.event>0)
+  && !RT.map.objs.some(f=>f.type==='fallen'&&!f.gone&&f.x===o.x&&f.y===o.y); }
+function drawBossActor(o,sx,sy){
+  const sp=o._sp||(o._sp=speakerSpec(BOSS_WHO[RT.map.id])), lk=specLook(sp);
+  cx.fillStyle='#0005'; cx.beginPath(); cx.ellipse(sx+16,sy+28,12,4,0,0,7); cx.fill();
+  drawSprite(sx,sy-4,lk,0,dirTo(o.x,o.y,G.x,G.y));
+}
+function partyTiles(){ const s=new Set([G.x+','+G.y]); for(let i=0;i<Math.min(3,G.party.length-1);i++){ const t=RT.trail[i]; if(t) s.add(t.x+','+t.y); } return s; }
+function bfsFrom(m,sx,sy,block){ const D=[[0,1],[0,-1],[1,0],[-1,0]], dist=new Map([[sx+','+sy,0]]), prev=new Map(), q=[[sx,sy]];
+  while(q.length){ const [x,y]=q.shift(), d=dist.get(x+','+y); for(const [dx,dy] of D){ const nx=x+dx, ny=y+dy, k=nx+','+ny; if(dist.has(k)||block.has(k)||!walkable(m,nx,ny)) continue; if(m.town&&ny>=m.h-1) continue; dist.set(k,d+1); prev.set(k,x+','+y); q.push([nx,ny]); } }
+  return {dist,prev}; }
+function onScreen(x,y){ const c=RT.cam||{x:0,y:0}; const px=x*TS-c.x, py=y*TS-c.y; return px>-4&&py>-4&&px<cv.width-TS+4&&py<cv.height-TS+4; }
+function spawnSpot(m,opt){
+  const {dist}=bfsFrom(m,G.x,G.y,partyTiles()); let off=null, vis=null;
+  for(const [k,d] of dist){ if(d<3) continue; const [x,y]=k.split(',').map(Number);
+    if(!onScreen(x,y)){ if(d<=16 && (!off||d<off.d)) off={x,y,d}; }
+    else if(d<=6 && (!vis||d>vis.d)) vis={x,y,d}; }
+  return opt.here? (vis||off) : (off||vis);
+}
+function pathToPlayer(m,n){
+  const block=partyTiles(); block.delete(n.x+','+n.y);
+  const {dist,prev}=bfsFrom(m,n.x,n.y,block);
+  const fr={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[G.dir]||[0,1];
+  const goals=[[G.x+fr[0],G.y+fr[1]],[G.x,G.y+1],[G.x,G.y-1],[G.x+1,G.y],[G.x-1,G.y]].map(([x,y])=>x+','+y).filter(k=>dist.has(k));
+  if(!goals.length) return null;
+  let g=goals[0]; for(const k of goals) if(dist.get(k)<dist.get(g)-1) g=k;   // 正面を優先（遠回りしすぎない範囲で）
+  const path=[]; for(let k=g;k!==n.x+','+n.y;k=prev.get(k)) path.unshift(k.split(',').map(Number));
+  return path;
+}
+function faceEachOther(x,y,n){ G.dir=dirTo(G.x,G.y,x,y); if(n) n.dir=dirTo(x,y,G.x,G.y); }
+function findSpeakerBody(m,real,sp){
+  const bw=BOSS_WHO[m.id]; if(bw && (bw===real||bw===sp.who)){ const b=m.objs.find(o=>o.type==='boss'); if(b&&bossActorObj(b)) return {obj:b}; }
+  const fl=m.objs.find(o=>o.type==='fallen'&&!o.gone&&(o.who===real||(sp.who&&o.who===sp.who))); if(fl) return {obj:fl};
+  const n=m.npcs.find(n=>!n.gone&&(n.nm===real||n.actorName===real||(sp.who&&n.who===sp.who))); if(n) return {npc:n};
+  return null;
+}
+async function stageSpeaker(w){
+  if(!w || !RT.event || RT.talkNpc || RT.dark || RT.dream || RT.mode!=='field') return;
+  const m=RT.map; if(!m || m.solo || m.room || m.throne) return;
+  const parts=w.split('|'); if(parts[0].startsWith('？？？')) return;
+  const real=parts[parts.length-1]; if(real==='アルト') return;
+  const sp=speakerSpec(real);
+  if(G.party.includes(real) || (sp.who && (G.party.includes(sp.who) || (G.members[sp.who]&&G.members[sp.who].avail)))) return;
+  const opt=(RT.stageOpt&&RT.stageOpt[real])||{}, near=opt.near||1;
+  const body=findSpeakerBody(m,real,sp);
+  if(body&&body.obj){ faceEachOther(body.obj.x,body.obj.y); return; }
+  let n=body&&body.npc;
+  if(!n){
+    const s=spawnSpot(m,opt); if(!s) return;
+    n={x:s.x,y:s.y,actorName:real,nm:real,role:'actor',idx:900+m.npcs.length,seed:hashStr(real),dir:dirTo(s.x,s.y,G.x,G.y)};
+    if(sp.who) n.who=sp.who; else if(sp.bank) n.bank=sp.bank; else n.type=sp.type;
+    n.actor=1; m.npcs.push(n);
+  }
+  if(!n.home) n.home={x:n.x,y:n.y,dir:n.dir,trip:[]};
+  if(!RT.staged) RT.staged=[]; if(!RT.staged.includes(n)) RT.staged.push(n);
+  const d=Math.abs(n.x-G.x)+Math.abs(n.y-G.y);
+  if(d>near){
+    $('msg').style.display='none';
+    let path=pathToPlayer(m,n); if(path && near>1) path=path.slice(0,Math.max(0,path.length-(near-1)));
+    if(path&&path.length){
+      if(onScreen(n.x,n.y) && !n.excl){ n.excl=1; sfx('pop'); await sleep(450); }
+      n.excl=0; await npcWalk(n,path,170); n.home.trip.push(...path);
+    }
+  }
+  faceEachOther(n.x,n.y,n);
+}
+// 出来事が終わったら、来た人は帰っていく（もとからいた人は元の場所へ戻る）
+async function dismissStaged(){
+  const list=(RT.staged||[]); RT.staged=[]; RT.stageOpt=null; const m=RT.map; if(!m) return;
+  await Promise.all(list.filter(n=>m.npcs.includes(n)&&!n.gone).map(async n=>{
+    const joined=n.who&&G.members[n.who]&&G.members[n.who].avail;
+    if(joined){ n.gone=true; return; }
+    const back=[...n.home.trip].reverse().slice(1).concat([[n.home.x,n.home.y]]).filter(([x,y])=>!(x===n.x&&y===n.y));
+    if(back.length) await npcWalk(n,back,150);
+    if(n.actor) n.gone=true; else n.dir=n.home.dir;
+    n.home=null;
+  }));
+}
+// その場にいるはずの人を、ある物のそばに置いておく（歩いてこない）
+function placeNear(name,o){
+  const m=RT.map, sp=speakerSpec(name);
+  const c=[[0,-1],[-1,0],[1,0],[-1,-1],[1,-1]].map(([dx,dy])=>[o.x+dx,o.y+dy]).find(([x,y])=>walkable(m,x,y)&&!(x===G.x&&y===G.y)); if(!c) return;
+  const n={x:c[0],y:c[1],actorName:name,nm:name,role:'actor',idx:950+m.npcs.length,seed:hashStr(name),dir:'down',actor:1,home:{x:c[0],y:c[1],dir:'down',trip:[]}};
+  if(sp.who) n.who=sp.who; else if(sp.bank) n.bank=sp.bank; else n.type=sp.type;
+  m.npcs.push(n); (RT.staged=RT.staged||[]).push(n); return n;
+}

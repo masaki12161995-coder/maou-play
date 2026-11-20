@@ -37,7 +37,7 @@ async function runTrigger(k){
   const f=TRIG[k]; if(!f) return;
   // イベント中は、戦闘のあとで一時的に動ける状態になっても、記録（自動セーブ・中断）しない
   const wasBusy=RT.busy; RT.busy=true; RT.event=(RT.event||0)+1;
-  try{ await f(); } finally { RT.event=Math.max(0,(RT.event||1)-1); RT.busy=wasBusy; renderTop(); }
+  try{ await f(); if(RT.event===1 && typeof dismissStaged==='function') await dismissStaged(); } finally { RT.event=Math.max(0,(RT.event||1)-1); RT.busy=wasBusy; renderTop(); }
 }
 async function fight(idx,extra){ const r=await bossBattle(idx,extra); return r==='win'; }
 
@@ -58,9 +58,10 @@ TRIG.wake = async()=>{
 };
 TRIG.enter_sora = async()=>{
   if(G.chapter===0 && !F('s_open')){ setF('s_open');
+    if(G.x===15&&G.y===18){ RT.trail=[{x:16,y:18,dir:'left'},{x:16,y:18,dir:'left'},{x:16,y:18,dir:'left'},{x:16,y:18,dir:'left'}]; await sleep(500); }
     await talk([
       ['村長','おお、勇者さま。この村はな、千年前から勇者さまをお育てするためにあるんじゃ。'],['村長','北の山を越えれば魔王城。どうか、ご無事で。']]);
-    await narr('村の出口で、リリィが胸元の青い石を握っている。');
+    await narr('リリィが、胸元の青い石を握っている。'); if(RT.trail[0]) G.dir=dirTo(G.x,G.y,RT.trail[0].x,RT.trail[0].y);
     await talk([['リリィ','これ、覚えてる？ 小さいころ、アルトがくれた「守り石」。'],['リリィ','ずっと持ってたんだ。…だから、大丈夫。どこまででも、ついていくから。']]);
     unlock('mtpath'); setObj('北の山道を越えて魔王城へ','mtpath');
     doSave();
@@ -118,9 +119,11 @@ TRIG.enter_lumiere = async()=>{
   if(G.chapter===1 && !F('lum1')){ setF('lum1');
     await talk([['衛兵','止まれ！ 今は非常時だ、勝手には通さんぞ。'],['？？？|セイル','その方々は、私のお客さまです。通してあげてください。'],['衛兵','せ、セイル司祭さま！ 失礼しました！']]);
     await talk([['セイル','ようこそ、勇者さま。司祭のセイルと申します。ノアがお役に立てたなら何よりです。'],['セイル','王がお待ちです。さあ、こちらへ。']]);
+    await fade(true); RT.dark=true; await fade(false);
     await narr('玉座の間。王は、魔王の死と空のヒビの話を、黙って聞いていた。');
     await talk([['王','魔王を殺した者がいる……。そして、世界は崩れ始めた。'],['王','勇者よ。空のヒビの原因と、魔王を殺した者を探してくれ。'],
       ['セイル','教会も全力で支えましょう。旅のお金はご心配なく。'],['王','それと……南の黒将ザガンが、村を焼いて回っておる。魔王を失った魔王軍の、いちばんの暴れ者だ。'],['王','鉱山町グラムが危ない。街道の森を抜けて、向かってくれ。']]);
+    await fade(true); RT.dark=false; for(const n of (RT.staged||[])) if(n.actor) n.gone=true; RT.staged=[]; await fade(false);
     unlock('forest'); setObj('街道の森を抜けて鉱山町グラムへ','forest');
   }
   if(G.chapter>=5 && !F('lum5')){ setF('lum5');
@@ -130,7 +133,7 @@ TRIG.enter_lumiere = async()=>{
   }
 };
 TRIG.leave_lumiere = async()=>{
-  if(G.chapter===1 && F('lum1') && !F('mina_join')){ setF('mina_join');
+  if(G.chapter===1 && F('lum1') && !F('mina_join')){ setF('mina_join'); RT.stageOpt={'衛兵':{near:3}};
     await talk([['？？？|ミナ','だーかーら！ あたしも連れてけって言ってんの！'],['衛兵','ダメだ！ 子どもが黒将の討伐なんて！'],['？？？|ミナ','子どもじゃない、ミナ！ 拳闘士ミナ！ 父ちゃんの道場をザガンに潰されたんだ！'],
       ['ミナ','……あ、あんたたち、勇者さま？ ちょうどいいや、あたしも行く！ 強いよ、あたし！'],['ノア','……にぎやかな子。'],['ミナ','あんた、なんかいい匂いするね！ 友だちになろ！']]);
     join('ミナ');
@@ -156,9 +159,10 @@ TRIG.goal_burnt = async()=>{ setF('goal_burnt');
 TRIG.boss_fort1 = async()=>{
   await talk([['ザガン','魔王が死んだ今、この世はオレのものだ。ガキどもが何の用だ？'],['ミナ','父ちゃんの道場の分、きっちり返してもらう！'],['ザガン','ハッ、かかってこい！']]);
   if(!await fight(2)) return; setF('boss_fort1');
-  await talk([['ザガン','ぐ……オレが……こんなガキどもに……。'],['ザガン','……その剣筋、覚えたぞ……。']]);
   { const bo=RT.map&&RT.map.objs.find(o=>o.type==='boss'); if(bo) RT.map.objs.push({type:'fallen',who:'ザガン',x:bo.x,y:bo.y,eyes:'line'}); await sleep(500); }
+  await talk([['ザガン','ぐ……オレが……こんなガキどもに……。'],['ザガン','……その剣筋、覚えたぞ……。']]);
   await narr('黒将ザガンは、動かなくなった。','そのとき、逃げようとする獣人の副官と目が合った。');
+  RT.stageOpt={'獣人の副官':{near:3,here:1}}; await stageSpeaker('獣人の副官');
   const c=await choose('副官がおびえた目でこちらを見ている。',['とどめを刺す','見逃す']);
   if(c===1){ setF('luga_spared'); await say('獣人の副官','……なぜ、殺さない。……この借りは、忘れない。'); } else await narr('副官は、闇の中へ逃げていった。');
   await gotoLoc('lumiere');
@@ -269,6 +273,7 @@ TRIG.boss_fort2 = async()=>{
   await talk([['ザガン','よう、勇者。また会ったな。'],['シオン','……なんで生きてるんだよ！'],['ザガン','知らん。目が覚めたら、生きていた。……だが、全部覚えているぞ。'],
     ['ザガン', top==='none'?'お前らの剣筋も、間合いも、全部だ！':`お前らの${ELJP[top]}の技――もう効かんぞ！`]]);
   if(!await fight(7)) return; setF('boss_fort2');
+  { const bo=RT.map&&RT.map.objs.find(o=>o.type==='boss'); if(bo) RT.map.objs.push({type:'fallen',who:'ザガン',x:bo.x,y:bo.y,eyes:'line'}); await sleep(500); }
   await talk([['ザガン','また……か……。'],['シオン','………。'],['ガルド','おい、誰か説明しろ。確実に仕留めたはずの奴が、なぜ生きてた。'],['ノア','……………。']]);
   await talk([['ドルク','……写本の続きを読んだ。落ち着いて聞いてくれ。'],['ドルク','魔王は、魔王を倒した者に受け継がれる。倒した者が、次の「器」になるんじゃ。'],['ドルク','そして勇者とは……次の器になるために、器のそばで育てられる者のこと。'],
     ['リリィ','……ソラの村が、魔王城のすぐそばにあるのは……。'],['ドルク','そういうことじゃ。……では、今の器は、誰じゃ？ 魔王を殺した者は――']]);
@@ -325,19 +330,21 @@ TRIG.enter_refuge = async()=>{
 };
 TRIG.boss_sewer = async()=>{ await narr('水路の奥で、巨大な何かが水しぶきを上げた。'); if(!await fight(10)) return; setF('boss_sewer'); await narr('水路の天井に、塔へ続くはしごがあった。'); unlock('tower'); setObj('セイルの塔へ','tower'); await gotoLoc('tower'); };
 TRIG.boss_tower = async()=>{
+  { const bo=RT.map&&RT.map.objs.find(o=>o.type==='boss'); if(bo&&!RT.map.npcs.some(n=>n.nm==='リリィ'&&!n.gone)) placeNear('リリィ',bo); RT.stageOpt={'リリィ':{near:99}}; }
   await narr('塔の最上階。鎖につながれたリリィと、セイルがいた。');
   await talk([['セイル','しつこいですね。損な役回りの勇者さま。'],['セイル','あと少しで、虚の力は私のものになる。邪魔はさせません。']]);
   if(!await fight(11)) return; setF('boss_tower');
+  { const bo=RT.map&&RT.map.objs.find(o=>o.type==='boss'); if(bo){ bo.hideActor=true; RT.map.objs.push({type:'fallen',who:'セイル',look:specLook(speakerSpec('セイル')),x:bo.x,y:bo.y,eyes:'line',tmp:1}); } }
   await talk([['セイル','ば……かな……。この私が……損を……。']]);
   await narr('セイルは床に崩れ落ち、動かなくなった。','――そのとき。','ノアが、セイルの体に手をかざしていた。','淡い光。セイルの胸が、ふたたび上下し始めた。');
   await talk([['ミナ','ノア……？ 何、してるの……？'],['ノア','……あ。'],['ノア','……ちがう、わたし、そんなつもりじゃ……体が、勝手に……。'],['ガルド','おい……まさか。オレの古傷が消えたのも……。'],['シオン','ザガンが生きてたのも……！'],
     ['ノア','………うん。ぜんぶ、わたし。'],['ノア','わたしは、死を見ると、取り消してしまうの。敵でも、悪い人でも。'],['ノア','誰にも、死んでほしくないの。……それだけだったのに。'],
     ['ドルク','……死を取り消すたび、その「取り消された死」が虚を育てる。世界が崩れていたのは……。'],['ノア','……知らなかった。セイルさまは、教えてくれなかった。'],['ノア','でも、止められないの。止め方が、わからないの。']]);
-  await narr('生き返ったセイルを、塔の床から湧き出した虚が呑みこんでいく。','悲鳴は、すぐに消えた。');
+  await narr('生き返ったセイルを、塔の床から湧き出した虚が呑みこんでいく。'); for(const o of RT.map.objs) if(o.tmp&&o.who==='セイル') o.gone=true; await narr('悲鳴は、すぐに消えた。');
   await talk([['ノア','……ごめんなさい。わたし、みんなのそばにいたら、また誰かを……。'],['ノア','さよなら。']]);
   await narr('ノアは光の中に消えた。','……ノアの装備は、荷物に戻された。');
   leave('ノア'); setF('noah_left');
-  await narr('鎖をほどくと、リリィが力なく笑った。');
+  RT.stageOpt=null; await narr('鎖をほどくと、リリィが力なく笑った。');
   await talk([['リリィ','……来てくれたんだね。'],['アルト','（当たり前だ、と言う代わりに、その手をにぎった）'],['リリィ','……一緒に行かせて。ノアを、ひとりにできない。']]);
   join('リリィ'); if(!G.party.includes('リリィ')){ G.party[G.party.length-1]='リリィ'; renderTop(); toast('リリィがパーティーに戻った（控えと入れ替えで変えられる）'); }
   unlock('hate'); setObj('最果ての村ハテへ','hate'); fullHeal();

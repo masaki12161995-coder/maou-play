@@ -373,7 +373,7 @@ function drawField(){
   if(m.town){ for(const ex of [9,10]){ const sx=ex*TS-camX, sy=(m.h-1)*TS-camY; cx.fillStyle='#ffffff18'; cx.fillRect(sx,sy,TS,TS);} }
   // 住人
   const ents=[];
-  for(const n of m.npcs){ if(n.gone) continue; ents.push({x:n.x,y:n.y,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:n.walk?Math.floor(performance.now()/120)%2:0,col:n.walk?(Math.floor(performance.now()/120)%2?2:0):undefined,dir:n.dir||'down',bang:npcHasNew(n)}); }
+  for(const n of m.npcs){ if(n.gone) continue; ents.push({x:n.x,y:n.y,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:n.walk?Math.floor(performance.now()/120)%2:0,col:n.walk?(Math.floor(performance.now()/120)%2?2:0):undefined,dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
   // 仲間（後ろについてくる）
   const pts=[{x:px,y:py,dir:G.dir}];
   const tr=RT.trail, mk=RT.moving?clamp((performance.now()-RT.moving.t0)/RT.moving.dur,0,1):1, wf=Math.floor(performance.now()/120)%2;
@@ -460,7 +460,8 @@ function renderHud(){
 
 // ---------- 会話 ----------
 let msgResolve=null;
-function say(who,text){
+async function say(who,text){ if(typeof stageSpeaker==='function') await stageSpeaker(who); return say0(who,text); }
+function say0(who,text){
   return new Promise(res=>{
     const el=$('msg'); el.style.display='block'; const center=!!(RT.dark||RT.dream); el.classList.toggle('center',center);
     const face=center?null:speakerFace(who);
