@@ -148,7 +148,7 @@ function showBattleBar(){
   $('panel').querySelectorAll('[data-spd]').forEach(b=>b.onclick=()=>{ G.settings.speed=+b.dataset.spd; sfx('tick'); showBattleBar(); });
 }
 
-function layoutEnemies(){ const es=B.enemies.filter(e=>e.hp>0||e.dying); const W=cv.width; const n=B.enemies.length; B.enemies.forEach((e,i)=>{ e.x=W*(i+1)/(n+1); }); }
+function layoutEnemies(){ const W=cv.width; const n=B.enemies.length; B.enemies.forEach((e,i)=>{ e.x= n>=4 ? W*(i+0.5)/n : W*(i+1)/(n+1); }); }
 
 // ---------- 表示 ----------
 async function blog(text, ms){ if(SIM.on) return; const el=$('msg'); el.style.display='block'; el.innerHTML=`<div class="tx">${text}</div>`; await sleep((ms||600)*1.6/G.settings.speed); }
@@ -196,8 +196,9 @@ function drawBattle(){
   for(const p of B.pops){ const k=(now-p.born)/1300; const x=p.t.x, y=by-30-k*30;
     cx.globalAlpha=k<.7?1:1-(k-.7)/.3; cx.font='bold 26px sans-serif'; cx.textAlign='center'; cx.lineWidth=4; cx.strokeStyle='#000'; cx.strokeText(p.text,x,y); cx.fillStyle=p.color||'#fff'; cx.fillText(p.text,x,y); cx.globalAlpha=1; }
 }
-// 【お試し】絵で描く敵（元に戻すときはこのまとまりを消す）
-const ENEMY_PIC_FILES={'プルリン':'img/enemy_purin.png','ツノウサギ':'img/enemy_tsunousagi.png','ヤミコウモリ':'img/enemy_yamikoumori.png','門番の大鎧':'img/enemy_monban.png'};
+// 敵の絵：番号の付いた絵（img/enemy_番号.png）がある敵は絵で、まだない敵は今までの図形で描く
+const ENEMY_NO={"プルリン": "001", "ヤミコウモリ": "002", "ツノウサギ": "003", "門番の大鎧": "004", "からっぽの鎧": "005", "城の骨犬": "006", "灯火の霊": "007", "キバオオカミ": "008", "ドクキノコ": "009", "はぐれ兵": "010", "森ネズミ": "011", "ツルハシゴブリン": "012", "岩トカゲ": "013", "ガス溜まり": "014", "坑道コウモリ": "015", "焼け跡の亡霊": "016", "火喰いトカゲ": "017", "黒将軍の偵察兵": "018", "黒将軍の歩兵": "019", "黒将軍の弓兵": "020", "黒将軍の魔術兵": "021", "鉄の猟犬": "022", "坑道の主・大土竜": "023", "黒将ザガン（1回目）": "024"};
+const ENEMY_PIC_FILES={}; for(const n in ENEMY_NO) ENEMY_PIC_FILES[n]='img/enemy_'+ENEMY_NO[n]+'.png';
 const ENEMY_PIC={}; for(const n in ENEMY_PIC_FILES){ const im=new Image(); im.onload=()=>{ ENEMY_PIC[n]=im; for(const k in ENEMY_ICON) if(k===n) delete ENEMY_ICON[k]; }; im.src=ENEMY_PIC_FILES[n]; }
 function drawEnemyPic(e,im,x,y,s,cx,icon){
   if(icon){ const c=cx.canvas, P=Math.max(1,Math.floor(Math.min(c.width,c.height)/Math.max(im.naturalWidth,im.naturalHeight))), w=im.naturalWidth*P, h=im.naturalHeight*P;
