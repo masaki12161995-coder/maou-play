@@ -55,7 +55,6 @@ TRIG.wake = async()=>{
   const ly=RT.map.npcs.find(n=>n.who==='リリィ'); if(ly){ ly.dir='up'; await sleep(300);
     await talk([['リリィ','おはよ。……ねぐせ、ついてるよ。'],['リリィ','じゃ、先に外で待ってるね！']]);
     await npcWalk(ly,[[4,3],[4,4],[4,5],[4,6],[4,7]],190); ly.gone=true; sfx('stairs'); }
-  await say('','（画面を指でなぞると歩く。タップで話す・調べる。下の扉から外へ出よう）');
 };
 TRIG.enter_sora = async()=>{
   if(G.chapter===0 && !F('s_open')){ setF('s_open');
@@ -64,7 +63,6 @@ TRIG.enter_sora = async()=>{
     await narr('村の出口で、リリィが胸元の青い石を握っている。');
     await talk([['リリィ','これ、覚えてる？ 小さいころ、アルトがくれた「守り石」。'],['リリィ','ずっと持ってたんだ。…だから、大丈夫。どこまででも、ついていくから。']]);
     unlock('mtpath'); setObj('北の山道を越えて魔王城へ','mtpath');
-    await say('','（画面を指でなぞると歩く。タップで話す・調べる。村を出るには下の出口へ。広場の光る石でセーブできる）');
     doSave();
   }
   if(F('cleared') && G.chapter>=7 && !F('s_post')){ setF('s_post'); }

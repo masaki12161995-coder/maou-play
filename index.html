@@ -52,7 +52,7 @@ font-size:15px;line-height:1.6;display:none;min-height:72px;white-space:pre-wrap
 #app.fm #pad{flex:0 0 62px;min-height:0;max-height:none}
 #app.fm #pad{position:absolute;left:0;right:0;bottom:0;height:62px;z-index:5;background:transparent;pointer-events:none}#app.fm #pad>*{pointer-events:auto}
 #app.fm #view{margin-bottom:calc(-1 * env(safe-area-inset-bottom))}#app.fm #cv{border-radius:12px 12px 0 0}
-#app.fm #fhint{background:rgba(0,0,0,.32);border-color:#ffffff38;color:#ffffffb0}#app.fm #bM{background:rgba(28,39,71,.82);backdrop-filter:blur(2px)}
+#padField{justify-content:flex-end}#padField #bM{flex:0 0 140px}#app.fm #bM{background:rgba(28,39,71,.82);backdrop-filter:blur(2px)}
 /* フィールドの会話は画面の上に（下から来る指で隠れないように） */
 #app.fm #msg{top:8px;bottom:auto}
 #joy{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:16px;position:relative;overflow:hidden}
@@ -313,7 +313,7 @@ body.th-dq .mt svg{stroke:#fff}
   <div id="view"><canvas id="cv" width="352" height="352"></canvas><div id="hud"><span id="hudL"></span><span id="hudR"></span></div><div id="msg"></div><div id="toast"></div></div>
   <div id="pad">
     <div id="padField">
-      <div id="fhint">ドラッグで移動・タップで調べる</div><button class="bigb" id="bM">メニュー</button>
+      <button class="bigb" id="bM">メニュー</button>
     </div>
     <div id="bparty"></div><div id="bpop"><div></div><div></div><div></div><div></div></div>
     <div id="panel"></div>
