@@ -1,0 +1,146 @@
+// ---------- 場面の演出（倒れた姿・玉座の間など） ----------
+// 立ち絵の顔から目（2×2の四角が2つ、間が6ドット）を探す
+function findEyesIn(g,w,h){
+  const d=g.getImageData(0,0,w,h).data, P=(x,y)=>{ const i=(y*w+x)*4; return [d[i],d[i+1],d[i+2],d[i+3]]; }, eq=(a,b)=>a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2]&&a[3]===b[3];
+  let best=null;
+  for(let y=1;y<h-2;y++) for(let x=0;x<w-10;x++){
+    const c=P(x,y); if(c[3]!==255) continue;
+    let ok=true; for(const i of [0,1]) for(const j of [0,1]){ if(!eq(P(x+i,y+j),c)||!eq(P(x+8+i,y+j),c)) ok=false; } if(!ok) continue;
+    const mid=[]; for(let i=0;i<6;i++) for(const j of [0,1]) mid.push(P(x+2+i,y+j));
+    if(mid.some(m=>m[3]!==255||eq(m,c))) continue;
+    const cnt={}; for(const m of mid){ const k=m.join(','); cnt[k]=(cnt[k]||0)+1; }
+    const [sk,n]=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]; const skin=sk.split(',').map(Number);
+    const far=Math.abs(skin[0]-c[0])+Math.abs(skin[1]-c[1])+Math.abs(skin[2]-c[2]);
+    if(n>=5 && far>=100 && (!best||far>best.far)) best={x,y,c,skin,far};
+  }
+  return best;
+}
+// 目を描き替える：'x'＝バツ印（力尽きた）、'line'＝閉じた線（眠り・気絶・死）
+function closeEyes(g,w,h,mode){
+  const e=findEyesIn(g,w,h); if(!e) return;
+  const px=(x,y,c)=>{ if(x<0||y<0||x>=w||y>=h) return; g.fillStyle=`rgb(${c[0]},${c[1]},${c[2]})`; g.fillRect(x,y,1,1); };
+  for(const ex of [e.x,e.x+8]){
+    for(const i of [0,1]) for(const j of [0,1]) px(ex+i,e.y+j,e.skin);
+    if(mode==='x'){ for(let k=0;k<3;k++){ px(ex+k,e.y-1+k,e.c); px(ex+2-k,e.y-1+k,e.c); } }
+    else { px(ex,e.y+1,e.c); px(ex+1,e.y+1,e.c); }
+  }
+}
+// 正面の「立ち」のコマ（目を描き替えたもの）
+function standFrame(img,mode){
+  const fw=img.naturalWidth/3, fh=img.naturalHeight/5, c=document.createElement('canvas'); c.width=fw; c.height=fh;
+  const g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(img,fw,0,fw,fh,0,0,fw,fh);
+  if(mode) try{ closeEyes(g,fw,fh,mode); }catch(e){}
+  return c;
+}
+// 倒れた姿：正面の立ち絵を横に90度倒す（頭が左）
+const LYING={};
+function lyingCanvas(img,mode,key){
+  const k=(key||img.src)+'|'+mode; if(LYING[k]) return LYING[k];
+  const s=standFrame(img,mode), c=document.createElement('canvas'); c.width=s.height; c.height=s.width;
+  const g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.translate(0,c.height); g.rotate(-Math.PI/2); g.drawImage(s,0,0);
+  return LYING[k]=c;
+}
+
+// ---------- 魔王城：玉座の間 ----------
+const MAOU_IMG=new Image(); MAOU_IMG.src='img/maou.png';
+function buildThrone(){
+  const W=11,H=15,t=new Uint8Array(W*H).fill(1), set=(x,y,v)=>{ t[y*W+x]=v; };
+  for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++) set(x,y,0);
+  for(let y=3;y<H-1;y++) for(let x=4;x<=6;x++) set(x,y,7);   // 赤い絨毯
+  for(const y of [4,7,10]){ set(2,y,8); set(8,y,8); }        // 柱
+  const objs=[
+    {type:'window',x:2,y:0},{type:'window',x:8,y:0},
+    {type:'throne',x:5,y:2},{type:'torch',x:3,y:2},{type:'torch',x:7,y:2},
+    {type:'scorch',x:4,y:5,s:1},{type:'scorch',x:6,y:6,s:2},{type:'scorch',x:5,y:7,s:3},{type:'scorch',x:6,y:4,s:4},
+    {type:'body',x:5,y:5,ev:'maou_body'},
+  ];
+  return {id:'castle',floor:LOCS.castle.floors-1,w:W,h:H,t,objs,npcs:[],start:{x:5,y:13},theme:'castle',safe:1,throne:1};
+}
+function enterThrone(){
+  G.loc='castle'; G.floor=LOCS.castle.floors-1; RT.map=buildThrone();
+  const p=RT.map.start; G.x=p.x; G.y=p.y; G.dir='up'; RT.trail=[0,1,2,3].map(()=>({x:p.x,y:p.y,dir:'up'})); RT.mode='field';
+  $('padField').style.display='flex'; hidePanel(); renderTop();
+}
+// 玉座の間の物を描く（drawObj から呼ぶ）。描いたら true
+function drawSceneObj(o,sx,sy){
+  const t=RT.anim;
+  if(o.type==='boss' && RT.map.id==='castle' && !RT.map.throne && typeof bossDone==='function' && bossDone() && G.chapter===0 && !G.flags.maou_seen){
+    cx.fillStyle='#1a0f24'; cx.fillRect(sx+4,sy+2,24,28); cx.beginPath(); cx.arc(sx+16,sy+4,12,Math.PI,0); cx.fill();
+    cx.fillStyle='#4a1d2e'; cx.fillRect(sx+7,sy+4,18,26); cx.fillStyle='#d4a017'; cx.fillRect(sx+15,sy+4,2,26); cx.fillRect(sx+12,sy+16,2,3); cx.fillRect(sx+18,sy+16,2,3);
+    return true; }
+  if(o.type==='throne'){
+    cx.fillStyle='#000a'; cx.beginPath(); cx.ellipse(sx+16,sy+30,18,5,0,0,7); cx.fill();
+    cx.fillStyle='#3b1020'; cx.fillRect(sx+4,sy-22,24,46);                 // 背もたれ
+    cx.fillStyle='#7f1d1d'; cx.fillRect(sx+8,sy-18,16,30);
+    cx.fillStyle='#d4a017'; cx.fillRect(sx+4,sy-22,24,3); cx.fillRect(sx+4,sy-22,3,46); cx.fillRect(sx+25,sy-22,3,46);
+    cx.fillStyle='#d4a017'; cx.beginPath(); cx.moveTo(sx+4,sy-22); cx.lineTo(sx+8,sy-32); cx.lineTo(sx+12,sy-22); cx.fill(); cx.beginPath(); cx.moveTo(sx+20,sy-22); cx.lineTo(sx+24,sy-32); cx.lineTo(sx+28,sy-22); cx.fill();
+    cx.beginPath(); cx.moveTo(sx+12,sy-22); cx.lineTo(sx+16,sy-36); cx.lineTo(sx+20,sy-22); cx.fill();
+    cx.fillStyle='#dc2626'; cx.fillRect(sx+14,sy-30,4,4);
+    cx.fillStyle='#2a0a14'; cx.fillRect(sx+2,sy+10,28,8); cx.fillStyle='#d4a017'; cx.fillRect(sx+2,sy+10,28,2); // 座面
+    cx.fillStyle='#3b1020'; cx.fillRect(sx+0,sy+2,6,18); cx.fillRect(sx+26,sy+2,6,18);   // ひじかけ
+    cx.fillStyle='#d4a017'; cx.fillRect(sx+0,sy+2,6,2); cx.fillRect(sx+26,sy+2,6,2);
+    cx.fillStyle='#1a0610'; cx.fillRect(sx+4,sy+18,24,10);
+    return true; }
+  if(o.type==='torch'){
+    cx.fillStyle='#000a'; cx.beginPath(); cx.ellipse(sx+16,sy+30,8,3,0,0,7); cx.fill();
+    cx.fillStyle='#57534e'; cx.fillRect(sx+14,sy+12,4,18); cx.fillStyle='#78716c'; cx.fillRect(sx+8,sy+8,16,6); cx.fillStyle='#44403c'; cx.fillRect(sx+10,sy+28,12,3);
+    const f=Math.sin(t/4+o.x)*2;
+    cx.fillStyle='rgba(251,146,60,.18)'; cx.beginPath(); cx.arc(sx+16,sy+2,18+f,0,7); cx.fill();
+    cx.fillStyle='#f97316'; cx.beginPath(); cx.moveTo(sx+10,sy+8); cx.quadraticCurveTo(sx+16,sy-12-f,sx+22,sy+8); cx.fill();
+    cx.fillStyle='#fde047'; cx.beginPath(); cx.moveTo(sx+13,sy+8); cx.quadraticCurveTo(sx+16,sy-4-f,sx+19,sy+8); cx.fill();
+    return true; }
+  if(o.type==='window'){
+    cx.fillStyle='#120a1e'; cx.fillRect(sx+6,sy+4,20,26); cx.beginPath(); cx.arc(sx+16,sy+6,10,Math.PI,0); cx.fill();
+    cx.fillStyle=G.flags.skycrack?'#3b2147':'#2b1840'; cx.fillRect(sx+8,sy+6,16,22); cx.beginPath(); cx.arc(sx+16,sy+7,8,Math.PI,0); cx.fill();
+    cx.fillStyle='#5b4a6e'; cx.fillRect(sx+15,sy-1,2,29); cx.fillRect(sx+8,sy+15,16,2);
+    if(G.flags.skycrack){ cx.strokeStyle='#f5f3ff'; cx.lineWidth=1.5; cx.beginPath(); cx.moveTo(sx+8,sy+4); cx.lineTo(sx+13,sy+10); cx.lineTo(sx+11,sy+15); cx.lineTo(sx+19,sy+21); cx.lineTo(sx+17,sy+25); cx.lineTo(sx+24,sy+29); cx.stroke(); }
+    return true; }
+  if(o.type==='scorch'){
+    const r=[0,7,5,6,4][o.s||1], ox=sx+16, oy=sy+18;
+    cx.fillStyle='rgba(120,110,95,.45)'; cx.beginPath(); cx.ellipse(ox,oy,r+6,r*0.55+4,0,0,7); cx.fill();
+    cx.fillStyle='rgba(40,36,32,.7)'; cx.beginPath(); cx.ellipse(ox+2,oy-1,r+1,r*0.45+2,0,0,7); cx.fill();
+    const g=0.35+0.15*Math.sin(t/20+(o.s||1)); cx.fillStyle=`rgba(254,240,138,${g})`;
+    for(let i=0;i<5;i++){ const a=i*1.3+(o.s||1); cx.fillRect(Math.round(ox+Math.cos(a)*(r+3)),Math.round(oy+Math.sin(a)*(r*0.5+2)),2,1); }
+    return true; }
+  if(o.type==='body'){
+    cx.fillStyle='#0006'; cx.beginPath(); cx.ellipse(sx+16,sy+22,22,7,0,0,7); cx.fill();
+    if(MAOU_IMG.naturalWidth){ const c=lyingCanvas(MAOU_IMG,'line','maou'); cx.imageSmoothingEnabled=false; cx.drawImage(c,Math.round(sx+16-c.width/2),Math.round(sy+16-c.height/2)); }
+    return true; }
+  if(o.type==='fallen'){
+    const lk=LOOK[o.who]; if(lk&&hasImg(lk)){ cx.fillStyle='#0006'; cx.beginPath(); cx.ellipse(sx+16,sy+22,22,7,0,0,7); cx.fill();
+      const c=lyingCanvas(lk.img,o.eyes||'line',o.who); cx.imageSmoothingEnabled=false; cx.drawImage(c,Math.round(sx+16-c.width/2),Math.round(sy+16-c.height/2)); }
+    return true; }
+  return false;
+}
+// 玉座の間の床（drawTile から呼ぶ）。描いたら true
+function drawSceneTile(m,v,x,y,px,py){
+  const th=THEMES[m.theme]||THEMES.castle, s=TS;
+  if(v===7){ cx.fillStyle='#7f1d1d'; cx.fillRect(px,py,s,s); cx.fillStyle='#991b1b'; cx.fillRect(px,py+((y%2)?0:16),s,2);
+    const L=tileAt(m,x-1,y)!==7, R=tileAt(m,x+1,y)!==7;
+    cx.fillStyle='#ca8a04'; if(L) cx.fillRect(px+2,py,3,s); if(R) cx.fillRect(px+s-5,py,3,s); return true; }
+  if(v===8){ cx.fillStyle=th.floor; cx.fillRect(px,py,s,s);
+    cx.fillStyle='#000a'; cx.beginPath(); cx.ellipse(px+16,py+29,13,4,0,0,7); cx.fill();
+    cx.fillStyle='#3a3347'; cx.fillRect(px+6,py-26,20,54); cx.fillStyle='#4f4660'; cx.fillRect(px+8,py-26,6,54); cx.fillStyle='#29233a'; cx.fillRect(px+22,py-26,4,54);
+    cx.fillStyle='#57506a'; cx.fillRect(px+3,py-30,26,6); cx.fillRect(px+3,py+24,26,6); return true; }
+  return false;
+}
+
+// ---------- 町の人：素材バンクの人物（024番以降）を、役目のある人に1人ずつ割り当てる ----------
+// 同じ人物は2つの役に使わない。001〜023はこのゲームの登場人物なので使わない
+const BANK_NPC={
+  'sora|nm:リリィの母':'026', 'halt|inn':'028', 'lumiere|equip':'024', 'lumiere|smith':'030',
+  'gram|item':'039', 'azur|item':'027', 'azur|equip':'031', 'garam|nm:傭兵':'033', 'garam|equip':'038',
+  'belka|nm:学生':'029', 'belka|smith':'032', 'belka|item':'034', 'saha|item':'037',
+  'shadow|nm:里の子ども':'040', 'shadow|flavor0':'025', 'shadow|flavor1':'036', 'shadow|flavor2':'042'
+};
+const BANK_SPEAKER={'里長':'041'};   // 物語の会話にだけ出る人の顔
+const BANK_IMG={}; for(const id of new Set([...Object.values(BANK_NPC),...Object.values(BANK_SPEAKER)])){ const im=new Image(); im.src='img/bank_'+id+'.png'; BANK_IMG[id]=im; }
+function bankForNpc(town,n){
+  if(n.shop && n.kind) return BANK_NPC[town+'|'+n.kind];
+  if(n.nm && BANK_NPC[town+'|nm:'+n.nm]) return BANK_NPC[town+'|nm:'+n.nm];
+  if(n.role==='flavor' && n.fi!==undefined) return BANK_NPC[town+'|flavor'+n.fi];
+}
+function assignBankNpcs(m){ for(const n of m.npcs){ if(n.who) continue; const b=bankForNpc(m.id,n); if(b){ n.bank=b; n.look=null; } } }
+function bankLook(id){ const im=BANK_IMG[id]; return im&&im.naturalWidth? {img:im} : null; }
+function bankFaceURL(id){ const im=BANK_IMG[id]; if(!im||!im.naturalWidth) return null; const key='bank|'+id; if(SPR_URL[key]) return SPR_URL[key];
+  const fw=im.naturalWidth/3, c=document.createElement('canvas'); c.width=fw; c.height=im.naturalHeight/5; const g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(im,fw,0,fw,c.height,0,0,fw,c.height); try{ return SPR_URL[key]=c.toDataURL(); }catch(e){ return null; } }
