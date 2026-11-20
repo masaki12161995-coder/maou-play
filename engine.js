@@ -490,7 +490,7 @@ async function fade(out){ const f=$('fade'); f.style.opacity=out?1:0; await slee
 // ---------- 操作：画面のどこでもドラッグで移動／タップで調べる ----------
 const APP=$('app'), knob=$('knob'), kb=$('knobBase'); let joyO=null;
 function fieldUI(){ return RT.mode==='field' && $('screen').style.display!=='flex' && $('title').style.display==='none' && $('panel').style.display!=='flex'; }
-function syncLayout(){ const fm=RT.mode==='field' && $('panel').style.display!=='flex', bm=RT.mode==='battle'; if(APP.classList.contains('fm')!==fm || APP.classList.contains('bm')!==bm){ APP.classList.toggle('fm',fm); APP.classList.toggle('bm',bm); resizeCanvas(); } }
+function syncLayout(){ const fm=RT.mode==='field' && $('panel').style.display!=='flex', bm=RT.mode==='battle', wm=RT.mode==='world'; if(APP.classList.contains('fm')!==fm || APP.classList.contains('bm')!==bm || APP.classList.contains('wm')!==wm){ APP.classList.toggle('fm',fm); APP.classList.toggle('bm',bm); APP.classList.toggle('wm',wm); resizeCanvas(); } }
 setInterval(syncLayout,50);
 APP.addEventListener('pointerdown',e=>{
   if(!fieldUI() || e.target.closest('button,#top,#msg,#panel,#screen')) return;

@@ -50,6 +50,10 @@ font-size:15px;line-height:1.6;display:none;min-height:72px;white-space:pre-wrap
 #bM{flex:0 0 110px}
 #fhint{white-space:nowrap}
 #app.fm #pad{flex:0 0 62px;min-height:0;max-height:none}
+#app.wm #pad{flex:0 0 auto;min-height:0;max-height:none}#app.wm #panel{position:relative;inset:auto;display:flex}
+.wcard{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px}.wcard .wnm{font-weight:800;font-size:15px}.wcard small{color:var(--sub)}
+.wbtns{display:flex;gap:6px}.wbtns .cb{flex:0 0 52px;font-size:16px}.wbtns .bigb{flex:1;padding:12px 0}
+
 #app.fm #pad{position:absolute;left:0;right:0;bottom:0;height:62px;z-index:5;background:transparent;pointer-events:none}#app.fm #pad>*{pointer-events:auto}
 #app.fm #view{margin-bottom:calc(-1 * env(safe-area-inset-bottom))}#app.fm #cv{border-radius:12px 12px 0 0}
 #padField{justify-content:flex-end}#padField #bM{flex:0 0 140px}#app.fm #bM{background:rgba(28,39,71,.82);backdrop-filter:blur(2px)}
@@ -337,6 +341,7 @@ body.th-dq .mt svg{stroke:#fff}
 <script src="icons.js"></script>
 <script src="battle.js"></script><script src="fight.js"></script>
 <script src="menu.js"></script>
+<script src="worldmap.js"></script>
 <script src="main.js"></script>
 <script>if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
 </body>

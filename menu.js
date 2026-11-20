@@ -709,45 +709,8 @@ function scrDex(tab){
   $('scrBody').querySelectorAll('[data-dt]').forEach(b=>b.onclick=()=>{ sfx('tick'); scrDex(b.dataset.dt); });
 }
 // ---------- 世界地図 ----------
-const LAND=(()=>{ const pts=[]; const rng=mulberry(77); for(let i=0;i<48;i++){ const a=i/48*Math.PI*2; const r=0.46+0.05*Math.sin(a*3)+0.04*Math.sin(a*7+1)+rng()*0.03; pts.push([0.5+Math.cos(a)*r*1.02,0.5+Math.sin(a)*r]); } return pts; })();
-function drawWorld(){
-  const W=cv.width,H=cv.height; const pad=14, mw=W-pad*2, mh=H-pad*2;
-  const g=cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0c2a4a'); g.addColorStop(1,'#123d66'); cx.fillStyle=g; cx.fillRect(0,0,W,H);
-  cx.fillStyle='#3f7a3a'; cx.beginPath(); LAND.forEach(([x,y],i)=>{ const px=pad+x*mw, py=pad+y*mh; i?cx.lineTo(px,py):cx.moveTo(px,py); }); cx.closePath(); cx.fill();
-  cx.save(); cx.clip();
-  cx.fillStyle='#e2e8f0'; cx.fillRect(pad+mw*0.52,pad,mw*0.5,mh*0.22);
-  cx.fillStyle='#d8b26a'; cx.fillRect(pad,pad+mh*0.74,mw*0.5,mh*0.3);
-  cx.fillStyle='#2a1f3d'; cx.beginPath(); cx.arc(pad+mw*0.06,pad+mh*0.15,mw*0.1,0,7); cx.fill();
-  const rng=mulberry(5); for(let i=0;i<70;i++){ const x=pad+rng()*mw, y=pad+rng()*mh; cx.fillStyle=rng()<.5?'#2f5d2a':'#5b6b4a'; if(rng()<.5){cx.beginPath();cx.arc(x,y,4,0,7);cx.fill();} else {cx.beginPath();cx.moveTo(x-5,y+4);cx.lineTo(x,y-5);cx.lineTo(x+5,y+4);cx.fill();} }
-  cx.restore();
-  // 空のヒビ
-  if(G.chapter>=1 && G.chapter<7){ cx.strokeStyle='#c084fc88'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(W*0.2,0); cx.lineTo(W*0.3,H*0.06); cx.lineTo(W*0.26,H*0.12); cx.lineTo(W*0.36,H*0.18); cx.stroke(); }
-  // 道
-  const vis=G.unlocked.map(id=>[id,LOCS[id]]);
-  cx.strokeStyle='#ffffff30'; cx.setLineDash([4,4]); cx.lineWidth=1.5; cx.beginPath(); vis.forEach(([id,L],i)=>{ const x=pad+L.x*mw,y=pad+L.y*mh; i?cx.lineTo(x,y):cx.moveTo(x,y); }); cx.stroke(); cx.setLineDash([]);
-  for(const [id,L] of vis){ const x=pad+L.x*mw,y=pad+L.y*mh; const town=L.type!=='dungeon';
-    if(id===G.next){ cx.strokeStyle='#facc15'; cx.lineWidth=2; cx.beginPath(); cx.arc(x,y,10+Math.sin(RT.anim/8)*3,0,7); cx.stroke(); }
-    cx.fillStyle=town?'#fef3c7':'#fca5a5'; if(L.post) cx.fillStyle='#c4b5fd';
-    if(town){ cx.fillRect(x-5,y-3,10,7); cx.beginPath(); cx.moveTo(x-7,y-3);cx.lineTo(x,y-9);cx.lineTo(x+7,y-3);cx.fill(); }
-    else { cx.beginPath(); cx.arc(x,y,5,0,7); cx.fill(); cx.fillStyle='#000'; cx.fillRect(x-2,y-1,4,4); }
-    if(id===RT.worldSel){ cx.strokeStyle='#fff'; cx.lineWidth=2; cx.strokeRect(x-9,y-11,18,18); }
-    cx.font='10px sans-serif'; cx.textAlign='center'; cx.fillStyle='#000a'; const nm=L.n.replace(/^(宿場町|王都|鉱山町|港町|灯台の村|傭兵の町|学術都市|荒野の宿場|オアシスの村|雪の村|大聖堂の町|最果ての村)/,''); cx.fillText(nm,x+1,y+17); cx.fillStyle='#fff'; cx.fillText(nm,x,y+16);
-  }
-  if(G.loc && LOCS[G.loc]){ const L=LOCS[G.loc]; const x=pad+L.x*mw,y=pad+L.y*mh-14+Math.sin(RT.anim/6)*2; drawSprite(x-16,y-26,LOOK['アルト'],0,'down'); }
-}
-function openWorld(){
-  RT.mode='world'; $('padField').style.display='none'; renderTop(); bgm('world');
-  const ids=G.unlocked.slice().sort((a,b)=>(b===G.next)-(a===G.next));
-  showPanel(`<div class="ptitle"><span>どこへ行く？</span><span>目的：${G.obj||'―'}</span></div><div class="list scroll">${ids.map(id=>{ const L=LOCS[id]; return `<button class="item" data-w="${id}" style="text-align:left"><span class="tag slab w5">${L.type==='dungeon'?'ダンジョン':'町'}</span><div class="grow"><div>${L.n}${id===G.next?' <span class="tag" style="background:#854d0e;color:#fde68a">目的地</span>':''}${!G.visited[id]?' <span class="tag" style="color:var(--gold)">NEW</span>':''}</div><small>目安 Lv${locLv(id)}${L.post&&id==='maze'?`〜（第${Math.min(G.frag,11)+1}の迷宮）`:''}</small></div></button>`; }).join('')}</div><button class="cb sm" id="wMenu">メニュー</button>`);
-  $('panel').querySelectorAll('[data-w]').forEach(b=>{ b.onclick=()=>{ sfx('ok'); travelTo(b.dataset.w); }; });
-  $('wMenu').onclick=()=>{ openMenuFromWorld(); };
-}
 function openMenuFromWorld(){ openMenu(); }
-cv.addEventListener('pointerdown',e=>{
-  if(RT.mode!=='world') return; const r=cv.getBoundingClientRect(); const sx=cv.width/r.width; const x=(e.clientX-r.left)*sx, y=(e.clientY-r.top)*(cv.height/r.height);
-  const pad=14,mw=cv.width-pad*2,mh=cv.height-pad*2; let best=null,bd=1e9; for(const id of G.unlocked){ const L=LOCS[id]; const d=Math.hypot(pad+L.x*mw-x,pad+L.y*mh-y); if(d<bd){bd=d;best=id;} }
-  if(best&&bd<30){ if(RT.worldSel===best){ travelTo(best); } else { RT.worldSel=best; sfx('tick'); toast(LOCS[best].n+'（もう一度タップで移動）'); } }
-});
+
 async function travelTo(id){
   if(RT.busy) return; RT.busy=true; hidePanel(); RT.worldSel=null;
   if(id==='maze'){ const n=Math.min(G.frag,11);
