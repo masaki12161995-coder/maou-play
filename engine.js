@@ -32,7 +32,6 @@ function newGame(){
   equip('アルト', makeItem('body',1,0,undefined,{mei:false}));
   equip('リリィ', makeItem('weapon',1,0,'m',{ty:FAV['リリィ']}));
   equip('リリィ', makeItem('body',1,0,undefined,{mei:false}));
-  addCompare();
   fullHeal();
   META = {gameOvers:0, goPre5:0, run:Date.now()}; saveMeta(META);
 }
@@ -317,20 +316,14 @@ function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
   if(look.mark) { r(7,9,2,2,look.mark); }
 }
 // 見比べ用に一時的に入れていた仲間を、記録から外す（見比べは終わった）
-function removeCompare(){ for(const n of ['新アルト','新リリィ','少年32','少年48','騎士32','騎士48','少年そのまま','熊そのまま']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); } }
-// 見比べ用：ふつうのチャットで描いた大きな絵を、そのまま縮めて映す（中身はアルトと同じ。絵だけ違う）
-const COMPARE=[['新・女の子','img/raw_girl.png'],['新・エルフ','img/raw_elf.png'],['新・魔族','img/raw_demon.png'],['新・少年','img/raw_boy.png'],['新・熊','img/raw_bear.png']];
-const SMOOTH_LOOK=new Set(COMPARE.map(c=>c[0]));
-for(const [nw] of COMPARE){ CHARS[nw]={...CHARS['アルト'],role:'見比べ用'}; AFF[nw]=AFF['アルト']; FAV[nw]=FAV['アルト']; if(typeof SKILLS!=='undefined') SKILLS[nw]=SKILLS['アルト']; if(typeof KIT!=='undefined') KIT[nw]=KIT['アルト']; }
-function addCompare(){ for(const [nw] of COMPARE){ if(!G.members[nw]||!G.members[nw].avail) join(nw,true); }
-  // 見比べ中：パーティはアルトと新しい3人（ほかは控え）
-  G.party=['アルト','新・女の子','新・エルフ','新・魔族'].filter(n=>G.members[n]&&G.members[n].avail); }
+// 見比べ用に一時的に入れていた仲間を、記録から外す（見比べは終わった）。リリィが外れていたら戻す
+function removeCompare(){ for(const n of ['新アルト','新リリィ','少年32','少年48','騎士32','騎士48','少年そのまま','熊そのまま','新・女の子','新・エルフ','新・魔族','新・少年','新・熊']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); }
+  if(G.party && G.members && G.members['リリィ'] && G.members['リリィ'].avail && !G.party.includes('リリィ') && G.party.length<4) G.party.splice(Math.min(1,G.party.length),0,'リリィ'); }
 const LOOK = {};
 for(const n in CHARS){ const c=CHARS[n]; LOOK[n]={hair:c.hair,col:c.col,col2:c.col2,style:c.style}; }
 // 歩行ドット絵（1コマ16×20、横3コマ×縦5段：下/左/右/上/技のポーズ）。細かい版（1コマ32×40）も同じ並びで使える
-const SPRITE_FILES={...Object.fromEntries(COMPARE),'アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
+const SPRITE_FILES={'アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
 const SPR_URL={};
-for(const n of SMOOTH_LOOK) if(LOOK[n]) LOOK[n].smooth=true;
 for(const n in SPRITE_FILES){ const im=new Image(); im.onload=()=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }; im.src=SPRITE_FILES[n]; }
 const DIRROW={down:0,left:1,right:2,up:3};
 // 町の人12種類
@@ -702,7 +695,7 @@ function resumeFrom(state){
   if(G.flags && G.flags.boss_temple && G.unlocked && !G.unlocked.includes('shadow')) G.unlocked.push('shadow');
   // イベントの途中で記録されたセーブを直す（済んだ出来事の先が開いていない、など）
   if(typeof storyRepair==='function'){ try{ const n=storyRepair(); if(n) setTimeout(()=>toast('記録を整えました'),600); }catch(e){} } META=loadMeta(); if(G.inv){ for(const k of ['ether','cure','smoke']) if(G.inv[k]){ G.inv.herb=(G.inv.herb||0)+G.inv[k]; delete G.inv[k]; } } if(G.runSeed===undefined) G.runSeed=hashStr(String(G.nid)+G.chapter+String(G.gold)); if(G.settings && !G.settings.v2){ G.settings.speed=1; G.settings.v2=1; } if(!G.saveLoc) G.saveLoc={loc:G.loc,floor:G.floor,x:G.x,y:G.y};
-  removeCompare(); addCompare();
+  removeCompare();
   if(G.loc==='__world'||G.saveLoc.loc==='__world'){ if(G.loc==='__world') G.loc='sora'; RT.mode='world'; RT.map=null; openWorld(); }
   else { enterMap(G.saveLoc.loc,G.saveLoc.floor,{x:G.saveLoc.x,y:G.saveLoc.y}); }
   renderTop();
