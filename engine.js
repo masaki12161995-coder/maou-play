@@ -317,18 +317,18 @@ function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
   if(look.mark) { r(7,9,2,2,look.mark); }
 }
 // 見比べ用に一時的に入れていた仲間を、記録から外す（見比べは終わった）
-function removeCompare(){ for(const n of ['新アルト','新リリィ']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); } }
-// 見比べ用：同じ絵を、1コマ32×40と48×64の2通りで（中身はアルトと同じ。絵だけ違う）
-const COMPARE=[['少年32','img/cmp_boy32.png'],['少年48','img/cmp_boy48.png'],['騎士32','img/cmp_knight32.png'],['騎士48','img/cmp_knight48.png'],['少年そのまま','img/raw_boy.png'],['熊そのまま','img/raw_bear.png']];
-const SMOOTH_LOOK=new Set(['少年そのまま','熊そのまま']);   // 大きな絵をそのまま縮めて映す（ドットにしない）
+function removeCompare(){ for(const n of ['新アルト','新リリィ','少年32','少年48','騎士32','騎士48','少年そのまま','熊そのまま']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); } }
+// 見比べ用：ふつうのチャットで描いた大きな絵を、そのまま縮めて映す（中身はアルトと同じ。絵だけ違う）
+const COMPARE=[['新・女の子','img/raw_girl.png'],['新・エルフ','img/raw_elf.png'],['新・魔族','img/raw_demon.png'],['新・少年','img/raw_boy.png'],['新・熊','img/raw_bear.png']];
+const SMOOTH_LOOK=new Set(COMPARE.map(c=>c[0]));
 for(const [nw] of COMPARE){ CHARS[nw]={...CHARS['アルト'],role:'見比べ用'}; AFF[nw]=AFF['アルト']; FAV[nw]=FAV['アルト']; if(typeof SKILLS!=='undefined') SKILLS[nw]=SKILLS['アルト']; if(typeof KIT!=='undefined') KIT[nw]=KIT['アルト']; }
 function addCompare(){ for(const [nw] of COMPARE){ if(!G.members[nw]||!G.members[nw].avail) join(nw,true); }
-  // 見比べ中：パーティはアルト・リリィ・「そのまま」の2人（ほかは控え）
-  G.party=['アルト','リリィ','少年そのまま','熊そのまま'].filter(n=>G.members[n]&&G.members[n].avail); }
+  // 見比べ中：パーティはアルトと新しい3人（ほかは控え）
+  G.party=['アルト','新・女の子','新・エルフ','新・魔族'].filter(n=>G.members[n]&&G.members[n].avail); }
 const LOOK = {};
 for(const n in CHARS){ const c=CHARS[n]; LOOK[n]={hair:c.hair,col:c.col,col2:c.col2,style:c.style}; }
 // 歩行ドット絵（1コマ16×20、横3コマ×縦5段：下/左/右/上/技のポーズ）。細かい版（1コマ32×40）も同じ並びで使える
-const SPRITE_FILES={'少年そのまま':'img/raw_boy.png','熊そのまま':'img/raw_bear.png','少年32':'img/cmp_boy32.png','少年48':'img/cmp_boy48.png','騎士32':'img/cmp_knight32.png','騎士48':'img/cmp_knight48.png','アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
+const SPRITE_FILES={...Object.fromEntries(COMPARE),'アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
 const SPR_URL={};
 for(const n of SMOOTH_LOOK) if(LOOK[n]) LOOK[n].smooth=true;
 for(const n in SPRITE_FILES){ const im=new Image(); im.onload=()=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }; im.src=SPRITE_FILES[n]; }
