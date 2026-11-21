@@ -472,11 +472,16 @@ function say0(who,text){
     const shown=who&&who.includes('|')?who.split('|')[0]:who; // 「？？？|ミナ」＝名前は伏せて、顔はミナ
     el.innerHTML=(face?`<img class="mface" src="${face}">`:'')+(shown?`<div class="who">${shown}</div>`:'')+'<div class="tx"></div><div class="nx">▼</div>';
     const tx=el.querySelector('.tx'); let i=0, done=false, tm=null, voiced=0;
-    const html=/<[a-z]/i.test(text), plain=html?text.replace(/<[^>]+>/g,''):text, chars=[...plain];
-    tx.textContent=''; const shown1=document.createElement('span'), rest=document.createElement('span'); rest.style.visibility='hidden'; rest.textContent=plain; tx.append(shown1,rest);
-    const fin=()=>{ clearTimeout(tm); if(html) tx.innerHTML=text.replace(/\n/g,'<br>'); else tx.textContent=text; done=true; el.classList.add('done'); };
+    // 色つきの文字（装備名など）も、最初から色のまま1文字ずつ出す。行の折り返しも最初から最後の形で決まる
+    const html=/<[a-z]/i.test(text), src=(html?text:text.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))).replace(/\n/g,'<br>');
+    tx.innerHTML=src; const units=[];
+    const walk=n=>{ for(const ch of [...n.childNodes]){
+      if(ch.nodeType===3){ const fr=document.createDocumentFragment(); for(const c of [...ch.data]){ const sp=document.createElement('span'); sp.textContent=c; sp.style.visibility='hidden'; fr.append(sp); units.push({sp,c}); } ch.replaceWith(fr); }
+      else if(ch.nodeName==='BR') units.push({c:'\n'}); else walk(ch); } };
+    walk(tx); const chars=units.map(u=>u.c);
+    const fin=()=>{ clearTimeout(tm); for(const u of units) if(u.sp) u.sp.style.visibility=''; done=true; el.classList.add('done'); };
     const step=()=>{
-      const c=chars[i++]; shown1.textContent=chars.slice(0,i).join(''); rest.textContent=chars.slice(i).join('');
+      const u=units[i++], c=u&&u.c; if(u&&u.sp) u.sp.style.visibility='';
       if(c && !/[\s、。，．！？!?…・「」『』（）()―ー〜~]/.test(c)){ if(voiced++%2===0) blip(!who); }
       if(i>=chars.length){ fin(); return; }
       const wait=/[。！？!?]/.test(c)?MSG_SPEED*5:/[、，]/.test(c)?MSG_SPEED*3:c==='…'?MSG_SPEED*2:(c==='\n'?MSG_SPEED*3:MSG_SPEED);
