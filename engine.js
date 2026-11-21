@@ -417,12 +417,12 @@ function drawObj(o,sx,sy){
 function chestKey(o){return `chest_${RT.map.id}_${RT.map.floor||0}_${o.ci}${LOCS[RT.map.id].post?'_'+(G.flags.mazeNo||0)+'_'+(G.mazeEntry||0):''}`;}
 
 // ---------- 上のパーティー表示・HUD ----------
-// 立ち絵の画像（frame: 0/1＝足ぶみ、'pose'＝技のポーズ）
+// 立ち絵の画像（frame: 0＝正面の立ち（真ん中のコマ）、1＝足ぶみ、'pose'＝技のポーズ）
 function spriteURL(name,frame){ const lk=LOOK[name]; const key=name+'|'+frame+'|'+(hasImg(lk)?1:0); if(SPR_URL[key]) return SPR_URL[key];
   const c=document.createElement('canvas'); const g=c.getContext('2d');
   if(hasImg(lk)&&frame==='ko'&&typeof standFrame==='function'){ const k=standFrame(lk.img,'x'); c.width=k.width; c.height=k.height; g.drawImage(k,0,0); }
-  else if(hasImg(lk)&&lk.smooth){ const fw=lk.img.naturalWidth/3, fh=lk.img.naturalHeight/5, W2=96, H2=Math.round(fh*96/fw); c.width=W2; c.height=H2; g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; const sx=frame==='pose'?0:(frame?2:0)*fw, sy=frame==='pose'?fh*4:0; g.drawImage(lk.img,sx,sy,fw,fh,0,0,W2,H2); }
-  else if(hasImg(lk)){ const fw=lk.img.naturalWidth/3, fh=lk.img.naturalHeight/5; c.width=fw; c.height=fh; g.imageSmoothingEnabled=false; if(frame==='pose') g.drawImage(lk.img,0,fh*4,fw,fh,0,0,fw,fh); else g.drawImage(lk.img,(frame?2:0)*fw,0,fw,fh,0,0,fw,fh); }
+  else if(hasImg(lk)&&lk.smooth){ const fw=lk.img.naturalWidth/3, fh=lk.img.naturalHeight/5, W2=96, H2=Math.round(fh*96/fw); c.width=W2; c.height=H2; g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; const sx=frame==='pose'?0:(frame?2:1)*fw, sy=frame==='pose'?fh*4:0; g.drawImage(lk.img,sx,sy,fw,fh,0,0,W2,H2); }
+  else if(hasImg(lk)){ const fw=lk.img.naturalWidth/3, fh=lk.img.naturalHeight/5; c.width=fw; c.height=fh; g.imageSmoothingEnabled=false; if(frame==='pose') g.drawImage(lk.img,0,fh*4,fw,fh,0,0,fw,fh); else g.drawImage(lk.img,(frame?2:1)*fw,0,fw,fh,0,0,fw,fh); }
   else { c.width=32; c.height=34; drawSprite(0,0,lk,frame==='pose'?1:(frame||0),'down',g); }
   try{ return SPR_URL[key]=c.toDataURL(); }catch(e){ const d=document.createElement('canvas'); d.width=32; d.height=34; drawSprite(0,0,{...lk,img:null},0,'down',d.getContext('2d')); return d.toDataURL(); } }
 // rows: [[ラベル, 合計, 増えた分], ...] を2列で
