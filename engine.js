@@ -321,7 +321,7 @@ function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
 function removeCompare(){ for(const n of ['新アルト','新リリィ','少年32','少年48','騎士32','騎士48','少年そのまま','熊そのまま','新・女の子','新・エルフ','新・魔族','新・少年','新・熊','新・金髪','新・フード','新・少女','新・クマ']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); }
   if(G.party && G.members && G.members['リリィ'] && G.members['リリィ'].avail && !G.party.includes('リリィ') && G.party.length<4) G.party.splice(Math.min(1,G.party.length),0,'リリィ'); }
 // 見比べ用：新しいやり方で描いた32×40のドット絵（中身はアルトと同じ。絵だけ違う）
-const COMPARE=[['新・少年','img/n2_001.png'],['新・少女','img/n2_002.png'],['新・クマ','img/n2_038.png'],['新・魔族','img/n2_042.png']];
+const COMPARE=[];
 for(const [nw] of COMPARE){ CHARS[nw]={...CHARS['アルト'],role:'見比べ用'}; AFF[nw]=AFF['アルト']; FAV[nw]=FAV['アルト']; if(typeof SKILLS!=='undefined') SKILLS[nw]=SKILLS['アルト']; if(typeof KIT!=='undefined') KIT[nw]=KIT['アルト']; }
 function addCompare(){ for(const [nw] of COMPARE){ if(!G.members[nw]||!G.members[nw].avail) join(nw,true); } }
 const LOOK = {};
