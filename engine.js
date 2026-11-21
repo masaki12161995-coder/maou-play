@@ -386,7 +386,7 @@ function drawField(){
   if(m.town){ for(const ex of [9,10]){ const sx=ex*TS-camX, sy=(m.h-1)*TS-camY; cx.fillStyle='#ffffff18'; cx.fillRect(sx,sy,TS,TS);} }
   // 住人
   const ents=[];
-  for(const n of m.npcs){ if(n.gone) continue; let nx=n.x, ny=n.y; if(n.mv){ const k=clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1); nx=n.mv.fx+(n.x-n.mv.fx)*k; ny=n.mv.fy+(n.y-n.mv.fy)*k; } ents.push({x:nx,y:ny,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:n.walk?Math.floor(performance.now()/120)%2:0,col:n.walk?(Math.floor(performance.now()/120)%2?2:0):undefined,dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
+  for(const n of m.npcs){ if(n.gone) continue; let nx=n.x, ny=n.y; if(n.mv){ const k=clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1); nx=n.mv.fx+(n.x-n.mv.fx)*k; ny=n.mv.fy+(n.y-n.mv.fy)*k; } ents.push({x:nx,y:ny,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:(n.mv&&n.walk&&clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1)<0.6)?1:0,col:(n.mv&&n.walk&&clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1)<0.6)?((n.stepN||0)%2?2:0):(n.walk?1:undefined),dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
   // 仲間（後ろについてくる）
   const pts=[{x:px,y:py,dir:G.dir}];
   const tr=RT.trail, mk=RT.moving?clamp((performance.now()-RT.moving.t0)/RT.moving.dur,0,1):1, wf=Math.floor(performance.now()/120)%2;
@@ -396,7 +396,7 @@ function drawField(){
     const d=mv?(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')):(to.dir||G.dir); to.dir=d;
     pts.push({x:fr.x+dx*mk,y:fr.y+dy*mk,dir:d,mv}); }
   if(m.solo) pts.length=1; if(RT.sleeping) pts.length=0;
-  pts.forEach((p,i)=>ents.push({x:p.x,y:p.y,look:LOOK[G.party[i]],fr:p.mv?wf:0,col:p.mv?(wf?2:0):1,dir:p.dir,party:i}));
+  pts.forEach((p,i)=>{ const st=p.mv&&mk<0.6, par=((RT.stepN||0)+i)%2; ents.push({x:p.x,y:p.y,look:LOOK[G.party[i]],fr:st?1:0,col:st?(par?2:0):1,dir:p.dir,party:i}); });
   ents.sort((a,b)=>a.y-b.y||((b.party??9)-(a.party??9)));
   for(const e of ents){ const sx=Math.round(e.x*TS-camX), sy=Math.round(e.y*TS-camY)-4; drawSprite(sx,sy,e.look,e.fr,e.dir,undefined,e.col);
     if(e.bang){ cx.fillStyle='#facc15'; cx.font='bold 16px sans-serif'; cx.textAlign='center'; cx.fillText('！',sx+16,sy-2+Math.sin(RT.anim/8)*2); } }
@@ -574,7 +574,7 @@ function stepLoop(){
     if(m.town && ny>=m.h-1 && (nx===9||nx===10)){ leaveToWorld(); return; }
     if(walkable(m,nx,ny)){
       RT.trail.unshift({x:G.x,y:G.y,dir:(RT.trail[0]&&RT.trail[0].x===G.x&&RT.trail[0].y===G.y)?RT.trail[0].dir:G.dir}); RT.trail.length=4;
-      RT.moving={fx:G.x,fy:G.y,t0:performance.now(),dur:150}; G.x=nx; G.y=ny;
+      RT.stepN=(RT.stepN||0)+1; RT.moving={fx:G.x,fy:G.y,t0:performance.now(),dur:150}; G.x=nx; G.y=ny;
       setTimeout(()=>{ RT.moving=null; onStep(); },150);
     }
   }

@@ -187,7 +187,7 @@ function enterRoom(){
   G.loc='sora'; G.floor=0; RT.map=buildRoom(true); const p=RT.map.start; G.x=p.x; G.y=p.y; G.dir='down';
   RT.trail=[0,1,2,3].map(()=>({x:p.x,y:p.y,dir:'down'})); RT.mode='field'; $('padField').style.display='flex'; hidePanel(); renderTop();
 }
-async function npcWalk(n,path,ms){ ms=ms||150; n.walk=1; for(const [x,y] of path){ n.dir=x>n.x?'right':x<n.x?'left':y>n.y?'down':'up'; n.mv={fx:n.x,fy:n.y,t0:performance.now(),dur:ms}; n.x=x; n.y=y; await sleep(ms); } n.mv=null; n.walk=0; }
+async function npcWalk(n,path,ms){ ms=ms||150; n.walk=1; for(const [x,y] of path){ n.dir=x>n.x?'right':x<n.x?'left':y>n.y?'down':'up'; n.stepN=(n.stepN||0)+1; n.mv={fx:n.x,fy:n.y,t0:performance.now(),dur:ms}; n.x=x; n.y=y; await sleep(ms); } n.mv=null; n.walk=0; }
 async function leaveRoom(){
   RT.busy=true; sfx('stairs'); await fade(true);
   enterMap('sora',0,{x:15,y:18}); G.dir='down'; RT.trail=[0,1,2,3].map(()=>({x:15,y:18,dir:'down'}));
