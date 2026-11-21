@@ -31,6 +31,7 @@ function newGame(){
   equip('アルト', makeItem('body',1,0,undefined,{mei:false}));
   equip('リリィ', makeItem('weapon',1,0,'m',{ty:FAV['リリィ']}));
   equip('リリィ', makeItem('body',1,0,undefined,{mei:false}));
+  addCompare();
   fullHeal();
   META = {gameOvers:0, goPre5:0, run:Date.now()}; saveMeta(META);
 }
@@ -311,10 +312,14 @@ function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
   if(dir!=='up'){ const ex = dir==='left'?-1:dir==='right'?1:0; r(6+ex,5,1,1,'#111'); r(9+ex,5,1,1,'#111'); }
   if(look.mark) { r(7,9,2,2,look.mark); }
 }
+// 見比べ用：新しい絵のアルトとリリィ（中身は本人と同じ。絵だけ新しい）
+const COMPARE_CHARS=[['新アルト','アルト','img/alto_new.png'],['新リリィ','リリィ','img/lily_new.png']];
+for(const [nw,old] of COMPARE_CHARS){ CHARS[nw]={...CHARS[old]}; if(AFF[old]) AFF[nw]=AFF[old]; if(FAV[old]) FAV[nw]=FAV[old]; if(typeof SKILLS!=='undefined'&&SKILLS[old]) SKILLS[nw]=SKILLS[old]; if(typeof KIT!=='undefined'&&KIT[old]) KIT[nw]=KIT[old]; }
+function addCompare(){ for(const [nw] of COMPARE_CHARS){ if(!G.members[nw]||!G.members[nw].avail) join(nw,true); } }
 const LOOK = {};
 for(const n in CHARS){ const c=CHARS[n]; LOOK[n]={hair:c.hair,col:c.col,col2:c.col2,style:c.style}; }
 // 歩行ドット絵（1コマ16×20、横3コマ×縦5段：下/左/右/上/技のポーズ）。細かい版（1コマ32×40）も同じ並びで使える
-const SPRITE_FILES={'アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
+const SPRITE_FILES={'アルト':'img/alto.png','リリィ':'img/lily.png','新アルト':'img/alto_new.png','新リリィ':'img/lily_new.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
 const SPR_URL={};
 for(const n in SPRITE_FILES){ const im=new Image(); im.onload=()=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }; im.src=SPRITE_FILES[n]; }
 const DIRROW={down:0,left:1,right:2,up:3};
@@ -686,6 +691,7 @@ function resumeFrom(state){
   if(G.flags && G.flags.boss_temple && G.unlocked && !G.unlocked.includes('shadow')) G.unlocked.push('shadow');
   // イベントの途中で記録されたセーブを直す（済んだ出来事の先が開いていない、など）
   if(typeof storyRepair==='function'){ try{ const n=storyRepair(); if(n) setTimeout(()=>toast('記録を整えました'),600); }catch(e){} } META=loadMeta(); if(G.inv){ for(const k of ['ether','cure','smoke']) if(G.inv[k]){ G.inv.herb=(G.inv.herb||0)+G.inv[k]; delete G.inv[k]; } } if(G.runSeed===undefined) G.runSeed=hashStr(String(G.nid)+G.chapter+String(G.gold)); if(G.settings && !G.settings.v2){ G.settings.speed=1; G.settings.v2=1; } if(!G.saveLoc) G.saveLoc={loc:G.loc,floor:G.floor,x:G.x,y:G.y};
+  addCompare();
   if(G.loc==='__world'||G.saveLoc.loc==='__world'){ if(G.loc==='__world') G.loc='sora'; RT.mode='world'; RT.map=null; openWorld(); }
   else { enterMap(G.saveLoc.loc,G.saveLoc.floor,{x:G.saveLoc.x,y:G.saveLoc.y}); }
   renderTop();
