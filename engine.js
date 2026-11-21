@@ -386,7 +386,7 @@ function drawField(){
   if(m.town){ for(const ex of [9,10]){ const sx=ex*TS-camX, sy=(m.h-1)*TS-camY; cx.fillStyle='#ffffff18'; cx.fillRect(sx,sy,TS,TS);} }
   // 住人
   const ents=[];
-  for(const n of m.npcs){ if(n.gone) continue; let nx=n.x, ny=n.y; if(n.mv){ const k=clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1); nx=n.mv.fx+(n.x-n.mv.fx)*k; ny=n.mv.fy+(n.y-n.mv.fy)*k; } ents.push({x:nx,y:ny,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:(n.mv&&n.walk&&walkCol(n.stepN||0)!==1)?1:0,col:(n.mv&&n.walk)?walkCol(n.stepN||0):(n.walk?1:undefined),dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
+  for(const n of m.npcs){ if(n.gone) continue; let nx=n.x, ny=n.y; if(n.mv){ const k=clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1); nx=n.mv.fx+(n.x-n.mv.fx)*k; ny=n.mv.fy+(n.y-n.mv.fy)*k; } ents.push({x:nx,y:ny,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:(n.walk&&walkCol(performance.now()-(n.walkT0||0))!==1)?1:0,col:n.walk?walkCol(performance.now()-(n.walkT0||0)):undefined,dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
   // 仲間（後ろについてくる）
   const pts=[{x:px,y:py,dir:G.dir}];
   const tr=RT.trail, mk=RT.moving?clamp((performance.now()-RT.moving.t0)/RT.moving.dur,0,1):1, wf=Math.floor(performance.now()/120)%2;
@@ -396,7 +396,8 @@ function drawField(){
     const d=mv?(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')):(to.dir||G.dir); to.dir=d;
     pts.push({x:fr.x+dx*mk,y:fr.y+dy*mk,dir:d,mv}); }
   if(m.solo) pts.length=1; if(RT.sleeping) pts.length=0;
-  pts.forEach((p,i)=>{ const c=p.mv?walkCol((RT.stepN||0)+i):1; ents.push({x:p.x,y:p.y,look:LOOK[G.party[i]],fr:c===1?0:1,col:c,dir:p.dir,party:i}); });
+  const pw=partyWalking();
+  pts.forEach((p,i)=>{ const c=(p.mv||pw)?walkCol(performance.now()-(RT.walkT0||0)+i*250):1; ents.push({x:p.x,y:p.y,look:LOOK[G.party[i]],fr:c===1?0:1,col:c,dir:p.dir,party:i}); });
   ents.sort((a,b)=>a.y-b.y||((b.party??9)-(a.party??9)));
   for(const e of ents){ const sx=Math.round(e.x*TS-camX), sy=Math.round(e.y*TS-camY)-4; drawSprite(sx,sy,e.look,e.fr,e.dir,undefined,e.col);
     if(e.bang){ cx.fillStyle='#facc15'; cx.font='bold 16px sans-serif'; cx.textAlign='center'; cx.fillText('！',sx+16,sy-2+Math.sin(RT.anim/8)*2); } }
@@ -568,9 +569,11 @@ document.addEventListener('dblclick',e=>e.preventDefault());
 
 const DXY={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
 // 1マス進むのにかかる時間（ミリ秒）。人やイベントで歩く村人も同じ速さにそろえる
-// 足は2マスで1歩（1マス目は足を出す、2マス目は両足そろう。次の1歩は逆の足）。進む速さは保ったまま、足のリズムをゆったりさせる
 const STEP_MS=150;
-function walkCol(n){ return n%2 ? (Math.floor(n/2)%2?2:0) : 1; }
+// 足のコマは進む速さと切り離して、歩き出した時からこのリズムで回す：片足を前→両足そろう→逆の足を前→両足そろう
+const WALK_BEATS=[[0,150],[1,100],[2,150],[1,100]], WALK_CYCLE=500;
+function walkCol(t){ t=((t%WALK_CYCLE)+WALK_CYCLE)%WALK_CYCLE; for(const [c,d] of WALK_BEATS){ if(t<d) return c; t-=d; } return 1; }
+function partyWalking(){ return !!RT.moving || (RT.lastStepEnd && performance.now()-RT.lastStepEnd<60); }
 function stepLoop(){
   if(RT.saveWhenFree!==undefined && RT.saveWhenFree!==false && G && RT.mode==='field' && !RT.busy && !RT.event && !msgResolve && RT.map && $('screen').style.display!=='flex'){ if(G.chapter===RT.saveWhenFree) doSave(); RT.saveWhenFree=false; }
   if(RT.mode==='field' && !RT.busy && !RT.moving && !msgResolve && RT.dir && $('screen').style.display!=='flex'){
@@ -578,8 +581,8 @@ function stepLoop(){
     if(m.town && ny>=m.h-1 && (nx===9||nx===10)){ leaveToWorld(); return; }
     if(walkable(m,nx,ny)){
       RT.trail.unshift({x:G.x,y:G.y,dir:(RT.trail[0]&&RT.trail[0].x===G.x&&RT.trail[0].y===G.y)?RT.trail[0].dir:G.dir}); RT.trail.length=4;
-      RT.stepN=(RT.stepN||0)+1; RT.moving={fx:G.x,fy:G.y,t0:performance.now(),dur:STEP_MS}; G.x=nx; G.y=ny;
-      setTimeout(()=>{ RT.moving=null; onStep(); },STEP_MS);
+      if(!partyWalking()) RT.walkT0=performance.now(); RT.stepN=(RT.stepN||0)+1; RT.moving={fx:G.x,fy:G.y,t0:performance.now(),dur:STEP_MS}; G.x=nx; G.y=ny;
+      setTimeout(()=>{ RT.moving=null; RT.lastStepEnd=performance.now(); onStep(); },STEP_MS);
     }
   }
 }
