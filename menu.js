@@ -90,7 +90,9 @@ function statsCard(n){
   <div style="font-size:12px;color:var(--sub);margin-top:4px">次のレベルまで <b style="color:var(--text)">${m.lv>=99?'―':(need-m.exp).toLocaleString()}</b></div></div></div>
   ${statGrid(statRows(n))}${(()=>{ const g=gxText(calcStats(n)); return g?`<div style="font-size:11px;color:var(--sub);margin-top:6px">ゲージ：${g}</div>`:''; })()}</div>`;
 }
-setInterval(()=>{ document.querySelectorAll('img.portrait').forEach(im=>{ const f=im.dataset.f==='1'?0:1; im.dataset.f=f; im.src=spriteURL(im.dataset.n,f); }); },450);
+// 顔のところの人物：足ぶみを何回かしてから、技のポーズを見せる
+let PORTRAIT_T=0; const PORTRAIT_SEQ=[0,1,0,1,0,1,0,1,'pose','pose','pose'];
+setInterval(()=>{ PORTRAIT_T=(PORTRAIT_T+1)%PORTRAIT_SEQ.length; const f=PORTRAIT_SEQ[PORTRAIT_T]; document.querySelectorAll('img.portrait').forEach(im=>{ im.src=spriteURL(im.dataset.n,f); }); },450);
 function scrStatus(n){
   const m=G.members[n];
   const eq=`<div class="eqgrid">${SLOTS.map(sl=>{ const it=m.equip[sl]; return `<button class="eqc" data-esl="${sl}">${it?itemIconHTML(it).replace('class="ico','class="ico sm'):`<span class="ico sm none">${SLOTJP[sl]}</span>`}<b class="r${it?it.r:0}"${it?'':' style="color:var(--sub);font-weight:400"'}>${it?it.name:'なし'}</b></button>`; }).join('')}</div>`;

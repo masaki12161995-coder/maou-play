@@ -1,6 +1,7 @@
 // ===== エンジン：状態・セーブ・能力値・装備生成・マップ・描画・入力・会話 =====
 const $ = id => document.getElementById(id);
 const cv = $('cv'), cx = cv.getContext('2d'), CX0 = cx;
+let VW=352, VH=600, VS=1;   // 画面の広さ（ドット）と、1ドットあたりの点の数
 const TS = 32; // タイルの描画サイズ
 let G = null;            // セーブされる状態
 const RT = {mode:'title', map:null, moving:null, dir:null, busy:false, trail:[], anim:0, encounterIn:20, worldSel:null, lastSaveBlocked:false};
@@ -31,6 +32,7 @@ function newGame(){
   equip('アルト', makeItem('body',1,0,undefined,{mei:false}));
   equip('リリィ', makeItem('weapon',1,0,'m',{ty:FAV['リリィ']}));
   equip('リリィ', makeItem('body',1,0,undefined,{mei:false}));
+  addCompare();
   fullHeal();
   META = {gameOvers:0, goPre5:0, run:Date.now()}; saveMeta(META);
 }
@@ -263,7 +265,10 @@ function resizeCanvas(){
   // 倍率は横352ドットを基準に決め、その倍率のまま画面の幅いっぱいまで広げる（左右に黒い帯を出さない）
   const s=Math.max(1,Math.floor(aw*dpr/352));
   const w=Math.max(320,Math.floor(aw*dpr/s)), h=clamp(Math.floor(ah*dpr/s),224,900);
-  if(cv.height!==h||cv.width!==w){cv.width=w;cv.height=h;}
+  // 絵を描く紙は画面の点の細かさのまま持ち、1ドット＝s個の点として描く（細かい絵の人物も、細かさを保ったまま映せる）
+  VW=w; VH=h; VS=s;
+  if(cv.height!==h*s||cv.width!==w*s){cv.width=w*s;cv.height=h*s;}
+  cx.setTransform(s,0,0,s,0,0); cx.imageSmoothingEnabled=false;
   cv.style.width=(w*s/dpr)+'px'; cv.style.height=(h*s/dpr)+'px';
 }
 function shade(hex,amt){ let c=parseInt(hex.slice(1),16); let r=(c>>16)&255,g=(c>>8)&255,b=c&255; r=clamp(Math.round(r*(1+amt)),0,255);g=clamp(Math.round(g*(1+amt)),0,255);b=clamp(Math.round(b*(1+amt)),0,255); return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);}
@@ -313,10 +318,14 @@ function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
 }
 // 見比べ用に一時的に入れていた仲間を、記録から外す（見比べは終わった）
 function removeCompare(){ for(const n of ['新アルト','新リリィ']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); } }
+// 見比べ用：同じ絵を、1コマ32×40と48×64の2通りで（中身はアルトと同じ。絵だけ違う）
+const COMPARE=[['少年32','img/cmp_boy32.png'],['少年48','img/cmp_boy48.png'],['騎士32','img/cmp_knight32.png'],['騎士48','img/cmp_knight48.png']];
+for(const [nw] of COMPARE){ CHARS[nw]={...CHARS['アルト'],role:'見比べ用'}; AFF[nw]=AFF['アルト']; FAV[nw]=FAV['アルト']; if(typeof SKILLS!=='undefined') SKILLS[nw]=SKILLS['アルト']; if(typeof KIT!=='undefined') KIT[nw]=KIT['アルト']; }
+function addCompare(){ for(const [nw] of COMPARE){ if(!G.members[nw]||!G.members[nw].avail) join(nw,true); } }
 const LOOK = {};
 for(const n in CHARS){ const c=CHARS[n]; LOOK[n]={hair:c.hair,col:c.col,col2:c.col2,style:c.style}; }
 // 歩行ドット絵（1コマ16×20、横3コマ×縦5段：下/左/右/上/技のポーズ）。細かい版（1コマ32×40）も同じ並びで使える
-const SPRITE_FILES={'アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
+const SPRITE_FILES={'少年32':'img/cmp_boy32.png','少年48':'img/cmp_boy48.png','騎士32':'img/cmp_knight32.png','騎士48':'img/cmp_knight48.png','アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
 const SPR_URL={};
 for(const n in SPRITE_FILES){ const im=new Image(); im.onload=()=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }; im.src=SPRITE_FILES[n]; }
 const DIRROW={down:0,left:1,right:2,up:3};
@@ -360,7 +369,7 @@ function npcLook(seed){
 }
 function drawField(){
   const m=RT.map; if(!m) return;
-  const W=cv.width,H=cv.height;
+  const W=VW,H=VH;
   let px=G.x,py=G.y;
   if(RT.moving){ const k=clamp((performance.now()-RT.moving.t0)/RT.moving.dur,0,1); px=RT.moving.fx+(G.x-RT.moving.fx)*k; py=RT.moving.fy+(G.y-RT.moving.fy)*k; }
   let camX=px*TS+TS/2-W/2, camY=py*TS+TS/2-H/2;
@@ -528,8 +537,8 @@ function tapAt(clientX,clientY){
   if(msgResolve){ advanceMsg(); return; }
   if(RT.mode!=='field'||RT.busy||RT.moving||!RT.cam) return;
   // タップした場所が主人公のとなりなら、そちらを向いてから調べる
-  const r=cv.getBoundingClientRect(), sc=Math.min(r.width/cv.width, r.height/cv.height);
-  const ox=r.left+(r.width-cv.width*sc)/2, oy=r.top+(r.height-cv.height*sc)/2;
+  const r=cv.getBoundingClientRect(), sc=Math.min(r.width/VW, r.height/VH);
+  const ox=r.left+(r.width-VW*sc)/2, oy=r.top+(r.height-VH*sc)/2;
   const tx=Math.floor(((clientX-ox)/sc+RT.cam.x)/TS), ty=Math.floor(((clientY-oy)/sc+RT.cam.y)/TS+4/TS);
   const ddx=tx-G.x, ddy=ty-G.y; if(Math.abs(ddx)+Math.abs(ddy)===1) G.dir=ddx>0?'right':ddx<0?'left':ddy>0?'down':'up';
   interact();
@@ -569,7 +578,7 @@ function stepLoop(){
 }
 setInterval(stepLoop,20);
 
-function frame(){ RT.anim++; if(RT.dream&&typeof drawDream==='function'){ drawDream(); } else if(RT.dark){ cx.fillStyle='#000'; cx.fillRect(0,0,cv.width,cv.height); } else if(RT.mode==='field') drawField(); else if(RT.mode==='world') drawWorld(); else if(RT.mode==='battle' && typeof drawBattle==='function') drawBattle(); renderHud(); requestAnimationFrame(frame); }
+function frame(){ RT.anim++; cx.setTransform(VS,0,0,VS,0,0); cx.imageSmoothingEnabled=false; if(RT.dream&&typeof drawDream==='function'){ drawDream(); } else if(RT.dark){ cx.fillStyle='#000'; cx.fillRect(0,0,VW,VH); } else if(RT.mode==='field') drawField(); else if(RT.mode==='world') drawWorld(); else if(RT.mode==='battle' && typeof drawBattle==='function') drawBattle(); renderHud(); requestAnimationFrame(frame); }
 
 // ---------- 場所の出入り ----------
 function enterMap(id, floor, pos){
@@ -688,7 +697,7 @@ function resumeFrom(state){
   if(G.flags && G.flags.boss_temple && G.unlocked && !G.unlocked.includes('shadow')) G.unlocked.push('shadow');
   // イベントの途中で記録されたセーブを直す（済んだ出来事の先が開いていない、など）
   if(typeof storyRepair==='function'){ try{ const n=storyRepair(); if(n) setTimeout(()=>toast('記録を整えました'),600); }catch(e){} } META=loadMeta(); if(G.inv){ for(const k of ['ether','cure','smoke']) if(G.inv[k]){ G.inv.herb=(G.inv.herb||0)+G.inv[k]; delete G.inv[k]; } } if(G.runSeed===undefined) G.runSeed=hashStr(String(G.nid)+G.chapter+String(G.gold)); if(G.settings && !G.settings.v2){ G.settings.speed=1; G.settings.v2=1; } if(!G.saveLoc) G.saveLoc={loc:G.loc,floor:G.floor,x:G.x,y:G.y};
-  removeCompare();
+  removeCompare(); addCompare();
   if(G.loc==='__world'||G.saveLoc.loc==='__world'){ if(G.loc==='__world') G.loc='sora'; RT.mode='world'; RT.map=null; openWorld(); }
   else { enterMap(G.saveLoc.loc,G.saveLoc.floor,{x:G.saveLoc.x,y:G.saveLoc.y}); }
   renderTop();

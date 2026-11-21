@@ -215,7 +215,7 @@ function drawRoomObj(o,sx,sy){
 
 // ---------- はじまりの夢（もやの中。何なのかは、まだ分からない） ----------
 function drawDream(){
-  const D=RT.dream, W=cv.width, H=cv.height, t=RT.anim;
+  const D=RT.dream, W=VW, H=VH, t=RT.anim;
   const g=cx.createRadialGradient(W/2,H*0.42,20,W/2,H*0.5,Math.max(W,H)*0.75); g.addColorStop(0,'#3a3150'); g.addColorStop(1,'#0c0a14'); cx.fillStyle=g; cx.fillRect(0,0,W,H);
   const S=2; cx.save(); cx.translate(Math.round(W/2),0); cx.scale(S,S); cx.imageSmoothingEnabled=false;
   const ty=Math.round(H*0.15);
@@ -236,7 +236,7 @@ function drawDream(){
 }
 async function dreamTween(ms,fn){ const t0=performance.now(); for(;;){ const k=Math.min(1,(performance.now()-t0)/ms); fn(k); if(k>=1) break; await sleep(16); } }
 TRIG.dream = async()=>{
-  const H=cv.height; RT.dream={show:true,walking:true,y:H*0.88,glow:0,white:0,ghosts:[]};
+  const H=VH; RT.dream={show:true,walking:true,y:H*0.88,glow:0,white:0,ghosts:[]};
   await fade(true); RT.dark=false; await fade(false);
   const y0=H*0.88, y1=H*0.46; await dreamTween(3400,k=>{ RT.dream.y=y0+(y1-y0)*k; });
   RT.dream.walking=false; await sleep(700);
@@ -274,7 +274,7 @@ function partyTiles(){ const s=new Set([G.x+','+G.y]); for(let i=0;i<Math.min(3,
 function bfsFrom(m,sx,sy,block){ const D=[[0,1],[0,-1],[1,0],[-1,0]], dist=new Map([[sx+','+sy,0]]), prev=new Map(), q=[[sx,sy]];
   while(q.length){ const [x,y]=q.shift(), d=dist.get(x+','+y); for(const [dx,dy] of D){ const nx=x+dx, ny=y+dy, k=nx+','+ny; if(dist.has(k)||block.has(k)||!walkable(m,nx,ny)) continue; if(m.town&&ny>=m.h-1) continue; dist.set(k,d+1); prev.set(k,x+','+y); q.push([nx,ny]); } }
   return {dist,prev}; }
-function onScreen(x,y){ const c=RT.cam||{x:0,y:0}; const px=x*TS-c.x, py=y*TS-c.y; return px>-4&&py>-4&&px<cv.width-TS+4&&py<cv.height-TS+4; }
+function onScreen(x,y){ const c=RT.cam||{x:0,y:0}; const px=x*TS-c.x, py=y*TS-c.y; return px>-4&&py>-4&&px<VW-TS+4&&py<VH-TS+4; }
 function spawnSpot(m,opt){
   const {dist}=bfsFrom(m,G.x,G.y,partyTiles()); let off=null, vis=null;
   for(const [k,d] of dist){ if(d<3) continue; const [x,y]=k.split(',').map(Number);

@@ -537,7 +537,7 @@ async function hit(a,t,o){
   }
   t.hp=Math.max(0,t.hp-d);
   pop(t,(r.crit?'会心 ':'')+d+(r.isWeak?' 弱点!':''), r.crit?'#facc15':(r.isWeak?'#fdba74':(t.isEnemy?'#fff':'#fca5a5')));
-  if(t.isEnemy){ t.flash=performance.now(); B.fx.push({kind:o.mag?'circle':'slash',x:t.x,y:cv.height*0.46,col:o.mag?elemColor(r.el):'#fff',born:performance.now()}); } else B.shake=6;
+  if(t.isEnemy){ t.flash=performance.now(); B.fx.push({kind:o.mag?'circle':'slash',x:t.x,y:VH*0.46,col:o.mag?elemColor(r.el):'#fff',born:performance.now()}); } else B.shake=6;
   sfx(r.crit?'crit':'hit');
   // 眠り・凍結は殴られて終わる
   if(t.st.sleep && d>0 && !o.noWake){ t.sleepHits=(t.sleepHits||1)-1; if(t.sleepHits<=0) delete t.st.sleep; }

@@ -19,14 +19,14 @@ const WM_EDGES=[['sora','mtpath'],['mtpath','castle'],['sora','halt'],['halt','l
   ['lumiere','sewer'],['lumiere','tower'],['lumiere','refuge'],['lumiere','azur'],['azur','ruth',1],['ruth','lhcave'],['ruth','marsh'],['marsh','garam'],['garam','battlefield'],['azur','wreck',1],
   ['azur','belka'],['belka','archive'],['belka','dura'],['dura','saha'],['saha','ruins'],['dura','fort2'],['dura','nest'],['refuge','hutte'],['hutte','canyon'],['canyon','sancta'],
   ['sancta','undercat'],['sancta','temple'],['temple','shadow'],['shadow','ruth'],['halt','hate'],['hate','abyss'],['castle','maze'],['archive','tomb']];
-function wmPos(L){ const W=cv.width,H=cv.height; return [WM_PAD+L.x*(W-WM_PAD*2), WM_PAD+L.y*(H-WM_PAD*2)]; }
+function wmPos(L){ const W=VW,H=VH; return [WM_PAD+L.x*(W-WM_PAD*2), WM_PAD+L.y*(H-WM_PAD*2)]; }
 function wmNoise(x,y,s){ const h=Math.sin(x*12.9898+y*78.233+s*37.719)*43758.5453; return h-Math.floor(h); }
 function wmSmooth(x,y,s){ const xi=Math.floor(x), yi=Math.floor(y), fx=x-xi, fy=y-yi, u=fx*fx*(3-2*fx), v=fy*fy*(3-2*fy);
   const a=wmNoise(xi,yi,s), b=wmNoise(xi+1,yi,s), c=wmNoise(xi,yi+1,s), d=wmNoise(xi+1,yi+1,s); return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v; }
 function wmFbm(x,y,s){ return wmSmooth(x*6,y*6,s)*0.55+wmSmooth(x*13,y*13,s+1)*0.3+wmSmooth(x*27,y*27,s+2)*0.15; }
 // 地形の絵（雲をのぞく）は、地図の大きさが変わったときだけ作り直す
 function wmTerrain(){
-  const W=cv.width,H=cv.height, key=W+'x'+H; if(WM.terrain&&WM.tkey===key) return WM.terrain;
+  const W=VW,H=VH, key=W+'x'+H; if(WM.terrain&&WM.tkey===key) return WM.terrain;
   const gw=Math.ceil(W/WM_C), gh=Math.ceil(H/WM_C), locs=Object.entries(LOCS).map(([id,L])=>({id,L,b:WM_LOC_BIOME[id]||WM_THEME[L.theme]||'plains'}));
   const land=locs.filter(o=>o.b!=='sea'), mw=W-WM_PAD*2, mh=H-WM_PAD*2;
   const grid=new Array(gw*gh), isLand=new Uint8Array(gw*gh);
@@ -80,7 +80,7 @@ function wmTerrain(){
 }
 // 雲（まだ行っていない所）。行ける場所が増えたら作り直す
 function wmFog(){
-  const W=cv.width,H=cv.height, seen=[...new Set([...G.unlocked,...Object.keys(G.visited||{})])].filter(id=>LOCS[id]);
+  const W=VW,H=VH, seen=[...new Set([...G.unlocked,...Object.keys(G.visited||{})])].filter(id=>LOCS[id]);
   const key=W+'x'+H+'|'+seen.sort().join(','); if(WM.fog&&WM.fkey===key) return WM.fog;
   const gw=Math.ceil(W/WM_C), gh=Math.ceil(H/WM_C), mw=W-WM_PAD*2, mh=H-WM_PAD*2, pts=seen.map(id=>LOCS[id]);
   const segs=WM_EDGES.filter(([a,b])=>G.unlocked.includes(a)&&G.unlocked.includes(b)&&LOCS[a]&&LOCS[b]).map(([a,b])=>[LOCS[a],LOCS[b]]);
@@ -133,7 +133,7 @@ function wmIcon(id,L,x,y){
 function wmShort(n){ return n.replace(/^(宿場町|王都|鉱山町|港町|灯台の村|傭兵の町|学術都市|荒野の宿場|オアシスの村|雪の村|大聖堂の町|最果ての村)/,''); }
 function wmList(){ const cur=G.loc; const L0=LOCS[cur]||LOCS.sora; return G.unlocked.filter(id=>LOCS[id]).slice().sort((a,b)=>(b===G.next)-(a===G.next)||(Math.hypot(LOCS[a].x-L0.x,LOCS[a].y-L0.y)-Math.hypot(LOCS[b].x-L0.x,LOCS[b].y-L0.y))); }
 function drawWorld(){
-  const W=cv.width,H=cv.height;
+  const W=VW,H=VH;
   cx.imageSmoothingEnabled=false; cx.fillStyle='#1f5d93'; cx.fillRect(0,0,W,H);
   cx.drawImage(wmTerrain(),0,0,Math.ceil(W/WM_C)*WM_C,Math.ceil(H/WM_C)*WM_C);
   // 波のきらめき
@@ -188,7 +188,7 @@ function openWorld(){
   showPanel('<div></div>'); wmCard();
 }
 cv.addEventListener('pointerdown',e=>{
-  if(RT.mode!=='world' || RT.busy) return; const r=cv.getBoundingClientRect(); const x=(e.clientX-r.left)*(cv.width/r.width), y=(e.clientY-r.top)*(cv.height/r.height);
+  if(RT.mode!=='world' || RT.busy) return; const r=cv.getBoundingClientRect(); const x=(e.clientX-r.left)*(VW/r.width), y=(e.clientY-r.top)*(VH/r.height);
   let best=null,bd=1e9; for(const id of G.unlocked){ if(!LOCS[id]) continue; const [px,py]=wmPos(LOCS[id]); const d=Math.hypot(px-x,py-2-y); if(d<bd){bd=d;best=id;} }
   if(best&&bd<26){ if(WM.sel===best){ sfx('ok'); travelTo(best); } else { WM.sel=best; sfx('tick'); wmCard(); } }
 });

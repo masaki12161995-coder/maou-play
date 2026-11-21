@@ -148,7 +148,7 @@ function showBattleBar(){
   $('panel').querySelectorAll('[data-spd]').forEach(b=>b.onclick=()=>{ G.settings.speed=+b.dataset.spd; sfx('tick'); showBattleBar(); });
 }
 
-function layoutEnemies(){ const W=cv.width; const es=B.enemies, n=es.length;
+function layoutEnemies(){ const W=VW; const es=B.enemies, n=es.length;
   // 絵の幅に合わせて、すき間が均等になるように並べる（大きい敵がとなりに食い込まないように）
   const ws=es.map(e=>{ const im=ENEMY_PIC[e.dexName||e.nm||e.name]; return im&&im.naturalWidth? im.naturalWidth*2 : 64; });
   const tot=ws.reduce((a,b)=>a+b,0);
@@ -167,7 +167,7 @@ function pop(target,text,color){
   if(/^\d/.test(String(text))||/会心/.test(String(text))){ const ch=$('bparty').children[i]; if(ch){ ch.classList.remove('hit'); void ch.offsetWidth; ch.classList.add('hit'); } }
 }
 function drawBattle(){
-  if(!B) return; const W=cv.width,H=cv.height; const th=THEMES[RT.map?RT.map.theme:'village']||THEMES.village;
+  if(!B) return; const W=VW,H=VH; const th=THEMES[RT.map?RT.map.theme:'village']||THEMES.village;
   const g=cx.createLinearGradient(0,0,0,H); g.addColorStop(0,th.sky[0]); g.addColorStop(1,th.sky[1]); cx.fillStyle=g; cx.fillRect(0,0,W,H);
   cx.fillStyle=shade(th.floor,-.2); cx.beginPath(); cx.ellipse(W/2,H*0.6,W*0.7,H*0.16,0,0,7); cx.fill();
   const sx=B.shake>0?(Math.random()-.5)*8:0; if(B.shake>0)B.shake--;
