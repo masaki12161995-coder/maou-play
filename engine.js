@@ -318,10 +318,10 @@ function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
 }
 // 見比べ用に一時的に入れていた仲間を、記録から外す（見比べは終わった）
 // 見比べ用に一時的に入れていた仲間を、記録から外す（見比べは終わった）。リリィが外れていたら戻す
-function removeCompare(){ for(const n of ['新アルト','新リリィ','少年32','少年48','騎士32','騎士48','少年そのまま','熊そのまま','新・女の子','新・エルフ','新・魔族','新・少年','新・熊','新・金髪','新・フード','新・少女','新・クマ','少女48','少女32']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); }
+function removeCompare(){ for(const n of ['新アルト','新リリィ','少年32','少年48','騎士32','騎士48','少年そのまま','熊そのまま','新・女の子','新・エルフ','新・魔族','新・少年','新・熊','新・金髪','新・フード','新・少女','新・クマ','少女48','少女32','男の子','よろい','エルフ','老人']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); }
   if(G.party && G.members && G.members['リリィ'] && G.members['リリィ'].avail && !G.party.includes('リリィ') && G.party.length<4) G.party.splice(Math.min(1,G.party.length),0,'リリィ'); }
 // 見比べ用：新しいやり方で描いた32×40のドット絵（中身はアルトと同じ。絵だけ違う）
-const COMPARE=[['少年48','img/c48_001.png'],['少年32','img/c32_001.png'],['少女48','img/c48_002.png'],['少女32','img/c32_002.png']];
+const COMPARE=[['男の子','img/d48_022.png'],['よろい','img/d48_023.png'],['エルフ','img/d48_024.png'],['老人','img/d48_008.png']];
 for(const [nw] of COMPARE){ CHARS[nw]={...CHARS['アルト'],role:'見比べ用'}; AFF[nw]=AFF['アルト']; FAV[nw]=FAV['アルト']; if(typeof SKILLS!=='undefined') SKILLS[nw]=SKILLS['アルト']; if(typeof KIT!=='undefined') KIT[nw]=KIT['アルト']; }
 function addCompare(lead){ for(const [nw] of COMPARE){ if(!G.members[nw]||!G.members[nw].avail) join(nw,true); } if(lead&&COMPARE.length) G.party=COMPARE.map(c=>c[0]).slice(0,4); }
 const LOOK = {};
