@@ -178,6 +178,7 @@ function pickTargets(tgt){ const en=alive(B.enemies); if(!en.length) return [];
 // ---------- 通常攻撃 ----------
 async function normalAct(u,opt){
   const s=u.N, P=u.P; if(!alive(B.enemies).length) return;
+  if(!u.isEnemy){ u.pose=true; renderTop(B.party); const bb=B; clearTimeout(u.poseT); u.poseT=setTimeout(()=>{ u.pose=false; if(B===bb) renderTop(B.party); }, 700/G.settings.speed); }
   await blog(`${u.name}の ${s.nm}！`,250);
   if(!u.isEnemy){ const M=meter(u); (M.by[s.nm]||(M.by[s.nm]={dmg:0,heal:0,n:0,crit:0})).n++; }
   const base=25+(P.breath||0);
@@ -190,7 +191,7 @@ async function normalAct(u,opt){
 // ---------- アクティブ ----------
 async function useActive(u){
   const a=u.A; const M=meter(u); M.acts++; (M.by[a.nm]||(M.by[a.nm]={dmg:0,heal:0,n:0})).n++;
-  u.pose=true; renderTop(B.party); const bb=B; setTimeout(()=>{ u.pose=false; if(B===bb) renderTop(B.party); }, 1100/G.settings.speed);
+  u.pose=true; renderTop(B.party); const bb=B; clearTimeout(u.poseT); u.poseT=setTimeout(()=>{ u.pose=false; if(B===bb) renderTop(B.party); }, 1100/G.settings.speed);
   await blog(`<span style="color:#ffd166">★</span> ${u.name}の ${a.nm}！`,450); sfx(a.rank>=5?'ult':'buff');
   let pow=(1+(u.nextPow||0)/100)*(1+((u.gx&&u.gx.ap)||0)/100); u.nextPow=0;
   if(u.P.blood){ const c=Math.round(u.mhp*0.15); if(u.hp>c+1){ u.hp-=c; u.taken=(u.taken||0)+c; pop(u,'-'+c,'#fca5a5'); pow*=1+u.P.blood/100; } }
@@ -422,7 +423,7 @@ async function firePassive(u,id){
   const P=u.P, v=P[id], def=u.kit.P.find(p=>p.id===id); if(!def||u.hp<=0&&id!=='vengeance') return;
   const nm=def.nm; const en=()=>alive(B.enemies);
   if(!en().length) return;
-  u.pose=true; renderTop(B.party); const bb=B; setTimeout(()=>{ u.pose=false; if(B===bb) renderTop(B.party); }, 900/G.settings.speed);
+  u.pose=true; renderTop(B.party); const bb=B; clearTimeout(u.poseT); u.poseT=setTimeout(()=>{ u.pose=false; if(B===bb) renderTop(B.party); }, 900/G.settings.speed);
   await blog(`<span style="color:#7dd3fc">◆</span> ${u.name}の ${nm}！`,420); sfx('buff');
   const all=async(o)=>{ for(const e of en()) await hit(u,e,{passive:1,skill:nm,...o}); };
   switch(id){

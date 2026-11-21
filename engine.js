@@ -460,7 +460,7 @@ function renderTop(battleUnits){
     else { const m=G.members[n], s=calcStats(n); hp=m.hp;mhp=s.hp; dead=hp<=0; }
     const lv=G.members[n].lv;
     if(battleUnits){ const u=battleUnits[i];
-      h+=`<div class="chip bchip${act?' act':''}${dead?' dead':''}">${st?`<span class="st">${st}</span>`:''}<img class="bicon${u.pose&&!dead?' pose':''}" src="${spriteURL(n,dead?'ko':u.pose?'pose':0)}">${stackLabel(u)}<div class="bin"><div class="nm"><span>${n}</span><span>Lv${lv}</span></div>${gaugeHTML(hp,mhp,gauge)}</div></div>`; continue; }
+      h+=`<div class="chip bchip${act?' act':''}${dead?' dead':''}">${st?`<span class="st">${st}</span>`:''}${stackLabel(u)}<div class="nm"><span>${n}</span></div><div class="brow"><img class="bicon${u.pose&&!dead?' pose':''}" src="${spriteURL(n,dead?'ko':u.pose?'pose':0)}"><div class="bin">${gaugeHTML(hp,mhp,gauge)}</div></div></div>`; continue; }
     h+=`<div class="chip${act?' act':''}${dead?' dead':''}">${st?`<span class="st">${st}</span>`:''}<div class="nm"><span>${n}</span><span>Lv${lv}</span></div>
     ${gaugeHTML(hp,mhp)}</div>`;
   }

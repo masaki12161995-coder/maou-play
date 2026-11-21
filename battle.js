@@ -415,7 +415,7 @@ function meterHTML(R, tab){
     const sub = tab==='dmg' ? `<span>${M.acts?`★アクティブ×${M.acts}`:'アクティブなし'}${M.crit?`・会心×${M.crit}`:''}</span><span>${M.max?`最大の一撃 ${M.max.toLocaleString()}`:''}${best?' <b class="pb">自己ベスト！</b>':''}</span>`
       : tab==='heal' ? `<span>${v?'':'回復していない'}</span><span></span>` : `<span>${v?'':'無傷'}</span><span></span>`;
     const rk = v>0 && i===0 ? `<b class="rk r1">${tab==='dmg'?'MVP':tab==='heal'?'癒し手':'盾役'}</b>` : `<b class="rk">${v>0?i+1:'―'}</b>`;
-    return `<div class="mrow${v>0?'':' zero'}${v>0&&i===0?' top':''}" data-mrow="${i}">${rk}<img src="${spriteURL(r.n,0)}"><div class="mmain"><div class="mtop"><b>${r.n}</b><span><b class="${tab}">${v.toLocaleString()}</b> <small>${total?Math.round(v/total*100):0}%</small></span></div>
+    return `<div class="mrow${v>0?'':' zero'}${v>0&&i===0?' top':''}" data-mrow="${i}">${rk}<img class="portrait" data-n="${r.n}" src="${spriteURL(r.n,0)}"><div class="mmain"><div class="mtop"><b>${r.n}</b><span><b class="${tab}">${v.toLocaleString()}</b> <small>${total?Math.round(v/total*100):0}%</small></span></div>
       <div class="mbar ${tab}"><i style="width:${v/top*100}%"></i></div><div class="msub">${sub}</div>
       <div class="mdet" style="display:${RT.resOpen===r.n?'block':'none'}">${det||'<div class="mby"><span>なし</span></div>'}</div></div></div>`; }).join('');
   return `<div class="ptitle"><span>この戦闘の成績</span><span>${RES_TABS.find(x=>x[0]===tab)[1]} 合計 ${total.toLocaleString()}</span></div>${tabs}<div class="meter">${list}</div><div class="mhint" style="font-size:10px;color:var(--sub);text-align:right">名前をタップで内訳</div>`;
@@ -424,10 +424,11 @@ function showResult(R){
   return new Promise(res=>{
     const el=$('result'); const lab={hp:'HP',atk:'攻撃',def:'防御',mat:'魔攻',mdf:'魔防',spd:'速度'};
     const upHTML=R.ups.map(x=>{
-      const head=`<div style="display:flex;align-items:center;gap:8px"><img src="${spriteURL(x.n,0)}" class="pspr"><div style="flex:1"><b>${x.n}</b>${x.inParty?'':' <span class="tag">控え</span>'}</div><div style="color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums">Lv ${x.lv0} → ${x.lv}</div></div>`;
-      if(!x.inParty) return `<div class="card upc" style="padding:6px 10px">${head}${x.learned.length?`<div style="font-size:12px;color:var(--gold)">✦ 覚えた：${x.learned.join('、')}</div>`:''}</div>`;
+      const nameLv=`<div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><b>${x.n}</b>${x.inParty?'':' <span class="tag">控え</span>'}</div><div style="color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums">Lv ${x.lv0} → ${x.lv}</div></div>`;
+      const learned=x.learned.length?`<div style="margin-top:4px;font-size:12px;color:var(--gold)">✦ 覚えた：${x.learned.join('、')}</div>`:'';
+      if(!x.inParty) return `<div class="card upc" style="padding:6px 10px;display:flex;align-items:center;gap:8px"><img class="rpor sm portrait" data-n="${x.n}" src="${spriteURL(x.n,0)}"><div style="flex:1;min-width:0">${nameLv}${learned}</div></div>`;
       const rows=['hp','atk','def','mat','mdf','spd'].map(k=>[lab[k],x.after[k],x.after[k]-x.before[k]]);
-      return `<div class="card upc" style="padding:8px 10px">${head}<div style="margin-top:6px">${statGrid(rows,1)}</div>${x.learned.length?`<div style="margin-top:6px;font-size:12px;color:var(--gold)">✦ 覚えた：${x.learned.join('、')}</div>`:''}</div>`; }).join('');
+      return `<div class="card upc" style="padding:8px 10px;display:flex;align-items:center;gap:10px"><img class="rpor portrait" data-n="${x.n}" src="${spriteURL(x.n,0)}"><div style="flex:1;min-width:0">${nameLv}<div style="margin-top:4px">${statGrid(rows,1)}</div>${learned}</div></div>`; }).join('');
     // 手に入れたもの：装備は中身（素の強さ・効果）まで。道具は同じ位置に「道具」の枠
     const dropHTML=R.dropRes.map(({it,sold})=>`<div class="item drop${it.r>=3?' rare q'+it.r:''}">${itemLine(it)}${sold?'<small class="cnt" style="flex-basis:2.6em">売却</small>':''}</div>`).join('')
       +(()=>{ const T={}, order=[]; for(const nm of R.gotItems){ const x=goodByName(nm); if(!T[x.n]){ T[x.n]=x; order.push(x.n); x.cnt0=0; } T[x.n].cnt0+=x.cnt; }

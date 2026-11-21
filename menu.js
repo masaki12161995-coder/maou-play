@@ -91,7 +91,7 @@ function statsCard(n){
   ${statGrid(statRows(n))}${(()=>{ const g=gxText(calcStats(n)); return g?`<div style="font-size:11px;color:var(--sub);margin-top:6px">ゲージ：${g}</div>`:''; })()}</div>`;
 }
 // 顔のところの人物：足ぶみを何回かしてから、技のポーズを見せる
-let PORTRAIT_T=0; const PORTRAIT_SEQ=[0,0,0,0,0,0,'pose','pose','pose','pose']; // 正面で立つ→技のポーズ、をゆっくりくり返す
+let PORTRAIT_T=0; const PORTRAIT_SEQ=[0,0,'pose','pose']; // 正面で立つ→技のポーズ、をゆっくりくり返す
 setInterval(()=>{ PORTRAIT_T=(PORTRAIT_T+1)%PORTRAIT_SEQ.length; const f=PORTRAIT_SEQ[PORTRAIT_T]; document.querySelectorAll('img.portrait').forEach(im=>{ im.src=spriteURL(im.dataset.n,f); }); },450);
 function scrStatus(n){
   const m=G.members[n];
