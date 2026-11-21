@@ -291,7 +291,7 @@ function drawTile(m,v,x,y,px,py){
 function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
   if(hasImg(look)){ const c=icol===undefined?1:icol, r=irow!==undefined?irow:(DIRROW[dir]||0);
     cx.fillStyle='#0004'; cx.beginPath(); cx.ellipse(x+16,y+33,9,3,0,0,7); cx.fill();
-    const fw=look.img.naturalWidth/3, fh=look.img.naturalHeight/5, k=32/fw; cx.imageSmoothingEnabled=false; cx.drawImage(look.img, c*fw, r*fh, fw, fh, x, y+36-fh*k, 32, fh*k); return; }
+    const fw=look.img.naturalWidth/3, fh=look.img.naturalHeight/5, k=32/fw; cx.imageSmoothingEnabled=!!look.smooth; if(look.smooth) cx.imageSmoothingQuality='high'; cx.drawImage(look.img, c*fw, r*fh, fw, fh, x, y+36-fh*k, 32, fh*k); cx.imageSmoothingEnabled=false; return; }
   const P=2; const r=(px,py,w,h,c)=>{cx.fillStyle=c;cx.fillRect(x+px*P,y+py*P,w*P,h*P);};
   const skin=look.skin||'#f2c79b', hair=look.hair, col=look.col, col2=look.col2||shade(col,-.3), st=look.style||'short';
   // 影
@@ -319,14 +319,18 @@ function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
 // 見比べ用に一時的に入れていた仲間を、記録から外す（見比べは終わった）
 function removeCompare(){ for(const n of ['新アルト','新リリィ']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); } }
 // 見比べ用：同じ絵を、1コマ32×40と48×64の2通りで（中身はアルトと同じ。絵だけ違う）
-const COMPARE=[['少年32','img/cmp_boy32.png'],['少年48','img/cmp_boy48.png'],['騎士32','img/cmp_knight32.png'],['騎士48','img/cmp_knight48.png']];
+const COMPARE=[['少年32','img/cmp_boy32.png'],['少年48','img/cmp_boy48.png'],['騎士32','img/cmp_knight32.png'],['騎士48','img/cmp_knight48.png'],['少年そのまま','img/raw_boy.png'],['熊そのまま','img/raw_bear.png']];
+const SMOOTH_LOOK=new Set(['少年そのまま','熊そのまま']);   // 大きな絵をそのまま縮めて映す（ドットにしない）
 for(const [nw] of COMPARE){ CHARS[nw]={...CHARS['アルト'],role:'見比べ用'}; AFF[nw]=AFF['アルト']; FAV[nw]=FAV['アルト']; if(typeof SKILLS!=='undefined') SKILLS[nw]=SKILLS['アルト']; if(typeof KIT!=='undefined') KIT[nw]=KIT['アルト']; }
-function addCompare(){ for(const [nw] of COMPARE){ if(!G.members[nw]||!G.members[nw].avail) join(nw,true); } }
+function addCompare(){ for(const [nw] of COMPARE){ if(!G.members[nw]||!G.members[nw].avail) join(nw,true); }
+  // 見比べ中：パーティはアルト・リリィ・「そのまま」の2人（ほかは控え）
+  G.party=['アルト','リリィ','少年そのまま','熊そのまま'].filter(n=>G.members[n]&&G.members[n].avail); }
 const LOOK = {};
 for(const n in CHARS){ const c=CHARS[n]; LOOK[n]={hair:c.hair,col:c.col,col2:c.col2,style:c.style}; }
 // 歩行ドット絵（1コマ16×20、横3コマ×縦5段：下/左/右/上/技のポーズ）。細かい版（1コマ32×40）も同じ並びで使える
-const SPRITE_FILES={'少年32':'img/cmp_boy32.png','少年48':'img/cmp_boy48.png','騎士32':'img/cmp_knight32.png','騎士48':'img/cmp_knight48.png','アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
+const SPRITE_FILES={'少年そのまま':'img/raw_boy.png','熊そのまま':'img/raw_bear.png','少年32':'img/cmp_boy32.png','少年48':'img/cmp_boy48.png','騎士32':'img/cmp_knight32.png','騎士48':'img/cmp_knight48.png','アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
 const SPR_URL={};
+for(const n of SMOOTH_LOOK) if(LOOK[n]) LOOK[n].smooth=true;
 for(const n in SPRITE_FILES){ const im=new Image(); im.onload=()=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }; im.src=SPRITE_FILES[n]; }
 const DIRROW={down:0,left:1,right:2,up:3};
 // 町の人12種類
@@ -418,6 +422,7 @@ function chestKey(o){return `chest_${RT.map.id}_${RT.map.floor||0}_${o.ci}${LOCS
 function spriteURL(name,frame){ const lk=LOOK[name]; const key=name+'|'+frame+'|'+(hasImg(lk)?1:0); if(SPR_URL[key]) return SPR_URL[key];
   const c=document.createElement('canvas'); const g=c.getContext('2d');
   if(hasImg(lk)&&frame==='ko'&&typeof standFrame==='function'){ const k=standFrame(lk.img,'x'); c.width=k.width; c.height=k.height; g.drawImage(k,0,0); }
+  else if(hasImg(lk)&&lk.smooth){ const fw=lk.img.naturalWidth/3, fh=lk.img.naturalHeight/5, W2=96, H2=Math.round(fh*96/fw); c.width=W2; c.height=H2; g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; const sx=frame==='pose'?0:(frame?2:0)*fw, sy=frame==='pose'?fh*4:0; g.drawImage(lk.img,sx,sy,fw,fh,0,0,W2,H2); }
   else if(hasImg(lk)){ const fw=lk.img.naturalWidth/3, fh=lk.img.naturalHeight/5; c.width=fw; c.height=fh; g.imageSmoothingEnabled=false; if(frame==='pose') g.drawImage(lk.img,0,fh*4,fw,fh,0,0,fw,fh); else g.drawImage(lk.img,(frame?2:0)*fw,0,fw,fh,0,0,fw,fh); }
   else { c.width=32; c.height=34; drawSprite(0,0,lk,frame==='pose'?1:(frame||0),'down',g); }
   try{ return SPR_URL[key]=c.toDataURL(); }catch(e){ const d=document.createElement('canvas'); d.width=32; d.height=34; drawSprite(0,0,{...lk,img:null},0,'down',d.getContext('2d')); return d.toDataURL(); } }
