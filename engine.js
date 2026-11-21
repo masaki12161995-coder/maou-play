@@ -567,6 +567,8 @@ document.addEventListener('gesturestart',e=>e.preventDefault());
 document.addEventListener('dblclick',e=>e.preventDefault());
 
 const DXY={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+// 1マス歩くのにかかる時間（ミリ秒）。人やイベントで歩く村人も同じ速さにそろえる
+const STEP_MS=250;
 function stepLoop(){
   if(RT.saveWhenFree!==undefined && RT.saveWhenFree!==false && G && RT.mode==='field' && !RT.busy && !RT.event && !msgResolve && RT.map && $('screen').style.display!=='flex'){ if(G.chapter===RT.saveWhenFree) doSave(); RT.saveWhenFree=false; }
   if(RT.mode==='field' && !RT.busy && !RT.moving && !msgResolve && RT.dir && $('screen').style.display!=='flex'){
@@ -574,8 +576,8 @@ function stepLoop(){
     if(m.town && ny>=m.h-1 && (nx===9||nx===10)){ leaveToWorld(); return; }
     if(walkable(m,nx,ny)){
       RT.trail.unshift({x:G.x,y:G.y,dir:(RT.trail[0]&&RT.trail[0].x===G.x&&RT.trail[0].y===G.y)?RT.trail[0].dir:G.dir}); RT.trail.length=4;
-      RT.stepN=(RT.stepN||0)+1; RT.moving={fx:G.x,fy:G.y,t0:performance.now(),dur:150}; G.x=nx; G.y=ny;
-      setTimeout(()=>{ RT.moving=null; onStep(); },150);
+      RT.stepN=(RT.stepN||0)+1; RT.moving={fx:G.x,fy:G.y,t0:performance.now(),dur:STEP_MS}; G.x=nx; G.y=ny;
+      setTimeout(()=>{ RT.moving=null; onStep(); },STEP_MS);
     }
   }
 }
