@@ -149,10 +149,11 @@ function showBattleBar(){
 }
 
 function layoutEnemies(){ const W=VW; const es=B.enemies, n=es.length;
-  // 絵の幅に合わせて、すき間が均等になるように並べる（大きい敵がとなりに食い込まないように）
-  const ws=es.map(e=>{ const im=ENEMY_PIC[e.dexName||e.nm||e.name]; return im&&im.naturalWidth? im.naturalWidth*2 : 64; });
-  const tot=ws.reduce((a,b)=>a+b,0);
-  if(tot>W*0.98){ let gap=(W-tot)/(n-1||1), x=0; es.forEach((e,i)=>{ e.x=x+ws[i]/2; x+=ws[i]+gap; }); return; }
+  // 絵の幅に合わせて並べる。入りきらないときは、全員を同じ割合で小さくして、重ならないようにする
+  const nat=es.map(e=>{ const im=ENEMY_PIC[e.dexName||e.nm||e.name]; return im&&im.naturalWidth? im.naturalWidth : 32; });
+  const sum=nat.reduce((a,b)=>a+b,0), minGap=6;
+  B.picP=Math.min(2,(W-minGap*(n+1))/sum);
+  const ws=nat.map(w=>w*B.picP), tot=ws.reduce((a,b)=>a+b,0);
   const gap=(W-tot)/(n+1); let x=gap; es.forEach((e,i)=>{ e.x=x+ws[i]/2; x+=ws[i]+gap; }); }
 
 // ---------- 表示 ----------
@@ -202,13 +203,13 @@ function drawBattle(){
     cx.globalAlpha=k<.7?1:1-(k-.7)/.3; cx.font='bold 26px sans-serif'; cx.textAlign='center'; cx.lineWidth=4; cx.strokeStyle='#000'; cx.strokeText(p.text,x,y); cx.fillStyle=p.color||'#fff'; cx.fillText(p.text,x,y); cx.globalAlpha=1; }
 }
 // 敵の絵：番号の付いた絵（img/enemy_番号.png）がある敵は絵で、まだない敵は今までの図形で描く
-const ENEMY_NO={"プルリン": "001", "ヤミコウモリ": "002", "ツノウサギ": "003", "門番の大鎧": "004", "からっぽの鎧": "005", "城の骨犬": "006", "灯火の霊": "007", "キバオオカミ": "008", "ドクキノコ": "009", "はぐれ兵": "010", "森ネズミ": "011", "ツルハシゴブリン": "012", "岩トカゲ": "013", "ガス溜まり": "014", "坑道コウモリ": "015", "焼け跡の亡霊": "016", "火喰いトカゲ": "017", "黒将軍の偵察兵": "018", "黒将軍の歩兵": "019", "黒将軍の弓兵": "020", "黒将軍の魔術兵": "021", "鉄の猟犬": "022", "坑道の主・大土竜": "023", "黒将ザガン（1回目）": "024", "ハサミガニ": "025", "ウミネコ": "026", "潮だまりのプルリン": "027", "沼ガエル": "028", "霧の精": "029", "人喰い草": "030", "泥人形": "031", "洞窟ザメ": "032", "光喰い": "033", "フナムシの群れ": "034", "さまよう剣士": "035", "骸骨弓兵": "036", "戦場カラス": "037", "怨念の旗": "038", "水死の船員": "039", "イカの化け物": "040", "船底の亡霊": "041", "動く本": "042", "インク溜まり": "043", "書庫の番人": "044", "紙魚の群れ": "045", "サソリ兵": "046"};
+const ENEMY_NO={"プルリン": "001", "ヤミコウモリ": "002", "ツノウサギ": "003", "門番の大鎧": "004", "からっぽの鎧": "005", "城の骨犬": "006", "灯火の霊": "007", "キバオオカミ": "008", "ドクキノコ": "009", "はぐれ兵": "010", "森ネズミ": "011", "ツルハシゴブリン": "012", "岩トカゲ": "013", "ガス溜まり": "014", "坑道コウモリ": "015", "焼け跡の亡霊": "016", "火喰いトカゲ": "017", "黒将軍の偵察兵": "018", "黒将軍の歩兵": "019", "黒将軍の弓兵": "020", "黒将軍の魔術兵": "021", "鉄の猟犬": "022", "坑道の主・大土竜": "023", "ハサミガニ": "025", "ウミネコ": "026", "潮だまりのプルリン": "027", "沼ガエル": "028", "霧の精": "029", "人喰い草": "030", "泥人形": "031", "洞窟ザメ": "032", "光喰い": "033", "フナムシの群れ": "034", "さまよう剣士": "035", "骸骨弓兵": "036", "戦場カラス": "037", "怨念の旗": "038", "水死の船員": "039", "イカの化け物": "040", "船底の亡霊": "041", "動く本": "042", "インク溜まり": "043", "書庫の番人": "044", "紙魚の群れ": "045", "サソリ兵": "046", "砂ミミズ": "024", "ハゲワシ": "047", "ミイラ兵": "048", "砂の巨人": "049", "呪いの壺": "050", "遺跡の蛇": "051", "雪男": "052", "氷の精": "053", "白オオカミ": "054", "氷柱の魔物": "055", "封じられた獣": "057", "祈る石像": "058", "地下の黒魔術師": "059", "下水の大ナメクジ": "060", "ドブネズミの王": "061", "水路の亡霊": "062", "瓦礫の魔物": "063", "虚の羽虫": "064", "作られた天使": "065", "聖堂騎士の亡霊": "056", "虚の影": "066", "神殿の守り手": "067", "裂け目の獣": "068", "虚に呑まれた兵": "069", "聖騎士": "070", "審問官": "071", "鎖の番人": "072", "虚の獣": "073", "記憶の亡霊": "074", "なり損ないの器": "075", "黒将軍の重騎兵": "076", "黒将軍の呪術兵": "077", "黒将軍の旗手": "078", "鋼の猟犬": "079"};
 const ENEMY_PIC_FILES={}; for(const n in ENEMY_NO) ENEMY_PIC_FILES[n]='img/enemy_'+ENEMY_NO[n]+'.png';
 const ENEMY_PIC={}; for(const n in ENEMY_PIC_FILES){ const im=new Image(); im.onload=()=>{ ENEMY_PIC[n]=im; for(const k in ENEMY_ICON) if(k===n) delete ENEMY_ICON[k]; }; im.src=ENEMY_PIC_FILES[n]; }
 function drawEnemyPic(e,im,x,y,s,cx,icon){
   if(icon){ const c=cx.canvas, P=Math.max(1,Math.floor(Math.min(c.width,c.height)/Math.max(im.naturalWidth,im.naturalHeight))), w=im.naturalWidth*P, h=im.naturalHeight*P;
     cx.save(); cx.imageSmoothingEnabled=false; cx.drawImage(im,Math.round((c.width-w)/2),Math.round((c.height-h)/2)+P,w,h); cx.restore(); return; }
-  const P=icon?1:2, w=im.naturalWidth*P, h=im.naturalHeight*P, t=RT.anim, fly=/コウモリ|霊|亡霊|ガス|精|光喰い|旗|動く本/.test(e.nm||e.dexName||e.name||'');
+  const P=(B&&B.picP)||2, w=Math.round(im.naturalWidth*P), h=Math.round(im.naturalHeight*P), t=RT.anim, fly=/コウモリ|霊|亡霊|ガス|精|光喰い|旗|動く本/.test(e.nm||e.dexName||e.name||'');
   const bob=icon?0:(fly?Math.round(Math.sin(t/10)*3)-3:Math.round(Math.sin(t/22)*1.2));
   const foot=Math.round(y+36*s), left=Math.round(x-w/2), top=foot-h+2*P+bob;
   cx.save(); if(e.glow){ cx.fillStyle=`rgba(250,204,21,${0.25+0.15*Math.sin(t/6)})`; cx.beginPath(); cx.arc(x,foot-h/2,h*0.55,0,7); cx.fill(); }

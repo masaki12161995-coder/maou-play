@@ -25,11 +25,12 @@ function closeEyes(g,w,h,mode){
     else { px(ex,e.y+1,e.c); px(ex+1,e.y+1,e.c); }
   }
 }
-// 正面の「立ち」のコマ（目を描き替えたもの）
+// 正面の「立ち」のコマ（目を閉じたもの）。素材バンクの新しい絵（1コマ48×60）は、5段目の右端に「目を閉じるポーズ」があるので、それを使う
 function standFrame(img,mode){
   const fw=img.naturalWidth/3, fh=img.naturalHeight/5, c=document.createElement('canvas'); c.width=fw; c.height=fh;
-  const g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(img,fw,0,fw,fh,0,0,fw,fh);
-  if(mode) try{ closeEyes(g,fw,fh,mode); }catch(e){}
+  const closed=mode && fw>=48;
+  const g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(img,closed?fw*2:fw,closed?fh*4:0,fw,fh,0,0,fw,fh);
+  if(mode && !closed) try{ closeEyes(g,fw,fh,mode); }catch(e){}
   return c;
 }
 // 倒れた姿：正面の立ち絵を横に90度倒す（頭が左）
@@ -122,12 +123,12 @@ function drawSceneObj(o,sx,sy){
     return true; }
   if(o.type==='body'){
     cx.fillStyle='#0006'; cx.beginPath(); cx.ellipse(sx+16,sy+22,22,7,0,0,7); cx.fill();
-    if(MAOU_IMG.naturalWidth){ const c=lyingCanvas(MAOU_IMG,'line','maou'); cx.imageSmoothingEnabled=false; cx.drawImage(c,Math.round(sx+16-c.width/2),Math.round(sy+16-c.height/2)); }
+    if(MAOU_IMG.naturalWidth){ const c=lyingCanvas(MAOU_IMG,'line','maou'), k=32/c.height, w=c.width*k, h=c.height*k; cx.imageSmoothingEnabled=false; cx.drawImage(c,Math.round(sx+16-w/2),Math.round(sy+16-h/2),w,h); }
     return true; }
   if(o.type==='boss' && RT.map && BOSS_WHO[RT.map.id]){ if(bossActorObj(o)) drawBossActor(o,sx,sy); return true; }
   if(o.type==='fallen'){
     const lk=o.look||LOOK[o.who]; if(lk&&hasImg(lk)){ cx.fillStyle='#0006'; cx.beginPath(); cx.ellipse(sx+16,sy+22,22,7,0,0,7); cx.fill();
-      const c=lyingCanvas(lk.img,o.eyes||'line',o.who); cx.imageSmoothingEnabled=false; cx.drawImage(c,Math.round(sx+16-c.width/2),Math.round(sy+16-c.height/2)); }
+      const c=lyingCanvas(lk.img,o.eyes||'line',o.who), k=32/c.height, w=c.width*k, h=c.height*k; cx.imageSmoothingEnabled=false; cx.drawImage(c,Math.round(sx+16-w/2),Math.round(sy+16-h/2),w,h); }
     return true; }
   return false;
 }

@@ -36,8 +36,6 @@ display:flex;flex-direction:column;max-width:520px;margin:0 auto;overflow:hidden
 #cv{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;border-radius:12px;background:#000;display:block}
 #hud{position:absolute;left:12px;top:6px;right:12px;display:flex;justify-content:space-between;pointer-events:none;font-size:11px}
 #hud span{background:#0009;border-radius:8px;padding:2px 8px;color:var(--sub)}
-#cmpBtn{position:absolute;right:12px;top:30px;z-index:4;font-size:12px;font-weight:700;color:#fff;background:#1e293bdd;border:1px solid #facc1588;border-radius:10px;padding:6px 10px}
-#app.bm #cmpBtn,#app.wm #cmpBtn{display:none!important}
 #msg{position:absolute;left:12px;right:12px;bottom:8px;background:var(--msgbg,rgba(12,17,32,.94));border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;
 font-size:15px;line-height:1.6;display:none;min-height:72px;white-space:pre-wrap}
 #msg .who{color:var(--gold);font-weight:700;font-size:13px;margin-bottom:2px}
@@ -321,7 +319,7 @@ body.th-dq .mt svg{stroke:#fff}
 <body>
 <div id="app">
   <div id="top"></div>
-  <div id="view"><canvas id="cv" width="352" height="352"></canvas><div id="hud"><span id="hudL"></span><span id="hudR"></span></div><button id="cmpBtn" style="display:none" onclick="event.stopPropagation();toggleCompare()"></button><div id="msg"></div><div id="toast"></div></div>
+  <div id="view"><canvas id="cv" width="352" height="352"></canvas><div id="hud"><span id="hudL"></span><span id="hudR"></span></div><div id="msg"></div><div id="toast"></div></div>
   <div id="pad">
     <div id="padField">
       <button class="bigb" id="bM">メニュー</button>
