@@ -288,10 +288,10 @@ function drawTile(m,v,x,y,px,py){
   if(v===6){ cx.fillStyle='#e8dcc0'; cx.fillRect(px,py,s,s); cx.fillStyle='#6b4423'; cx.fillRect(px+8,py+4,16,28); cx.fillStyle='#fbbf24'; cx.fillRect(px+20,py+18,3,3); return; }
 }
 // キャラクターのドット絵（16x16 を 2倍）
-function drawSprite(x,y,look,frame,dir,ctxo,icol,irow){ const cx=ctxo||CX0;
+function drawSprite(x,y,look,frame,dir,ctxo,icol,irow,lift){ const cx=ctxo||CX0;
   if(hasImg(look)){ const c=icol===undefined?1:icol, r=irow!==undefined?irow:(DIRROW[dir]||0);
     cx.fillStyle='#0004'; cx.beginPath(); cx.ellipse(x+16,y+33,9,3,0,0,7); cx.fill();
-    const fw=look.img.naturalWidth/3, fh=look.img.naturalHeight/5, k=32/fw; cx.imageSmoothingEnabled=!!look.smooth; if(look.smooth) cx.imageSmoothingQuality='high'; cx.drawImage(look.img, c*fw, r*fh, fw, fh, x, y+36-fh*k, 32, fh*k); cx.imageSmoothingEnabled=false; return; }
+    const fw=look.img.naturalWidth/3, fh=look.img.naturalHeight/5, k=32/fw; cx.imageSmoothingEnabled=!!look.smooth; if(look.smooth) cx.imageSmoothingQuality='high'; cx.drawImage(look.img, c*fw, r*fh, fw, fh, x, y+36-fh*k-(lift?k:0), 32, fh*k); cx.imageSmoothingEnabled=false; return; }
   const P=2; const r=(px,py,w,h,c)=>{cx.fillStyle=c;cx.fillRect(x+px*P,y+py*P,w*P,h*P);};
   const skin=look.skin||'#f2c79b', hair=look.hair, col=look.col, col2=look.col2||shade(col,-.3), st=look.style||'short';
   // 影
@@ -391,7 +391,7 @@ function drawField(){
   if(m.town){ for(const ex of [9,10]){ const sx=ex*TS-camX, sy=(m.h-1)*TS-camY; cx.fillStyle='#ffffff18'; cx.fillRect(sx,sy,TS,TS);} }
   // 住人
   const ents=[];
-  for(const n of m.npcs){ if(n.gone) continue; let nx=n.x, ny=n.y; if(n.mv){ const k=clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1); nx=n.mv.fx+(n.x-n.mv.fx)*k; ny=n.mv.fy+(n.y-n.mv.fy)*k; } ents.push({x:nx,y:ny,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:(n.walk&&walkCol(performance.now()-(n.walkT0||0))!==1)?1:0,col:n.walk?walkCol(performance.now()-(n.walkT0||0)):undefined,dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
+  for(const n of m.npcs){ if(n.gone) continue; let nx=n.x, ny=n.y; if(n.mv){ const k=clamp((performance.now()-n.mv.t0)/n.mv.dur,0,1); nx=n.mv.fx+(n.x-n.mv.fx)*k; ny=n.mv.fy+(n.y-n.mv.fy)*k; } ents.push({x:nx,y:ny,look:n.who?LOOK[n.who]:(n.bank?npcLookFor(n):(n.look&&n.look.img?n.look:npcLookFor(n))),fr:(n.walk&&walkCol(performance.now()-(n.walkT0||0))!==1)?1:0,col:n.walk?walkCol(performance.now()-(n.walkT0||0)):undefined,lift:!!n.walk&&walkCol(performance.now()-(n.walkT0||0))===1,dir:n.dir||'down',bang:n.excl||npcHasNew(n)}); }
   // 仲間（後ろについてくる）
   const pts=[{x:px,y:py,dir:G.dir}];
   const tr=RT.trail, mk=RT.moving?clamp((performance.now()-RT.moving.t0)/RT.moving.dur,0,1):1, wf=Math.floor(performance.now()/120)%2;
@@ -402,9 +402,9 @@ function drawField(){
     pts.push({x:fr.x+dx*mk,y:fr.y+dy*mk,dir:d,mv}); }
   if(m.solo) pts.length=1; if(RT.sleeping) pts.length=0;
   const pw=partyWalking();
-  pts.forEach((p,i)=>{ const c=(p.mv||pw)?walkCol(performance.now()-(RT.walkT0||0)+i*250):1; ents.push({x:p.x,y:p.y,look:LOOK[G.party[i]],fr:c===1?0:1,col:c,dir:p.dir,party:i}); });
+  pts.forEach((p,i)=>{ const wk=!!(p.mv||pw), c=wk?walkCol(performance.now()-(RT.walkT0||0)+i*250):1; ents.push({x:p.x,y:p.y,look:LOOK[G.party[i]],fr:c===1?0:1,col:c,lift:wk&&c===1,dir:p.dir,party:i}); });
   ents.sort((a,b)=>a.y-b.y||((b.party??9)-(a.party??9)));
-  for(const e of ents){ const sx=Math.round(e.x*TS-camX), sy=Math.round(e.y*TS-camY)-4; drawSprite(sx,sy,e.look,e.fr,e.dir,undefined,e.col);
+  for(const e of ents){ const sx=Math.round(e.x*TS-camX), sy=Math.round(e.y*TS-camY)-4; drawSprite(sx,sy,e.look,e.fr,e.dir,undefined,e.col,undefined,e.lift);
     if(e.bang){ cx.fillStyle='#facc15'; cx.font='bold 16px sans-serif'; cx.textAlign='center'; cx.fillText('！',sx+16,sy-2+Math.sin(RT.anim/8)*2); } }
   if(m.theme==='abyss'||m.theme==='crypt'||m.theme==='cave'||m.theme==='sewer'){ const g=cx.createRadialGradient(W/2,H/2,60,W/2,H/2,Math.max(W,H)*0.7); g.addColorStop(0,'#0000'); g.addColorStop(1,'#000c'); cx.fillStyle=g; cx.fillRect(0,0,W,H); }
 }
