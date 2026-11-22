@@ -322,7 +322,7 @@ function removeCompare(){ for(const n of ['新アルト','新リリィ','少年3
   if(G.party && G.members && G.members['リリィ'] && G.members['リリィ'].avail && !G.party.includes('リリィ') && G.party.length<4) G.party.splice(Math.min(1,G.party.length),0,'リリィ'); }
 // 見比べ用：新しいやり方で描いた32×40のドット絵（中身はアルトと同じ。絵だけ違う）
 // 見比べ用：32×40と48×60の4人ずつ。画面右上のボタンでパーティを一発で入れ替える
-const CMP_GROUPS=[['5〜8人目',[['大剣の戦士v4','img/v4_005.png'],['銀の騎士v4','img/v4_006.png'],['短剣使いv4','img/v4_007.png'],['老賢者v4','img/v4_008.png']]]];
+const CMP_GROUPS=[['1〜4人目',[['剣の少年','img/f_001.png'],['杖の子','img/f_002.png'],['祈りの子','img/f_003.png'],['武道家','img/f_004.png']]],['5〜8人目',[['大剣の戦士','img/f_005.png'],['銀の騎士','img/f_006.png'],['短剣使い','img/f_007.png'],['老賢者','img/f_008.png']]],['13〜16人目',[['金髪の騎士','img/f_013.png'],['旅商人','img/f_014.png'],['盾の少年','img/f_015.png'],['竪琴弾き','img/f_016.png']]]];
 const COMPARE=CMP_GROUPS.flatMap(g=>g[1]);
 for(const [nw] of COMPARE){ CHARS[nw]={...CHARS['アルト'],role:'見比べ用'}; AFF[nw]=AFF['アルト']; FAV[nw]=FAV['アルト']; if(typeof SKILLS!=='undefined') SKILLS[nw]=SKILLS['アルト']; if(typeof KIT!=='undefined') KIT[nw]=KIT['アルト']; }
 function cmpGroupIdx(){ return CMP_GROUPS.findIndex(g=>g[1].every((c,k)=>G.party[k]===c[0])); }
