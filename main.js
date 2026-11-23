@@ -87,7 +87,7 @@ function showTitle(){
   RT.mode='title'; $('title').style.display='flex'; $('msg').style.display='none'; hidePanel(); bgm(null);
   META=loadMeta(); const susp=loadSave('mzy_suspend'), ss=[1,2,3].map(k=>loadSave(slotKey(k)));
   $('tsub').textContent = META.cleared ? '― 首飾りは、どこへ消えた？ ―' : '― The Demon King Died Yesterday ―';
-  const start=async(fn)=>{ $('title').style.display='none'; await fn(); };
+  const start=async(fn)=>{ $('tbtns').innerHTML='<div class="tpk">読み込み中…</div>'; await imagesReady(); $('title').style.display='none'; await fn(); };
   const main=()=>{
     const b=[]; if(susp) b.push(['susp','中断したところから',`記録${susp.slot||1}・${saveInfo(susp)}`]); if(ss.some(Boolean)) b.push(['cont','つづきから','']); b.push(['new','はじめから','']);
     $('tbtns').innerHTML=b.map(([k,t,s])=>`<button class="cb" data-t="${k}">${t}${s?`<div style="font-size:11px;opacity:.7;font-weight:400;margin-top:2px">${s}</div>`:''}</button>`).join('');

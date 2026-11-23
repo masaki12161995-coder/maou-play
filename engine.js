@@ -291,29 +291,7 @@ function drawSprite(x,y,look,frame,dir,ctxo,icol,irow,lift){ const cx=ctxo||CX0;
   if(hasImg(look)){ const c=icol===undefined?1:icol, r=irow!==undefined?irow:(DIRROW[dir]||0);
     cx.fillStyle='#0004'; cx.beginPath(); cx.ellipse(x+16,y+33,9,3,0,0,7); cx.fill();
     const fw=look.img.naturalWidth/3, fh=look.img.naturalHeight/5, k=32/fw; cx.imageSmoothingEnabled=!!look.smooth; if(look.smooth) cx.imageSmoothingQuality='high'; cx.drawImage(look.img, c*fw, r*fh, fw, fh, x, y+36-fh*k-(lift?k:0), 32, fh*k); cx.imageSmoothingEnabled=false; return; }
-  const P=2; const r=(px,py,w,h,c)=>{cx.fillStyle=c;cx.fillRect(x+px*P,y+py*P,w*P,h*P);};
-  const skin=look.skin||'#f2c79b', hair=look.hair, col=look.col, col2=look.col2||shade(col,-.3), st=look.style||'short';
-  // 影
-  cx.fillStyle='#0004'; cx.beginPath(); cx.ellipse(x+16,y+30,9,3,0,0,7); cx.fill();
-  const lg=frame?1:0;
-  r(5,13-0,2,3- (lg?1:0),'#3b2a1e'); r(9,13,2,3-(lg?0:1),'#3b2a1e');
-  r(4,8,8,5,col); r(4,11,8,1,col2); if(st==='hood') r(4,8,8,5,col2);
-  r(3,8,1,4,skin); r(12,8,1,4,skin);
-  if(st==='hood'){ r(4,1,8,7,col2); r(5,3,6,4,skin); }
-  else { r(4,2,8,6,skin); }
-  if(st==='old'){ r(3,3,2,4,hair); r(11,3,2,4,hair); r(5,6,6,4,hair); }
-  else if(st!=='hood'){
-    r(4,1,8,2,hair); r(3,2,1,3,hair); r(12,2,1,3,hair); if(dir==='up') r(4,1,8,7,hair);
-    if(st==='long'){ r(3,4,1,6,hair); r(12,4,1,6,hair); }
-    if(st==='bob'){ r(3,3,2,5,hair); r(11,3,2,5,hair); r(4,3,8,1,hair); }
-    if(st==='braid'){ r(12,4,2,7,hair); r(12,11,2,1,'#fbbf24'); }
-    if(st==='pony'){ r(12,1,2,6,hair); }
-    if(st==='spiky'){ r(4,0,2,1,hair); r(7,0,2,1,hair); r(10,0,2,1,hair); }
-    if(st==='beard'){ r(5,6,6,2,hair); }
-    if(st==='beast'){ r(4,0,2,2,hair); r(10,0,2,2,hair); }
-  }
-  if(dir!=='up'){ const ex = dir==='left'?-1:dir==='right'?1:0; r(6+ex,5,1,1,'#111'); r(9+ex,5,1,1,'#111'); }
-  if(look.mark) { r(7,9,2,2,look.mark); }
+  // 絵がまだ読み込めていないときは何も描かない（読み込みはタイトルで待つ）
 }
 // 見比べ用に一時的に入れていた仲間を、記録から外す（見比べは終わった）。外したあと、パーティを今いる仲間でうめ直す
 function removeCompare(){ for(const n of ['新アルト','新リリィ','少年32','少年48','騎士32','騎士48','少年そのまま','熊そのまま','新・女の子','新・エルフ','新・魔族','新・少年','新・熊','新・金髪','新・フード','新・少女','新・クマ','少女48','少女32','男の子','よろい','エルフ','老人','ライオン','弓の少女','魔族','獣人の子','新・剣士','新・杖の子','新・祈りの子','新・武道家','新・盾の少年','新・吟遊詩人','新・弓使い','新・角の少女','剣士v2','杖の子v2','祈りの子v2','武道家v2','剣士v3','杖の子v3','祈りの子v3','武道家v3','剣士v4','杖の子v4','祈りの子v4','武道家v4','大剣の戦士v4','銀の騎士v4','短剣使いv4','老賢者v4','剣の少年','杖の子','祈りの子','武道家','大剣の戦士','銀の騎士','短剣使い','老賢者','金髪の騎士','旅商人','盾の少年','竪琴弾き']){ if(G.members) delete G.members[n]; if(G.party) G.party=G.party.filter(x=>x!==n); }
@@ -325,11 +303,14 @@ for(const n in CHARS){ const c=CHARS[n]; LOOK[n]={hair:c.hair,col:c.col,col2:c.c
 // 歩行ドット絵（1コマ16×20、横3コマ×縦5段：下/左/右/上/技のポーズ）。細かい版（1コマ32×40）も同じ並びで使える
 const SPRITE_FILES={'アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
 const SPR_URL={};
-for(const n in SPRITE_FILES){ const im=new Image(); im.onload=()=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }; im.src=SPRITE_FILES[n]; }
+// 人物の絵は、ゲームを始める前に全部読み込み終わるまで待つ（読み込み前に別の絵が一瞬出ないように）
+const WAIT_IMGS=[];
+function imagesReady(){ return Promise.race([Promise.all(WAIT_IMGS.map(im=>im.complete?1:new Promise(r=>{ im.addEventListener('load',r); im.addEventListener('error',r); }))), new Promise(r=>setTimeout(r,15000))]); }
+for(const n in SPRITE_FILES){ const im=new Image(); im.onload=()=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }; im.src=SPRITE_FILES[n]; WAIT_IMGS.push(im); }
 const DIRROW={down:0,left:1,right:2,up:3};
 // 町の人12種類
 const NPC_TYPES=['oldman','oldwoman','man','woman','boy','girl','soldier','merchant','priest','nun','miner','sailor'];
-const NPC_IMG={}; for(const k of NPC_TYPES){ const im=new Image(); im.onload=()=>{ NPC_IMG[k]=im; }; im.src='img/npc_'+k+'.png'; }
+const NPC_IMG={}; for(const k of NPC_TYPES){ const im=new Image(); im.onload=()=>{ NPC_IMG[k]=im; }; im.src='img/npc_'+k+'.png'; WAIT_IMGS.push(im); }
 // 呼び名から見た目を選ぶ（分からなければ番号で男女を振り分け）
 function npcType(label, seed){
   const L=label||'';
@@ -357,14 +338,8 @@ function speakerFace(who){
   const n=RT.talkNpc; if(n && (n.nm===who || !n.nm)){ if(n.who&&CHARS[n.who]) return spriteURL(n.who,0); if(n.bank&&typeof bankFaceURL==='function'){ const f=bankFaceURL(n.bank); if(f) return f; } if(n.type) return npcFaceURL(n.type); }
   const t=SPEAKER_TYPE[who]||npcType(who, hashStr(who)); return npcFaceURL(t);
 }
-function npcLookFor(n){ if(n.bank&&typeof bankLook==='function'){ const b=bankLook(n.bank); if(b) return b; } const k=n.type; if(k && NPC_IMG[k]) return (n.look={img:NPC_IMG[k]}); return n.oldLook||(n.oldLook=npcLook(n.seed||0)); }
+function npcLookFor(n){ if(n.bank&&typeof bankLook==='function'){ const b=bankLook(n.bank); if(b) return b; } const k=n.type; if(k && NPC_IMG[k]) return (n.look={img:NPC_IMG[k]}); return null; }
 function hasImg(look){ return look && look.img && look.img.naturalWidth>0; }
-function npcLook(seed){
-  const rng=mulberry(seed); const hairs=['#1f2937','#78350f','#a16207','#d6d3d1','#7c2d12','#e5e7eb','#111827'];
-  const cols=['#7c3aed','#0891b2','#b45309','#be123c','#4d7c0f','#334155','#a21caf','#0f766e','#c2410c'];
-  const sts=['short','long','bob','beard','old','pony','short'];
-  return {hair:hairs[Math.floor(rng()*hairs.length)], col:cols[Math.floor(rng()*cols.length)], style:sts[Math.floor(rng()*sts.length)]};
-}
 function drawField(){
   const m=RT.map; if(!m) return;
   const W=VW,H=VH;
