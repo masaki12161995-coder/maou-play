@@ -69,11 +69,15 @@ function openMenu(){
   const bsum=ks=>ks.reduce((a,k)=>a+(G.inv[k]||0),0);
   const bk=[['N',BOOKK.N],['A',BOOKK.A],['P',BOOKK.P],['W',BOOKS]].filter(([c,ks],i)=>i<3||bsum(ks)>0).map(([c,ks])=>`<span class="bki">${goodIconHTML(toolIcon(c==='W'?'book1':'b'+c+'1'),1).replace('ico ','ico xs ')}<b>${bsum(ks)}</b></span>`).join('');
   const h=`<div class="card mobj"><div class="mch">${CHAPTERS[Math.min(G.chapter,7)]}</div><div class="mgo">${G.obj||'―'}</div></div>
-  <div class="mparty">${party}</div><div class="skhint mph2" style="margin-top:-4px"><span>長押しで並べかえ</span>${memberList().length>G.party.length?'<button class="lnk" id="toParty">控えと入れ替え ›</button>':''}</div>
+  <div class="mparty">${party}</div>
+  <div class="skhint mph2" style="margin-top:-4px"><span>長押しで並べかえ</span>${memberList().length>G.party.length?'<button class="lnk" id="toParty">控えと入れ替え ›</button>':''}</div>
+  <div class="card mpow"><div><small>パーティーの戦闘力</small><b id="mPow">${partyPower().toLocaleString()}</b></div><button class="cb sm" id="mEq">一括装備${(POW.plan&&powSig()===POW.sig&&POW.plan.gain>0)?`<br><em>+${POW.plan.gain.toLocaleString()}</em>`:''}</button><button class="cb sm${G.settings.autoHeal?' on':''}" id="mHeal">自動回復 ${G.settings.autoHeal?'オン':'オフ'}</button></div>
   <div class="mtiles">${tile('status','ステータス')}${tile('equip','そうび',(()=>{ const c=G.gear.filter(x=>x.isNew).length; return c?`NEW ${c}`:''; })())}${tile('skill','スキル',upN?`強化${upN}`:'')}${tile('item','どうぐ')}${tile('mat','素材')}${tile('gear','装備品')}${tile('dex','図鑑')}${tile('setting','設定')}<button class="mt mq" data-a="quit"><span>中断して<br>終わる</span></button></div>
   <div class="card minfo"><div><small>所持金</small><b style="color:var(--gold)">${G.gold.toLocaleString()}G</b></div><div><small>技の書</small><span class="bks">${bk}</span></div><div><small>${G.frag?'素材・欠片':'錬成の素材'}</small><b>${G.mat}</b>${G.frag?` <b>欠片${G.frag}</b>`:''}</div></div>`;
   NAV=[]; navHere('menu', openMenu); openScreen('メニュー',h);
   $('scrBody').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ sfx('ok'); ({status:()=>scrStatus(G.party[0]),equip:()=>scrEquip(G.party[0]),skill:()=>scrSkill(G.party[0]),item:()=>scrItem(),mat:scrMat,gear:scrGear,setting:scrSetting,dex:()=>scrDex('e'),quit:doQuit})[b.dataset.a](); });
+  $('mEq').onclick=()=>{ const P=partyPlan(); if(P.gain<1){ sfx('tick'); toast('今がいちばん強い'); return; } const a=partyPower(); applyPlan(P); sfx('best'); openMenu(); countUp($('mPow'),a,partyPower(),900); toast('戦闘力 +'+P.gain.toLocaleString()); };
+  $('mHeal').onclick=()=>{ G.settings.autoHeal=!G.settings.autoHeal; sfx('tick'); toast(G.settings.autoHeal?'自動回復オン：戦闘のあと、薬草と蘇生の羽を自動で使う':'自動回復オフ'); openMenu(); };
   const tp=$('scrBody').querySelector('#toParty'); if(tp) tp.onclick=()=>{ sfx('ok'); scrParty(); };
   $('scrBody').querySelectorAll('[data-st]').forEach(b=>{ b.onclick=()=>{ if(DRAG.justDropped) return; sfx('ok'); scrStatus(b.dataset.st); };
     dragable(b,{ ghost:()=>b.querySelector('img').cloneNode(true), targets:()=>[...$('scrBody').querySelectorAll('[data-st]')].filter(x=>x!==b),

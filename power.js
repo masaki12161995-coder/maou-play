@@ -67,12 +67,12 @@ function applyPlan(P){
 const POW={sig:'',plan:null,timer:null,undo:null,undoT:null}; const ITEMID=new WeakMap(); let ITEMN=0;
 const iid=x=>{ if(!x) return 0; if(!ITEMID.has(x)) ITEMID.set(x,++ITEMN); return ITEMID.get(x); };
 function powSig(){ if(!G) return ''; return JSON.stringify([G.party, G.party.map(n=>{ const m=G.members[n]; return m?[m.lv, m.kit&&m.kit.rk, m.kit&&[m.kit.n,m.kit.a,m.kit.p], m.lock||0, SLOTS.map(sl=>{ const x=m.equip[sl]; return x?[iid(x),x.plus||0]:0; })]:0; }), G.gear.length, G.gear.reduce((a,x)=>a+iid(x)*7+(x.plus||0),0)]); }
+function partyPower(){ return G.party.reduce((a,n)=>a+(G.members[n]?power(n):0),0); }
 function updateEqBtn(){
   const b=$('bEq'); if(!b||!G) return;
-  const sig=powSig(); const total=G.party.reduce((a,n)=>a+(G.members[n]?power(n):0),0);
-  $('bEqV').textContent=total.toLocaleString();
-  if(sig!==POW.sig){ POW.sig=sig; POW.plan=null; b.classList.remove('glow'); $('bEqUp').textContent='';
-    clearTimeout(POW.timer); POW.timer=setTimeout(()=>{ if(powSig()!==sig) return; POW.plan=partyPlan(); const g=POW.plan.gain; b.classList.toggle('glow',g>0); $('bEqUp').textContent=g>0?'+'+g.toLocaleString():''; },120); }
+  const sig=powSig();
+  if(sig!==POW.sig){ POW.sig=sig; POW.plan=null; b.classList.remove('glow');
+    clearTimeout(POW.timer); POW.timer=setTimeout(()=>{ if(powSig()!==sig) return; POW.plan=partyPlan(); const g=POW.plan.gain; $('bEqUp').textContent=g>0?'+'+g.toLocaleString():''; b.classList.toggle('glow',g>0 && $('bUndo').style.display!=='block'); },120); }
 }
 function countUp(el,from,to,ms){ const t0=performance.now(); const f=t=>{ const r=Math.min(1,(t-t0)/ms), e=1-Math.pow(1-r,3); el.textContent=Math.round(from+(to-from)*e).toLocaleString(); if(r<1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
 function floatUp(anchor,text){ const r=anchor.getBoundingClientRect(), a=APP.getBoundingClientRect(); const d=document.createElement('div'); d.className='pwfloat'; d.textContent=text; d.style.left=(r.left-a.left+r.width/2)+'px'; d.style.top=(r.bottom-a.top+2)+'px'; APP.appendChild(d); setTimeout(()=>d.remove(),1400); }
@@ -80,11 +80,9 @@ function doPartyEquip(){
   audioUnlock(); if(RT.mode!=='field'||RT.busy||msgResolve) return;
   const P=(POW.plan && powSig()===POW.sig)? POW.plan : partyPlan();
   if(!P || P.gain<1){ sfx('tick'); toast('今がいちばん強い'); return; }
-  const before=P.ns.map(n=>power(n)), totalBefore=G.party.reduce((a,n)=>a+(G.members[n]?power(n):0),0);
+  const before=P.ns.map(n=>power(n));
   POW.undo={ns:P.ns, eq:P.ns.map(n=>Object.assign({},G.members[n].equip)), gear:G.gear.slice(), hp:P.ns.map(n=>G.members[n].hp)};
-  applyPlan(P); sfx('best'); renderTop();
-  const totalAfter=G.party.reduce((a,n)=>a+(G.members[n]?power(n):0),0);
-  countUp($('bEqV'),totalBefore,totalAfter,900);
+  applyPlan(P); sfx('best'); $('bEq').classList.remove('glow'); renderTop();
   P.ns.forEach((n,i)=>{ const el=$('top').querySelector(`[data-pw="${n}"]`); if(!el) return; const now=power(n); if(now>before[i]){ countUp(el,before[i],now,900); floatUp(el.closest('.chip'),'+'+(now-before[i]).toLocaleString()); el.closest('.chip').classList.add('pwup'); } });
   setTimeout(()=>$('top').querySelectorAll('.pwup').forEach(c=>c.classList.remove('pwup')),1200);
   const u=$('bUndo'); u.style.display='block'; clearTimeout(POW.undoT); POW.undoT=setTimeout(()=>{ u.style.display='none'; POW.undo=null; },5000);
@@ -94,3 +92,20 @@ function undoPartyEquip(){
   $('bUndo').style.display='none'; sfx('back'); renderTop(); toast('元に戻した');
 }
 $('bEq').onclick=doPartyEquip; $('bUndo').onclick=undoPartyEquip;
+
+// ---------- 自動回復（戦闘のあと） ----------
+// 戦闘不能の人に蘇生の羽、HPが半分を切った人に薬草（減り具合に合う方）。特薬草は自動では使わない。
+function autoHeal(){
+  if(!G||!G.settings.autoHeal) return; const used={}; const use=(k,n)=>{ G.inv[k]--; const key=n+'|'+k; used[key]=(used[key]||0)+1; };
+  for(const n of G.party){ const m=G.members[n]; if(!m) continue; const s=calcStats(n);
+    while(m.hp<=0 && (G.inv.feather||0)>0){ use('feather',n); if(Math.random()<.75) m.hp=Math.round(s.hp*.3); }
+    while(m.hp>0 && m.hp<s.hp*0.5){ const miss=1-m.hp/s.hp; const k= miss>=0.55&&(G.inv.herb2||0)>0 ? 'herb2' : (G.inv.herb||0)>0 ? 'herb' : (G.inv.herb2||0)>0 ? 'herb2' : null; if(!k) break;
+      use(k,n); m.hp=Math.min(s.hp,m.hp+Math.round(s.hp*{herb:.3,herb2:.6}[k])); } }
+  const ks=Object.keys(used); if(!ks.length){ const need=G.party.some(n=>{ const m=G.members[n]; return m && m.hp<calcStats(n).hp*0.5; }); if(need) toast('自動回復：薬が足りない'); return; }
+  sfx('heal');
+  const line=ks.map(x=>{ const [n,k]=x.split('|'); return `${n}に${ITEMS[k].n}${used[x]>1?'×'+used[x]:''}`; }).join('・');
+  const left=['herb','herb2','feather'].filter(k=>ks.some(x=>x.endsWith('|'+k))).map(k=>`${ITEMS[k].n}${G.inv[k]||0}`).join('・');
+  toast(`<span style="font-size:13px">自動回復：${line}<br><small style="opacity:.75">残り ${left}</small></span>`);
+}
+// 上の札をタップすると、攻撃・防御などの表示をオン・オフ
+$('top').addEventListener('click',()=>{ if(!G||RT.mode==='battle') return; G.settings.chipDetail=G.settings.chipDetail===false; sfx('tick'); renderTop(); });

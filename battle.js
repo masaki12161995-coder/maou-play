@@ -139,6 +139,7 @@ async function startBattle(enemies, opts){
   if(result==='lose' && !opts.noLose){ B=null; RT.mode=prevMode; await gameOver(); return 'lose'; }
   B=null; RT.mode=prevMode==='battle'?'field':prevMode; RT.busy=false;
   if(RT.mode==='field') $('padField').style.display='flex';
+  if(typeof autoHeal==='function') autoHeal();
   bgm(RT.mode==='world'?'world':'field'); renderTop();
   return out;
 }

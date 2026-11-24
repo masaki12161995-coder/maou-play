@@ -316,17 +316,20 @@ body.th-dq .cb.on{background:#fff;color:#000;border-color:#fff}
 body.th-dq .mt svg{stroke:#fff}
 
 /* 戦闘力・一括装備 */
+.chip .hd{display:flex;align-items:center;gap:4px;min-width:0}.chip .fc{flex:0 0 20px;width:20px;height:20px;border-radius:6px;overflow:hidden;position:relative;background:#0004}
+.chip .fc img{position:absolute;width:32px;left:-6px;top:-1px;image-rendering:pixelated}
+.chip .hd .nm2{min-width:0;line-height:1.05}.chip .hd .nm2 b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:clip}.chip .hd .nm2 small{font-size:9px;color:var(--sub)}
+.chip .dtl{display:grid;grid-template-columns:auto 1fr auto 1fr;column-gap:3px;margin-top:2px;font-size:9px;line-height:1.25;font-variant-numeric:tabular-nums;white-space:nowrap}.chip .dtl em{font-style:normal;color:var(--sub)}.chip .dtl span{text-align:right;padding-right:3px}
+.mpow{display:flex;align-items:center;gap:8px;padding:8px 12px}.mpow>div{flex:1}.mpow small{display:block;font-size:10px;color:var(--sub)}.mpow b{font-size:18px;color:var(--gold);font-variant-numeric:tabular-nums}
+.mpow .cb{position:relative;white-space:nowrap}.mpow .cb em{font-style:normal;color:#ffe08a;font-size:11px}.mpow .cb.on{border-color:#4ade80;color:#4ade80;background:#14532d66}
 .chip .cpw{display:flex;justify-content:space-between;align-items:baseline;margin-top:2px;font-size:10px;line-height:1.1;white-space:nowrap}
 .chip .cpw em{font-style:normal;color:var(--sub);font-size:9px}.chip .cpw b{color:var(--gold);font-variant-numeric:tabular-nums}
 .chip.pwup{border-color:var(--gold);box-shadow:0 0 10px #ffd16688}
 .pwfloat{position:absolute;transform:translate(-50%,0);color:#ffe08a;font-weight:800;font-size:15px;text-shadow:0 1px 3px #000,0 0 6px #ffb00088;pointer-events:none;z-index:30;animation:pwf 1.3s ease-out forwards}
 @keyframes pwf{0%{opacity:0;transform:translate(-50%,-8px) scale(.8)}15%{opacity:1;transform:translate(-50%,0) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,14px) scale(1)}}
-#padField #bEq{flex:0 0 132px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
-#bEq .eqt{font-size:13px}#bEq .eqv{font-size:12px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}#bEq .eqv small{font-size:9px;color:var(--sub);font-weight:500;margin-right:3px}
-#bEq em{position:absolute;top:-9px;right:-4px;font-style:normal;font-size:11px;font-weight:800;background:#b45309;color:#fff;border-radius:9px;padding:1px 6px;display:none}
-#bEq.glow{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 0 12px #ffd16666;animation:eqglow 1.6s ease-in-out infinite}#bEq.glow em{display:block}
-@keyframes eqglow{50%{box-shadow:0 0 0 1px var(--gold) inset,0 0 18px #ffd166aa}}
-#app.fm #bEq{background:rgba(28,39,71,.82);backdrop-filter:blur(2px)}
+#bEq{display:none;position:absolute;right:8px;bottom:calc(100% + 6px);border-radius:14px;border:1px solid var(--gold);background:#2a2208ee;color:#ffe08a;font-size:13px;font-weight:800;padding:7px 14px;box-shadow:0 0 12px #ffd16655;animation:eqglow 1.6s ease-in-out infinite}
+#bEq b{font-variant-numeric:tabular-nums}#bEq.glow{display:block}
+@keyframes eqglow{50%{box-shadow:0 0 20px #ffd166aa}}
 #bUndo{display:none;position:absolute;right:8px;bottom:calc(100% + 6px);border-radius:12px;border:1px solid var(--line);background:#0b1222e6;font-size:12px;font-weight:700;padding:6px 12px}
 .lk{flex:0 0 auto;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:8px;margin-left:4px;opacity:.35}
 .lk svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2}.lk.on{opacity:1;color:var(--gold);background:#ffd16622}
@@ -340,7 +343,7 @@ body.th-dq .mt svg{stroke:#fff}
   <div id="view"><canvas id="cv" width="352" height="352"></canvas><div id="hud"><span id="hudL"></span><span id="hudR"></span></div><div id="msg"></div><div id="toast"></div></div>
   <div id="pad">
     <div id="padField">
-      <button class="bigb" id="bEq"><span class="eqt">一括装備</span><span class="eqv"><small>戦闘力</small><b id="bEqV">0</b></span><em id="bEqUp"></em></button><button id="bUndo">↶ 元に戻す</button>
+      <button id="bEq">⇧ 装備 <b id="bEqUp"></b></button><button id="bUndo">↶ 元に戻す</button>
       <button class="bigb" id="bM">メニュー</button>
     </div>
     <div id="bparty"></div><div id="bpop"><div></div><div></div><div></div><div></div></div>
