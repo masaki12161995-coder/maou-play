@@ -161,9 +161,13 @@ function layoutEnemies(){ const W=VW; const es=B.enemies, n=es.length;
 async function blog(text, ms){ if(SIM.on) return; const el=$('msg'); el.style.display='block'; el.innerHTML=`<div class="tx">${text}</div>`; await sleep((ms||600)*1.6/G.settings.speed); }
 // 1行足す（行動の結果）。3行まで
 async function blogAdd(text, ms){ if(SIM.on) return; const el=$('msg'); el.style.display='block'; const ls=[...el.querySelectorAll('.tx')]; if(ls.length>=3) ls[0].remove(); el.insertAdjacentHTML('beforeend',`<div class="tx" style="font-size:14px;color:#e2e8f0">${text}</div>`); await sleep((ms||500)/G.settings.speed); }
-function pop(target,text,color){
+// 戦闘の時計：ふだんは本当の時間と同じ速さ。自己ベストの瞬間だけ遅くする（スロー）
+const BCLK={t:0,last:0,rate:1};
+function bnow(){ const n=performance.now(); if(!BCLK.last) BCLK.last=n; BCLK.t+=(n-BCLK.last)*BCLK.rate; BCLK.last=n; return BCLK.t; }
+async function slowMo(ms){ if(SIM.on) return; BCLK.rate=0.22; B.pbFlash=bnow(); await sleep(ms); BCLK.rate=1; }
+function pop(target,text,color,big){
   if(SIM.on) return;
-  if(target.isEnemy){ B.pops.push({t:target,text,color,born:performance.now()}); return; }
+  if(target.isEnemy){ B.pops.push({t:target,text,color,born:bnow(),big}); return; }
   const i=B.party.indexOf(target); const col=$('bpop').children[i]; if(!col) return;
   const d=document.createElement('div'); d.className='dpop'; d.style.color=color||'#fff'; d.textContent=text; col.appendChild(d); setTimeout(()=>d.remove(),1400);
   if(/^\d/.test(String(text))||/会心/.test(String(text))){ const ch=$('bparty').children[i]; if(ch){ ch.classList.remove('hit'); void ch.offsetWidth; ch.classList.add('hit'); } }
@@ -177,8 +181,8 @@ function drawBattle(){
   const by=H*0.46;
   const nE=B.enemies.length; const base=nE>=4?1.0:nE===3?1.15:1.35;
   B.enemies.forEach((e,i)=>{ if(e.hp<=0&&!e.dying) return; const s=(e.big?1.6:(e.tp==='大'?1.25:1))*base;
-    let a=1; if(e.dying){ a=Math.max(0,1-(performance.now()-e.dying)/400); if(a<=0){e.dying=0;} }
-    cx.globalAlpha=a; if(e.flash && performance.now()-e.flash<160) cx.globalAlpha=a*0.35;
+    let a=1; if(e.dying){ a=Math.max(0,1-(bnow()-e.dying)/400); if(a<=0){e.dying=0;} }
+    cx.globalAlpha=a; if(e.flash && bnow()-e.flash<160) cx.globalAlpha=a*0.35;
     drawEnemy(e, e.x, by - (e.big?20:0), s);
     cx.globalAlpha=1;
     if(e.hp>0){ const w=56*s; cx.fillStyle='#0008'; cx.fillRect(e.x-w/2,by+42*s,w,5); cx.fillStyle=e.hp/e.mhp<.3?'#f87171':'#4ade80'; cx.fillRect(e.x-w/2,by+42*s,w*e.hp/e.mhp,5);
@@ -188,7 +192,7 @@ function drawBattle(){
   });
   cx.restore();
   // エフェクト
-  const now=performance.now();
+  const now=bnow();
   B.fx=B.fx.filter(f=>now-f.born<350);
   for(const f of B.fx){ const k=(now-f.born)/350; cx.globalAlpha=1-k; cx.strokeStyle=f.col; cx.lineWidth=4;
     if(f.kind==='slash'){ cx.beginPath(); cx.moveTo(f.x-30+k*10,f.y-30); cx.lineTo(f.x+30,f.y+30-k*10); cx.stroke(); }
@@ -200,8 +204,9 @@ function drawBattle(){
     rest.forEach((u,i)=>{ const nm=u.name.length>5?u.name.slice(0,5):u.name; const w=cx.measureText(nm).width+10; cx.fillStyle=i===0?'#facc15':(u.isEnemy?'#7f1d1d':'#1e3a8a'); cx.fillRect(x,3,w,12); cx.fillStyle=i===0?'#111':'#fff'; cx.fillText(nm,x+5,9.5); x+=w+3; });
     cx.textBaseline='alphabetic'; }
   B.pops=B.pops.filter(p=>now-p.born<1300);
-  for(const p of B.pops){ const k=(now-p.born)/1300; const x=p.t.x, y=by-30-k*30;
-    cx.globalAlpha=k<.7?1:1-(k-.7)/.3; cx.font='bold 26px sans-serif'; cx.textAlign='center'; cx.lineWidth=4; cx.strokeStyle='#000'; cx.strokeText(p.text,x,y); cx.fillStyle=p.color||'#fff'; cx.fillText(p.text,x,y); cx.globalAlpha=1; }
+  for(const p of B.pops){ const k=(now-p.born)/1300; let x=p.t.x; const y=p.big==='pb'? by-104-k*10 : p.big? by-74-k*14 : by-30-k*30;
+    cx.globalAlpha=k<.7?1:1-(k-.7)/.3; cx.font=p.big==='pb'?'900 30px sans-serif':p.big?'900 34px sans-serif':'bold 26px sans-serif'; cx.textAlign='center'; { const hw=cx.measureText(p.text).width/2+6; x=Math.min(W-hw,Math.max(hw,x)); } cx.lineWidth=4; cx.strokeStyle='#000'; cx.strokeText(p.text,x,y); cx.fillStyle=p.color||'#fff'; cx.fillText(p.text,x,y); cx.globalAlpha=1; }
+  if(B.pbFlash){ const k=(now-B.pbFlash)/260; if(k<1){ cx.fillStyle=`rgba(255,236,170,${0.45*(1-k)})`; cx.fillRect(0,0,W,H); } else B.pbFlash=0; }
 }
 // 敵の絵：番号の付いた絵（img/enemy_番号.png）がある敵は絵で、まだない敵は今までの図形で描く
 const ENEMY_NO={"プルリン": "001", "ヤミコウモリ": "002", "ツノウサギ": "003", "門番の大鎧": "004", "からっぽの鎧": "005", "城の骨犬": "006", "灯火の霊": "007", "キバオオカミ": "008", "ドクキノコ": "009", "はぐれ兵": "010", "森ネズミ": "011", "ツルハシゴブリン": "012", "岩トカゲ": "013", "ガス溜まり": "014", "坑道コウモリ": "015", "焼け跡の亡霊": "016", "火喰いトカゲ": "017", "黒将軍の偵察兵": "018", "黒将軍の歩兵": "019", "黒将軍の弓兵": "020", "黒将軍の魔術兵": "021", "鉄の猟犬": "022", "坑道の主・大土竜": "023", "ハサミガニ": "025", "ウミネコ": "026", "潮だまりのプルリン": "027", "沼ガエル": "028", "霧の精": "029", "人喰い草": "030", "泥人形": "031", "洞窟ザメ": "032", "光喰い": "033", "フナムシの群れ": "034", "さまよう剣士": "035", "骸骨弓兵": "036", "戦場カラス": "037", "怨念の旗": "038", "水死の船員": "039", "イカの化け物": "040", "船底の亡霊": "041", "動く本": "042", "インク溜まり": "043", "書庫の番人": "044", "紙魚の群れ": "045", "サソリ兵": "046", "砂ミミズ": "024", "ハゲワシ": "047", "ミイラ兵": "048", "砂の巨人": "049", "呪いの壺": "050", "遺跡の蛇": "051", "雪男": "052", "氷の精": "053", "白オオカミ": "054", "氷柱の魔物": "055", "封じられた獣": "057", "祈る石像": "058", "地下の黒魔術師": "059", "下水の大ナメクジ": "060", "ドブネズミの王": "061", "水路の亡霊": "062", "瓦礫の魔物": "063", "虚の羽虫": "064", "作られた天使": "065", "聖堂騎士の亡霊": "056", "虚の影": "066", "神殿の守り手": "067", "裂け目の獣": "068", "虚に呑まれた兵": "069", "聖騎士": "070", "審問官": "071", "鎖の番人": "072", "虚の獣": "073", "記憶の亡霊": "074", "なり損ないの器": "075", "黒将軍の重騎兵": "076", "黒将軍の呪術兵": "077", "黒将軍の旗手": "078", "鋼の猟犬": "079"};
@@ -335,7 +340,7 @@ async function enemyAct(e,c){
     case 'eDispel': await blog(`${e.name}の ${n||'強化消し'}！`,300); alive(B.party).forEach(t=>{ t.buff={}; t.guard=null; t.regen=null; t.critBuff=null; for(const k in t.atkUps) if(t.atkUps[k][1]<50) delete t.atkUps[k]; }); break;
     case 'eCall': case 'eSummon': { const base=e.boss?makeEnemy(LOCS[G.loc].area,0,e.lv-1):makeEnemy(LOCS[G.loc].area,0,e.lv); if(!e.boss){ Object.assign(base,{name:e.name.replace(/^.*?の/,'')===e.name?e.name:e.name, }); }
       B.enemies.push(e.boss?base:{...e,hp:e.mhp,st:{},buff:{},glow:0}); layoutEnemies(); await blog(`${e.name}は仲間を呼んだ！`,400); } break;
-    case 'eBoom': await blog(`${e.name}は自爆した！`,400); for(const t of alive(B.party)) await hit(e,t,{mult:1.2}); e.hp=0; e.dying=performance.now(); break;
+    case 'eBoom': await blog(`${e.name}は自爆した！`,400); for(const t of alive(B.party)) await hit(e,t,{mult:1.2}); e.hp=0; e.dying=bnow(); break;
     case 'eMpDrain': { const v=Math.min(tgt.gauge||0,20); tgt.gauge=(tgt.gauge||0)-v; await blog(`${e.name}はゲージを吸い取った！`,300); pop(tgt,'ゲージ-'+v,'#ffd166'); } break;
     case 'eDrain': await blog(`${e.name}は生気を吸い取った！`,300); { const d=await hit(e,tgt,{mult:.9}); e.hp=Math.min(e.mhp,e.hp+Math.round(d/2*(1-partyMax('noRise')/100))); } break;
   }
@@ -414,10 +419,10 @@ function meterHTML(R, tab){
     const det = tab==='taken'
       ? Object.entries(M.tby||{}).sort((a,b)=>b[1]-a[1]).map(([k,x])=>`<div class="mby"><span>${k}</span><span>${x.toLocaleString()}</span><i style="width:${x/Math.max(1,v)*100}%"></i></div>`).join('')
       : Object.entries(M.by||{}).filter(([k,x])=>x[tab]>0).sort((a,b)=>b[1][tab]-a[1][tab]).map(([k,x])=>`<div class="mby"><span>${k}${x.n?` <small>×${x.n}</small>`:''}${tab==='dmg'&&x.crit?` <small class="cr">会心${x.crit}</small>`:''}</span><span>${x[tab].toLocaleString()} <small>${Math.round(x[tab]/Math.max(1,v)*100)}%</small></span><i style="width:${x[tab]/Math.max(1,v)*100}%"></i></div>`).join('');
-    const sub = tab==='dmg' ? `<span>${M.acts?`★アクティブ×${M.acts}`:'アクティブなし'}${M.crit?`・会心×${M.crit}`:''}</span><span>${M.max?`最大の一撃 ${M.max.toLocaleString()}`:''}${best?' <b class="pb">自己ベスト！</b>':''}</span>`
+    const sub = tab==='dmg' ? `<span>${M.acts?`★アクティブ×${M.acts}`:'アクティブなし'}${M.crit?`・会心×${M.crit}`:''}</span><span>${M.max?`<small>最大</small> ${M.maxNm||'攻撃'} <b>${M.max.toLocaleString()}</b>`:''}</span>`
       : tab==='heal' ? `<span>${v?'':'回復していない'}</span><span></span>` : `<span>${v?'':'無傷'}</span><span></span>`;
     const rk = v>0 && i===0 ? `<b class="rk r1">${tab==='dmg'?'MVP':tab==='heal'?'癒し手':'盾役'}</b>` : `<b class="rk">${v>0?i+1:'―'}</b>`;
-    return `<div class="mrow${v>0?'':' zero'}${v>0&&i===0?' top':''}" data-mrow="${i}">${rk}<img class="portrait" data-n="${r.n}" src="${spriteURL(r.n,0)}"><div class="mmain"><div class="mtop"><b>${r.n}</b><span><b class="${tab}">${v.toLocaleString()}</b> <small>${total?Math.round(v/total*100):0}%</small></span></div>
+    return `<div class="mrow${v>0?'':' zero'}${v>0&&i===0?' top':''}" data-mrow="${i}">${rk}<img class="portrait" data-n="${r.n}" src="${spriteURL(r.n,0)}"><div class="mmain"><div class="mtop"><b>${r.n}${(tab==='dmg'&&R._best[r.n])?' <small class="pb">自己ベスト！</small>':''}</b><span><b class="${tab}">${v.toLocaleString()}</b> <small>${total?Math.round(v/total*100):0}%</small></span></div>
       <div class="mbar ${tab}"><i style="width:${v/top*100}%"></i></div><div class="msub">${sub}</div>
       <div class="mdet" style="display:${RT.resOpen===r.n?'block':'none'}">${det||'<div class="mby"><span>なし</span></div>'}</div></div></div>`; }).join('');
   return `<div class="ptitle"><span>この戦闘の成績</span><span>${RES_TABS.find(x=>x[0]===tab)[1]} 合計 ${total.toLocaleString()}</span></div>${tabs}<div class="meter">${list}</div><div class="mhint" style="font-size:10px;color:var(--sub);text-align:right">名前をタップで内訳</div>`;
@@ -457,7 +462,7 @@ function showResult(R){
         el.querySelectorAll('#resMeter .mrow').forEach((r,i)=>r.style.setProperty('--d',(0.15+i*0.12)+'s'));
         const mh=el.querySelector('#resMeter .mhint'); if(mh) mh.style.setProperty('--d',(0.15+nRow*0.12)+'s');
         const bindMeter=()=>{ const box=el.querySelector('#resMeter'); if(!box) return;
-          box.querySelectorAll('[data-mrow]').forEach(r=>r.onclick=e=>{ e.stopPropagation(); const d=r.querySelector('.mdet'); const open=d.style.display==='none'; box.querySelectorAll('.mdet').forEach(x=>x.style.display='none'); d.style.display=open?'block':'none'; RT.resOpen=open?r.querySelector('.mtop b').textContent:null; sfx('tick'); });
+          box.querySelectorAll('[data-mrow]').forEach(r=>r.onclick=e=>{ e.stopPropagation(); const d=r.querySelector('.mdet'); const open=d.style.display==='none'; box.querySelectorAll('.mdet').forEach(x=>x.style.display='none'); d.style.display=open?'block':'none'; RT.resOpen=open?r.querySelector('.portrait').dataset.n:null; sfx('tick'); });
           box.querySelectorAll('[data-rtab]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); RT.resTab=b.dataset.rtab; RT.resOpen=null; box.classList.remove('anim'); box.innerHTML=meterHTML(R,RT.resTab); bindMeter(); sfx('tick'); }); };
         RT.resOpen=null; bindMeter();
         if(!P.sfxDone){ P.sfxDone=1; sfx('win'); const vals=(R.party||[]).map(n=>(R.meter&&R.meter[n]&&R.meter[n].dmg)||0).sort((a,b)=>b-a), top=Math.max(1,vals[0]||0);

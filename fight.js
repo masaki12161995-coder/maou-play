@@ -228,7 +228,20 @@ async function useActive(u){
 }
 
 // ---------- スキルを動かす（通常・アクティブ共通） ----------
+// 1回の行動が終わったら：連撃は合計を出す／最大の一撃は行動の合計で数える／自己ベストを超えたらスロー（1戦闘に1回まで）
 async function runSkill(u,s,ctx){
+  if(ctx&&ctx._in) return runSkillCore(u,s,ctx);
+  const R=await runSkillCore(u,s,Object.assign({},ctx||{},{_in:1}));
+  if(B && R && !u.isEnemy && R.dmg>0){
+    const M=meter(u); if(R.dmg>M.max){ M.max=R.dmg; M.maxNm=s.nm; }
+    const big=R.hits>=2, T=(R.lastT&&R.lastT.isEnemy)?R.lastT:null;
+    if(big && T) pop(T,'合計 '+R.dmg.toLocaleString(),'#fde68a',true);
+    G.records=G.records||{}; const rec=G.records[u.name]||0;
+    if(rec>0 && R.dmg>rec && !B.pbDone && T){ B.pbDone=1; pop(T,'自己ベスト！','#fbbf24','pb'); sfx('best'); await slowMo(650); }
+  }
+  return R;
+}
+async function runSkillCore(u,s,ctx){
   ctx=ctx||{}; const R={hits:0,kills:0,critKills:0,crits:0,dmg:0,lastT:null};
   const nm=s.nm, pow=ctx.pow||1;
   if(s.mimicN && B.lastN && B.lastN.u!==u && B.lastN.s.k==='atk'){ const L=B.lastN.s; await blogAdd(`${L.nm}をまねした！`,250); return runSkill(u,{...L, m:L.m*s.mimicN, nm:L.nm, mimicN:0, gSelf:(L.gSelf||0)+(s.gSelf||0)},ctx); }
@@ -415,7 +428,7 @@ async function healUnit(u,t,amt,skill,quiet,noEvt,s){
   return h;
 }
 // 防御を通さない固定ダメージ（爆炎・燃焼など）
-async function fixedHit(a,t,d,skill,col){ if(t.hp<=0) return 0; d=Math.max(1,Math.round(d)); t.hp=Math.max(0,t.hp-d); pop(t,d,col||'#fff'); meterAdd(a,skill,'dmg',d); t.flash=performance.now();
+async function fixedHit(a,t,d,skill,col){ if(t.hp<=0) return 0; d=Math.max(1,Math.round(d)); t.hp=Math.max(0,t.hp-d); pop(t,d,col||'#fff'); meterAdd(a,skill,'dmg',d); t.flash=bnow();
   if(t.hp<=0) await onDown(t,a); return d; }
 
 // ---------- パッシブの技 ----------
@@ -538,7 +551,7 @@ async function hit(a,t,o){
   }
   t.hp=Math.max(0,t.hp-d);
   pop(t,(r.crit?'会心 ':'')+d+(r.isWeak?' 弱点!':''), r.crit?'#facc15':(r.isWeak?'#fdba74':(t.isEnemy?'#fff':'#fca5a5')));
-  if(t.isEnemy){ t.flash=performance.now(); B.fx.push({kind:o.mag?'circle':'slash',x:t.x,y:VH*0.46,col:o.mag?elemColor(r.el):'#fff',born:performance.now()}); } else B.shake=6;
+  if(t.isEnemy){ t.flash=bnow(); B.fx.push({kind:o.mag?'circle':'slash',x:t.x,y:VH*0.46,col:o.mag?elemColor(r.el):'#fff',born:bnow()}); } else B.shake=6;
   sfx(r.crit?'crit':'hit');
   // 眠り・凍結は殴られて終わる
   if(t.st.sleep && d>0 && !o.noWake){ t.sleepHits=(t.sleepHits||1)-1; if(t.sleepHits<=0) delete t.st.sleep; }
@@ -610,7 +623,7 @@ async function onDown(t,by){
   if(t.isEnemy){
     if(t.dying) return;
     if(t.autoRevive){ t.autoRevive=0; await blog(`${t.name}が倒れた…`,500); await sleep(400); t.hp=Math.round(t.mhp*0.35); pop(t,'復活','#c084fc'); await blog('……倒れたはずのノアが、自分を生き返らせた。',1100); return; }
-    t.dying=performance.now(); sfx('down'); dexEnemy(t,true); await blog(`${t.name}を倒した！`,300);
+    t.dying=bnow(); sfx('down'); dexEnemy(t,true); await blog(`${t.name}を倒した！`,300);
     // 燃え移る・毒が移る（業火★5・毒霧★5で付けたもの）
     if(t.spreadSt && t.st[t.spreadSt] && !t.spreadDone){ t.spreadDone=1; const src=t.spreadSt==='burn'?t.burnBy:t.poisonBy; const nx=alive(B.enemies).filter(e=>!e.st[t.spreadSt])[0]; if(nx&&src) addStatus(nx,t.spreadSt,100,src,{kSpread:t.spreadSt}); }
     if(by && !by.isEnemy){
