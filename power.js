@@ -80,10 +80,12 @@ function doPartyEquip(){
   audioUnlock(); if(RT.mode!=='field'||RT.busy||msgResolve) return;
   const P=(POW.plan && powSig()===POW.sig)? POW.plan : partyPlan();
   if(!P || P.gain<1){ sfx('tick'); toast('今がいちばん強い'); return; }
-  const before=P.ns.map(n=>power(n));
+  const before=P.ns.map(n=>power(n)), stB=P.ns.map(n=>calcStats(n));
   POW.undo={ns:P.ns, eq:P.ns.map(n=>Object.assign({},G.members[n].equip)), gear:G.gear.slice(), hp:P.ns.map(n=>G.members[n].hp)};
   applyPlan(P); sfx('best'); $('bEq').classList.remove('glow'); renderTop();
   P.ns.forEach((n,i)=>{ const el=$('top').querySelector(`[data-pw="${n}"]`); if(!el) return; const now=power(n); if(now>before[i]){ countUp(el,before[i],now,900); floatUp(el.closest('.chip'),'+'+(now-before[i]).toLocaleString()); el.closest('.chip').classList.add('pwup'); } });
+  // 上がった能力は緑、下がった能力は赤で、数字が動く
+  P.ns.forEach((n,i)=>{ const s=calcStats(n); for(const k of ['atk','def','mat','mdf']){ const el=$('top').querySelector(`[data-s="${n}|${k}"]`); const d=s[k]-stB[i][k]; if(!el||!d) continue; el.classList.add(d>0?'sup':'sdn'); countUp(el,stB[i][k],s[k],700); } });
   setTimeout(()=>$('top').querySelectorAll('.pwup').forEach(c=>c.classList.remove('pwup')),1200);
   const u=$('bUndo'); u.style.display='block'; clearTimeout(POW.undoT); POW.undoT=setTimeout(()=>{ u.style.display='none'; POW.undo=null; },5000);
 }

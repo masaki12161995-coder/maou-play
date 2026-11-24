@@ -434,7 +434,7 @@ function renderTop(battleUnits){
       h+=`<div class="chip bchip${act?' act':''}${dead?' dead':''}">${st?`<span class="st">${st}</span>`:''}${stackLabel(u)}<div class="nm"><span>${n}</span></div><div class="brow"><img class="bicon${u.pose&&!dead?' pose':''}" src="${spriteURL(n,dead?'ko':u.pose?'pose':0)}"><div class="bin">${gaugeHTML(hp,mhp,gauge)}</div></div></div>`; continue; }
     const S=calcStats(n), dt=G.settings.chipDetail!==false;
     h+=`<div class="chip${act?' act':''}${dead?' dead':''}">${st?`<span class="st">${st}</span>`:''}<div class="hd"><span class="fc"><img src="${spriteURL(n,0)}"></span><span class="nm2"><b>${n}</b><small>Lv${lv}</small></span></div>
-    ${gaugeHTML(hp,mhp)}<div class="cpw"><em>戦闘力</em><b data-pw="${n}">${powerFrom(n,S).toLocaleString()}</b></div>${dt?`<div class="dtl"><em>攻</em><span>${S.atk}</span><em>防</em><span>${S.def}</span><em>魔攻</em><span>${S.mat}</span><em>魔防</em><span>${S.mdf}</span></div>`:''}</div>`;
+    ${gaugeHTML(hp,mhp)}<div class="cpw"><em>戦闘力</em><b data-pw="${n}">${powerFrom(n,S).toLocaleString()}</b></div>${dt?`<div class="dtl"><em>攻</em><span data-s="${n}|atk">${S.atk}</span><em>防</em><span data-s="${n}|def">${S.def}</span><em>魔攻</em><span data-s="${n}|mat">${S.mat}</span><em>魔防</em><span data-s="${n}|mdf">${S.mdf}</span></div>`:''}</div>`;
   }
   el.innerHTML=h;
   if(!battleUnits && typeof updateEqBtn==='function') updateEqBtn();

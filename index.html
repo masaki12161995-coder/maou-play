@@ -335,6 +335,10 @@ body.th-dq .mt svg{stroke:#fff}
 .lk svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2}.lk.on{opacity:1;color:var(--gold);background:#ffd16622}
 .pwline{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;padding:6px 10px;border-radius:10px;background:#ffd16614;border:1px solid #ffd16644;font-variant-numeric:tabular-nums}
 .pwline span{font-size:12px;color:var(--sub)}.pwline b{font-size:18px;color:var(--gold)}.pwline .ar{color:var(--sub)}.pwline b.up{color:#4ade80}.pwline b.dn{color:#f87171}.pwline small{font-size:11px}
+.chip .dtl span.sup{animation:stup 1.8s ease-out}.chip .dtl span.sdn{animation:stdn 1.8s ease-out}
+@keyframes stup{0%{color:#4ade80;transform:scale(1.25);text-shadow:0 0 6px #4ade80cc}60%{color:#4ade80;transform:scale(1);text-shadow:0 0 4px #4ade8088}100%{color:inherit;text-shadow:none}}
+@keyframes stdn{0%,60%{color:#f87171}100%{color:inherit}}
+.chip .dtl span{display:inline-block;transform-origin:right center}
 </style>
 </head>
 <body>
