@@ -314,6 +314,24 @@ body.th-dq{--msgbg:rgba(0,0,0,.95);--bg:#000;--panel:#000;--panel2:#000;--line:#
 body.th-dq .card,body.th-dq .cb,body.th-dq .item,body.th-dq .mt,body.th-dq .mp,body.th-dq .sksec,body.th-dq .chip,body.th-dq #skSheet .sh,body.th-dq .spec{border-width:2px;border-radius:8px}
 body.th-dq .cb.on{background:#fff;color:#000;border-color:#fff}
 body.th-dq .mt svg{stroke:#fff}
+
+/* 戦闘力・一括装備 */
+.chip .cpw{display:flex;justify-content:space-between;align-items:baseline;margin-top:2px;font-size:10px;line-height:1.1;white-space:nowrap}
+.chip .cpw em{font-style:normal;color:var(--sub);font-size:9px}.chip .cpw b{color:var(--gold);font-variant-numeric:tabular-nums}
+.chip.pwup{border-color:var(--gold);box-shadow:0 0 10px #ffd16688}
+.pwfloat{position:absolute;transform:translate(-50%,0);color:#ffe08a;font-weight:800;font-size:15px;text-shadow:0 1px 3px #000,0 0 6px #ffb00088;pointer-events:none;z-index:30;animation:pwf 1.3s ease-out forwards}
+@keyframes pwf{0%{opacity:0;transform:translate(-50%,-8px) scale(.8)}15%{opacity:1;transform:translate(-50%,0) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,14px) scale(1)}}
+#padField #bEq{flex:0 0 132px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
+#bEq .eqt{font-size:13px}#bEq .eqv{font-size:12px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}#bEq .eqv small{font-size:9px;color:var(--sub);font-weight:500;margin-right:3px}
+#bEq em{position:absolute;top:-9px;right:-4px;font-style:normal;font-size:11px;font-weight:800;background:#b45309;color:#fff;border-radius:9px;padding:1px 6px;display:none}
+#bEq.glow{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 0 12px #ffd16666;animation:eqglow 1.6s ease-in-out infinite}#bEq.glow em{display:block}
+@keyframes eqglow{50%{box-shadow:0 0 0 1px var(--gold) inset,0 0 18px #ffd166aa}}
+#app.fm #bEq{background:rgba(28,39,71,.82);backdrop-filter:blur(2px)}
+#bUndo{display:none;position:absolute;right:8px;bottom:calc(100% + 6px);border-radius:12px;border:1px solid var(--line);background:#0b1222e6;font-size:12px;font-weight:700;padding:6px 12px}
+.lk{flex:0 0 auto;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:8px;margin-left:4px;opacity:.35}
+.lk svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2}.lk.on{opacity:1;color:var(--gold);background:#ffd16622}
+.pwline{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;padding:6px 10px;border-radius:10px;background:#ffd16614;border:1px solid #ffd16644;font-variant-numeric:tabular-nums}
+.pwline span{font-size:12px;color:var(--sub)}.pwline b{font-size:18px;color:var(--gold)}.pwline .ar{color:var(--sub)}.pwline b.up{color:#4ade80}.pwline b.dn{color:#f87171}.pwline small{font-size:11px}
 </style>
 </head>
 <body>
@@ -322,6 +340,7 @@ body.th-dq .mt svg{stroke:#fff}
   <div id="view"><canvas id="cv" width="352" height="352"></canvas><div id="hud"><span id="hudL"></span><span id="hudR"></span></div><div id="msg"></div><div id="toast"></div></div>
   <div id="pad">
     <div id="padField">
+      <button class="bigb" id="bEq"><span class="eqt">一括装備</span><span class="eqv"><small>戦闘力</small><b id="bEqV">0</b></span><em id="bEqUp"></em></button><button id="bUndo">↶ 元に戻す</button>
       <button class="bigb" id="bM">メニュー</button>
     </div>
     <div id="bparty"></div><div id="bpop"><div></div><div></div><div></div><div></div></div>
@@ -346,6 +365,7 @@ body.th-dq .mt svg{stroke:#fff}
 <script src="icons.js"></script>
 <script src="battle.js"></script><script src="fight.js"></script>
 <script src="menu.js"></script>
+<script src="power.js"></script>
 <script src="worldmap.js"></script>
 <script src="main.js"></script>
 <script>if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});</script>

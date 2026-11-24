@@ -88,7 +88,7 @@ function statsCard(n){
   <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:18px;font-weight:800">${n}</div><div>Lv <b style="font-size:18px">${m.lv}</b></div></div>
   <div style="font-size:12px;color:var(--sub)">${c.role}　得意：${TYJP[FAV[n]]||'―'}</div>
   <div style="font-size:12px;color:var(--sub);margin-top:4px">次のレベルまで <b style="color:var(--text)">${m.lv>=99?'―':(need-m.exp).toLocaleString()}</b></div></div></div>
-  ${statGrid(statRows(n))}${(()=>{ const g=gxText(calcStats(n)); return g?`<div style="font-size:11px;color:var(--sub);margin-top:6px">ゲージ：${g}</div>`:''; })()}</div>`;
+  <div class="pwline"><span>戦闘力</span><b>${power(n).toLocaleString()}</b></div>${statGrid(statRows(n))}${(()=>{ const g=gxText(calcStats(n)); return g?`<div style="font-size:11px;color:var(--sub);margin-top:6px">ゲージ：${g}</div>`:''; })()}</div>`;
 }
 // 顔のところの人物：足ぶみを何回かしてから、技のポーズを見せる
 let PORTRAIT_T=0; const PORTRAIT_SEQ=[0,0,'pose','pose']; // 正面で立つ→技のポーズ、をゆっくりくり返す
@@ -121,7 +121,7 @@ const GXJP=[['gNorm','通常攻撃'],['gHurt','被弾'],['gCrit','会心'],['gKi
 function gxText(s){ const p=GXJP.filter(([k])=>s[k]).map(([k,l])=>`${l}+${s[k]}${k==='actP'?'%':''}`); const u=(s.uniq||[]).filter(k=>['gDouble','startFull','gShare','gHalf','mpRegen'].includes(k)).map(k=>UNIQ.find(x=>x.k===k).t); return [...p,...u].join('　'); }
 function diffStats(n, it, slot){
   const m=G.members[n]; const before=calcStats(n); const sl=slot; const old=m.equip[sl]; m.equip[sl]=it; const after=calcStats(n); m.equip[sl]=old;
-  const parts=[]; for(const k of ['atk','def','mat','mdf','spd','hp']){ const d=after[k]-before[k]; if(d) parts.push(`<span class="${d>0?'up':'dn'}">${STJP[k]}${d>0?'+':''}${d}</span>`); }
+  const parts=[]; { const d=powerFrom(n,after)-powerFrom(n,before); if(d) parts.push(`<span class="${d>0?'up':'dn'}" style="font-weight:800">戦闘力${d>0?'+':''}${d.toLocaleString()}</span>`); } for(const k of ['atk','def','mat','mdf','spd','hp']){ const d=after[k]-before[k]; if(d) parts.push(`<span class="${d>0?'up':'dn'}">${STJP[k]}${d>0?'+':''}${d}</span>`); }
   for(const k of ['crit','critDmg']){ const d=after[k]-before[k]; if(d) parts.push(`<span class="${d>0?'up':'dn'}">${k==='crit'?'会心':'会心ダメ'}${d>0?'+':''}${d}%</span>`); }
   return parts.length?`<div style="font-size:11px;display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">${parts.join('')}</div>`:'';
 }
@@ -129,11 +129,11 @@ function scrEquip(n, slotSel){
   const m=G.members[n];
   if(!slotSel){
     const rows=SLOTS.map(sl=>{ const it=m.equip[sl]; const cnt=G.gear.filter(x=>x.slot===(sl.startsWith('acc')?'acc':sl)).length; const nw=G.gear.some(x=>x.slot===(sl.startsWith('acc')?'acc':sl)&&x.isNew);
-      return `<button class="item" data-sl="${sl}" style="text-align:left"><span class="tag slab">${SLOTJP[sl]}</span>${it?itemLine(it,'',n):'<span class="ico none"></span><div class="grow" style="color:var(--sub)">なし</div>'}<small class="cnt">${nw?'<span class="newdot"></span>':''}${cnt}</small></button>`; }).join('');
+      return `<button class="item" data-sl="${sl}" style="text-align:left"><span class="tag slab">${SLOTJP[sl]}</span>${it?itemLine(it,'',n):'<span class="ico none"></span><div class="grow" style="color:var(--sub)">なし</div>'}<small class="cnt">${nw?'<span class="newdot"></span>':''}${cnt}</small><span class="lk${isLocked(n,sl)?' on':''}" data-lk="${sl}"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span></button>`; }).join('');
     navHere('equip', x=>scrEquip(x), n);
     openScreen('そうび', memberTabs(n)+charHead(n,'',statGrid(statRows(n),1))+`<div class="list scroll">${rows}</div><button class="cb" id="eqBest">おすすめ装備</button>`);
     bindTabs(x=>scrEquip(x)); bindHead(); swipeAnim();
-    $('scrBody').querySelectorAll('[data-sl]').forEach(b=>b.onclick=()=>{ sfx('ok'); scrEquip(n,b.dataset.sl); });
+    $('scrBody').querySelectorAll('[data-sl]').forEach(b=>b.onclick=e=>{ const lk=e.target.closest('[data-lk]'); if(lk){ toggleLock(n,lk.dataset.lk); sfx('tick'); toast(isLocked(n,lk.dataset.lk)?'固定した（一括装備・おすすめで変えない）':'固定をはずした'); scrEquip(n); return; } sfx('ok'); scrEquip(n,b.dataset.sl); });
     $('eqBest').onclick=()=>{ const P=autoPlan(n); if(!P.changes.length){ sfx('tick'); toast('いまの装備がいちばん良い'); return; } sfx('ok'); scrAutoEquip(n,P); };
     return;
   }
@@ -150,6 +150,8 @@ function scrEquip(n, slotSel){
   bindSort(()=>scrEquip(n,slotSel));
   list.forEach(it=>it.isNew=false);
 }
+// 戦闘力の「今 → 装備後」（比べる画面のいちばん上）
+function pwRow(n,before,after){ const a=powerFrom(n,before), b=powerFrom(n,after), d=b-a; return `<div class="pwline"><span>戦闘力</span><b>${a.toLocaleString()}</b><span class="ar">→</span><b class="${d>0?'up':d<0?'dn':''}">${b.toLocaleString()}${d?` <small>${d>0?'▲':'▼'}${Math.abs(d).toLocaleString()}</small>`:''}</b></div>`; }
 // 装備したらどう変わるか：全部のステータスを「今 → 装備後」で
 function cmpTable(before,after){
   const ks=['hp','atk','def','mat','mdf','spd'];
@@ -162,7 +164,7 @@ function scrEquipCmp(n,slot,it){
   navHere('eqcmp', ()=>scrEquipCmp(n,slot,it));
   openScreen(`${n}：${SLOTJP[slot]}`, `<div class="scroll" style="flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto">
     <div class="ptitle"><span>いまの装備</span></div>${card(old)}<div class="ptitle"><span>これに変える</span></div>${card(it)}
-    <div class="card">${cmpTable(before,after)}</div></div>
+    <div class="card">${pwRow(n,before,after)}${cmpTable(before,after)}</div></div>
     <button class="cb" id="cmpOk" style="background:#24407a;border-color:#4b6fd1">装備する</button>`);
   $('cmpOk').onclick=()=>{ const o=m.equip[slot]; m.equip[slot]=it; it.isNew=false; G.gear=G.gear.filter(x=>x!==it); if(o) G.gear.push(o); clampHpMp(n); sfx('equip'); toast(it.name+' を装備した');
     // 部位の一覧の、その前の画面（そうび画面かステータス画面）へ戻る
@@ -184,11 +186,12 @@ function scrAutoEquip(n,P){
   const rows=P.changes.map(c=>`<div class="item aeqr"><span class="tag slab">${SLOTJP[c.sl]}</span><div class="grow">${line(c.from,1)}<div class="aeqa">↓</div>${line(c.to)}</div></div>`).join('');
   openScreen(`${n}：おすすめ装備`, `<div class="scroll" style="flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto">
     <div class="ptitle"><span>変わる装備（${P.changes.length}か所）</span><span>ほかはそのまま</span></div><div class="list" style="flex:0 0 auto;overflow:visible">${rows}</div>
-    <div class="ptitle"><span>能力の変化</span><span>いま → おすすめ</span></div><div class="card">${cmpTable(P.before,P.after)}</div></div>
+    <div class="ptitle"><span>能力の変化</span><span>いま → おすすめ</span></div><div class="card">${pwRow(n,P.before,P.after)}${cmpTable(P.before,P.after)}</div></div>
     <button class="cb" id="aeqOk" style="background:#24407a;border-color:#4b6fd1">この装備にする</button>`);
   $('aeqOk').onclick=()=>{ autoEquip(n); sfx('equip'); toast('おすすめの装備にした'); navPop(1,n); };
 }
-function autoEquip(n){
+function autoEquip(n){ applyPlan(partyPlan([n])); }
+function autoEquipOld(n){
   const m=G.members[n], mag=CHARS[n].wpn==='mag';
   const score=(it,sl)=>{ const old=m.equip[sl]; m.equip[sl]=it; const s=calcStats(n); m.equip[sl]=old; const main=mag?s.mat:s.atk; return (mag?s.mat*1.2+s.atk*0.2:s.atk*1.2+s.mat*0.2)+s.def*0.8+s.mdf*0.6+s.spd*0.8+s.hp/12+s.crit*4+s.critDmg+s.gauge*main*0.002+main*(s.gNorm*0.012+s.gHurt*0.004+s.gCrit*0.002+s.gKill*0.003+s.gTurn*0.014+s.gKeep*0.006+s.actP*0.006)+(s.uniq.length?main*0.15*s.uniq.length:0); };
   for(const sl of SLOTS){ const base=sl.startsWith('acc')?'acc':sl; const cands=[m.equip[sl],...G.gear.filter(x=>x.slot===base)].filter(Boolean);

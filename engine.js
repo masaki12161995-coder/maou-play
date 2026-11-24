@@ -433,9 +433,10 @@ function renderTop(battleUnits){
     if(battleUnits){ const u=battleUnits[i];
       h+=`<div class="chip bchip${act?' act':''}${dead?' dead':''}">${st?`<span class="st">${st}</span>`:''}${stackLabel(u)}<div class="nm"><span>${n}</span></div><div class="brow"><img class="bicon${u.pose&&!dead?' pose':''}" src="${spriteURL(n,dead?'ko':u.pose?'pose':0)}"><div class="bin">${gaugeHTML(hp,mhp,gauge)}</div></div></div>`; continue; }
     h+=`<div class="chip${act?' act':''}${dead?' dead':''}">${st?`<span class="st">${st}</span>`:''}<div class="nm"><span>${n}</span><span>Lv${lv}</span></div>
-    ${gaugeHTML(hp,mhp)}</div>`;
+    ${gaugeHTML(hp,mhp)}<div class="cpw"><em>戦闘力</em><b data-pw="${n}">${power(n).toLocaleString()}</b></div></div>`;
   }
   el.innerHTML=h;
+  if(!battleUnits && typeof updateEqBtn==='function') updateEqBtn();
 }
 function renderHud(){
   if(!G) return;
