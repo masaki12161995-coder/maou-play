@@ -139,7 +139,7 @@ TRIG.leave_lumiere = async()=>{
     join('ミナ');
   }
 };
-TRIG.goal_forest = async()=>{ setF('goal_forest'); await narr('森を抜けた。山あいに、煙を上げる町が見える。'); unlock('gram'); setObj('鉱山町グラムへ','gram'); };
+TRIG.goal_forest = async()=>{ setF('goal_forest'); await narr('森を抜けた。山あいに、煙を上げる町が見える。'); unlock('gram'); setObj('鉱山町グラムへ','gram'); await arrive('gram'); };
 TRIG.enter_gram = async()=>{
   if(G.chapter===1 && !F('gram1')){ setF('gram1');
     await talk([['町長','勇者さまか！ 昨夜、ザガンの手下に襲われてな……。'],['町長','奴らは坑道の奥から出てきた。坑道のどこかに、砦への抜け道があるはずだ。'],['町長','どうか調べてくだされ！']]);
@@ -155,7 +155,7 @@ TRIG.boss_mine = async()=>{
 };
 TRIG.goal_burnt = async()=>{ setF('goal_burnt');
   await narr('焼け跡の向こうを、小さな影が走り去っていった。','……生き残りの子どもだろうか。');
-  unlock('fort1'); setObj('黒将の砦でザガンを倒す','fort1'); };
+  unlock('fort1'); setObj('黒将の砦でザガンを倒す','fort1'); await arrive('fort1'); };
 TRIG.boss_fort1 = async()=>{
   await talk([['ザガン','魔王が死んだ今、この世はオレのものだ。ガキどもが何の用だ？'],['ミナ','父ちゃんの道場の分、きっちり返してもらう！'],['ザガン','ハッ、かかってこい！']]);
   if(!await fight(2)) return; setF('boss_fort1');
@@ -284,7 +284,7 @@ TRIG.boss_fort2 = async()=>{
 
 // ---------- 4章 ----------
 TRIG.enter_hutte = async()=>{ if(G.chapter===4 && !F('hutte1')){ setF('hutte1'); await talk([['峡谷の案内人','大聖堂へ？ 凍てつく峡谷を抜けるしかない。最近は氷竜が出るそうだ。']]); unlock('canyon'); setObj('凍てつく峡谷を抜ける','canyon'); } };
-TRIG.boss_canyon = async()=>{ await narr('峡谷の出口で、白い竜が吠えた。'); if(!await fight(8)) return; setF('boss_canyon'); await narr('峡谷を抜けると、雪の向こうに大聖堂の尖塔が見えた。'); unlock('sancta'); setObj('大聖堂の町サンクタへ','sancta'); };
+TRIG.boss_canyon = async()=>{ await narr('峡谷の出口で、白い竜が吠えた。'); if(!await fight(8)) return; setF('boss_canyon'); await narr('峡谷を抜けると、雪の向こうに大聖堂の尖塔が見えた。'); unlock('sancta'); setObj('大聖堂の町サンクタへ','sancta'); await arrive('sancta'); };
 TRIG.enter_sancta = async()=>{
   if(G.chapter===4 && !F('sancta1')){ setF('sancta1');
     await talk([['セイル','よくぞここまで。大聖堂の地下に、器の記録があります。どうぞ自由にお調べください。'],['セイル','すべてが分かれば、世界を救う道も見えるでしょう。'],['オルガ','セイル様……ありがとうございます！']]);
