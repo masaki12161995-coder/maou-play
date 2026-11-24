@@ -382,9 +382,11 @@ function drawObj(o,sx,sy){
   else if(o.type==='spring'){ const used=G.flags.springAt===G.mazeEntry; cx.fillStyle='#0f766e'; cx.beginPath(); cx.ellipse(sx+16,sy+22,13,6,0,0,7); cx.fill(); if(!used){ const g=0.5+0.5*Math.sin(t/10); cx.fillStyle=`rgba(94,234,212,${0.5+g*0.4})`; cx.beginPath(); cx.ellipse(sx+16,sy+21,9,4,0,0,7); cx.fill(); cx.fillStyle='#ccfbf1'; cx.fillRect(sx+15,sy+8-g*4,2,8); } }
   else if(o.type==='up'||o.type==='down'){ cx.fillStyle='#0008'; cx.fillRect(sx+2,sy+2,28,28); cx.fillStyle='#cbd5e1'; for(let i=0;i<4;i++) cx.fillRect(sx+4+(o.type==='down'?i*2:6-i*2),sy+5+i*6,24-(o.type==='down'?i*4:(3-i)*4)+0,4); }
   else if(o.type==='boss'){ if(bossDone()) return; if(RT.map.id==='abyss'&&G.flags.cleared){ const g=0.3+0.3*Math.sin(t/14); cx.fillStyle=`rgba(250,204,21,${g})`; cx.fillRect(sx+14,sy+14,3,3); return; } cx.fillStyle='#000a'; cx.beginPath(); cx.ellipse(sx+16,sy+28,16,5,0,0,7); cx.fill(); const pul=Math.sin(t/10)*2; cx.fillStyle='#3b0764'; cx.beginPath(); cx.arc(sx+16,sy+12+pul,15,0,7); cx.fill(); cx.fillStyle='#f87171'; cx.fillRect(sx+9,sy+9+pul,4,4); cx.fillRect(sx+19,sy+9+pul,4,4); }
-  else if(o.type==='goal'){ if(goalDone()) return; drawGoal(LOCS[RT.map.id].theme,sx,sy,t); }
+  else if(o.type==='goal'){ drawGoal(LOCS[RT.map.id].theme,sx,sy,t); }
   else if(o.type==='sign'){ cx.fillStyle='#6b4423'; cx.fillRect(sx+14,sy+16,4,14); cx.fillStyle='#d6b47a'; cx.fillRect(sx+4,sy+6,24,12); cx.fillStyle='#3b2412'; cx.font='bold 10px sans-serif'; cx.textAlign='center'; cx.fillText({inn:'宿',item:'道具',equip:'武具',smith:'錬成'}[o.kind]||'',sx+16,sy+16); }
 }
+// 通り抜けるダンジョンの出口（何度でも、ここから外へ出られる）
+const EXIT_THEMES=['forest','mountain','burnt','marsh'];
 // ダンジョンの奥（ゴール）を、その場所らしい形で描く：森の抜け道・山の峠・焼け跡の門・湿原の木道・書見台・封じられた扉・祭壇の水晶
 function drawGoal(theme,ox,oy,t){
   // 出口は人物と釣り合う大きさに（2マス分）。書見台・祭壇などの物は1.5倍。下の辺をマスの下にそろえる
@@ -675,7 +677,7 @@ async function interact(){
       else if(o.type==='boss' && !bossDone()) await runTrigger('boss_'+m.id);
       else if(o.type==='body'||o.type==='fallen'){ if(o.ev) await runTrigger(o.ev); else if(o.say) await say('',o.say); }
       else if(o.say) await say('',o.say);
-      else if(o.type==='goal' && !goalDone()) await runTrigger('goal_'+m.id);
+      else if(o.type==='goal'){ if(!goalDone()) await runTrigger('goal_'+m.id); else if(EXIT_THEMES.includes(LOCS[m.id].theme)) await leaveToWorld(); }
       else if(o.type==='sign'){ const n=m.npcs.find(n=>n.kind===o.kind); if(n) await talkNpc(n); }
     } else if(m.id==='sora' && m.town && f.x===15 && f.y===17 && typeof enterHome==='function'){ await enterHome(); }
     else { await runTrigger('look_'+m.id); }
