@@ -382,8 +382,61 @@ function drawObj(o,sx,sy){
   else if(o.type==='spring'){ const used=G.flags.springAt===G.mazeEntry; cx.fillStyle='#0f766e'; cx.beginPath(); cx.ellipse(sx+16,sy+22,13,6,0,0,7); cx.fill(); if(!used){ const g=0.5+0.5*Math.sin(t/10); cx.fillStyle=`rgba(94,234,212,${0.5+g*0.4})`; cx.beginPath(); cx.ellipse(sx+16,sy+21,9,4,0,0,7); cx.fill(); cx.fillStyle='#ccfbf1'; cx.fillRect(sx+15,sy+8-g*4,2,8); } }
   else if(o.type==='up'||o.type==='down'){ cx.fillStyle='#0008'; cx.fillRect(sx+2,sy+2,28,28); cx.fillStyle='#cbd5e1'; for(let i=0;i<4;i++) cx.fillRect(sx+4+(o.type==='down'?i*2:6-i*2),sy+5+i*6,24-(o.type==='down'?i*4:(3-i)*4)+0,4); }
   else if(o.type==='boss'){ if(bossDone()) return; if(RT.map.id==='abyss'&&G.flags.cleared){ const g=0.3+0.3*Math.sin(t/14); cx.fillStyle=`rgba(250,204,21,${g})`; cx.fillRect(sx+14,sy+14,3,3); return; } cx.fillStyle='#000a'; cx.beginPath(); cx.ellipse(sx+16,sy+28,16,5,0,0,7); cx.fill(); const pul=Math.sin(t/10)*2; cx.fillStyle='#3b0764'; cx.beginPath(); cx.arc(sx+16,sy+12+pul,15,0,7); cx.fill(); cx.fillStyle='#f87171'; cx.fillRect(sx+9,sy+9+pul,4,4); cx.fillRect(sx+19,sy+9+pul,4,4); }
-  else if(o.type==='goal'){ if(goalDone()) return; const g=0.5+0.5*Math.sin(t/9); cx.fillStyle=`rgba(250,204,21,${g})`; cx.beginPath(); cx.arc(sx+16,sy+16,8+g*4,0,7); cx.fill(); cx.fillStyle='#fff'; cx.fillRect(sx+14,sy+10,4,12); }
+  else if(o.type==='goal'){ if(goalDone()) return; drawGoal(LOCS[RT.map.id].theme,sx,sy,t); }
   else if(o.type==='sign'){ cx.fillStyle='#6b4423'; cx.fillRect(sx+14,sy+16,4,14); cx.fillStyle='#d6b47a'; cx.fillRect(sx+4,sy+6,24,12); cx.fillStyle='#3b2412'; cx.font='bold 10px sans-serif'; cx.textAlign='center'; cx.fillText({inn:'宿',item:'道具',equip:'武具',smith:'錬成'}[o.kind]||'',sx+16,sy+16); }
+}
+// ダンジョンの奥（ゴール）を、その場所らしい形で描く：森の抜け道・山の峠・焼け跡の門・湿原の木道・書見台・封じられた扉・祭壇の水晶
+function drawGoal(theme,ox,oy,t){
+  // 出口は人物と釣り合う大きさに（2マス分）。書見台・祭壇などの物は1.5倍。下の辺をマスの下にそろえる
+  const sc=['library','temple'].includes(theme)?1.5:2;
+  cx.save(); cx.translate(ox+16,oy+32); cx.scale(sc,sc); cx.translate(-16,-32); const sx=0, sy=0;
+  try{ drawGoalArt(theme,sx,sy,t); } finally { cx.restore(); }
+}
+function drawGoalArt(theme,sx,sy,t){
+  const R=(c,x,y,w,h)=>{ cx.fillStyle=c; cx.fillRect(sx+x,sy+y,w,h); };
+  const sh=0.5+0.5*Math.sin(t/14);
+  if(theme==='forest'){
+    // 木々の切れ目の先に、明るい道が続いている
+    const gl=cx.createLinearGradient(0,sy,0,sy+20); gl.addColorStop(0,`rgba(255,240,170,${0.55+0.25*sh})`); gl.addColorStop(1,'rgba(255,240,170,0)'); cx.fillStyle=gl; cx.fillRect(sx+8,sy,16,20);
+    R('#b08a54',11,8,10,24); R('#c9a46a',13,8,6,24); R('#e2c48c',14,2,4,8);
+    const tree=(x)=>{ R('#3f2a14',x+3,20,4,12); const C=(c,r,dx,dy)=>{ cx.fillStyle=c; cx.beginPath(); cx.arc(sx+x+5+dx,sy+12+dy,r,0,7); cx.fill(); };
+      C('#0f3d22',7,0,0); C('#14532d',6,0,-1); C('#166534',4,-1,-2); C('#22c55e',2,-2,-4); };
+    tree(-2); tree(24);
+  } else if(theme==='mountain'){
+    // 岩の切れ目から空がのぞく峠
+    R('#7dd3fc',10,0,12,12); R('#e0f2fe',12,2,5,3);
+    R('#57534e',0,0,11,32); R('#78716c',2,3,6,20); R('#a8a29e',3,5,2,8);
+    R('#57534e',21,0,11,32); R('#78716c',23,3,6,20); R('#a8a29e',25,5,2,8);
+    R('#a07850',11,12,10,20); R('#c4a074',13,12,6,20);
+  } else if(theme==='burnt'){
+    // 焼け焦げた村の門。その先に道
+    const gl=cx.createLinearGradient(0,sy,0,sy+22); gl.addColorStop(0,`rgba(253,186,116,${0.35+0.2*sh})`); gl.addColorStop(1,'rgba(253,186,116,0)'); cx.fillStyle=gl; cx.fillRect(sx+8,sy+4,16,20);
+    R('#9a7b56',10,10,12,22); R('#b4946a',12,10,8,22);
+    R('#1c1917',4,2,5,30); R('#44403c',5,4,2,24); R('#1c1917',23,4,5,28); R('#44403c',24,6,2,22);
+    R('#292524',3,2,16,4); R('#57534e',4,3,12,1); R('#f97316',7,6,2,2); R('#fb923c',25,10,2,2);
+  } else if(theme==='marsh'){
+    // 霧の中へ続く木道
+    for(let i=0;i<5;i++){ R('#78502c',10+i,26-i*6,12-i*2,4); R('#a0703c',11+i,26-i*6,10-i*2,1); }
+    const gl=cx.createLinearGradient(0,sy,0,sy+18); gl.addColorStop(0,`rgba(226,232,240,${0.6+0.2*sh})`); gl.addColorStop(1,'rgba(226,232,240,0)'); cx.fillStyle=gl; cx.fillRect(sx,sy,32,18);
+  } else if(theme==='library'){
+    // 書見台の上の古い写本
+    R('#3f2a14',14,16,4,14); R('#57391c',8,28,16,3); R('#6b4423',6,12,20,6);
+    R('#f5e6c4',7,7,8,7); R('#f5e6c4',17,7,8,7); R('#d6c29a',15,7,2,7); R('#8b7355',9,9,5,1); R('#8b7355',18,9,5,1); R('#8b7355',9,11,4,1); R('#8b7355',18,11,5,1);
+    cx.fillStyle=`rgba(250,230,160,${0.25+0.25*sh})`; cx.fillRect(sx+5,sy+4,22,12);
+  } else if(theme==='crypt'){
+    // 鎖で封じられた古い扉
+    R('#292524',5,2,22,30); R('#57534e',7,4,18,28); R('#44403c',15,4,2,28);
+    cx.strokeStyle='#a8a29e'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(sx+7,sy+8); cx.lineTo(sx+25,sy+26); cx.moveTo(sx+25,sy+8); cx.lineTo(sx+7,sy+26); cx.stroke();
+    R('#78716c',13,14,6,6); R('#d6d3d1',14,15,4,2);
+  } else if(theme==='temple'){
+    // 祭壇の上の水晶
+    R('#57534e',6,24,20,6); R('#78716c',8,22,16,3);
+    cx.fillStyle=`rgba(165,243,252,${0.75+0.25*sh})`; cx.beginPath(); cx.moveTo(sx+16,sy+2); cx.lineTo(sx+23,sy+12); cx.lineTo(sx+16,sy+22); cx.lineTo(sx+9,sy+12); cx.fill();
+    R('#ecfeff',13,7,3,6);
+  } else {
+    // そのほかの場所は、奥へ続く道の明かり
+    const gl=cx.createLinearGradient(0,sy,0,sy+24); gl.addColorStop(0,`rgba(255,240,170,${0.5+0.25*sh})`); gl.addColorStop(1,'rgba(255,240,170,0)'); cx.fillStyle=gl; cx.fillRect(sx+6,sy,20,24);
+  }
 }
 function chestKey(o){return `chest_${RT.map.id}_${RT.map.floor||0}_${o.ci}${LOCS[RT.map.id].post?'_'+(G.flags.mazeNo||0)+'_'+(G.mazeEntry||0):''}`;}
 
