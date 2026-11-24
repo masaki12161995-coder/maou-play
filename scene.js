@@ -154,7 +154,7 @@ const BANK_NPC={
   'shadow|nm:里の子ども':'040', 'shadow|flavor0':'025', 'shadow|flavor1':'036', 'shadow|flavor2':'042'
 };
 const BANK_SPEAKER={'里長':'041'};   // 物語の会話にだけ出る人の顔
-const BANK_IMG={}; for(const id of new Set([...Object.values(BANK_NPC),...Object.values(BANK_SPEAKER)])){ const im=new Image(); im.src='img/bank_'+id+'.png'; BANK_IMG[id]=im; WAIT_IMGS.push(im); }
+const BANK_IMG={}; for(const id of new Set([...Object.values(BANK_NPC),...Object.values(BANK_SPEAKER)])){ BANK_IMG[id]=loadPic('img/bank_'+id+'.png'); }
 function bankForNpc(town,n){
   if(n.shop && n.kind) return BANK_NPC[town+'|'+n.kind];
   if(n.nm && BANK_NPC[town+'|nm:'+n.nm]) return BANK_NPC[town+'|nm:'+n.nm];

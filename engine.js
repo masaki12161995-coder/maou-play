@@ -305,12 +305,19 @@ const SPRITE_FILES={'アルト':'img/alto.png','リリィ':'img/lily.png','ノ�
 const SPR_URL={};
 // 人物の絵は、ゲームを始める前に全部読み込み終わるまで待つ（読み込み前に別の絵が一瞬出ないように）
 const WAIT_IMGS=[];
-function imagesReady(){ return Promise.race([Promise.all(WAIT_IMGS.map(im=>im.complete?1:new Promise(r=>{ im.addEventListener('load',r); im.addEventListener('error',r); }))), new Promise(r=>setTimeout(r,15000))]); }
-for(const n in SPRITE_FILES){ const im=new Image(); im.onload=()=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }; im.src=SPRITE_FILES[n]; WAIT_IMGS.push(im); }
+// 絵の読み込み：電波が弱くて失敗しても、あきらめずに取り直す（読めなかった絵の代わりに、古い図形の絵が出ないように）
+function loadPic(src,onok){ const im=new Image(); let n=0, done;
+  im._ready=new Promise(r=>done=r);
+  im.onload=()=>{ if(im.naturalWidth){ try{ onok&&onok(im); }catch(e){} done(); } };
+  im._retry=()=>{ if(im.naturalWidth) return; n++; im.src=src+(src.includes('?')?'&':'?')+'r='+Date.now(); };
+  im.onerror=()=>{ if(n<8) setTimeout(im._retry, Math.min(4000,500*(n+1))); else done(); };
+  im.src=src; WAIT_IMGS.push(im); return im; }
+function imagesReady(){ return Promise.race([Promise.all(WAIT_IMGS.map(im=>im.complete&&im.naturalWidth?1:im._ready||new Promise(r=>{ im.addEventListener('load',r); im.addEventListener('error',r); }))), new Promise(r=>setTimeout(r,20000))]); }
+for(const n in SPRITE_FILES){ loadPic(SPRITE_FILES[n],im=>{ LOOK[n].img=im; for(const k in SPR_URL) if(k.startsWith(n+'|')) delete SPR_URL[k]; try{ renderTop(RT.mode==='battle'&&B?B.party:undefined); }catch(e){} }); }
 const DIRROW={down:0,left:1,right:2,up:3};
 // 町の人12種類
 const NPC_TYPES=['oldman','oldwoman','man','woman','boy','girl','soldier','merchant','priest','nun','miner','sailor'];
-const NPC_IMG={}; for(const k of NPC_TYPES){ const im=new Image(); im.onload=()=>{ NPC_IMG[k]=im; }; im.src='img/npc_'+k+'.png'; WAIT_IMGS.push(im); }
+const NPC_IMG={}; for(const k of NPC_TYPES){ loadPic('img/npc_'+k+'.png',im=>{ NPC_IMG[k]=im; }); }
 // 呼び名から見た目を選ぶ（分からなければ番号で男女を振り分け）
 function npcType(label, seed){
   const L=label||'';

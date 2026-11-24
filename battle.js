@@ -117,6 +117,7 @@ async function bossBattle(idx, extra){
   return startBattle(es,{canRun:false, boss:true, maze:extra.maze, noLose:extra.noLose, bgm:idx===13?'noahDark':'boss'});
 }
 async function startBattle(enemies, opts){
+  await enemyPicsReady(enemies);
   const prevMode=RT.mode; RT.mode='battle'; RT.busy=true;
   B={enemies, party:G.party.map(partyUnit), turn:0, opts, pops:[], fx:[], shake:0, sel:-1, partySpd:0, meter:{}, queue:[]};
   // 人数が少ないときは敵を弱める（序盤は2〜3人）
@@ -149,6 +150,8 @@ function showBattleBar(){
   $('panel').querySelectorAll('[data-spd]').forEach(b=>b.onclick=()=>{ G.settings.speed=+b.dataset.spd; sfx('tick'); showBattleBar(); });
 }
 
+// 行動順の札に入れる短い名前：「坑道の主・大土竜」→「坑道の主」、「（1回目）」などは外す
+function shortNm(n){ let t=String(n).replace(/（.*?）/g,''); if(t.includes('・')) t=t.split('・')[0]; return t.length>6?t.slice(0,6):t; }
 function layoutEnemies(){ const W=VW; const es=B.enemies, n=es.length;
   // 絵の幅に合わせて並べる。入りきらないときは、全員を同じ割合で小さくして、重ならないようにする
   const nat=es.map(e=>{ const im=ENEMY_PIC[e.dexName||e.nm||e.name]; return im&&im.naturalWidth? im.naturalWidth : 32; });
@@ -167,7 +170,10 @@ function bnow(){ const n=performance.now(); if(!BCLK.last) BCLK.last=n; BCLK.t+=
 async function slowMo(ms){ if(SIM.on) return; BCLK.rate=0.22; B.pbFlash=bnow(); await sleep(ms); BCLK.rate=1; }
 function pop(target,text,color,big){
   if(SIM.on) return;
-  if(target.isEnemy){ B.pops.push({t:target,text,color,born:bnow(),big}); return; }
+  if(target.isEnemy){ // 同じ敵に続けて出る数字は、新しいものほど下に出して、前の数字を上へ押し上げる（重ならない）
+    const now=bnow();
+    if(big) for(const p of B.pops) if(p.t===target&&!p.big) p.die=Math.min(p.die||1e15, now+220); // まとめの数字が出たら、ひとつずつの数字はすぐ消す
+    B.pops.push({t:target,text,color,born:now,big}); return; }
   const i=B.party.indexOf(target); const col=$('bpop').children[i]; if(!col) return;
   const d=document.createElement('div'); d.className='dpop'; d.style.color=color||'#fff'; d.textContent=text; col.appendChild(d); setTimeout(()=>d.remove(),1400);
   if(/^\d/.test(String(text))||/会心/.test(String(text))){ const ch=$('bparty').children[i]; if(ch){ ch.classList.remove('hit'); void ch.offsetWidth; ch.classList.add('hit'); } }
@@ -201,17 +207,24 @@ function drawBattle(){
   // 行動順
   if(B.queue&&B.queue.length){ const rest=B.queue.slice(B.qi).filter(u=>u.hp>0).slice(0,7); let x=6; cx.font='bold 10px sans-serif'; cx.textAlign='left'; cx.textBaseline='middle';
     cx.fillStyle='#0008'; cx.fillRect(0,0,W,18); cx.fillStyle='#94a3b8'; cx.fillText('順番',x,9); x+=28;
-    rest.forEach((u,i)=>{ const nm=u.name.length>5?u.name.slice(0,5):u.name; const w=cx.measureText(nm).width+10; cx.fillStyle=i===0?'#facc15':(u.isEnemy?'#7f1d1d':'#1e3a8a'); cx.fillRect(x,3,w,12); cx.fillStyle=i===0?'#111':'#fff'; cx.fillText(nm,x+5,9.5); x+=w+3; });
+    rest.forEach((u,i)=>{ const nm=shortNm(u.name); const w=cx.measureText(nm).width+10; cx.fillStyle=i===0?'#facc15':(u.isEnemy?'#7f1d1d':'#1e3a8a'); cx.fillRect(x,3,w,12); cx.fillStyle=i===0?'#111':'#fff'; cx.fillText(nm,x+5,9.5); x+=w+3; });
     cx.textBaseline='alphabetic'; }
-  B.pops=B.pops.filter(p=>now-p.born<1300);
-  for(const p of B.pops){ const k=(now-p.born)/1300; let x=p.t.x; const y=p.big==='pb'? by-104-k*10 : p.big? by-74-k*14 : by-30-k*30;
-    cx.globalAlpha=k<.7?1:1-(k-.7)/.3; cx.font=p.big==='pb'?'900 30px sans-serif':p.big?'900 34px sans-serif':'bold 26px sans-serif'; cx.textAlign='center'; { const hw=cx.measureText(p.text).width/2+6; x=Math.min(W-hw,Math.max(hw,x)); } cx.lineWidth=4; cx.strokeStyle='#000'; cx.strokeText(p.text,x,y); cx.fillStyle=p.color||'#fff'; cx.fillText(p.text,x,y); cx.globalAlpha=1; }
+  B.pops=B.pops.filter(p=>now-p.born<1300&&!(p.die&&now>=p.die));
+  { const grp=new Map(); for(const p of B.pops) if(!p.big){ if(!grp.has(p.t)) grp.set(p.t,[]); grp.get(p.t).push(p); }
+    for(const L of grp.values()){ L.sort((a,b)=>b.born-a.born); L.forEach((p,i)=>{ const want=i*27; p.lift=p.lift===undefined?want:p.lift+(want-p.lift)*0.35; }); } }
+  for(const p of B.pops){ const k=(now-p.born)/1300; let x=p.t.x; const y=p.big==='pb'? by-104-k*10 : p.big? by-74-k*14 : by-30-Math.min(1,k*3)*12-(p.lift||0);
+    cx.globalAlpha=(k<.7?1:1-(k-.7)/.3)*(p.die?Math.max(0,Math.min(1,(p.die-now)/220)):1); cx.font=p.big==='pb'?'900 30px sans-serif':p.big?'900 34px sans-serif':'bold 26px sans-serif'; cx.textAlign='center'; { const hw=cx.measureText(p.text).width/2+6; x=Math.min(W-hw,Math.max(hw,x)); } cx.lineWidth=4; cx.strokeStyle='#000'; cx.strokeText(p.text,x,y); cx.fillStyle=p.color||'#fff'; cx.fillText(p.text,x,y); cx.globalAlpha=1; }
   if(B.pbFlash){ const k=(now-B.pbFlash)/260; if(k<1){ cx.fillStyle=`rgba(255,236,170,${0.45*(1-k)})`; cx.fillRect(0,0,W,H); } else B.pbFlash=0; }
 }
 // 敵の絵：番号の付いた絵（img/enemy_番号.png）がある敵は絵で、まだない敵は今までの図形で描く
 const ENEMY_NO={"プルリン": "001", "ヤミコウモリ": "002", "ツノウサギ": "003", "門番の大鎧": "004", "からっぽの鎧": "005", "城の骨犬": "006", "灯火の霊": "007", "キバオオカミ": "008", "ドクキノコ": "009", "はぐれ兵": "010", "森ネズミ": "011", "ツルハシゴブリン": "012", "岩トカゲ": "013", "ガス溜まり": "014", "坑道コウモリ": "015", "焼け跡の亡霊": "016", "火喰いトカゲ": "017", "黒将軍の偵察兵": "018", "黒将軍の歩兵": "019", "黒将軍の弓兵": "020", "黒将軍の魔術兵": "021", "鉄の猟犬": "022", "坑道の主・大土竜": "023", "ハサミガニ": "025", "ウミネコ": "026", "潮だまりのプルリン": "027", "沼ガエル": "028", "霧の精": "029", "人喰い草": "030", "泥人形": "031", "洞窟ザメ": "032", "光喰い": "033", "フナムシの群れ": "034", "さまよう剣士": "035", "骸骨弓兵": "036", "戦場カラス": "037", "怨念の旗": "038", "水死の船員": "039", "イカの化け物": "040", "船底の亡霊": "041", "動く本": "042", "インク溜まり": "043", "書庫の番人": "044", "紙魚の群れ": "045", "サソリ兵": "046", "砂ミミズ": "024", "ハゲワシ": "047", "ミイラ兵": "048", "砂の巨人": "049", "呪いの壺": "050", "遺跡の蛇": "051", "雪男": "052", "氷の精": "053", "白オオカミ": "054", "氷柱の魔物": "055", "封じられた獣": "057", "祈る石像": "058", "地下の黒魔術師": "059", "下水の大ナメクジ": "060", "ドブネズミの王": "061", "水路の亡霊": "062", "瓦礫の魔物": "063", "虚の羽虫": "064", "作られた天使": "065", "聖堂騎士の亡霊": "056", "虚の影": "066", "神殿の守り手": "067", "裂け目の獣": "068", "虚に呑まれた兵": "069", "聖騎士": "070", "審問官": "071", "鎖の番人": "072", "虚の獣": "073", "記憶の亡霊": "074", "なり損ないの器": "075", "黒将軍の重騎兵": "076", "黒将軍の呪術兵": "077", "黒将軍の旗手": "078", "鋼の猟犬": "079"};
-const ENEMY_PIC_FILES={}; for(const n in ENEMY_NO) ENEMY_PIC_FILES[n]='img/enemy_'+ENEMY_NO[n]+'.png';
-const ENEMY_PIC={}; for(const n in ENEMY_PIC_FILES){ const im=new Image(); im.onload=()=>{ ENEMY_PIC[n]=im; for(const k in ENEMY_ICON) if(k===n) delete ENEMY_ICON[k]; }; im.src=ENEMY_PIC_FILES[n]; WAIT_IMGS.push(im); }
+// ボス・記憶の迷宮の敵の絵（素材バンクのモンスターと人物から作った絵）。これで、どの敵も図形の仮の絵では出ない
+const ENEMY_PIC_MORE={"黒将ザガン（1回目）": "boss_zagan", "黒将ザガン（2回目）": "boss_zagan", "湿原の大蛇": "boss_numahebi", "亡霊騎士": "boss_bourei", "沈没船の主": "boss_chinbotsu", "遺跡の守護者": "boss_iseki", "氷竜": "boss_hyouryu", "聖騎士団長": "boss_dancho", "地下水路の大王": "boss_suiro", "司祭セイル": "boss_seil", "虚の化身": "boss_kyo", "ノア": "boss_noah", "玉座の魔王アルト": "maze0", "古戦場の亡霊ガルド": "maze1", "黒天のセイル": "maze2", "独りの巫女の影": "maze3", "笑わない拳": "maze4", "さまよう双剣": "maze5", "砕けた大盾": "maze6", "燃える古文書": "maze7", "泣きつづける少女": "maze8", "剣を向けた勇者": "maze9", "終わりのない世界": "maze10", "首飾りの記憶": "maze11", "玉座の影": "post_00", "黒衣の近衛": "post_01", "燃える軍旗": "post_02", "魔王の猟犬": "post_03", "崩れた石像": "post_04", "器の残り火": "post_05", "名もなき勇者の霊": "post_06", "砕けた冠の精": "post_07", "影の弓兵": "post_08", "夜の巨人": "post_09", "泣き声の亡霊": "post_10", "墓守の鎧": "post_11", "灰の獣": "post_12", "焼けた本": "post_13", "迷子の灯火": "post_14", "道場の木人": "post_15", "忘れられた騎士": "post_16", "さまよう双影": "post_17", "涙の大蛇": "post_18", "錆びた盾の番人": "post_19", "黒天の天使": "post_20", "祭壇の石像": "post_21", "聖騎士の影": "post_22", "祈りの壺": "post_23", "金の書庫": "post_24", "ひび割れ精": "post_25", "黒い雨の精": "post_26", "教会の猟犬": "post_27", "器の守り手": "post_28", "寄付箱ゴーレム": "post_29", "終わらない亡霊": "post_30", "巻き戻る影": "post_31", "生き返った兵士": "post_32", "取り消された死": "post_33", "崩れる世界の精": "post_34", "器のなり損ない": "post_35", "祈る泥人形": "post_36", "夜明けの番人": "post_37", "首飾りの影": "post_38", "黒将ザガンの記憶": "maze_zagan"};
+const ENEMY_PIC_FILES={}; for(const n in ENEMY_NO) ENEMY_PIC_FILES[n]='img/enemy_'+ENEMY_NO[n]+'.png'; for(const n in ENEMY_PIC_MORE) ENEMY_PIC_FILES[n]='img/'+ENEMY_PIC_MORE[n]+'.png';
+const ENEMY_PIC={}, ENEMY_IMG_OBJ={}; for(const n in ENEMY_PIC_FILES){ ENEMY_IMG_OBJ[n]=loadPic(ENEMY_PIC_FILES[n],im=>{ ENEMY_PIC[n]=im; delete ENEMY_ICON[n]; }); }
+// 戦闘を始める前に、出てくる敵の絵がそろっているか確かめる（まだなら、すぐ取り直して少し待つ）
+async function enemyPicsReady(es){ const ws=[]; for(const e of es){ const k=e.dexName||e.nm||e.name, im=ENEMY_IMG_OBJ[k]; if(im && !ENEMY_PIC[k]){ if(im.complete) im._retry(); ws.push(im._ready); } }
+  if(ws.length) await Promise.race([Promise.all(ws), sleep(5000)]); }
 function drawEnemyPic(e,im,x,y,s,cx,icon){
   if(icon){ const c=cx.canvas, P=Math.max(1,Math.floor(Math.min(c.width,c.height)/Math.max(im.naturalWidth,im.naturalHeight))), w=im.naturalWidth*P, h=im.naturalHeight*P;
     cx.save(); cx.imageSmoothingEnabled=false; cx.drawImage(im,Math.round((c.width-w)/2),Math.round((c.height-h)/2)+P,w,h); cx.restore(); return; }
