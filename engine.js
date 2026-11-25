@@ -53,8 +53,8 @@ function calcStats(name){
   const fl={hp:0,atk:0,def:0,mat:0,mdf:0,spd:0}, pc={hp:0,atk:0,def:0,mat:0,mdf:0,spd:0};
   const ex={gauge:0,crit:0,critDmg:0,critDef:0,res:{fire:0,ice:0,thunder:0,dark:0,light:0},stRes:0,expUp:0,dropUp:0,drain:0,uniq:[]}; for(const k of EXK) ex[k]=0;
   for(const sl of SLOTS){ const it=m.equip[sl]; if(!it) continue;
-    // 得意な武器は素の強さ+12%、苦手な武器は-15%。鍛えた品（+1〜+5）は素の強さ+4%ずつ
-    const aff = sl==='weapon'? weaponAff(name, wTy(it)) : 0, am = aff>0?1.12: aff<0?0.85:1, pm=1+0.04*(it.plus||0);
+    // 得意な武器は素の強さ+12%、苦手な武器は-15%。鍛えた品（+1〜+5）は素の強さ+6%ずつ
+    const aff = sl==='weapon'? weaponAff(name, wTy(it)) : 0, am = aff>0?1.12: aff<0?0.85:1, pm=1+PLUS_STEP*(it.plus||0);
     for(const k in it.base){ const v=it.base[k]; fl[k]+= v>0? Math.round(v*pm*((k==='atk'||k==='mat')?am:1)) : v; }
     for(const a of [...(it.imp||[]), ...it.af]){ const k=a.k,v=a.v;
       if(k==='atkF')fl.atk+=v; else if(k==='matF')fl.mat+=v; else if(k==='defF')fl.def+=v; else if(k==='mdfF')fl.mdf+=v; else if(k==='spdF')fl.spd+=v;
@@ -125,6 +125,7 @@ function matCount(cat,minG){ return matList(cat,minG).reduce((s,n)=>s+G.mats[n],
 function matTake(cat,minG,k){ for(const n of matList(cat,minG)){ if(k<=0) break; const t=Math.min(k,G.mats[n]); matTakeName(n,t); k-=t; } }
 function matCountBoss(core){ return Object.keys(G.mats||{}).filter(n=>MAT[n]&&MAT[n].cat==='boss'&&(core?MAT[n].core:true)).reduce((s,n)=>s+G.mats[n],0); }
 function matTakeBoss(core,k){ for(const n of Object.keys(G.mats||{}).filter(n=>MAT[n]&&MAT[n].cat==='boss'&&(core?MAT[n].core:!MAT[n].core)).concat(core?[]:['記憶の核'])){ if(k<=0) break; const t=Math.min(k,matHave(n)); if(t>0){ matTakeName(n,t); k-=t; } } }
+const PLUS_STEP=0.06; // 鍛えた品は、+1ごとに素の強さ+6%（+5で+30%）
 function makeItem(slot, iLv, r, kind, opt){
   opt=opt||{};
   if(slot==='acc1'||slot==='acc2') slot='acc';
@@ -157,7 +158,7 @@ function afText(a){ if(a.k==='mpF') return '戦闘開始時ゲージ+'+Math.min(
 function afHTML(a){ const t=afText(a); if(!(a.q>=1)) return t; return `<span class="${a.q>=1.3?'qtop':'qhi'}">${t}</span>`; }
 const PW={gNorm:4,gHurt:1,gCrit:1,gKill:1,gTurn:5,gKeep:1.5,actP:3,gaugeF:1,mpF:1,hpF:0.1};
 function itemPower(it){ // 比較用のざっくりした強さ
-  let p=0; const pm=1+0.04*(it.plus||0); for(const k in it.base) p+= (k==='hp'?it.base[k]/10:it.base[k])*(it.base[k]>0?pm:1);
+  let p=0; const pm=1+PLUS_STEP*(it.plus||0); for(const k in it.base) p+= (k==='hp'?it.base[k]/10:it.base[k])*(it.base[k]>0?pm:1);
   for(const a of [...(it.imp||[]),...it.af]){ const d=AFX.find(x=>x.k===a.k)||{}; p+= PW[a.k]!==undefined? a.v*PW[a.k] : d.p? a.v*4 : a.v; }
   if(it.u) p+=40; return Math.round(p);
 }
