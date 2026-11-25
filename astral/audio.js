@@ -94,6 +94,27 @@
         });
         tone(146.83, time + 0.38, 1.35, 0.14);
         break;
+      case "reward":
+        [523.25, 659.25, 783.99].forEach((note, index) =>
+          tone(note, time + index * .065, .42, .092, "triangle"));
+        break;
+      case "gold":
+        tone(130.81, time + .06, 1.25, .16, "triangle");
+        [392, 523.25, 659.25, 783.99, 1046.5].forEach((note, index) => {
+          tone(note, time + index * .106, .82, .113, "triangle");
+          tone(note * 2, time + index * .106 + .02, .46, .030);
+        });
+        brush(time + .24, .52, 1820, .082);
+        break;
+      case "rainbow":
+        tone(146.83, time, 1.6, .18, "triangle");
+        tone(220, time + .21, 1.4, .085, "triangle");
+        [440, 587.33, 739.99, 880, 1174.66, 1479.98].forEach((note, index) => {
+          tone(note, time + index * .085, 1.00, .097, index % 2 ? "triangle" : "sine");
+          tone(note * 1.5, time + index * .085 + .06, .63, .035);
+        });
+        brush(time + .17, .7, 2450, .101);
+        break;
       case "defeat":
         [392, 329.63, 261.63, 196].forEach((note, index) => {
           tone(note, time + index * 0.16, 0.75, 0.087, "triangle");

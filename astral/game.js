@@ -4,6 +4,11 @@
 
   const rules = AstralRules;
   const sound = AstralAudio;
+  const campaign = AstralCampaign;
+  const artSizes = AstralSpriteSizes;
+  const storage = (() => {
+    try { return window.localStorage; } catch { return null; }
+  })();
   const stage = document.getElementById("stage");
   const screen = document.getElementById("screen");
   const modal = document.getElementById("modal");
@@ -12,17 +17,21 @@
   const context = canvas.getContext("2d");
   const announce = document.getElementById("announce");
   const shortMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const STORE_KEY = "astral-eclipse.v1";
-  const HERO_NAMES = ["あなた", "月蝕の騎士"];
   const KIND_NAMES = { unit: "ユニット", gear: "装備", spell: "魔法" };
   const WIDTH = 402;
   const HEIGHT = 874;
   const GALLERY_SIZE = 9;
   const HOLD_TIME = 430;
-  let progress = readProgress();
+  const progress = campaign.readProgress(storage);
   let scene = "title";
   let game = null;
   let result = null;
+  let rival = null;
+  let draft = null;
+  let editorBack = "title";
+  let editPage = 0;
+  let editKind = "all";
+  let editMessage = "";
   let page = 0;
   let galleryBack = "title";
   let busy = false;
@@ -53,6 +62,12 @@
     close: '<path d="M6 6l12 12M18 6 6 18"/>',
     touch: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11l2-.7 5 1.5a2 2 0 0 1 1.4 2.1l-.6 4.1c-.2 1.5-1.2 2.5-2.7 2.5h-4.6c-1 0-1.7-.5-2.3-1.2L5 14a1.4 1.4 0 0 1 2-2l1 1Z"/>',
     trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4m-5 2v4m-5 3h10m-8-3h6v3"/>',
+    forge: '<path d="M3 8h18l-3 4-4 2v4l3 2H7l3-2v-4L6 12 3 8Z"/><path d="M9 5h6"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    minus: '<path d="M5 12h14"/>',
+    check: '<path d="m5 12 4 4L19 6"/>',
+    frost: '<path d="M12 2v20M3 7l18 10M21 7 3 17M9 5l3 3 3-3m-6 14 3-3 3 3"/>',
+    ward: '<path d="M12 3l7 4v9l-7 5-7-5V7l7-4Z"/><path d="m12 7 4 5-4 5-4-5 4-5Z"/>',
     moon: '<path d="M19.9 15.2A8.6 8.6 0 0 1 8.8 4.1a8.6 8.6 0 1 0 11.1 11.1Z"/><path d="M16 3v6m-3-3h6"/>'
   };
 
@@ -62,7 +77,8 @@
     ["カードを出す", "光る手札を引っぱります。ユニットは自分の場の空き枠へ、装備は味方へ。魔法は光った相手や味方、自分の場へ。"],
     ["攻撃する", "光るユニットを相手のカードか顔へ。ユニット同士は同時にダメージを受けます。「守護」がいると、攻撃は守護が先です。"],
     ["次の番へ", "場に出たユニットは次の自分の番から攻撃（速攻はすぐ）。カードは長押しで詳細。「ターン終了」で相手の番です。"],
-    ["山札と報酬", "手札は７枚まで。山札が空なら引くたび１、２、３…ダメージ。勝つと図鑑にカードが１枚増えます。"]
+    ["山札と報酬", "手札は７枚まで。山札が空なら引くたび１、２、３…ダメージ。勝つとカードが１枚もらえます。"],
+    ["デッキを組む", "デッキは２２枚。持っているカードから同じ札は３枚まで、金と虹は同じ札を１枚まで入れられます。"]
   ];
 
   function icon(name) {
@@ -70,38 +86,35 @@
       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${symbols[name]}</svg>`;
   }
 
-  function readProgress() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
-      const prizes = {};
-      for (const id of rules.prizes) {
-        const quantity = saved.prizes?.[id];
-        if (Number.isSafeInteger(quantity) && quantity > 0) prizes[id] = quantity;
-      }
-      return {
-        prizes,
-        muted: saved.muted === true,
-        wins: Number.isSafeInteger(saved.wins) && saved.wins > 0 ? saved.wins : 0
-      };
-    } catch {
-      return { prizes: {}, muted: false, wins: 0 };
-    }
+  function saveProgress() {
+    campaign.saveProgress(storage, progress);
   }
 
-  function saveProgress() {
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(progress));
-    } catch {
-      // All features still work for the current session on storage-restricted origins.
-    }
-  }
+  const artMultipliers = {
+    hand: { person: 1.02, monster: .88, item: 2.8 },
+    board: { person: 1.12, monster: 1, item: 3.25 },
+    display: { person: 1.55, monster: 1.16, item: 4.0 },
+    small: { person: 1.19, monster: .96, item: 3.0 },
+    detail: { person: 2.16, monster: 1.45, item: 6.0 },
+    portrait: { person: .95, monster: .95, item: 3.0 },
+    rival: { person: 1.40, monster: 1.0, item: 3.4 }
+  };
 
   function fit() {
     const viewport = window.visualViewport;
     const width = viewport?.width ?? window.innerWidth;
     const height = viewport?.height ?? window.innerHeight;
-    stage.style.setProperty("--scale", Math.min(width / WIDTH, height / HEIGHT));
+    const scale = Math.min(width / WIDTH, height / HEIGHT);
+    stage.style.setProperty("--scale", scale);
+    const density = (window.devicePixelRatio || 1) * scale;
+    for (const [size, kinds] of Object.entries(artMultipliers)) {
+      for (const [kind, desired] of Object.entries(kinds)) {
+        const pixels = Math.max(1, Math.round(desired * density));
+        stage.style.setProperty(`--${kind}-${size}`, pixels / density);
+      }
+    }
   }
+
   window.addEventListener("resize", fit);
   window.visualViewport?.addEventListener("resize", fit);
   for (const gesture of ["gesturestart", "gesturechange", "gestureend", "contextmenu", "dragstart"]) {
@@ -135,6 +148,7 @@
   function showTitle() {
     game = null;
     result = null;
+    draft = null;
     busy = false;
     closeDialog(false);
     clearInspection();
@@ -148,7 +162,8 @@
           <p lang="en">ASTRAL ECLIPSE</p>
         </div>
         <div class="cover-actions">
-          ${button("start", "対戦する", "metal", "clash")}
+          ${button("rivals", "対戦する", "metal", "clash")}
+          ${button("editor", "デッキ編成", "quiet", "forge")}
           ${button("catalog", "カード図鑑", "quiet", "deck")}
           ${button("rules", "遊び方", "quiet", "book")}
         </div>
@@ -156,45 +171,62 @@
       </section>`);
   }
 
+  function pixelArt(id, group) {
+    const kind = id.startsWith("person_") ? "person" : id.startsWith("monster_") ? "monster" : "item";
+    const [width] = artSizes[id];
+    return `<img class="pixel-art pixel-${kind}" src="assets/bank/${id}.png" alt="" draggable="false"
+      style="--sprite-w:${width}px;--sprite-scale:var(--${kind}-${group},1)">`;
+  }
+
   function cardFace(id, options = {}) {
     const card = rules.cards[id];
     const rarity = rules.rarities[card.rarity];
     const element = rules.elements[card.element];
-    const { unit, extra = "", tag = "div", attributes = "", showText = true } = options;
+    const {
+      unit, entry, extra = "", tag = "div", attributes = "", showText = true, mode = "display"
+    } = options;
+    const hand = mode === "hand";
+    const cost = entry ? rules.costOf(entry) : card.cost;
     const stats = card.kind === "unit" ? `
       <span class="card-stats"><span>${icon("sword")}${unit?.attack ?? card.attack}</span>
       <span>${icon("heart")}${unit?.hp ?? card.health}</span></span>` : `<span class="card-kind">${KIND_NAMES[card.kind]}</span>`;
-    const badges = unit ? `
-      <span class="card-badges" aria-hidden="true">
-        ${unit.guard ? `<span class="card-status">${icon("shield")}</span>` : ""}
-        ${unit.gear.length ? `<span class="card-status equipped">${icon("sword")}</span>` : ""}
-        ${!unit.ready ? `<span class="card-status asleep">${icon("hour")}</span>` : ""}
-      </span>` : "";
-    const imagePosition = card.kind === "unit" ? "center 39%" : "center 48%";
-    return `<${tag} class="card-face ${card.rarity === 5 ? "rainbow" : ""} ${extra}"
-      style="--rarity:${rarity.color};--rarity-dark:${rarity.dark};--element:${element.color}" ${attributes}>
-      <img class="card-art" src="assets/${card.art}.webp" alt="" draggable="false" style="object-position:${imagePosition}">
-      <span class="card-wash" aria-hidden="true"></span>
+    const flags = unit ? [
+      [unit.guard, "shield", "guard"], [unit.ward, "ward", "shielded"], [unit.frozen, "frost", "frozen"],
+      [unit.gear.length, "sword", "equipped"], [!unit.ready, "hour", "asleep"]
+    ] : [];
+    const badges = flags.filter(([show]) => show).slice(0, 3).map(([, shape, color]) =>
+      `<span class="card-status ${color}">${icon(shape)}</span>`).join("");
+    const compactBadge = card.badge && hand
+      ? `<span class="hand-effect ${card.badge.length > 2 ? "three" : ""}">${card.badge}</span>`
+      : "";
+    return `<${tag} class="card-face grade-${card.rarity} ${card.rarity === 5 ? "rainbow" : ""} ${hand ? "hand-mode" : ""} ${extra}"
+      style="--rarity:${rarity.color};--rarity-border:${rarity.border};--rarity-dark:${rarity.dark};--element:${element.color}" ${attributes}>
+      <span class="card-art-field" aria-hidden="true">${pixelArt(card.art, mode)}</span>
       <span class="card-top">
-        ${unit ? "<span></span>" : `<span class="card-cost">${card.cost}</span>`}
-        <span class="card-element">${element.name}</span>
-      </span>${badges}
+        ${unit ? "<span></span>" : `<span class="card-cost ${entry?.discount ? "discount" : ""}">${cost}</span>`}
+        ${hand ? "" : `<span class="card-element">${element.name}</span>`}
+      </span>
+      ${badges ? `<span class="card-badges" aria-hidden="true">${badges}</span>` : ""}
       <span class="card-info">
-        <strong class="card-name">${card.name}</strong>
-        ${showText && card.short ? `<span class="card-short">${card.short}</span>` : ""}
-        ${stats}
+        ${hand ? compactBadge : `<strong class="card-name">${card.name}</strong>`}
+        ${!hand && showText && card.short ? `<span class="card-short">${card.short}</span>` : ""}
+        ${!hand || card.kind === "unit" ? stats : ""}
       </span>
     </${tag}>`;
   }
 
-  function describeCard(id, unit = null) {
+  function describeCard(id, unit = null, entry = null) {
     const card = rules.cards[id];
     const stats = card.kind === "unit" ? `、攻撃${unit?.attack ?? card.attack}、体力${unit?.hp ?? card.health}` : "";
-    return `${card.name}、${KIND_NAMES[card.kind]}、${card.cost}マナ${stats}`;
+    return `${card.name}、${KIND_NAMES[card.kind]}、${entry ? rules.costOf(entry) : card.cost}マナ${stats}${card.badge ? "、" + card.badge : ""}`;
+  }
+
+  function heroName(side) {
+    return side === 0 ? "あなた" : rival.name;
   }
 
   function portrait(side) {
-    return `<div class="portrait"><img src="assets/portrait-${side === 0 ? "you" : "cpu"}.webp" alt="" draggable="false"></div>`;
+    return `<div class="portrait">${pixelArt(side === 0 ? campaign.playerArt : rival.art, "portrait")}</div>`;
   }
 
   function manaReadout(player) {
@@ -211,10 +243,10 @@
     const player = game.players[side];
     const current = game.active === side ? "current" : "";
     return `<div class="hero-hud ${side === 0 ? "south" : "north"} ${current}" tabindex="-1" id="hero-${side}"
-      aria-label="${HERO_NAMES[side]} ライフ ${player.hp} / ${rules.LIFE}、マナ ${player.mana} / ${player.maxMana}">
+      aria-label="${heroName(side)} ライフ ${player.hp} / ${rules.LIFE}、マナ ${player.mana} / ${player.maxMana}">
       ${portrait(side)}
       <div class="hero-copy">
-        <span class="hero-name"><b>${HERO_NAMES[side]}</b><span class="deck-count" aria-label="山札 ${player.pile.length}枚">${icon("deck")}${player.pile.length}</span></span>
+        <span class="hero-name"><b>${heroName(side)}</b><span class="deck-count" aria-label="山札 ${player.pile.length}枚">${icon("deck")}${player.pile.length}</span></span>
         ${manaReadout(player)}
       </div>
       <div class="life">
@@ -238,10 +270,10 @@
       if (!unit) {
         return `<div class="slot-cell empty" id="slot-${side}-${index}" tabindex="-1" aria-label="空き枠 ${index + 1}">${icon("sigil")}</div>`;
       }
-      const ready = game.winner === null && game.active === side && unit.ready;
+      const ready = rules.attackTargets(game, side, unit.uid).length > 0;
       const classes = `board-card ${ready ? "ready" : ""} ${side === 1 ? "enemy" : "ally"}`;
       return `<div class="slot-cell" id="slot-${side}-${index}">${cardFace(unit.id, {
-        unit, extra: classes, tag: "button", showText: false,
+        unit, extra: classes, tag: "button", showText: false, mode: "board",
         attributes: `type="button" id="unit-${unit.uid}" data-unit="${unit.uid}" data-side="${side}"
           data-card="${unit.id}" aria-label="${describeCard(unit.id, unit)}${unit.guard ? "、守護" : ""}${ready ? "、攻撃できる" : ""}"`
       })}</div>`;
@@ -255,20 +287,19 @@
   function handHtml(drawn = []) {
     const hand = game.players[0].hand;
     const count = hand.length;
-    const gap = count > 5 ? 4 : 7;
-    const width = Math.min(83, Math.floor((354 - gap * (count - 1)) / Math.max(1, count)));
+    const gap = count > 5 ? 3 : 7;
+    const width = Math.min(83, Math.floor((356 - gap * (count - 1)) / Math.max(1, count)));
     const holders = hand.map((entry, index) => {
       const playable = rules.playTargets(game, 0, entry.uid).length > 0;
       const distance = index - (count - 1) / 2;
       const angle = count <= 5 ? distance * 2 : distance;
       const readyStyle = playable ? "playable" : "unavailable";
-      const density = count >= 7 ? "compact slim" : count >= 5 ? "compact" : "";
       return `<div class="hand-holder ${drawn.includes(entry.uid) ? "new-card" : ""}"
         style="--angle:${angle}deg;--lift:${Math.abs(distance) * 1.7}px">
         ${cardFace(entry.id, {
-          extra: `hand-card ${readyStyle} ${density}`, tag: "button",
+          entry, extra: `hand-card ${readyStyle}`, tag: "button", mode: "hand",
           attributes: `type="button" id="hand-${entry.uid}" data-hand="${entry.uid}" data-card="${entry.id}"
-            aria-label="${describeCard(entry.id)}${playable ? "、出せる" : ""}"`
+            aria-label="${describeCard(entry.id, null, entry)}${playable ? "、出せる" : ""}"`
         })}
       </div>`;
     }).join("");
@@ -284,7 +315,7 @@
     const playerTurn = game.active === 0;
     const playable = game.winner === null && playerTurn;
     const drawn = events.filter(event => event.type === "draw" && event.side === 0).map(event => event.card.uid);
-    const actionable = playable && (rules.units(game, 0).some(unit => unit.ready) ||
+    const actionable = playable && (rules.units(game, 0).some(unit => rules.attackTargets(game, 0, unit.uid).length) ||
       game.players[0].hand.some(entry => rules.playTargets(game, 0, entry.uid).length));
     const hint = actionable ? "光るカードを引っぱる" : playable ? "行動できるカードがありません" : "相手の行動を表示中";
     swapScene("battle", `
@@ -329,16 +360,23 @@
     if (label) announce.textContent = label;
   }
 
-  function start() {
+  function start(rivalId) {
+    const selected = campaign.rivals.find(item => item.id === rivalId);
+    if (!selected || !rules.validDeck(progress.deck, progress.owned)) return;
     closeDialog(false);
     clearInspection();
     fx.replaceChildren();
     result = null;
-    game = rules.create();
+    rival = selected;
+    const matchArts = [...Object.keys(progress.deck), ...Object.keys(rival.deck)].map(id => rules.cards[id].art);
+    warmArt([rival.art, ...matchArts]);
+    progress.battles[rival.id] = (progress.battles[rival.id] || 0) + 1;
+    saveProgress();
+    game = rules.create(Math.random, [progress.deck, rival.deck]);
     busy = false;
-    actionLabel = game.first === 0 ? "先攻はあなた" : "先攻は月蝕の騎士";
+    actionLabel = game.first === 0 ? "先攻はあなた" : `先攻は${rival.name}`;
     renderBattle();
-    announce.textContent = actionLabel;
+    announce.textContent = `${rival.name}との対戦。${actionLabel}`;
     sound.play(game.active === 0 ? "turn" : "cpu");
     if (game.active === 1) runCpu(game, 1000);
   }
@@ -378,30 +416,42 @@
 
   function resultPanel() {
     const won = result.winner === 0;
-    const prize = won ? rules.cards[result.prize] : null;
+    const prize = won ? rules.cards[result.prize.id] : null;
+    const rarity = prize && result.revealed ? rules.rarities[prize.rarity] : null;
+    const rewardBody = !won ? "" : !result.revealed ? `
+      <div class="etched-line reward-heading">獲得カード</div>
+      <button type="button" class="reward-back" data-action="open-prize" aria-label="獲得カードをめくる">
+        <span class="reward-glyph">${icon("star")}</span>
+        <span>タップしてめくる</span>
+      </button>` : `
+      <div class="etched-line reward-heading ${prize.rarity === 5 ? "prismatic-text" : ""}" style="color:${rarity.color}">
+        ${rarity.name}レア獲得
+      </div>
+      ${cardFace(prize.id, {
+        tag: "button", extra: "detail-card prize-card", mode: "detail",
+        attributes: `type="button" data-action="prize-detail" aria-label="${describeCard(prize.id)}"`
+      })}
+      <div class="reward-caption">${result.prize.firstCopy ? "初獲得　・　図鑑に追加" : "所持カードに１枚追加"}</div>`;
     swapScene("result", `
-      <section class="view result ${won ? "" : "defeat"}" aria-label="対戦結果">
+      <section class="view result ${won ? "" : "defeat"} ${rarity ? "loot-" + prize.rarity : ""}" aria-label="対戦結果">
         ${titleFrame()}${soundButton()}
         <div class="result-seal" aria-hidden="true">${icon(won ? "trophy" : "moon")}</div>
         <div class="result-head">
           <h1>${won ? "勝利" : "敗北"}</h1>
-          <p>ラウンド ${result.round} で決着　｜　ライフ ${result.hp[0]} 対 ${result.hp[1]}</p>
+          <p>${rival.name}戦　｜　ラウンド ${result.round}　｜　${result.hp[0]} 対 ${result.hp[1]}</p>
         </div>
         ${won ? `
-          <div class="reward">
-            <div class="etched-line">獲得カード</div>
-            ${cardFace(prize.id, {
-              tag: "button", extra: "detail-card", attributes: `type="button" data-action="prize-detail" aria-label="${describeCard(prize.id)}"`
-            })}
-            <div class="reward-caption">${rules.rarities[prize.rarity].name}レア　・　図鑑に追加</div>
+          <div class="reward ${rarity ? "revealed" : ""}">
+            <div class="reward-aura" aria-hidden="true"></div>${rewardBody}
           </div>` : `
           <div class="final-score">${[0, 1].map(side => `
-            <div>${portrait(side)}<p>${HERO_NAMES[side]}</p><b>${result.hp[side]}</b></div>
+            <div>${portrait(side)}<p>${heroName(side)}</p><b>${result.hp[side]}</b></div>
           `).join('<span aria-hidden="true">×</span>')}</div>`}
-        <div class="result-actions">
-          ${button("start", "もう一度対戦", "metal", "clash")}
+        <div class="result-actions" ${won && !result.revealed ? "hidden" : ""}>
+          ${button("replay", "もう一度対戦", "metal", "clash")}
+          ${button("rivals", "相手を選ぶ", "quiet", "left")}
+          ${button("editor", "デッキ編成", "quiet", "forge")}
           ${button("catalog", "カード図鑑", "quiet", "deck")}
-          ${button("title", "タイトルへ", "quiet", "left")}
         </div>
       </section>`);
   }
@@ -409,23 +459,53 @@
   async function displayResultAfter(match, time) {
     await wait(time);
     if (game !== match) return;
-    result = { winner: match.winner, hp: match.players.map(player => player.hp), round: match.round, prize: null };
+    result = {
+      winner: match.winner, hp: match.players.map(player => player.hp), round: match.round, prize: null, revealed: false
+    };
     if (result.winner === 0) {
-      result.prize = rules.prizes.find(id => !progress.prizes[id]) || rules.prizes[progress.wins % rules.prizes.length];
-      progress.wins++;
-      progress.prizes[result.prize] = (progress.prizes[result.prize] || 0) + 1;
+      result.prize = campaign.reward(rival, progress);
+      warmArt([rules.cards[result.prize.id].art]);
       saveProgress();
     }
     busy = false;
     game = null;
     resultPanel();
     sound.play(result.winner === 0 ? "victory" : "defeat");
-    announce.textContent = result.winner === 0 ? "勝利。カードを１枚獲得。" : "敗北。";
-    burst({ x: 201, y: 191 }, result.winner === 0 ? "#ffe2a4" : "#c87a95", 28, 165);
-    document.querySelector(".result-seal").animate([
+    announce.textContent = result.winner === 0 ? "勝利。獲得カードをタップしてめくれます。" : "敗北。";
+    burst({ x: 201, y: 191 }, result.winner === 0 ? "#ffe2a4" : "#c87a95", 23, 145);
+    screen.querySelector(".result-seal").animate([
       { opacity: 0.3, transform: "scale(.72)" },
       { opacity: 1, transform: "scale(1)" }
     ], { duration: motion(490), easing: "cubic-bezier(.2,.85,.2,1)" });
+  }
+
+  function revealPrize() {
+    if (!result?.prize || result.revealed) return;
+    result.revealed = true;
+    const card = rules.cards[result.prize.id];
+    const grade = rules.rarities[card.rarity];
+    resultPanel();
+    const face = screen.querySelector(".prize-card");
+    const point = metrics(face);
+    const rare = card.rarity >= 4;
+    const color = card.rarity === 5 ? "#c9a7ff" : grade.color;
+    face.animate([
+      { transform: "perspective(680px) rotateY(-83deg) scale(.83)", filter: "brightness(2.15)", opacity: .37 },
+      { transform: "perspective(680px) rotateY(0) scale(1.07)", filter: "brightness(1.4)", opacity: 1, offset: .59 },
+      { transform: "scale(1)", filter: "brightness(1)", opacity: 1 }
+    ], { duration: motion(rare ? 835 : 540), easing: "cubic-bezier(.16,.79,.21,1)" });
+    const flare = addFx("loot-flare");
+    placement(flare, point.x, point.y + 5);
+    flare.style.setProperty("--prize-color", color);
+    flare.classList.toggle("great-loot", rare);
+    setTimeout(() => flare.remove(), 1150);
+    burst(point, color, rare ? 29 : 12, rare ? 164 : 69);
+    if (card.rarity === 5) {
+      burst({ x: point.x - 18, y: point.y + 6 }, "#92e2ff", 15, 144);
+      burst({ x: point.x + 15, y: point.y - 13 }, "#ffd9a3", 13, 118);
+    }
+    sound.play(card.rarity === 5 ? "rainbow" : card.rarity === 4 ? "gold" : "reward");
+    announce.textContent = `${grade.name}レア。${card.name}を獲得。`;
   }
 
   function showCatalog(reset = true) {
@@ -433,11 +513,11 @@
       galleryBack = scene;
       page = 0;
     }
-    const owned = { ...rules.starter, ...progress.prizes };
+    const owned = progress.owned;
     const ids = Object.keys(owned).sort((left, right) => {
       const a = rules.cards[left];
       const b = rules.cards[right];
-      return a.cost - b.cost || a.rarity - b.rarity || a.art.localeCompare(b.art);
+      return b.rarity - a.rarity || a.cost - b.cost || a.art.localeCompare(b.art);
     });
     const pageCount = Math.ceil(ids.length / GALLERY_SIZE);
     const count = Object.values(owned).reduce((sum, amount) => sum + amount, 0);
@@ -475,6 +555,160 @@
     screen.querySelector('[data-action="gallery-next"]').disabled = page + 1 >= pageCount;
   }
 
+  function showRivals() {
+    const tones = ["#93dac7", "#edaa86", "#8fcafb", "#d0a5ef"];
+    const rows = campaign.rivals.map((entry, index) => {
+      const seen = Boolean(progress.battles[entry.id]);
+      const cleared = progress.clears[entry.id] || 0;
+      const odds = campaign.rareOdds(entry, cleared);
+      const special = !cleared && entry.firstOdds;
+      const rare = odds[4] + odds[5];
+      const prizeText = special ? "初勝利で金・虹確定" : rare ? `金・虹 ${rare}%` : `青以上 ${odds[2] + odds[3]}%`;
+      const dropBar = odds.map((percent, tier) => percent > 0
+        ? `<i style="width:${percent}%;background:${rules.rarities[tier].color}"></i>` : ""
+      ).join("");
+      return `
+        <button class="rival-tile ${seen ? "seen" : "unknown"}" type="button" data-action="challenge" data-rival="${entry.id}"
+          style="--rival-color:${tones[index]}"
+          aria-label="${seen ? entry.name : entry.title}、${entry.difficulty}、${prizeText}">
+          <span class="rival-art" aria-hidden="true">${seen ? pixelArt(entry.art, "rival") : `<span class="unknown-seal">${icon("moon")}</span>`}</span>
+          <span class="rival-copy">
+            <span class="rival-top"><span>${entry.difficulty}</span><small>${cleared ? `${cleared} 勝` : ""}</small></span>
+            <strong>${seen ? entry.name : entry.title}</strong>
+            <span class="rival-style">${seen ? entry.styleName + "　" + entry.description : "初対戦で相手が判明"}</span>
+            <span class="rival-loot"><span class="rarity-band" aria-hidden="true">${dropBar}</span><span>${prizeText}</span></span>
+          </span>
+          <span class="rival-go">${icon("right")}</span>
+        </button>`;
+    }).join("");
+    swapScene("rivals", `
+      <section class="view challenge-view" aria-label="対戦相手">
+        ${titleFrame()}
+        <div class="sub-head">
+          ${iconButton("title", "left", "タイトルへ")}
+          <h1>対戦相手</h1>${soundButton()}
+        </div>
+        <div class="rival-list">${rows}</div>
+        <div class="challenge-foot"><i class="diamond"></i>勝つとカードを１枚獲得<i class="diamond"></i></div>
+      </section>`);
+  }
+
+  function openEditor() {
+    editorBack = scene;
+    draft = { ...progress.deck };
+    editPage = 0;
+    editKind = "all";
+    editMessage = "";
+    drawEditor();
+  }
+
+  function draftChanged() {
+    return Object.keys(progress.owned).some(id => (draft[id] || 0) !== (progress.deck[id] || 0));
+  }
+
+  function leaveEditor() {
+    if (draftChanged()) {
+      dialog("editor", `<h2>編成の変更をやめますか？</h2>
+        <div class="dialog-actions">
+          ${button("close", "編成に戻る", "metal", "forge")}
+          ${button("edit-leave", "変更を取り消す", "quiet", "left")}
+        </div>`, "編成の変更", "pause-dialog");
+      return;
+    }
+    exitEditor();
+  }
+
+  function exitEditor() {
+    closeDialog(false);
+    draft = null;
+    if (editorBack === "result" && result) resultPanel();
+    else showTitle();
+  }
+
+  function changeDeck(id, step) {
+    const owned = progress.owned[id];
+    const count = (draft[id] || 0) + step;
+    if (!owned || count < 0 || count > Math.min(owned, rules.copyLimit(id)) ||
+        rules.copies(draft) + step > rules.DECK_SIZE) return;
+    if (count === 0) delete draft[id];
+    else draft[id] = count;
+    editMessage = "";
+    drawEditor();
+  }
+
+  function saveDeck() {
+    if (!rules.validDeck(draft, progress.owned)) return;
+    progress.deck = { ...draft };
+    saveProgress();
+    editMessage = "デッキを保存しました";
+    drawEditor();
+    announce.textContent = editMessage;
+  }
+
+  function drawEditor() {
+    const amount = rules.copies(draft);
+    const amounts = { unit: 0, gear: 0, spell: 0 };
+    for (const [id, count] of Object.entries(draft)) amounts[rules.cards[id].kind] += count;
+    const owned = progress.owned;
+    const visible = Object.keys(owned).filter(id => editKind === "all" || rules.cards[id].kind === editKind)
+      .sort((a, b) => {
+        const first = rules.cards[a], second = rules.cards[b];
+        return second.rarity - first.rarity || first.cost - second.cost || a.localeCompare(b);
+      });
+    const size = 6;
+    const pages = Math.max(1, Math.ceil(visible.length / size));
+    editPage = Math.min(editPage, pages - 1);
+    const tiles = visible.slice(size * editPage, size * (editPage + 1)).map(id => {
+      const copies = draft[id] || 0;
+      const card = rules.cards[id];
+      const ceiling = Math.min(owned[id], rules.copyLimit(id));
+      return `
+        <div class="work-card ${copies ? "in-deck" : ""}">
+          ${cardFace(id, {
+            tag: "button", extra: "edit-face",
+            attributes: `type="button" data-action="album-detail" data-card="${id}" aria-label="${describeCard(id)}、所持${owned[id]}枚"`
+          })}
+          <div class="edit-quantity">
+            <button type="button" data-action="edit-remove" data-card="${id}" aria-label="${card.name}を抜く" ${copies === 0 ? "disabled" : ""}>${icon("minus")}</button>
+            <span aria-label="編成${copies}枚、所持${owned[id]}枚"><b>${copies}</b><small>/${owned[id]}</small></span>
+            <button type="button" data-action="edit-add" data-card="${id}" aria-label="${card.name}を入れる" ${amount >= rules.DECK_SIZE || copies >= ceiling ? "disabled" : ""}>${icon("plus")}</button>
+          </div>
+        </div>`;
+    }).join("");
+    const filters = [["all", "すべて"], ...Object.entries(KIND_NAMES)].map(([id, name]) =>
+      `<button type="button" data-action="edit-kind" data-kind="${id}" aria-pressed="${editKind === id}">${name}</button>`
+    ).join("");
+    const message = editMessage || (amount === rules.DECK_SIZE ? "入れ替えるときは「−」から" : `あと ${rules.DECK_SIZE - amount} 枚入れると保存できます`);
+    swapScene("editor", `
+      <section class="view editor-view" aria-label="デッキ編成">
+        ${titleFrame()}
+        <div class="sub-head">
+          ${iconButton("editor-back", "left", "戻る")}
+          <h1>デッキ編成</h1>${soundButton()}
+        </div>
+        <div class="deck-meter" aria-label="デッキ ${amount} / ${rules.DECK_SIZE}枚">
+          <div class="deck-total"><span>編成中</span><strong>${amount}<small> / ${rules.DECK_SIZE}</small></strong></div>
+          <div class="deck-breakdown">${Object.entries(KIND_NAMES).map(([kind, name]) =>
+            `<span><small>${name}</small><b>${amounts[kind]}</b></span>`).join("")}</div>
+          <div class="progress-track" aria-hidden="true"><i style="width:${amount / rules.DECK_SIZE * 100}%"></i></div>
+        </div>
+        <nav class="deck-filter" aria-label="カードの種類">${filters}</nav>
+        <div class="workbench">${tiles || '<div class="work-empty">この種類のカードはまだありません</div>'}</div>
+        <nav class="album-pages editor-pages" aria-label="カードのページ">
+          ${iconButton("edit-prev", "left", "前のページ")}
+          <span>${editPage + 1} / ${pages}</span>
+          ${iconButton("edit-next", "right", "次のページ")}
+        </nav>
+        <div class="edit-actions">
+          <span class="${editMessage ? "saved" : ""}">${message}</span>
+          ${button("edit-save", "デッキを保存", "metal", "check")}
+        </div>
+      </section>`);
+    screen.querySelector('[data-action="edit-prev"]').disabled = editPage <= 0;
+    screen.querySelector('[data-action="edit-next"]').disabled = editPage + 1 >= pages;
+    screen.querySelector('[data-action="edit-save"]').disabled = !draftChanged() || !rules.validDeck(draft, owned);
+  }
+
   function dialog(kind, text, accessible, extra = "") {
     previousFocus = document.activeElement;
     clearInspection();
@@ -501,14 +735,15 @@
     previousFocus = null;
   }
 
-  function cardDetail(id, unit) {
+  function cardDetail(id, unit, entry = null) {
     const card = rules.cards[id];
     const rarity = rules.rarities[card.rarity];
     const element = rules.elements[card.element];
     const gear = unit?.gear.map(item => rules.cards[item].name).join("、") || "";
-    const current = unit ? `<p class="card-live">攻撃 ${unit.attack}　体力 ${unit.hp}/${unit.maxHp}${unit.guard ? "　守護" : ""}${gear ? `<br>装備　${gear}` : ""}</p>` : "";
+    const statuses = unit ? [unit.guard && "守護", unit.ward && "障壁", unit.frozen && "氷結"].filter(Boolean).join("・") : "";
+    const current = unit ? `<p class="card-live">攻撃 ${unit.attack}　体力 ${unit.hp}/${unit.maxHp}${statuses ? "　" + statuses : ""}${gear ? `<br>装備　${gear}` : ""}</p>` : "";
     dialog("card", `
-      ${cardFace(id, { extra: "detail-card", unit })}
+      ${cardFace(id, { extra: "detail-card", mode: "detail", unit, entry })}
       <div class="detail-meta">
         <span>${KIND_NAMES[card.kind]}</span>
         <span style="color:${element.color}">${element.name}属性</span>
@@ -550,9 +785,21 @@
     if (!target || target.disabled) return;
     const action = target.dataset.action;
     sound.prepare();
-    if (action !== "sound" && action !== "start" && action !== "end") sound.play("pick");
+    if (!["sound", "challenge", "replay", "end", "open-prize"].includes(action)) sound.play("pick");
     switch (action) {
-      case "start": start(); break;
+      case "rivals": showRivals(); break;
+      case "challenge": start(target.dataset.rival); break;
+      case "replay": start(rival.id); break;
+      case "editor": openEditor(); break;
+      case "editor-back": leaveEditor(); break;
+      case "edit-leave": exitEditor(); break;
+      case "edit-kind": editKind = target.dataset.kind; editPage = 0; drawEditor(); break;
+      case "edit-prev": editPage--; drawEditor(); break;
+      case "edit-next": editPage++; drawEditor(); break;
+      case "edit-add": changeDeck(target.dataset.card, 1); break;
+      case "edit-remove": changeDeck(target.dataset.card, -1); break;
+      case "edit-save": saveDeck(); break;
+      case "open-prize": revealPrize(); break;
       case "title": showTitle(); break;
       case "end": nextTurn(); break;
       case "pause": pauseDialog(); break;
@@ -564,7 +811,7 @@
       case "gallery-prev": page--; showCatalog(false); break;
       case "gallery-next": page++; showCatalog(false); break;
       case "album-detail": cardDetail(target.dataset.card); break;
-      case "prize-detail": cardDetail(result.prize); break;
+      case "prize-detail": cardDetail(result.prize.id); break;
     }
   });
 
@@ -674,7 +921,9 @@
     if (!from || !to) return Promise.resolve();
     const width = type === "attack" ? 93 : 84;
     const height = type === "attack" ? 99 : 113;
-    const copy = addFx("fly-card", cardFace(id, { unit, showText: !unit, extra: unit ? "board-card" : "" }));
+    const copy = addFx("fly-card", cardFace(id, {
+      unit, showText: !unit, extra: unit ? "board-card" : "", mode: unit ? "board" : "small"
+    }));
     copy.style.width = `${width}px`;
     copy.style.height = `${height}px`;
     const transform = (p, scale, angle) => `translate(${p.x - width / 2}px, ${p.y - height / 2}px) scale(${scale}) rotate(${angle}deg)`;
@@ -715,9 +964,16 @@
     setTimeout(() => float.remove(), 800);
   }
 
+  function popStatus(point, label) {
+    const float = addFx("hit-number fx-note");
+    float.textContent = label;
+    placement(float, point.x, point.y - (point.h || 44) * .45);
+    setTimeout(() => float.remove(), 800);
+  }
+
   function fallCard(point, id) {
     if (!point?.unit) return;
-    const copy = addFx("fallen", cardFace(id, { unit: point.unit, showText: false, extra: "board-card" }));
+    const copy = addFx("fallen", cardFace(id, { unit: point.unit, showText: false, extra: "board-card", mode: "board" }));
     placement(copy, point.left, point.top);
     copy.style.width = `${point.w}px`;
     copy.style.height = `${point.h}px`;
@@ -743,6 +999,16 @@
         fallCard(old.get(keyOf(event.target)), event.card);
         burst(point, "#d3aff4", 14, 66);
       }
+      if (event.type === "recall") {
+        fallCard(old.get(keyOf(event.target)), event.card);
+        burst(point, "#a8cffa", 12, 59);
+        popStatus(point, "手札へ");
+      }
+      if (event.type === "block" || event.type === "freeze" || event.type === "mana") {
+        const label = { block: "障壁", freeze: "氷結", mana: `マナ＋${event.amount}` };
+        burst(point, "#a6ddff", 10, 42);
+        popStatus(point, label[event.type]);
+      }
       if (event.type === "summon" || event.type === "buff") {
         burst(point, event.type === "summon" ? "#b6f7dd" : "#efdca0", 15, 60);
       }
@@ -760,7 +1026,7 @@
     const card = rules.cards[move.card];
     if (move.kind === "attack") {
       const foe = rules.unitAt(game, move.target);
-      const target = foe ? rules.cards[foe.id].name : HERO_NAMES[1 - side];
+      const target = foe ? rules.cards[foe.id].name : heroName(1 - side);
       return `${card.name} → ${target}に攻撃`;
     }
     const verb = card.kind === "unit" ? "を召喚" : card.kind === "gear" ? "を装備" : "を発動";
@@ -768,7 +1034,7 @@
   }
 
   async function revealCpu(id) {
-    const copy = addFx("cpu-peek", cardFace(id));
+    const copy = addFx("cpu-peek", cardFace(id, { mode: "small" }));
     copy.animate([
       { opacity: 0, transform: "translateY(-27px) scale(.68)" },
       { opacity: 1, transform: "translateY(0) scale(1)" }
@@ -844,7 +1110,7 @@
         await wait(130);
         continue;
       }
-      const move = rules.cpuMove(match);
+      const move = rules.cpuMove(match, 1, Math.random, rival.style);
       if (!move) {
         turnToOther(1);
         return;
@@ -922,7 +1188,7 @@
     selection.origin = metrics(selection.source);
     selection.copy = addFx("drag-clone", cardFace(selection.intent.card, {
       unit: selection.unit,
-      extra: attacking ? "board-card" : "",
+      entry: selection.entry, extra: attacking ? "board-card" : "", mode: attacking ? "board" : "small",
       showText: !attacking
     }));
     if (attacking) {
@@ -969,10 +1235,11 @@
     const targets = playerTargets(intent, source);
     const initial = stagePoint(event.clientX, event.clientY);
     const unit = intent.kind === "attack" ? rules.unitAt(game, { kind: "unit", side: Number(source.dataset.side), id: intent.uid }) : null;
-    drag = { pointer: event.pointerId, initial, source, intent, targets, unit, copy: null, timer: null, moved: false };
+    const entry = intent.kind === "play" ? game.players[0].hand.find(card => card.uid === intent.uid) : null;
+    drag = { pointer: event.pointerId, initial, source, intent, targets, unit, entry, copy: null, timer: null, moved: false };
     stage.setPointerCapture(event.pointerId);
     drag.timer = setTimeout(() => {
-      if (drag && !drag.moved) cardDetail(intent.card, unit);
+      if (drag && !drag.moved) cardDetail(intent.card, unit, entry);
     }, HOLD_TIME);
   });
 
@@ -1053,7 +1320,8 @@
     const targets = playerTargets(intent, source);
     if (!targets.length || event.key.toLowerCase() === "i") {
       const unit = intent.kind === "attack" ? rules.unitAt(game, { kind: "unit", side: Number(source.dataset.side), id: intent.uid }) : null;
-      cardDetail(intent.card, unit);
+      const entry = intent.kind === "play" ? game.players[0].hand.find(card => card.uid === intent.uid) : null;
+      cardDetail(intent.card, unit, entry);
       return;
     }
     keyPick = { source, intent, targets, index: 0 };
@@ -1062,13 +1330,19 @@
     focusTarget();
   });
 
+  function warmArt(ids) {
+    for (const id of new Set(ids)) {
+      const image = new Image();
+      image.src = `assets/bank/${id}.png`;
+    }
+  }
+
   fit();
   showTitle();
-  // Warm the small illustrations before the first draw or AI reveal.
+  // Only the cards owned at startup need to load before a challenge is chosen.
   window.addEventListener("load", () => {
-    for (const name of ["board", "portrait-you", "portrait-cpu", ...Object.values(rules.cards).map(card => card.art)]) {
-      const image = new Image();
-      image.src = `assets/${name}.webp`;
-    }
+    const board = new Image();
+    board.src = "assets/board.webp";
+    warmArt([campaign.playerArt, ...Object.keys(progress.owned).map(id => rules.cards[id].art)]);
   });
 }());
