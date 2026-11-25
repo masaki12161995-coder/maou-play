@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#111719">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="潮影の弔鐘">
+  <meta name="description" content="縦画面で遊ぶ日本語のロールプレイングゲーム">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon.png">
+  <link rel="icon" href="./icon.png">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./battle.css">
+  <link rel="stylesheet" href="./adventure-ui.css">
+  <title>潮影の弔鐘</title>
+</head>
+<body>
+  <main id="game" aria-label="潮影の弔鐘">
+    <canvas id="world" aria-label="地図"></canvas>
+    <div id="hud" hidden>
+      <div id="place"><span class="place-seal">◇</span><div><b id="place-name"></b><small id="place-time"></small></div></div>
+      <button id="open-menu" class="round-button" aria-label="旅の手帳"><i class="book-icon"></i></button>
+      <div id="map-prompt" hidden><button id="act"></button></div>
+    </div>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <div id="veil" aria-hidden="true"></div>
+    <section id="panels" aria-label="旅の手帳" hidden></section>
+    <section id="story" aria-label="会話" hidden></section>
+    <section id="combat" aria-label="戦闘" hidden></section>
+    <section id="title">
+      <div class="title-mast">
+        <h1>潮影の弔鐘</h1>
+        <hr>
+      </div>
+      <div id="start-actions"><div id="loading" role="status">支度をしています<span id="load-progress"></span></div></div>
+    </section>
+    <input id="restore-file" type="file" accept=".json,application/json" hidden>
+  </main>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>

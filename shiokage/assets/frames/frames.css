@@ -1,0 +1,48 @@
+/* =========================================================
+   素材バンク：レア度の枠と文字の色（白・緑・青・紫・金・虹）
+   ・アイコンは <img class="ico rare-blue" src="..."> のように使う
+   ・名前の文字は <span class="txt-blue">名前</span> のように使う
+   ・枠は絵に描き込まず、表示するときに外側へ付ける
+   ========================================================= */
+
+/* アイコンの土台（どの段階も共通） */
+.ico{
+  width:40px;height:40px;box-sizing:border-box;padding:3px;
+  border-radius:9px;border:1.5px solid #ffffff22;
+  background:radial-gradient(circle at 50% 45%,#3a2f25,#15110d 75%);
+  image-rendering:pixelated;image-rendering:crisp-edges;
+}
+
+/* 枠：上の段階ほど目立つ */
+.ico.rare-white {border-color:#ffffff22}
+.ico.rare-green {border-color:#5ee08a99}
+.ico.rare-blue  {border-color:#5aa0ff99}
+.ico.rare-purple{border-color:#c084fc99}
+.ico.rare-gold  {border-color:#ffd34dcc;box-shadow:0 0 8px #ffd34d55}
+
+/* 虹：虹色が枠のまわりを回り続ける。枠は少し太い */
+@property --rba{syntax:'<angle>';inherits:false;initial-value:0deg}
+.ico.rare-rainbow{
+  border:2px solid transparent;
+  background:
+    radial-gradient(circle at 50% 45%,#3a2f25,#15110d 75%) padding-box,
+    conic-gradient(from var(--rba),#ff7a7a,#ffd34d,#5ef08a,#6cb6ff,#d29bff,#ff7a7a) border-box;
+  animation:rare-spin 3s linear infinite;
+  box-shadow:0 0 9px #d29bff55,0 0 4px #6cb6ff44;
+}
+@keyframes rare-spin{to{--rba:360deg}}
+
+/* 文字の色 */
+.txt-white {color:#e5e7eb}
+.txt-green {color:#6ee7a0;font-weight:700}
+.txt-blue  {color:#7ab8ff;font-weight:700}
+.txt-purple{color:#d29bff;font-weight:700}
+.txt-gold  {color:#ffd34d;font-weight:700;text-shadow:0 0 8px #ffd34d55}
+/* 虹：赤→黄→緑→青→紫の帯が、文字の中を横に流れ続ける */
+.txt-rainbow{
+  display:inline-block;width:fit-content;max-width:100%;
+  background:linear-gradient(90deg,#ff7a7a,#ffd34d,#5ef08a,#6cb6ff,#d29bff,#ff7a7a);
+  background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  font-weight:800;animation:rare-flow 2.4s linear infinite;
+}
+@keyframes rare-flow{to{background-position:200% 0}}
