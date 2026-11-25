@@ -360,6 +360,8 @@ function drawField(){
   for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){ const out=(x<0||y<0||x>=m.w||y>=m.h); if(out&&m.room) continue; const v=out?(m.town?2:1):m.t[y*m.w+x]; drawTile(m,v,x,y,Math.round(x*TS-camX),Math.round(y*TS-camY)); }
   // 物
   for(const o of m.objs){ if(o.gone) continue; const sx=Math.round(o.x*TS-camX), sy=Math.round(o.y*TS-camY); if(sx<-TS*4||sy<-TS*5||sx>W+TS*2||sy>H+TS) continue; drawObj(o,sx,sy); }
+  // 自動で歩く行き先の印
+  if(RT.routeDest && RT.route){ const d=RT.routeDest, sx=d.x*TS-camX+TS/2, sy=d.y*TS-camY+TS/2, k=((performance.now()-d.t)%900)/900; cx.save(); cx.strokeStyle='rgba(255,226,140,'+(0.9-k*0.6)+')'; cx.lineWidth=2; cx.beginPath(); cx.ellipse(sx,sy+TS*0.28,TS*(0.22+k*0.18),TS*(0.1+k*0.08),0,0,7); cx.stroke(); cx.restore(); }
   // 出口の目印
   if(m.town){ for(const ex of [9,10]){ const sx=ex*TS-camX, sy=(m.h-1)*TS-camY; cx.fillStyle='#ffffff18'; cx.fillRect(sx,sy,TS,TS);} }
   // 住人
@@ -568,7 +570,7 @@ APP.addEventListener('pointerdown',e=>{
 });
 APP.addEventListener('pointermove',e=>{ if(!joyO||e.pointerId!==joyO.id) return;
   const dx=e.clientX-joyO.cx, dy=e.clientY-joyO.cy, d=Math.hypot(dx,dy);
-  if(!joyO.drag && d>10){ joyO.drag=true; kb.style.left=knob.style.left=joyO.x+'px'; kb.style.top=knob.style.top=joyO.y+'px'; kb.style.display=knob.style.display='block'; }
+  if(!joyO.drag && d>10){ joyO.drag=true; cancelRoute(); kb.style.left=knob.style.left=joyO.x+'px'; kb.style.top=knob.style.top=joyO.y+'px'; kb.style.display=knob.style.display='block'; }
   if(!joyO.drag) return;
   const k=Math.min(1,40/Math.max(1,d)); knob.style.left=(joyO.x+dx*k)+'px'; knob.style.top=(joyO.y+dy*k)+'px';
   RT.dir = d<12?null:(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')); });
@@ -579,9 +581,33 @@ function tapAt(clientX,clientY){
   const r=cv.getBoundingClientRect(), sc=Math.min(r.width/VW, r.height/VH);
   const ox=r.left+(r.width-VW*sc)/2, oy=r.top+(r.height-VH*sc)/2;
   const tx=Math.floor(((clientX-ox)/sc+RT.cam.x)/TS), ty=Math.floor(((clientY-oy)/sc+RT.cam.y)/TS+4/TS);
-  const ddx=tx-G.x, ddy=ty-G.y; if(Math.abs(ddx)+Math.abs(ddy)===1) G.dir=ddx>0?'right':ddx<0?'left':ddy>0?'down':'up';
-  interact();
+  const ddx=tx-G.x, ddy=ty-G.y, dist=Math.abs(ddx)+Math.abs(ddy);
+  if(dist===1){ G.dir=ddx>0?'right':ddx<0?'left':ddy>0?'down':'up'; interact(); return; }
+  if(dist===0){ interact(); return; }
+  routeTo(tx,ty);
 }
+// ---------- タップした場所へ自動で歩く ----------
+// 歩ける所なら、そこまで歩く。人や物なら、となりまで歩いて、そちらを向いて話す・調べる
+function isTownExit(m,x,y){ return !!(m.town && y>=m.h-1 && (x===9||x===10)); }
+function findPath(m,sx,sy,isGoal){
+  const W=m.w,H=m.h, start=sy*W+sx, prev=new Int32Array(W*H).fill(-1); prev[start]=start; const q=[start];
+  for(let qi=0;qi<q.length;qi++){ const c=q[qi], x=c%W, y=(c/W)|0;
+    if(c!==start && isGoal(x,y)){ const dirs=[]; let k=c; while(k!==start){ const p=prev[k], d=k-p; dirs.unshift(d===1?'right':d===-1?'left':d===W?'down':'up'); k=p; } return dirs; }
+    for(const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]){ const nx=x+dx, ny=y+dy; if(nx<0||ny<0||nx>=W||ny>=H) continue; const n=ny*W+nx; if(prev[n]!==-1) continue;
+      if(!(walkable(m,nx,ny)||isTownExit(m,nx,ny))) continue; prev[n]=c; q.push(n); } }
+  return null;
+}
+function routeTo(tx,ty){
+  const m=RT.map; if(!m) return;
+  if(m.town && ty>=m.h-1 && tx>=8 && tx<=11){ tx=tx<10?9:10; ty=m.h-1; }
+  const who=m.npcs.find(n=>n.x===tx&&n.y===ty&&!n.gone), obj=m.objs.find(o=>o.x===tx&&o.y===ty&&!o.gone);
+  let path, act=null;
+  if(isTownExit(m,tx,ty)||walkable(m,tx,ty)) path=findPath(m,G.x,G.y,(x,y)=>x===tx&&y===ty);
+  else { path=findPath(m,G.x,G.y,(x,y)=>Math.abs(x-tx)+Math.abs(y-ty)===1); if(path&&(who||obj)) act={x:tx,y:ty}; }
+  if(!path||!path.length){ RT.route=null; return; }
+  RT.route=path; RT.routeAct=act; RT.routeDest={x:tx,y:ty,t:performance.now()};
+}
+function cancelRoute(){ RT.route=null; RT.routeAct=null; RT.routeDest=null; }
 const joyEnd=e=>{ if(!joyO) return; const o=joyO; joyO=null; RT.dir=null; kb.style.display=knob.style.display='none';
   if(e && e.type==='pointerup' && !o.drag && performance.now()-o.t<400) tapAt(e.clientX,e.clientY); };
 APP.addEventListener('pointerup',joyEnd); APP.addEventListener('pointercancel',joyEnd);
@@ -594,7 +620,7 @@ document.addEventListener('pointerup',ffStop); document.addEventListener('pointe
 document.addEventListener('pointerdown',e=>{ if(msgResolve && !fieldUI() && RT.mode!=='battle' && !e.target.closest('button,#panel,#screen,#msg,#title')) advanceMsg(); });
 $('bM').onclick=()=>{ audioUnlock(); if(RT.mode==='field'&&!RT.busy&&!RT.moving&&!msgResolve) openMenu(); };
 const KEYD={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right'};
-document.addEventListener('keydown',e=>{ if(KEYD[e.key]){RT.dir=KEYD[e.key];e.preventDefault();}
+document.addEventListener('keydown',e=>{ if(KEYD[e.key]){RT.dir=KEYD[e.key];cancelRoute();e.preventDefault();}
   else if(e.key==='Enter'||e.key===' '||e.key==='z'){ e.preventDefault(); if(msgResolve)advanceMsg(); else if(RT.mode==='field'&&!RT.busy&&!RT.moving) interact(); }
   else if(e.key==='Escape'||e.key==='x'){ if(RT.mode==='field'&&!RT.busy&&!msgResolve) openMenu(); } });
 document.addEventListener('keyup',e=>{ if(KEYD[e.key]&&RT.dir===KEYD[e.key]) RT.dir=null; });
@@ -611,9 +637,16 @@ function walkCol(t){ t=((t%WALK_CYCLE)+WALK_CYCLE)%WALK_CYCLE; for(const [c,d] o
 function partyWalking(){ return !!RT.moving || (RT.lastStepEnd && performance.now()-RT.lastStepEnd<60); }
 function stepLoop(){
   if(RT.saveWhenFree!==undefined && RT.saveWhenFree!==false && G && RT.mode==='field' && !RT.busy && !RT.event && !msgResolve && RT.map && $('screen').style.display!=='flex'){ if(G.chapter===RT.saveWhenFree) doSave(); RT.saveWhenFree=false; }
-  if(RT.mode==='field' && !RT.busy && !RT.moving && !msgResolve && RT.dir && $('screen').style.display!=='flex'){
-    const [dx,dy]=DXY[RT.dir]; G.dir=RT.dir; const nx=G.x+dx, ny=G.y+dy, m=RT.map;
-    if(m.town && ny>=m.h-1 && (nx===9||nx===10)){ leaveToWorld(); return; }
+  // 自動で歩いている途中に、戦闘・会話・画面切りかえが入ったら、そこで止める
+  if(RT.route && (RT.mode!=='field' || RT.busy || msgResolve || $('screen').style.display==='flex')){ cancelRoute(); }
+  if(RT.route && !RT.route.length && !RT.moving){ const a=RT.routeAct; cancelRoute(); if(a){ const ddx=a.x-G.x, ddy=a.y-G.y; if(Math.abs(ddx)+Math.abs(ddy)===1){ G.dir=ddx>0?'right':ddx<0?'left':ddy>0?'down':'up'; interact(); } } return; }
+  const wantDir = RT.dir || (RT.route && RT.route.length ? RT.route[0] : null);
+  if(RT.mode==='field' && !RT.busy && !RT.moving && !msgResolve && wantDir && $('screen').style.display!=='flex'){
+    const fromRoute=!RT.dir;
+    const [dx,dy]=DXY[wantDir]; G.dir=wantDir; const nx=G.x+dx, ny=G.y+dy, m=RT.map;
+    if(m.town && ny>=m.h-1 && (nx===9||nx===10)){ cancelRoute(); leaveToWorld(); return; }
+    if(fromRoute && !walkable(m,nx,ny)){ cancelRoute(); return; }
+    if(fromRoute) RT.route.shift();
     if(walkable(m,nx,ny)){
       RT.trail.unshift({x:G.x,y:G.y,dir:(RT.trail[0]&&RT.trail[0].x===G.x&&RT.trail[0].y===G.y)?RT.trail[0].dir:G.dir}); RT.trail.length=4;
       if(!partyWalking()) RT.walkT0=performance.now(); RT.stepN=(RT.stepN||0)+1; RT.moving={fx:G.x,fy:G.y,t0:performance.now(),dur:STEP_MS}; G.x=nx; G.y=ny;
@@ -630,7 +663,7 @@ function enterMap(id, floor, pos){
   const L=LOCS[id]; G.loc=id; G.floor=floor||0;
   RT.map = L.type==='dungeon'? genDungeon(id,G.floor) : genTown(id);
   if(RT.map.town) decorateTown(RT.map);
-  const p = pos || RT.map.start; G.x=p.x; G.y=p.y; RT.trail=[0,1,2,3].map(()=>({x:p.x,y:p.y,dir:G.dir||'down'})); RT.mode='field'; RT.encounterIn=ri(14,26);
+  cancelRoute(); const p = pos || RT.map.start; G.x=p.x; G.y=p.y; RT.trail=[0,1,2,3].map(()=>({x:p.x,y:p.y,dir:G.dir||'down'})); RT.mode='field'; RT.encounterIn=ri(14,26);
   $('padField').style.display='flex'; hidePanel();
   if(typeof BGM!=='undefined' && ['field','town','dungeon'].includes(BGM.name)) bgm('field');
   if(!G.visited[id]){ G.visited[id]=1; }
