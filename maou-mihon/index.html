@@ -24,7 +24,6 @@ const COLS = 15;
 const ROWS = 32;
 const FIRST_PLAYABLE_ROW = 4;
 const LAST_PLAYABLE_ROW = 27;
-const FOLLOW_GAP = 1;
 const STEP_MS = 175;
 const STAND = 1;
 
@@ -822,19 +821,6 @@ function lerp(from, to, amount) {
   return from + (to - from) * amount;
 }
 
-function trailParty(trail) {
-  return [trail[0], trail[FOLLOW_GAP], trail[FOLLOW_GAP * 2], trail[FOLLOW_GAP * 3]];
-}
-
-function appendTrail(trail, point) {
-  return [point, ...trail.slice(0, FOLLOW_GAP * 3)];
-}
-
-function clearsTrail(trail, point) {
-  // The last follower vacates its cell during the same step.
-  return !trail.slice(0, -1).some(occupied => equal(occupied, point));
-}
-
 class Field {
   constructor(mode, bank) {
     this.mode = mode;
@@ -845,9 +831,8 @@ class Field {
     this.npcs = mode === "town" ? TOWN_NPCS : ROAD_NPCS;
     this.objects = mode === "town" ? TOWN_OBJECTS : ROAD_OBJECTS;
     this.lamps = mode === "town" ? TOWN_LAMPS : ROAD_LAMPS;
-    const startCol = mode === "town" ? 7 : 6;
-    this.trail = Array.from({ length: FOLLOW_GAP * 3 + 1 }, (_, index) => [startCol, 17 + index]);
-    this.directions = [3, 3, 3, 3];
+    this.cell = [mode === "town" ? 7 : 6, 17];
+    this.facing = 3;
     this.renderedParty = [];
     this.route = [];
     this.steps = 0;
@@ -869,16 +854,16 @@ class Field {
   }
 
   get party() {
-    return trailParty(this.trail);
+    return [[...this.cell]];
   }
 
   get position() {
-    const [col, row] = this.trail[0];
+    const [col, row] = this.cell;
     return { col, row };
   }
 
   get partyPositions() {
-    return this.party.map(([col, row]) => ({ col, row }));
+    return [this.position];
   }
 
   gridCell(col, row) {
@@ -895,27 +880,17 @@ class Field {
 
   findPath(start, end) {
     if (!this.walkable(...end) || equal(start, end)) return [];
-    const firstTrail = this.moving?.trail ?? this.trail;
-    const distance = point => Math.abs(point[0] - end[0]) + Math.abs(point[1] - end[1]);
-    const queue = [{ trail: firstTrail, path: [], cost: distance(start) }];
-    const seen = new Set([firstTrail.flat().join(",")]);
-    for (let examined = 0; queue.length && examined < 5500; examined += 1) {
-      const { trail, path } = queue.shift();
-      const current = trail[0];
-      if (equal(current, end)) return path;
+    const queue = [{ cell: start, path: [] }];
+    const seen = new Set([start.join(",")]);
+    for (let index = 0; index < queue.length; index += 1) {
+      const { cell, path } = queue[index];
+      if (equal(cell, end)) return path;
       for (const [dx, dy] of DIRECTIONS) {
-        const next = [current[0] + dx, current[1] + dy];
-        if (!this.walkable(...next) || !clearsTrail(trail, next)) continue;
-        const shifted = appendTrail(trail, next);
-        const key = shifted.flat().join(",");
-        if (seen.has(key)) continue;
+        const next = [cell[0] + dx, cell[1] + dy];
+        const key = next.join(",");
+        if (seen.has(key) || !this.walkable(...next)) continue;
         seen.add(key);
-        const nextPath = [...path, next];
-        const cost = nextPath.length + distance(next);
-        const node = { trail: shifted, path: nextPath, cost };
-        const later = queue.findIndex(entry => entry.cost > cost);
-        if (later < 0) queue.push(node);
-        else queue.splice(later, 0, node);
+        queue.push({ cell: next, path: [...path, next] });
       }
     }
     return [];
@@ -929,14 +904,14 @@ class Field {
       return Math.abs(x - cx) <= 15 && y > feet - 40 && y <= feet + 8;
     });
     const clicked = clickedPerson ?? this.objects.find(object => inBox(x,y,object.box));
-    const origin = this.moving?.to[0] ?? this.party[0];
+    const origin = this.moving?.to ?? this.cell;
     const target = clicked ? [clicked.col, clicked.row] : destination;
     const distance = Math.abs(target[0] - origin[0]) + Math.abs(target[1] - origin[1]);
     if (!this.moving && clicked && distance === 1) {
       this.lastDistant = null;
       this.route = [];
       this.interacting = { npc: clicked, since: this.time };
-      this.directions[0] = direction(origin, target);
+      this.facing = direction(origin, target);
       return { label: clicked.label, line: clicked.line, icon: clicked.icon, sheet: clicked.sheet };
     }
     const choices = clicked ? DIRECTIONS.map(([dx, dy]) => [target[0] + dx, target[1] + dy]) : [target];
@@ -968,7 +943,7 @@ class Field {
   key(key) {
     const facing = ["ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp"].indexOf(key);
     if (facing < 0) return;
-    const [col, row] = this.moving?.to[0] ?? this.party[0];
+    const [col, row] = this.moving?.to ?? this.cell;
     const [dx, dy] = DIRECTIONS[facing];
     this.tap(...coordinate(col + dx, row + dy));
   }
@@ -976,17 +951,15 @@ class Field {
   advance(time) {
     this.time = time;
     if (this.moving && time >= this.moving.start + STEP_MS) {
-      this.trail = this.moving.trail;
+      this.cell = this.moving.to;
       this.steps += 1;
       this.moving = null;
     }
     if (!this.moving && this.route.length) {
       if (!this.wasMoving) this.animationStart = time;
-      const from = this.party;
-      const trail = appendTrail(this.trail, this.route.shift());
-      const to = trailParty(trail);
-      this.moving = { trail, to, start: time };
-      this.directions = to.map((point, index) => direction(from[index], point));
+      const to = this.route.shift();
+      this.moving = { to, start: time };
+      this.facing = direction(this.cell, to);
     }
     this.wasMoving = !!this.moving;
   }
@@ -1047,29 +1020,23 @@ class Field {
     const cast = this.npcs.map(npc => {
       const [x, y] = coordinate(npc.col, npc.row);
       const talking = this.interacting?.npc === npc && time - this.interacting.since < 2500;
-      const facing = talking ? direction([npc.col, npc.row], this.party[0]) : npc.facing;
+      const facing = talking ? direction([npc.col, npc.row], this.cell) : npc.facing;
       const col = !talking && (Math.floor(time / 300) + npc.sheet * 4) % 29 === 10 ? 0 : STAND;
       return { x, y, facing, col, sheet: this.bank.npcs?.[npc.sheet] };
     });
-    const party = [];
-    const positions = this.party;
-    for (let index = 0; index < positions.length; index += 1) {
-      const [sx, sy] = coordinate(...positions[index]);
-      let x = sx;
-      let y = sy;
-      let col = STAND;
-      if (this.moving) {
-        const [tx, ty] = coordinate(...this.moving.to[index]);
-        const amount = Math.min(1, (time - this.moving.start) / STEP_MS);
-        x = lerp(sx, tx, amount);
-        y = lerp(sy, ty, amount);
-        if (sx !== tx || sy !== ty) col = stepColumn(time - this.animationStart + index * 70);
-      }
-      const member = { x, y, facing: this.directions[index], col, sheet: this.bank.people?.[index], index };
-      party.push(member);
+    const [sx, sy] = coordinate(...this.cell);
+    let x = sx;
+    let y = sy;
+    let col = STAND;
+    if (this.moving) {
+      const [tx, ty] = coordinate(...this.moving.to);
+      const amount = Math.min(1, (time - this.moving.start) / STEP_MS);
+      x = lerp(sx, tx, amount);
+      y = lerp(sy, ty, amount);
+      col = stepColumn(time - this.animationStart);
     }
-    this.renderedParty = party.map(({ x, y, index }) => ({ x: Math.round(x), y: Math.round(y), index }));
-    cast.push(...party);
+    this.renderedParty = [{ x: Math.round(x), y: Math.round(y), index: 0 }];
+    cast.push({ x, y, facing: this.facing, col, sheet: this.bank.people?.[0] });
     cast.sort((a, b) => a.y - b.y);
     for (const member of cast) {
       if (!member.sheet) continue;
@@ -1814,7 +1781,10 @@ const MAP_STOPS = [
   { mode: "battle", label: "通常戦", y: 606 },
 ];
 const FIELD = new Map();
+const FIELD_FORMATION = [0, 1, 2, 3];
+const FORMATION_CARDS = [0, 3, 1, 2];
 let bank;
+let fieldBank;
 let battle;
 let scene = "road";
 let panel = null;
@@ -1924,7 +1894,7 @@ function drawFieldHud(ctx) {
     const x = 194 + index * 48;
     metal(ctx, x, 76, 42, 49);
     fieldFill(ctx, "#30394a", x + 5, 81, 32, 33);
-    face(ctx, index, x + 8, 83, 31, 35);
+    face(ctx, FIELD_FORMATION[index], x + 8, 83, 31, 35);
     fieldFill(ctx, "#101b21", x + 5, 115, 32, 5);
     fieldFill(ctx, "#7cac74", x + 6, 116, 30, 3);
     fieldFill(ctx, "#acd196", x + 6, 116, 29, 1);
@@ -1990,7 +1960,7 @@ function drawPanel(ctx) {
     });
   } else {
     const heroes = ["剣", "杖", "槍", "盾"];
-    const order = [0, 3, 1, 2];
+    const order = FORMATION_CARDS.map(slot => FIELD_FORMATION[slot]);
     for (let i = 0; i < 4; i += 1) {
       const x = 60 + (i % 2) * 163;
       const y = 481 + Math.floor(i / 2) * 103;
@@ -2062,6 +2032,21 @@ function choose(next) {
   DISPLAY.setAttribute("aria-label", scene === "battle" ? "通常戦闘" : SCENES[scene]);
 }
 
+function selectFormationCard(card) {
+  if (selected === card) {
+    selected = null;
+  } else if (selected === null) {
+    selected = card;
+  } else {
+    const first = FORMATION_CARDS[selected];
+    const second = FORMATION_CARDS[card];
+    [FIELD_FORMATION[first], FIELD_FORMATION[second]] =
+      [FIELD_FORMATION[second], FIELD_FORMATION[first]];
+    fieldBank.people = FIELD_FORMATION.map(index => bank.people[index]);
+    selected = null;
+  }
+}
+
 function tap(x, y) {
   if (y < FIELD_SAFE_TOP || y >= FIELD_SAFE_BOTTOM) return;
   if (scene === "battle") {
@@ -2093,8 +2078,8 @@ function tap(x, y) {
     } else if (panel === "party" && y >= 481 && y < 660) {
       const row = Math.floor((y - 481) / 103);
       if ((y - 481) % 103 < 76) {
-        if (x >= 60 && x < 178) selected = row * 2;
-        if (x >= 223 && x < 341) selected = row * 2 + 1;
+        if (x >= 60 && x < 178) selectFormationCard(row * 2);
+        if (x >= 223 && x < 341) selectFormationCard(row * 2 + 1);
       }
     }
     return;
@@ -2137,8 +2122,9 @@ async function boot() {
     loadList("tools", "tool", [28, 35, 33, 32, 4, 5, 31]),
   ]);
   bank = { people, npcs, enemies, icons: Object.fromEntries(["map", "bag", "berry", "bread", "herb", "bottle", "stone"].map((name, i) => [name, icons[i]])) };
-  FIELD.set("road", new Field("road", bank));
-  FIELD.set("town", new Field("town", bank));
+  fieldBank = { ...bank, people: [...people] };
+  FIELD.set("road", new Field("road", fieldBank));
+  FIELD.set("town", new Field("town", fieldBank));
   battle = new Battle(bank);
   choose(query.get("scene") || "road");
   DISPLAY.dataset.ready = "true";
@@ -2151,6 +2137,7 @@ async function boot() {
           steps: field?.steps ?? null, position: field?.position ?? null,
           width: DISPLAY.width, height: DISPLAY.height, dpi,
           fieldParty: field?.party ?? null, moving: !!field?.moving,
+          fieldFormation: [...FIELD_FORMATION],
           positions: field?.renderedParty ?? null,
           labels: visibleLabels.map(item => item.text),
         };
