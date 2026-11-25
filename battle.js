@@ -342,20 +342,22 @@ async function enemyAct(e,c){
     case 'eAoe': await blog(`${e.name}の全体攻撃！`,350); for(const t of alive(B.party)){ if(t.air) continue; await hit(e,t,{mult:e.boss?.65:.55,mag:c.elem!=='none',elem:c.elem,aoe:1}); if(c.blind) addStatus(t,'blind',35,e);} break;
     case 'eStatus': await blog(`${e.name}の ${n||STATUSJP[c.st]+'攻撃'}！`,300); if(c.all){ for(const t of alive(B.party)) addStatus(t,c.st,c.chance||45,e); } else { await hit(e,tgt,{mult:.6}); addStatus(tgt,c.st,45,e); } break;
     case 'eChargeStart': e.charging=true; await blog(`${e.name}は力をためている…！`,500);
+      { const fr=partyMax('foreRead'); if(fr){ alive(B.party).forEach(x=>setCut(x,fr,3)); await blog('……その一撃は、もう見えている。みんなが身構えた。',450); }
+        const br=alive(B.party).find(x=>x.P&&x.P.breakRead); if(br && Math.random()*100<br.P.breakRead){ breakCharge(e,br); await blog(`${br.name}が星を読み、ためた力をほどいた。`,500); break; } }
       { const ly=alive(B.party).find(x=>x.P&&x.P.foresight&&!x.flags.foresight); if(ly){ ly.flags.foresight=1; ly.forceActive=true; ly.foreMul=ly.P.foresight; ly.flags.first=true; await blog(`${ly.name}は、この先に来るものを知っている顔をした。`,500); } } break;
     case 'eCharge': e.charging=false; await blog(`${e.name}の渾身の一撃！`,400); await hit(e,tgt,{mult:2.4}); break;
     case 'eBuff': e.buff[c.stat]=[clamp((e.buff[c.stat]?e.buff[c.stat][0]:0)+1,-2,2),3]; await blog(`${e.name}は守りを固めた。`,350); break;
     case 'eAllyBuff': alive(B.enemies).forEach(x=>x.buff.atk=[1,3]); await blog(`${e.name}は仲間を奮い立たせた！`,350); break;
     case 'eDebuff': await blog(`${e.name}の呪い！`,300); { const st=pick(['atk','def','spd']); tgt.buff[st]=[clamp((tgt.buff[st]?tgt.buff[st][0]:0)-1,-2,2),3]; pop(tgt,STJP[st]+'↓','#fca5a5'); } break;
     case 'eDebuffAll': await blog(`${e.name}の ${n}！`,300); alive(B.party).forEach(t=>{ t.buff.spd=[-1,3]; pop(t,'速度↓','#fca5a5'); }); break;
-    case 'eHealAlly': { const a=alive(B.enemies).sort((x,y)=>x.hp/x.mhp-y.hp/y.mhp)[0]; const h=Math.round(a.mhp*.3*(1-partyMax('noRise')/100)); a.hp=Math.min(a.mhp,a.hp+h); pop(a,'+'+h,'#4ade80'); await blog(`${e.name}は祈りを捧げた。`,300); } break;
-    case 'eHeal': e.healed=1; { const h=Math.round(e.mhp*.25*(1-partyMax('noRise')/100)); e.hp=Math.min(e.mhp,e.hp+h); pop(e,'+'+h,'#4ade80'); await blog(`${e.name}は聖なる光で傷を癒やした！`,500); } break;
+    case 'eHealAlly': { const a=alive(B.enemies).sort((x,y)=>x.hp/x.mhp-y.hp/y.mhp)[0]; const h=Math.round(a.mhp*.3*eHealMul(a)); a.hp=Math.min(a.mhp,a.hp+h); pop(a,'+'+h,'#4ade80'); await blog(`${e.name}は祈りを捧げた。`,300); } break;
+    case 'eHeal': e.healed=1; { const h=Math.round(e.mhp*.25*eHealMul(e)); e.hp=Math.min(e.mhp,e.hp+h); pop(e,'+'+h,'#4ade80'); await blog(`${e.name}は聖なる光で傷を癒やした！`,500); } break;
     case 'eDispel': await blog(`${e.name}の ${n||'強化消し'}！`,300); alive(B.party).forEach(t=>{ t.buff={}; t.guard=null; t.regen=null; t.critBuff=null; for(const k in t.atkUps) if(t.atkUps[k][1]<50) delete t.atkUps[k]; }); break;
     case 'eCall': case 'eSummon': { const base=e.boss?makeEnemy(LOCS[G.loc].area,0,e.lv-1):makeEnemy(LOCS[G.loc].area,0,e.lv); if(!e.boss){ Object.assign(base,{name:e.name.replace(/^.*?の/,'')===e.name?e.name:e.name, }); }
       B.enemies.push(e.boss?base:{...e,hp:e.mhp,st:{},buff:{},glow:0}); layoutEnemies(); await blog(`${e.name}は仲間を呼んだ！`,400); } break;
     case 'eBoom': await blog(`${e.name}は自爆した！`,400); for(const t of alive(B.party)) await hit(e,t,{mult:1.2}); e.hp=0; e.dying=bnow(); break;
     case 'eMpDrain': { const v=Math.min(tgt.gauge||0,20); tgt.gauge=(tgt.gauge||0)-v; await blog(`${e.name}はゲージを吸い取った！`,300); pop(tgt,'ゲージ-'+v,'#ffd166'); } break;
-    case 'eDrain': await blog(`${e.name}は生気を吸い取った！`,300); { const d=await hit(e,tgt,{mult:.9}); e.hp=Math.min(e.mhp,e.hp+Math.round(d/2*(1-partyMax('noRise')/100))); } break;
+    case 'eDrain': await blog(`${e.name}は生気を吸い取った！`,300); { const d=await hit(e,tgt,{mult:.9}); e.hp=Math.min(e.mhp,e.hp+Math.round(d/2*eHealMul(e))); } break;
   }
 }
 

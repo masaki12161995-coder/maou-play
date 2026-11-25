@@ -325,6 +325,14 @@ function skillSpec(def,r){
   if(z.xSelfFull) e(`自分のHP満タンなら ${NB('×'+z.xSelfFull)}`,'xsf'); if(z.allAttack) e('ほかの味方がすぐ通常攻撃する','aa');
   if(z.selfStack) e(`自分の攻撃 ${NB('+'+z.selfStack+'%')}（戦闘中・最大+50%）`,'sst'); if(z.focus) e(`同じ敵を続けて攻撃するたび ${NB('+'+z.focus+'%')}`,'foc');
   if(z.xLearn) e(`覚え1つにつき ${NB('+'+PC(z.xLearn))}`,'xle');
+  if(z.regen) e(`${z.regenTgt==='self'?'自分':z.regenTgt==='low'?'一番減った味方':'味方全員'}に再生（毎ターン最大HPの${NB(z.regen.pct+'%')}・${z.regen.t}ターン）`,'rg');
+  if(z.prayRegen) e(`回復した味方に再生（毎ターン最大HPの${NB(z.prayRegen.pct+'%')}・${z.prayRegen.t}ターン）`,'prg'); if(z.revRegen) e(`起こした味方（いなければ全員）に再生 ${NB(z.revRegen.pct+'%')}`,'rrg');
+  if(z.reflect) e(`味方全員に反射（受けたダメージの${NB(z.reflect.pct+'%')}を返す・${z.reflect.t}ターン）`,'rf'); if(z.sRef) e(`受けたダメージの${NB(z.sRef+'%')}を返す`,'srf');
+  if(z.pEvade) e(`味方全員の回避 ${NB('+'+z.pEvade.pct+'%')}（${z.pEvade.t}ターン）`,'pev'); if(z.evadeNext) e('次の攻撃を必ずかわす','evn');
+  if(z.selfHealPct) e(`自分のHPを${NB(z.selfHealPct+'%')}回復`,'shp'); if(z.hpLow) e(`一番減った味方のHPを${NB(z.hpLow+'%')}回復`,'hpl'); if(z.kHealLow) e(`倒すたび一番減った味方のHPを${NB(z.kHealLow+'%')}回復`,'khl');
+  if(z.lowCut) e(`その味方の被ダメージ ${NB('−'+z.lowCut.pct+'%')}（${z.lowCut.t}ターン）`,'lcut'); if(z.hurtHeal) e(`挑発中に受けたダメージの${NB(z.hurtHeal+'%')}で一番減った味方を回復`,'hhl'); if(z.shed) e('自分の状態異常を治す','shed');
+  if(z.breakCharge) e(z.breakCharge>=100?'力をためている敵の溜めをくずす':`力をためている敵の溜めを${NB(z.breakCharge+'%')}でくずす`,'brk'); if(z.breakAll) e('力をためている敵全員の溜めをくずす','brka');
+  if(z.xCharge) e(`力をためている敵に ${NB('×'+z.xCharge)}`,'xch'); if(z.noHeal) e(`回復封じ ${NB(z.noHeal+'ターン')}（敵が回復できない）`,'nh');
   if(z.poisonExt) e('毒を1ターン延ばす','pe'); if(z.stAdd) e('状態異常を1つ足す','sa');
   // あとから起きること
   if(z.gph) e(`当たるたびゲージ ${NB('+'+z.gph)}`,'gph'); if(z.kph) e(`当たるたび気 ${NB('+'+z.kph)}`,'kph'); if(z.kAdd) e(`気 ${NB('+'+z.kAdd)}`,'kadd'); if(z.kpt) e('当てた数だけ気+1','kpt');

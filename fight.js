@@ -26,6 +26,15 @@ function addCurse(t,n,a){ if(!t||t.hp<=0||!(n>0)) return; const before=t.curse||
 function setCut(x,pct,turns){ if(!x||!(pct>0)) return; if(!x.cut||x.cut[0]<pct||(x.cut[0]===pct&&x.cut[1]<turns)) x.cut=[pct,turns]; }
 function partyMax(key){ return B? alive(B.party).reduce((m,x)=>Math.max(m,(x.P&&x.P[key])||0),0) : 0; }
 function addAtkUp(u,src,pct,turns){ if(!u||u.hp<=0||!(pct>0)) return; const c=u.atkUps[src]; if(!c||c[0]<=pct) u.atkUps[src]=[pct,turns+1]; else c[1]=Math.max(c[1],turns+1); }
+// 続けて効くもの（再生・反射・回避）：強い方・長い方を残す
+function addTimed(x,key,pct,turns){ if(!x||x.hp<=0||!(pct>0)) return; const c=x[key]; x[key]=[Math.max(pct,c?c[0]:0), Math.max(turns+1,c?c[1]:0)]; }
+function addRegen(x,pct,turns,by){ if(!x||x.hp<=0||!(pct>0)) return; const c=x.regen; x.regen=[Math.max(pct/100,c?c[0]:0), Math.max(turns+1,c?c[1]:0)]; if(by) x.regenBy=by; pop(x,'再生','#86efac'); }
+const lowestAlly=()=>alive(B.party).sort((p,q)=>p.hp/p.mhp-q.hp/q.mhp)[0];
+async function healLowestPct(u,pct,skill){ const x=lowestAlly(); if(x&&x.hp<x.mhp) return healUnit(u,x,x.mhp*pct/100,skill,true); return 0; }
+// 敵の「力をためる」をくずす
+function breakCharge(e,by){ if(!e||!e.charging||e.hp<=0) return false; e.charging=false; pop(e,'溜めくずし','#c4b5fd'); if(B) B.broke=(B.broke||0)+1; return true; }
+// 敵の回復のしにくさ（土に還す・回復封じ）
+function eHealMul(e){ return (1-partyMax('noRise')/100)*(e&&e.noHeal?0:1); }
 
 function sv(u,k){ let v=u[k]; const b=u.buff[k]; if(b) v*=STAGE[b[0]+2];
   if(u.isEnemy){ if(k==='spd'&&u.st.freeze) v*=0.5; return v; }
@@ -80,6 +89,11 @@ async function battleOpen(){
   B.prevFoes=G.lastFoes||[]; G.lastFoes=[...new Set(B.enemies.map(foeKey))];
   if(partyMax('appraise')) for(const e of alive(B.enemies)) revealWeak(e);
   for(const u of B.party){ if(u.hp>0&&u.P.vesselKin) for(const e of alive(B.enemies)) addCurse(e,Math.floor(u.P.vesselKin),u); }
+  for(const u of alive(B.party)){
+    if(u.P.herbGarden) for(const x of alive(B.party)) addRegen(x,u.P.herbGarden,3,u);
+    if(u.P.smokeOut) for(const x of alive(B.party)) addTimed(x,'evadeB',u.P.smokeOut,2);
+    if(u.P.crystal) for(const e of alive(B.enemies)) revealWeak(e);
+  }
   for(const u of B.party) kitTrace(u);
 }
 function kitTrace(u){} // 予備（表示用）
@@ -275,6 +289,7 @@ async function runSkillCore(u,s,ctx){
         if(s.xPerFull) mult*=1+s.xPerFull*alive(B.party).filter(x=>x.hp>=x.mhp).length;
         if(s.xKi) mult*=1+s.xKi*kiSpent;
         if(s.xWeak && t.weak===el) mult*=s.xWeak;
+        if(s.xCharge && t.charging) mult*=s.xCharge;
         let hits=s.rh?1:(s.h||1); if(s.weakH && t.weak===el) hits=s.weakH;
         let sure=!!(s.sc||ctx.sure); let cr=(s.cr||0);
         if(s.scIf==='mark' && t.mark>0) sure=true;
@@ -296,6 +311,7 @@ async function runSkillCore(u,s,ctx){
         }
         if(t.hp>0 && s.exec && !t.boss && t.hp<=t.mhp*s.exec.th && Math.random()*100<s.exec.c){ pop(t,'葬送','#e9d5ff'); await fixedHit(u,t,t.hp,nm,'#e9d5ff'); R.kills++; }
         if(t.hp>0 && s.curseBurst && t.curse>0){ const n=t.curse; t.curse=s.keepCurse?Math.floor(n/2):0; pop(t,'呪いがはじけた','#c084fc'); const d2=await hit(u,t,{mult:s.curseBurst*n*pow,mag:true,elem:'dark',skill:nm,passive:1}); R.dmg+=d2; }
+        if(t.hp>0 && s.breakCharge && t.charging && Math.random()*100<s.breakCharge) breakCharge(t,u);
         if(t.hp<=0){ await onKillBySkill(u,s,t); continue; }
       }
       // 当てたあとに付くもの
@@ -311,6 +327,7 @@ async function runSkillCore(u,s,ctx){
       if(s.reveal) revealWeak(t);
       if(s.expose){ t.vuln=[s.expose.pct,s.expose.t+1]; pop(t,'見抜いた','#fde68a'); }
       if(s.atkDown){ t.buff.atk=[-1,3]; pop(t,'攻撃↓','#93c5fd'); }
+      if(s.noHeal && t.isEnemy){ t.noHeal=Math.max(t.noHeal||0,s.noHeal+1); pop(t,'回復封じ','#c4b5fd'); }
       if(s.poisonExt && t.st.poison) t.st.poison+=1;
       if(s.stAdd){ const pool=['poison','paralyze','burn'].filter(x=>!t.st[x]); if(pool.length) addStatus(t,pick(pool),100,u,s); }
       if(s.st2G && nSt(t)>=2) addGauge(u,s.st2G);
@@ -329,12 +346,12 @@ async function runSkillCore(u,s,ctx){
   }
   else if(s.k==='pray'){
     const hurt=alive(B.party).filter(x=>x.hp<x.mhp*0.8).sort((a,b)=>a.hp/a.mhp-b.hp/b.mhp);
-    if(hurt.length){ for(const t of hurt.slice(0,s.n||1)){ const h=await healUnit(u,t,sv(u,'mat')*s.m*pow,nm); if(s.cure) t.st={}; if(s.healHit && h>0){ const e=pickTargets('front')[0]; if(e) await fixedHit(u,e,Math.round(h*s.healHit),nm,'#fef9c3'); } } R.hits=1; }
+    if(hurt.length){ for(const t of hurt.slice(0,s.n||1)){ const h=await healUnit(u,t,sv(u,'mat')*s.m*pow,nm); if(s.prayRegen) addRegen(t,s.prayRegen.pct,s.prayRegen.t,u); if(s.cure) t.st={}; if(s.healHit && h>0){ const e=pickTargets('front')[0]; if(e) await fixedHit(u,e,Math.round(h*s.healHit),nm,'#fef9c3'); } } R.hits=1; }
     else { const t=pickTargets('front')[0]; if(t){ const d=await hit(u,t,{mult:0.8*pow,mag:true,elem:'light',skill:nm,normal:true}); if(d>0){R.hits=1;R.dmg+=d;} } }
   }
   else if(s.k==='heal'){
     if(s.tgt==='all'){ for(const x of alive(B.party)) await healUnit(u,x,sv(u,'mat')*s.m*pow,nm,true,false,s); if(u.P.judge) stackUp(u,'judge'); await blogAdd('みんなのHPが回復した',420); }
-    else { const x=alive(B.party).sort((p,q)=>p.hp/p.mhp-q.hp/q.mhp)[0]; await healUnit(u,x,sv(u,'mat')*s.m*pow,nm,false,false,s); if(x&&s.toG) addGauge(x,s.toG,x!==u); }
+    else { const x=alive(B.party).sort((p,q)=>p.hp/p.mhp-q.hp/q.mhp)[0]; await healUnit(u,x,sv(u,'mat')*s.m*pow,nm,false,false,s); if(x&&s.toG) addGauge(x,s.toG,x!==u); if(x&&s.lowCut){ setCut(x,s.lowCut.pct,s.lowCut.t+1); pop(x,'守り','#bae6fd'); } }
     if(s.cure) alive(B.party).forEach(x=>{ for(const k of AILMENT) delete x.st[k]; });
     if(s.pCut) alive(B.party).forEach(x=>setCut(x,s.pCut.pct,s.pCut.t+1));
     if(s.pG) for(const x of alive(B.party)) if(x!==u) addGauge(x,s.pG,true);
@@ -342,7 +359,7 @@ async function runSkillCore(u,s,ctx){
   else if(s.k==='shield'){
     const ts= s.tgt==='all'? alive(B.party) : alive(B.party).sort((p,q)=>p.hp/p.mhp-q.hp/q.mhp).slice(0,s.n||1);
     const shV=Math.round(s.shHp? u.mhp*s.shHp/100*pow : sv(u,'mat')*s.m*pow);
-    for(const x of ts){ const v=shV; x.shield=(x.shield||0)+v; if(s.shAtk) x.shAtk=s.shAtk; if(s.shBurst) x.shFrom=u; pop(x,'加護 '+v,'#bae6fd'); }
+    for(const x of ts){ const v=shV; x.shield=(x.shield||0)+v; if(s.shAtk) x.shAtk=s.shAtk; if(s.shBurst) x.shFrom=u; if(s.evadeNext) x.evadeNext=1; pop(x,'加護 '+v,'#bae6fd'); }
     if(s.pAtk) for(const x of alive(B.party)) addAtkUp(x,'sk_'+u.name,s.pAtk.pct,s.pAtk.t);
     if(s.pCut) alive(B.party).forEach(x=>setCut(x,s.pCut.pct,s.pCut.t+1));
     if(s.pG) for(const x of alive(B.party)) if(x!==u) giveGauge(u,x,s.pG);
@@ -361,12 +378,13 @@ async function runSkillCore(u,s,ctx){
     if(s.reveal) for(const e of alive(B.enemies)) revealWeak(e);
     if(s.pHeal) for(const x of alive(B.party)) await healUnit(u,x,x.mhp*s.pHeal/100*pow,nm,true);
     if(s.cure) alive(B.party).forEach(x=>{ for(const k of AILMENT) delete x.st[k]; });
-    if(!ctx.normal){ await blogAdd(s.pAtk?'みんなの力が湧き上がる':'みんなのゲージが増えた',420); }
+    if(!ctx.normal){ const msg=s.pAtk?'みんなの力が湧き上がる':(s.pG||s.gTop)?'みんなのゲージが増えた':s.regen?'みんなの体に、薬が静かにしみていく':s.pCut?'みんなが身構えた':''; if(msg) await blogAdd(msg,420); }
     if(s.allAttack) for(const x of alive(B.party)){ if(x===u||!canAct(x)||x.tf.pushed||!alive(B.enemies).length) continue; x.tf.pushed=1; await normalAct(x,{noG:true}); }
     if(s.actTop){ const x=alive(B.party).filter(x=>x!==u&&canAct(x)).sort((a,b)=>b.gauge-a.gauge)[0]; if(x&&!x.tf.pushed){ x.tf.pushed=1; await blog(`${x.name}がすぐに動く！`,350); await partyAct(x,{extra:true}); } }
   }
   else if(s.k==='taunt'){
     u.taunt=s.turns+1; setCut(u,s.cut||0,s.turns+1); u.tauntSk=s; pop(u,s.cover?'かばう':'挑発','#fde68a'); if(s.cover) u.cover=s.turns+1;
+    if(s.shed){ for(const k of AILMENT) delete u.st[k]; }
     if(s.atkSelf) addAtkUp(u,'taunt',s.atkSelf.pct,s.atkSelf.t);
     if(s.pCut) alive(B.party).forEach(x=>{ if(x!==u) setCut(x,s.pCut.pct,s.pCut.t+1); });
     await blogAdd(`敵の目が ${u.name} に向いた`,420);
@@ -380,6 +398,7 @@ async function runSkillCore(u,s,ctx){
     if(dead.length){ for(const x of dead){ x.hp=Math.min(x.mhp,Math.round(x.mhp*s.rev/100*pow)); x.gauge=s.fullG?100:0; x.st={}; x.buff={}; pop(x,'復活','#c084fc'); meterAdd(u,nm,'heal',x.hp); } sfx('heal'); await blogAdd(`${dead.map(x=>x.name).join('と')}が立ち上がった`,500); }
     else { for(const x of alive(B.party)) await healUnit(u,x,x.mhp*s.pHeal/100*pow,nm,true); await blogAdd('みんなのHPが回復した',420); }
     if(s.guardAll) B.party.forEach(x=>{ if(x.hp>0) x.guardOnce=1; });
+    if(s.revRegen) for(const x of (dead.length?dead:alive(B.party))) addRegen(x,s.revRegen.pct,s.revRegen.t,u);
   }
   // スキル共通のおまけ
   if(s.k==='atk'){
@@ -391,6 +410,13 @@ async function runSkillCore(u,s,ctx){
     if(s.air){ u.air=true; pop(u,'跳躍','#e0f2fe'); }
     if(s.fullG) for(const x of alive(B.party)) if(x.hp>=x.mhp) addGauge(x,s.fullG,x!==u);
   }
+  if(s.tauntSelf && s.k!=='atk'){ u.taunt=Math.max(u.taunt||0,s.tauntSelf+1); setCut(u,s.cutSelf||0,s.tauntSelf+1); pop(u,'挑発','#fde68a'); }
+  if(s.regen){ const ts=s.regenTgt==='self'?[u]:s.regenTgt==='low'?[lowestAlly()]:alive(B.party); for(const x of ts) addRegen(x,s.regen.pct,s.regen.t,u); }
+  if(s.reflect){ for(const x of (s.reflectSelf?[u]:alive(B.party))) addTimed(x,'reflect',s.reflect.pct,s.reflect.t); if(!ctx.normal) await blogAdd(s.reflectSelf?`${u.name}のうろこが逆立った`:'みんなのまわりに、うろこの膜が張った',380); }
+  if(s.pEvade){ for(const x of alive(B.party)) addTimed(x,'evadeB',s.pEvade.pct,s.pEvade.t); pop(u,'分身','#e0e7ff'); }
+  if(s.selfHealPct) await healUnit(u,u,u.mhp*s.selfHealPct/100,nm,true);
+  if(s.hpLow) await healLowestPct(u,s.hpLow,nm);
+  if(s.breakAll){ let n=0; for(const e of alive(B.enemies)) if(breakCharge(e,u)) n++; if(n) await blogAdd('ためていた力が、ほどけた',400); }
   if(s.gAll) for(const x of alive(B.party)) if(x!==u) addGauge(x,s.gAll,true);
   if(s.gSelf) addGauge(u,s.gSelf);
   if(s.kAdd) addKi(u,s.kAdd);
@@ -406,6 +432,7 @@ async function runSkillCore(u,s,ctx){
 // 倒したとき（スキル側）
 async function onKillBySkill(u,s,t){
   if(s.kG) addGauge(u,s.kG);
+  if(s.kHealLow) await healLowestPct(u,s.kHealLow,s.nm);
   if(s.kAtk) for(const x of alive(B.party)) addAtkUp(x,'kill_'+u.name,s.kAtk.pct,s.kAtk.t);
   if(s.kAgain && !u.tf.kAgain){ u.tf.kAgain=1; u.extra++; }
   if(s.kAtkSelf) u.atkStack=(u.atkStack||0)+s.kAtkSelf;
@@ -464,6 +491,7 @@ async function firePassive(u,id){
     case 'procession': await all({mult:v}); for(const e of en()) if(!e.boss && e.hp<=e.mhp*0.5 && Math.random()<0.1){ pop(e,'葬送','#e9d5ff'); await fixedHit(u,e,e.hp,nm,'#e9d5ff'); } break;
     case 'warCry': await all({mult:v}); break;
     case 'kingReturn': for(const x of alive(B.party)){ addAtkUp(x,'kingReturn',v,2); if(x!==u) addGauge(x,30,true); } await blogAdd('王が、みんなの前に立った',380); break;
+    case 'mortar': for(const x of alive(B.party)) await healUnit(u,x,x.mhp*v/100,nm,true,true); await blogAdd('みんなのHPが回復した',380); break;
     case 'nextEra': { const t=pickTargets('high')[0]; if(t) await hit(u,t,{passive:1,skill:nm,mult:v,elem:'light',sureCrit:true}); } break;
   }
   renderTop(B.party);
@@ -523,6 +551,7 @@ function calcDmg(a,t,o){
     if(t.P&&t.P.learn) d*=1-Math.min(50,t.P.learn*(t.learn||0))/100;
     if(t.P&&t.P.generalPride && t.hp>=t.mhp*0.5) d*=1-t.P.generalPride/100;
     if(t.uniq && t.uniq.includes('dmgCut')) d*=0.9;
+    if(t.P&&t.P.scaleArmor && t.hp<=t.mhp*0.5) d*=1-t.P.scaleArmor/100;
   }
   if(o.fixed) d=o.fixed*(crit?1.5:1)*elemMul(t,el,a);
   return {d:Math.max(1,Math.round(d)),crit,el,isWeak};
@@ -531,6 +560,12 @@ function calcDmg(a,t,o){
 async function hit(a,t,o){
   if(!a||!t||t.hp<=0) return 0;
   if(a.isEnemy && !t.isEnemy && !o.counter && B){ const cov=alive(B.party).find(x=>x!==t&&x.cover>0); if(cov){ t=cov; o.covered=1; } }
+  if(a.isEnemy && !t.isEnemy && !o.counter && B){
+    const ch=t.evadeNext?100:(o.aoe?0:(t.P.evade||0))+(t.evadeB?t.evadeB[0]:0);
+    if(ch>0 && Math.random()*100<ch){ t.evadeNext=0; pop(t,'かわした','#e0e7ff'); await blogAdd(`${t.name}は攻撃をかわした！`,380);
+      if(t.P.evadeG) addGauge(t,t.P.evadeG);
+      if(t.P.shadowStep && a.hp>0 && t.hp>0) await hit(t,a,{mult:t.P.shadowStep,skill:'影渡り',counter:1,passive:1});
+      return 0; } }
   if(!o.mag && a.st.blind && Math.random()<.5){ pop(t,'ミス','#cbd5e1'); await blogAdd(`ミス！ ${t.name}はダメージを受けない`,380); return 0; }
   const r=calcDmg(a,t,o); let d=r.d; o.didCrit=r.crit;
   if(o.covered && o.aoe) d=Math.max(1,Math.round(d*0.5)); // 全体攻撃をかばうときは盾で半分受け流す
@@ -548,6 +583,8 @@ async function hit(a,t,o){
     else if(t.P.standFirm && !t.flags.endured){ d=Math.max(0,t.hp-1); t.flags.endured=1; endured='standFirm'; }
     else if(t.P.noFlee && !t.flags.endured){ d=Math.max(0,t.hp-1); t.flags.endured=1; endured='noFlee'; }
     else if(t.P.purse && !t.flags.endured && (G.gold>0||SIM.on)){ d=Math.max(0,t.hp-1); t.flags.endured=1; endured='purse'; }
+    else if(t.P.stubborn && !t.flags.endured){ d=Math.max(0,t.hp-1); t.flags.endured=1; endured='stubborn'; }
+    else if(alive(B.party).some(x=>x.P.fateHeal&&!x.flags.fate)){ const fx=alive(B.party).find(x=>x.P.fateHeal&&!x.flags.fate); fx.flags.fate=1; t.fateBy=fx; d=Math.max(0,t.hp-1); endured='fate'; }
     else { const sg=alive(B.party).find(x=>x.P.shadowGuard && (x.flags.shadow||0)<Math.floor(x.P.shadowGuard)); if(sg){ sg.flags.shadow=(sg.flags.shadow||0)+1; d=0; endured='shadow'; } }
   }
   t.hp=Math.max(0,t.hp-d);
@@ -583,6 +620,8 @@ async function hit(a,t,o){
   // ---- 味方が受けた ----
   if(!t.isEnemy){
     t.taken=(t.taken||0)+d; if(a && a.isEnemy) meterAdd(t,(a.dexName||a.name),'taken',d);
+    if(a && a.isEnemy && a.hp>0 && !o.counter && d>0){ const rp=(t.reflect?t.reflect[0]:0)+(t.P.thorns||0)+((t.stance&&t.stance.sRef)||0); if(rp>0) await fixedHit(t,a,d*rp/100,'反射','#a5f3fc'); }
+    if(d>0 && (t.taunt>0||t.cover>0||o.covered)){ if(t.P.guardBless) await healLowestPct(t,t.P.guardBless,'うろこの守り'); if(t.taunt>0&&t.tauntSk&&t.tauntSk.hurtHeal){ const x=lowestAlly(); if(x) await healUnit(t,x,d*t.tauntSk.hurtHeal/100,t.tauntSk.nm,true); } }
     if(t.hp>0){ addGauge(t,((t.P.shieldMind)||10)+((t.gx&&t.gx.h)||0)); if(t.taunt>0&&t.tauntSk&&t.tauntSk.hurtG) addGauge(t,t.tauntSk.hurtG); }
     for(const x of alive(B.party)){ if(x!==t && x.P.devotion) addGauge(x,x.P.devotion); if(x.P.oath && !o.passive) stackUp(x,'oath'); }
     if(t.hp>0){
@@ -595,6 +634,9 @@ async function hit(a,t,o){
       if(t.P.immovable) stackUp(t,'immovable');
       if(t.taunt>0 && t.P.guardChain){ const lo=alive(B.party).filter(x=>x!==t).sort((p,q)=>p.gauge-q.gauge)[0]; addGauge(lo,t.P.guardChain,true); }
       if(t.taunt>0 && t.tauntSk && t.tauntSk.hurtWeak && a.isEnemy) a.buff.atk=[-1,3];
+      if(t.P.painGauge && d>0) addGauge(t,Math.round(d/t.mhp*10*t.P.painGauge));
+      if(t.P.fury && !t.flags.fury && t.hp<=t.mhp*0.5){ t.flags.fury=1; addAtkUp(t,'fury',t.P.fury,99); t.gauge=100; pop(t,'本気','#f87171'); }
+      if(t.hp<=t.mhp*0.5 && t.hp+d>t.mhp*0.5){ const fa=alive(B.party).find(x=>x.P.firstAid&&!x.tf.firstAid); if(fa){ fa.tf.firstAid=1; addRegen(t,fa.P.firstAid,2,fa); } }
       if(t.P.recover && !t.flags.recovered && t.hp<=t.mhp*0.4){ t.flags.recovered=1; await healUnit(t,t,sv(t,'mat')*t.P.recover,'リカバー',true); }
     }
   }
@@ -606,6 +648,8 @@ async function hit(a,t,o){
   if(endured==='noFlee'){ pop(t,'王は退かない','#fde68a'); for(const x of alive(B.party)) addAtkUp(x,'noFlee',t.P.noFlee,2); }
   if(endured==='purse'){ const c=SIM.on?0:Math.min(G.gold,Math.max(10,Math.round(G.gold*0.1))); G.gold-=c; t.hp=Math.max(t.hp,Math.round(t.mhp*t.P.purse/100)); pop(t,c?`${c}G払った`:'耐えた','#facc15'); }
   if(endured==='shadow'){ pop(t,'影が受けた','#c084fc'); }
+  if(endured==='stubborn'){ pop(t,'がんこ','#fde68a'); for(const x of alive(B.party)) addRegen(x,t.P.stubborn,3,t); }
+  if(endured==='fate'){ const fx=t.fateBy; t.fateBy=null; pop(t,'運命が見えていた','#c4b5fd'); if(fx) await healUnit(fx,t,t.mhp*fx.P.fateHeal/100,'運命の手当て',true); }
   if(t.hp<=0){ await onDown(t,a); }
   else if(!t.isEnemy && a.isEnemy && a.hp>0 && !o.counter){
     // 反撃いろいろ
@@ -636,6 +680,8 @@ async function onDown(t,by){
       if(P.sendOff) by.nextHitUp=Math.max(by.nextHitUp||0,P.sendOff);
       if(P.bloodBack && by.hp>0){ const h=Math.round(by.mhp*P.bloodBack/100); by.hp=Math.min(by.mhp,by.hp+h); pop(by,'+'+h,'#4ade80'); }
       if(P.warCry) stackUp(by,'warCry');
+      if(P.killHeal) await healLowestPct(by,P.killHeal,'血止め');
+      if(P.feast && by.hp>0){ const h=by.mhp*P.feast/100; await healUnit(by,by,h,'腹ごしらえ',true); const x=lowestAlly(); if(x&&x!==by) await healUnit(by,x,h,'腹ごしらえ',true); }
     }
     for(const x of alive(B.party)) if(x.P.procession) stackUp(x,'procession');
     return;
@@ -648,6 +694,9 @@ async function onDown(t,by){
   for(const x of alive(B.party)){ if(x.P.mourner) addAtkUp(x,'mourn',x.P.mourner,99); if(x.P.regret) alive(B.party).forEach(y=>setCut(y,x.P.regret,3)); }
   if(t.P.undying2 && !t.flags.revived){ t.flags.revived=1; t.hp=Math.round(t.mhp*t.P.undying2/100); pop(t,'復活','#c084fc'); await blog(`${t.name}は、もう一度立ち上がった。`,500); return; }
   if(t.P.undo && !t.flags.revived){ t.flags.revived=1; t.hp=Math.round(t.mhp*t.P.undo/100); pop(t,'復活','#c084fc'); await blog(`${t.name}は自分で立ち上がった！`,500); return; }
+  if(t.uniq&&t.uniq.includes('rise') && !t.flags.rose){ t.flags.rose=1; t.hp=Math.round(t.mhp*0.4); pop(t,'復活','#c084fc'); await blog(`${t.name}の装備が光り、${t.name}は立ち上がった。`,500); return; }
+  { const rz=alive(B.party).find(x=>x!==t && x.uniq&&x.uniq.includes('raise') && !x.flags.raised); if(rz){ rz.flags.raised=1; t.hp=Math.round(t.mhp*0.3); pop(t,'復活','#c084fc'); meterAdd(rz,'起こす装備','heal',t.hp); await blog(`${rz.name}の装備が光った。${t.name}が立ち上がった。`,500); return; } }
+  { const db=alive(B.party).find(x=>x!==t && x.P.debt && !x.flags.debt && x.hp>t.mhp*x.P.debt/100+1); if(db){ db.flags.debt=1; const c=Math.round(t.mhp*db.P.debt/100); db.hp=Math.max(1,db.hp-c); pop(db,'-'+c,'#fca5a5'); t.hp=c; pop(t,'復活','#c084fc'); meterAdd(db,'義理','heal',c); await blog(`${db.name}が自分の血を分けた。${t.name}が立ち上がった。`,550); return; } }
   const ch=alive(B.party).find(x=>x.P.rewind && (x.flags.rewound||0)<Math.floor(x.P.rewind));
   if(ch && t.prevHp>0){ ch.flags.rewound=(ch.flags.rewound||0)+1; t.hp=t.prevHp; pop(t,'巻き戻し','#7dd3fc'); meterAdd(ch,'巻き戻し','heal',t.prevHp); await blog(`${ch.name}が時を巻き戻した。${t.name}はそこに立っている。`,600); return; }
   for(const x of alive(B.party)) if(x.P.refund){ x.flags.first=true; addGauge(x,x.P.refund); }
@@ -655,7 +704,7 @@ async function onDown(t,by){
 
 function addStatus(t,s,chance,a,sk){
   if(t.hp<=0) return false;
-  if(!t.isEnemy){ const P=t.P||{}; if(P.immuneAll) return false; chance*=(1-(t.stRes||0)/100); }
+  if(!t.isEnemy){ const P=t.P||{}; if(P.immuneAll) return false; chance*=(1-(t.stRes||0)/100); if(t.regen){ const bt=partyMax('bitter'); if(bt) chance*=1-bt/100; } }
   if(t.boss){ const k={stop:0.25,sleep:0.4,paralyze:0.4,poison:0.6,burn:0.8,freeze:0.5,confuse:0.4,blind:0.5,silence:0.5}[s]||0.4; chance*= (s==='stop'&&sk&&sk.bossOk)? 0.6 : k; }
   if(a && !a.isEnemy && a.P && a.P.stSkill) chance+=a.P.stSkill;
   if(Math.random()*100>=chance) return false;
@@ -681,12 +730,19 @@ async function endOfTurn(){
     if(u.st.poison){ const d=Math.max(1,Math.round(u.mhp*0.05)); u.hp=Math.max(1,u.hp-d); pop(u,d,'#a3e635'); }
     if(u.uniq&&u.uniq.includes('mpRegen')) addGauge(u,8);
     if(u.gx&&u.gx.t) addGauge(u,u.gx.t);
+    if(u.hp<u.mhp){ const sr=(u.P.selfRegen||0)+(u.uniq&&u.uniq.includes('regenU')?4:0); if(sr) await healUnit(u,u,u.mhp*sr/100,'自然回復',true,true); }
     if(u.P.nightmare){ const n=alive(B.enemies).filter(e=>e.st.sleep).length; if(n) stackUp(u,'nightmare',n); }
     if(u.P.timeEnd) stackUp(u,'timeEnd');
   }
   for(const u of [...B.party,...B.enemies]){
     if(u.hp<=0) continue;
-    if(u.regen){ const h=Math.round(u.mhp*u.regen[0]*(u.isEnemy?1-partyMax('noRise')/100:1)); u.hp=Math.min(u.mhp,u.hp+h); pop(u,'+'+h,'#4ade80'); if(--u.regen[1]<=0) u.regen=null; }
+    if(u.regen){
+      if(u.isEnemy){ const h=Math.round(u.mhp*u.regen[0]*eHealMul(u)); if(h>0){ u.hp=Math.min(u.mhp,u.hp+h); pop(u,'+'+h,'#4ade80'); } }
+      else if(u.hp<u.mhp){ const by=(u.regenBy&&B.party.includes(u.regenBy))?u.regenBy:u; const h=await healUnit(by,u,u.mhp*u.regen[0]*(1+((by.P&&by.P.herbal)||0)/100),'再生',true); if(h>0 && by.P&&by.P.mortar) stackUp(by,'mortar'); }
+      if(u.regen && --u.regen[1]<=0){ u.regen=null; u.regenBy=null; } }
+    if(u.reflect){ if(--u.reflect[1]<=0) u.reflect=null; }
+    if(u.evadeB){ if(--u.evadeB[1]<=0) u.evadeB=null; }
+    if(u.noHeal){ if(--u.noHeal<=0) u.noHeal=0; }
     for(const k in u.st){ if(--u.st[k]<=0){ delete u.st[k]; if(k==='sleep') u.sleepHits=0; } }
     for(const k in u.buff){ if(--u.buff[k][1]<=0) delete u.buff[k]; }
     if(u.cut){ if(--u.cut[1]<=0) u.cut=null; }

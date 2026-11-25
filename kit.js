@@ -88,7 +88,7 @@ const KIT = {
  N:[{nm:'盾打ち', d:'前の敵を盾で打つ（{m}）', k:'atk', tgt:'front', m:[1.0,1.4], r3:{xTaunt:1.3}, r3d:'挑発中は1.3倍', r5:{gSelf:10}, r5d:'ゲージ+10'},
     {nm:'構え', d:'攻撃せず、次のターンまで挑発＋被ダメージ−{cut}%', k:'stance', cut:[20,40], r3:{defUp:1}, r3d:'防御↑', r5:{ctr:1.0}, r5d:'構え中に殴られると反撃（1.0）'},
     {nm:'返しの構え', d:'攻撃せず、次に受けた攻撃に反撃（{ctr}）', k:'stance', cut:0, ctr:[1.5,2.5], once:1, noTaunt:1, r3:{ctrAll:1}, r3d:'反撃が敵全体に', r5:{gSelf:30}, r5d:'ゲージ+30'}],
- A:[{nm:'鉄の誓い', d:'3ターン挑発＋被ダメージ−{cut}%', k:'taunt', turns:3, cut:[30,50], tag:'守る', r3:{pCut:{pct:10,t:3}}, r3d:'味方全員の被ダメージ−10%', r5:{hurtWeak:1}, r5d:'挑発中に殴ってきた敵の攻撃↓'},
+ A:[{nm:'鉄の誓い', d:'3ターン挑発＋被ダメージ−{cut}%。挑発中に受けたダメージの{hurtHeal}%で、一番減った味方を回復', k:'taunt', turns:3, cut:[30,50], hurtHeal:[10,20], tag:'守る', r3:{pCut:{pct:10,t:3}}, r3d:'味方全員の被ダメージ−10%', r5:{hurtWeak:1}, r5d:'挑発中に殴ってきた敵の攻撃↓'},
     {nm:'盾の旋風', d:'敵全体に{m}＋自分に挑発（2ターン）', k:'atk', tgt:'all', m:[1.6,2.6], tauntSelf:2, tag:'雑魚', r3:{cutSelf:20}, r3d:'挑発中の被ダメージ−20%', r5:{tauntSelf:3}, r5d:'挑発が3ターンに'},
     {nm:'報いの一撃', d:'この戦闘で受けたダメージ合計の{m}倍を、一番HPの多い敵に', k:'atk', tgt:'high', xTaken:1, m:[0.3,0.6], tag:'ボス', r3:{el:'light', drain:0.2}, r3d:'光属性になり、与えたダメージの20%回復', r5:{idef:1}, r5d:'防御無視'}],
  P:[{id:'retaliate', nm:'報復の盾', d:'挑発中に攻撃を受けると、敵全員に{v%}の反撃', v:[0.7,1.2]},
@@ -156,13 +156,13 @@ const KIT = {
     {id:'finale', nm:'勇者狩りの終幕', d:'敵に状態異常が付くたび「狩り」+1。5つで状態異常が一番多い敵に、状態異常1つにつき{v%}のダメージ', v:[0.8,1.3], need:5, stack:'狩り'}] },
 
 'イヴ':{ pow:1.38, role:'攻撃', theme:'撃つと癒え、癒えると撃つ', rare:1,
- N:[{nm:'聖光', d:'光の魔法（{m}）', k:'atk', tgt:'front', mag:1, el:'light', m:[1.0,1.4], r3:{hLow:10}, r3d:'与えたダメージの10%で一番減った味方を回復', r5:{gSelf:10}, r5d:'ゲージ+10'},
+ N:[{nm:'聖光', d:'光の魔法（{m}）。与えたダメージの{hLow}%で一番減った味方を回復', k:'atk', tgt:'front', mag:1, el:'light', m:[1.0,1.4], hLow:[8,15], r3:{gSelf:10}, r3d:'ゲージ+10', r5:{hLow:25}, r5d:'回復25%に'},
     {nm:'癒やしの光', d:'HP80%未満の味方がいれば一番減った1人を回復（魔攻×{m}）。いなければ光の攻撃（0.8）', k:'pray', m:[0.7,1.1], r3:{healHit:0.5}, r3d:'回復量の50%を敵に光ダメージ', r5:{n:2}, r5d:'2人に届く'},
     {nm:'光の楔', d:'光の魔法（{m}）＋その敵は光の被ダメージ+{lvn.pct}%（2ターン）', k:'atk', tgt:'front', mag:1, el:'light', m:[0.6,1.0], lvn:{pct:[15,30],t:2}, r3:{lvn:{pct:30,t:3}}, r3d:'3ターンに', r5:{splash:0.3}, r5d:'敵全体にも0.3'}],
  A:[{nm:'天の裁き', d:'光の魔法で一番HPの多い敵に（{m}）', k:'atk', tgt:'high', mag:1, el:'light', m:[3.2,5.4], tag:'ボス', r3:{xPerFull:0.1}, r3d:'HP満タンの味方1人につき+10%', r5:{idef:0.3}, r5d:'防御を30%無視'},
     {nm:'光の雨', d:'光の全体魔法（{m}）', k:'atk', tgt:'all', mag:1, el:'light', m:[1.7,2.8], tag:'雑魚', r3:{hAll:10}, r3d:'与えたダメージの10%で味方全員回復', r5:{fullG:15}, r5d:'HP満タンの味方のゲージ+15'},
-    {nm:'創世の光', d:'光の全体魔法（{m}）＋味方全員のHPを{pHeal}%回復', k:'atk', tgt:'all', mag:1, el:'light', m:[1.3,2.1], pHeal:[15,30], tag:'回復', r3:{cure:1}, r3d:'状態異常も治す', r5:{pShield:0.6}, r5d:'加護（魔攻×0.6の盾）も'}],
- P:[{id:'afterglow', nm:'祈りの残り火', d:'アクティブのあと、与えたダメージの{v}%ぶん味方全員を回復', v:[8,20]},
+    {nm:'創世の光', d:'光の全体魔法（{m}）＋味方全員のHPを{pHeal}%回復', k:'atk', tgt:'all', mag:1, el:'light', m:[1.3,2.1], pHeal:[22,38], tag:'回復', r3:{cure:1}, r3d:'状態異常も治す', r5:{pShield:0.6}, r5d:'加護（魔攻×0.6の盾）も'}],
+ P:[{id:'afterglow', nm:'祈りの残り火', d:'アクティブのあと、与えたダメージの{v}%ぶん味方全員を回復', v:[14,30]},
     {id:'cycle', nm:'光の循環', d:'味方が回復を受けるたび、自分のゲージ+{v}', v:[3,7]},
     {id:'primal', nm:'原初の光', d:'光のダメージ+{v}%', v:[10,25]},
     {id:'lamp', nm:'聖なる灯', d:'HPが満タンの味方1人につき魔攻+{v}%', v:[3,8]},
@@ -337,6 +337,77 @@ const KIT = {
     {id:'warlord', nm:'魔軍の将', d:'味方全員の攻撃+{v}%', v:[8,15]},
     {id:'undying2', nm:'不滅の黒将', d:'倒れても1度だけHP{v}%で立ち上がる', v:[50,100]}] },
 
+// ---- 寄り道で出会う仲間（2）：回復と守りを、いろんな形で ----
+'オーツ':{ pow:1.0, role:'回復', theme:'じわじわ治して、倒れさせない', rare:2,
+ N:[{nm:'薬草の煙', d:'HP80%未満の味方がいれば一番減った1人を回復（魔攻×{m}）＋再生（毎ターン最大HPの{prayRegen.pct}%・2ターン）。いなければ魔法の攻撃（0.8）', k:'pray', m:[0.5,0.8], prayRegen:{pct:[2,4],t:2}, r3:{cure:1}, r3d:'状態異常も治す', r5:{n:2}, r5d:'2人に届く'},
+    {nm:'苦い粉薬', d:'前の敵に魔法{m}＋攻撃ダウン', k:'atk', tgt:'front', mag:1, m:[0.7,1.1], atkDown:1, r3:{regen:{pct:2,t:2}}, r3d:'味方全員に再生（2%・2ターン）', r5:{gSelf:10}, r5d:'ゲージ+10'},
+    {nm:'気付けの香', d:'攻撃せず、味方全員に再生（毎ターン最大HPの{regen.pct}%・3ターン）', k:'support', regen:{pct:[3,5],t:3}, r3:{cure:1}, r3d:'状態異常も治す', r5:{pG:10}, r5d:'味方全員のゲージ+10'}],
+ A:[{nm:'万能薬の雨', d:'味方全員を回復（魔攻×{m}）＋再生（毎ターン最大HPの{regen.pct}%・3ターン）', k:'heal', tgt:'all', m:[0.9,1.4], regen:{pct:[3,5],t:3}, tag:'回復', r3:{cure:1}, r3d:'状態異常も治す', r5:{regen:{pct:6,t:4}}, r5d:'再生が6%・4ターンに'},
+    {nm:'気付け薬', d:'倒れた味方をHP{rev}%で起こす。いなければ全員のHPを{pHeal}%回復', k:'revive', rev:[25,45], pHeal:[10,20], tag:'守る', r3:{revRegen:{pct:4,t:3}}, r3d:'起こした味方（いなければ全員）に再生4%', r5:{rev:60}, r5d:'HP60%で起こす'},
+    {nm:'秘伝の煎じ薬', d:'一番減った1人を大きく回復（魔攻×{m}）＋その味方の被ダメージ−{lowCut.pct}%（2ターン）', k:'heal', tgt:'low', m:[3.5,5.5], lowCut:{pct:[20,35],t:2}, tag:'回復', r3:{cure:1}, r3d:'状態異常も治す', r5:{toG:40}, r5d:'その味方のゲージ+40'}],
+ P:[{id:'herbal', nm:'薬草の知恵', d:'再生で回復する量+{v}%', v:[20,50]},
+    {id:'firstAid', nm:'手当て', d:'味方のHPが50%を切ると、1ターンに1回、その味方に再生（毎ターン最大HPの{v}%・2ターン）', v:[4,8]},
+    {id:'herbGarden', nm:'薬草畑', d:'戦闘開始時、味方全員に再生（毎ターン最大HPの{v}%・3ターン）', v:[2,4]},
+    {id:'mortar', nm:'薬研', d:'再生で回復するたび「薬」+1。6つで味方全員のHPを{v}%回復', v:[10,20], need:6, stack:'薬'},
+    {id:'bitter', nm:'良薬は口に苦し', d:'再生中の味方は、状態異常にかかりにくい（−{v}%）', v:[50,100]},
+    {id:'stubborn', nm:'がんこ者', d:'致命傷を1度だけHP1で耐え、味方全員に再生（毎ターン最大HPの{v}%・3ターン）', v:[3,6]}] },
+
+'ガロ':{ pow:1.15, role:'盾', theme:'受けて、返して、しぶとく立つ', rare:2,
+ N:[{nm:'盾斧', d:'前の敵に{m}', k:'atk', tgt:'front', m:[1.0,1.4], r3:{tauntSelf:1}, r3d:'自分に挑発（1ターン）', r5:{gSelf:10}, r5d:'ゲージ+10'},
+    {nm:'うろこの構え', d:'攻撃せず、次のターンまで挑発＋被ダメージ−{cut}%。受けたダメージの{sRef}%を返す', k:'stance', cut:[20,35], sRef:[30,50], r3:{defUp:1}, r3d:'防御↑', r5:{ctr:1.0}, r5d:'殴られたら反撃（1.0）も'},
+    {nm:'しっぽ払い', d:'敵全体に{m}＋敵全員の攻撃ダウン', k:'atk', tgt:'all', m:[0.5,0.8], allDown:1, r3:{gSelf:10}, r3d:'ゲージ+10', r5:{tauntSelf:1}, r5d:'自分に挑発（1ターン）'}],
+ A:[{nm:'鱗の盾', d:'味方全員に反射（受けたダメージの{reflect.pct}%を返す・2ターン）＋自分に挑発（2ターン）', k:'support', reflect:{pct:[25,40],t:2}, tauntSelf:2, tag:'守る', r3:{pCut:{pct:15,t:2}}, r3d:'味方全員の被ダメージ−15%も', r5:{reflect:{pct:60,t:3}}, r5d:'反射60%・3ターンに'},
+    {nm:'脱皮', d:'自分のHPを最大HPの{selfHealPct}%回復し、状態異常を治す。2ターン挑発', k:'taunt', turns:2, cut:[20,30], selfHealPct:[25,45], shed:1, tag:'守る', r3:{regen:{pct:5,t:3}, regenTgt:'self'}, r3d:'自分に再生（5%・3ターン）', r5:{noDie:1}, r5d:'挑発中は倒れない'},
+    {nm:'逆鱗', d:'この戦闘で受けたダメージ合計の{m}倍を、敵全員に', k:'atk', tgt:'all', xTaken:1, m:[0.15,0.3], tag:'雑魚', r3:{allDown:1}, r3d:'敵全員の攻撃ダウン', r5:{idef:1}, r5d:'防御無視'}],
+ P:[{id:'thorns', nm:'とげのうろこ', d:'攻撃を受けると、受けたダメージの{v}%を返す', v:[20,40]},
+    {id:'guardBless', nm:'うろこの守り', d:'挑発中やかばっている間に攻撃を受けるたび、一番減った味方のHPを{v}%回復', v:[2,4]},
+    {id:'selfRegen', nm:'変温', d:'ターンの終わりに、自分のHPを最大HPの{v}%回復', v:[3,6]},
+    {id:'scaleArmor', nm:'鱗の鎧', d:'HP50%以下のとき被ダメージ−{v}%', v:[15,30]},
+    {id:'debt', nm:'義理', d:'仲間が倒れると1戦闘1回、自分のHPを払って、その仲間をHP{v}%で起こす', v:[20,40]},
+    {id:'undo', nm:'しっぽ切り', d:'自分が倒れたとき、1度だけHP{v}%で立ち上がる', v:[30,60]}] },
+
+'カスミ':{ pow:1.15, role:'攻撃', theme:'かわして、斬って、薬を投げる', rare:2,
+ N:[{nm:'苦無', d:'前の敵に{m}', k:'atk', tgt:'front', m:[1.0,1.4], r3:{cr:10}, r3d:'会心率+10%', r5:{kHealLow:6}, r5d:'倒すと一番減った味方をHP6%回復'},
+    {nm:'煙玉', d:'前の敵に{m}＋暗闇{st.c}%', k:'atk', tgt:'front', m:[0.7,1.1], st:{s:'blind',c:[40,70]}, r3:{pEvade:{pct:10,t:1}}, r3d:'味方全員の回避+10%（1ターン）', r5:{gSelf:10}, r5d:'ゲージ+10'},
+    {nm:'投げ薬', d:'前の敵に{m}＋一番減った味方のHPを{hpLow}%回復', k:'atk', tgt:'front', m:[0.7,1.0], hpLow:[4,7], r3:{cr:15}, r3d:'会心率+15%', r5:{hpLow:10}, r5d:'回復10%に'}],
+ A:[{nm:'影分身', d:'前の敵に{h}回×{m}。味方全員の回避+{pEvade.pct}%（2ターン）', k:'atk', tgt:'front', m:[0.8,1.3], h:3, pEvade:{pct:[15,25],t:2}, tag:'ボス', r3:{cr:20}, r3d:'会心率+20%', r5:{pEvade:{pct:30,t:3}}, r5d:'回避+30%・3ターンに'},
+    {nm:'霞斬り', d:'敵全体を斬る（{m}）。倒した数×一番減った味方のHPを{kHealLow}%回復', k:'atk', tgt:'all', m:[1.5,2.5], kHealLow:[6,10], tag:'雑魚', r3:{kG:15}, r3d:'倒した数×ゲージ+15', r5:{kRe:0.5}, r5d:'1体でも倒せばもう一度（威力半分）'},
+    {nm:'暗殺', d:'HPが一番少ない敵に{m}。HP30%以下なら2倍', k:'atk', tgt:'low', m:[3.0,5.0], xLow:{th:0.3,x:2}, tag:'ボス', r3:{idef:0.3}, r3d:'防御を30%無視', r5:{kAgain:1}, r5d:'倒すともう1回動く'}],
+ P:[{id:'evade', nm:'見切り', d:'{v}%で敵の攻撃をかわす（全体攻撃はかわせない）', v:[10,22]},
+    {id:'evadeG', nm:'空蝉', d:'攻撃をかわすたびゲージ+{v}', v:[15,30]},
+    {id:'killHeal', nm:'血止め', d:'敵を倒すと、一番減った味方のHPを{v}%回復', v:[6,12]},
+    {id:'swift', nm:'忍び足', d:'速度+{v}%', v:[10,20]},
+    {id:'shadowStep', nm:'影渡り', d:'攻撃をかわしたら、その敵に{v%}で斬り返す', v:[1.0,1.8]},
+    {id:'smokeOut', nm:'煙幕', d:'戦闘開始時、味方全員の回避+{v}%（2ターン）', v:[10,20]}] },
+
+'ネフェ':{ pow:1.2, role:'補助', theme:'先を読んで、大技をくずす', rare:3,
+ N:[{nm:'星読み', d:'闇の魔法（{m}）。力をためている敵なら{breakCharge}%で溜めをくずす', k:'atk', tgt:'front', mag:1, el:'dark', m:[0.8,1.2], breakCharge:[30,60], r3:{reveal:1}, r3d:'弱点を見抜く', r5:{gSelf:10}, r5d:'ゲージ+10'},
+    {nm:'凶兆', d:'前の敵に魔法{m}＋攻撃ダウン＋回復封じ（{noHeal}ターン）', k:'atk', tgt:'front', mag:1, el:'dark', m:[0.6,1.0], atkDown:1, noHeal:2, r3:{noHeal:3}, r3d:'回復封じ3ターンに', r5:{breakCharge:100}, r5d:'力をためていたら必ずくずす'},
+    {nm:'水晶の守り', d:'攻撃せず、一番減った味方に盾（魔攻×{m}）。その味方は次の攻撃を必ずかわす', k:'shield', tgt:'low', m:[0.6,1.0], evadeNext:1, r3:{n:2}, r3d:'2人に', r5:{gSelf:15}, r5d:'ゲージ+15'}],
+ A:[{nm:'運命の糸', d:'敵全員の攻撃ダウン＋力をためている敵の溜めを必ずくずす。味方全員の被ダメージ−{pCut.pct}%（2ターン）', k:'support', allDown:1, breakAll:1, pCut:{pct:[15,30],t:2}, tag:'守る', r3:{pG:10}, r3d:'味方全員のゲージ+10も', r5:{pCut:{pct:35,t:3}}, r5d:'−35%・3ターンに'},
+    {nm:'破滅の予言', d:'敵全員に闇の魔法（{m}）＋回復封じ（3ターン）', k:'atk', tgt:'all', mag:1, el:'dark', m:[1.5,2.5], noHeal:3, tag:'雑魚', r3:{dd:100}, r3d:'防御ダウン', r5:{breakCharge:100}, r5d:'力をためている敵の溜めをくずす'},
+    {nm:'宿命返し', d:'HPが一番多い敵に闇の魔法（{m}）。力をためていたら2倍で、溜めもくずす', k:'atk', tgt:'high', mag:1, el:'dark', m:[3.0,5.0], xCharge:2, breakCharge:100, tag:'ボス', r3:{idef:0.3}, r3d:'防御を30%無視', r5:{sc:1}, r5d:'かならず会心'}],
+ P:[{id:'foreRead', nm:'先読み', d:'敵が力をためたら、味方全員の被ダメージ−{v}%（2ターン）', v:[25,45]},
+    {id:'breakRead', nm:'星の巡り', d:'敵が力をためたとき、{v}%でその場で溜めをくずす', v:[30,60]},
+    {id:'allyCritDef', nm:'凶運の守り', d:'味方全員が会心を受けにくい（−{v}%）', v:[10,25]},
+    {id:'fateHeal', nm:'運命の手当て', d:'味方が致命傷を受けたとき、1戦闘1回だけHP1で耐えさせ、最大HPの{v}%回復', v:[20,40]},
+    {id:'noRise', nm:'呪縛', d:'敵の回復を{v}%減らす', v:[50,100]},
+    {id:'crystal', nm:'水晶玉', d:'戦闘開始時、敵全員の弱点を見抜き、自分のゲージ+{v}', v:[20,40]}] },
+
+'タオ':{ pow:1.3, role:'攻撃', theme:'痛みを食べて、怒りで返す', rare:3,
+ N:[{nm:'張り手', d:'前の敵に{m}', k:'atk', tgt:'front', m:[1.0,1.4], r3:{xSelfLow:{th:0.5,x:1.3}}, r3d:'自分のHP50%以下で1.3倍', r5:{gSelf:10}, r5d:'ゲージ+10'},
+    {nm:'つまみ食い', d:'前の敵に{m}＋自分のHPを{selfHealPct}%回復', k:'atk', tgt:'front', m:[0.8,1.1], selfHealPct:[5,10], r3:{hpLow:5}, r3d:'一番減った味方もHP5%回復', r5:{selfHealPct:15}, r5d:'自分の回復15%に'},
+    {nm:'腹太鼓', d:'攻撃せず1ターン挑発し、自分の攻撃+{atkSelf.pct}%（2ターン）', k:'taunt', turns:1, cut:[20,30], atkSelf:{pct:[20,35],t:2}, r3:{hurtG:10}, r3d:'挑発中に殴られるたびゲージ+10', r5:{hurtHeal:20}, r5d:'挑発中に受けたダメージの20%で一番減った味方を回復'}],
+ A:[{nm:'大噴火', d:'HPが一番多い敵に{m}。この戦闘で受けたダメージが多いほど最大2倍', k:'atk', tgt:'high', m:[3.0,5.0], xTakenScale:2, tag:'ボス', r3:{idef:0.2}, r3d:'防御を20%無視', r5:{sc:1}, r5d:'かならず会心'},
+    {nm:'まんぷく', d:'自分のHPを{selfHealPct}%回復＋味方全員のHPを{pHeal}%回復', k:'support', selfHealPct:[20,30], pHeal:[10,18], tag:'回復', r3:{cure:1}, r3d:'状態異常も治す', r5:{regen:{pct:4,t:3}}, r5d:'味方全員に再生（4%・3ターン）も'},
+    {nm:'竹割り', d:'敵全体に{m}＋敵全員の攻撃ダウン', k:'atk', tgt:'all', m:[1.6,2.6], allDown:1, tag:'雑魚', r3:{kG:15}, r3d:'倒した数×ゲージ+15', r5:{kHealLow:8}, r5d:'倒した数×一番減った味方をHP8%回復'}],
+ P:[{id:'painGauge', nm:'痛いのはきらい', d:'HPを10%失うごとにゲージ+{v}', v:[8,15]},
+    {id:'selfRegen', nm:'ひと眠り', d:'ターンの終わりに、自分のHPを最大HPの{v}%回復', v:[3,6]},
+    {id:'fury', nm:'本気', d:'HPが50%を切ると1度だけ、攻撃+{v}%（戦闘中）とゲージ満タン', v:[30,60]},
+    {id:'feast', nm:'腹ごしらえ', d:'敵を倒すとHPを{v}%回復し、一番減った味方も同じだけ回復', v:[6,12]},
+    {id:'thick', nm:'厚い毛皮', d:'会心を受けにくい（−{v}%）', v:[15,30]},
+    {id:'standFirm', nm:'ねばり腰', d:'致命傷を1度だけHP1で耐え、ゲージが{v}たまる', v:[50,100]}] },
+
 };
 // 覚えるLvを付ける
 for(const n in KIT){ const K=KIT[n]; K.N.forEach((s,i)=>{s.lv=LV_N[i]; s.kind='N'; s.i=i;}); K.A.forEach((s,i)=>{s.lv=LV_A[i]; s.kind='A'; s.i=i;}); K.P.forEach((s,i)=>{s.lv=LV_P[i]; s.kind='P'; s.i=i;}); }
@@ -368,7 +439,7 @@ function equippedPassives(n){ const K=KIT[n]; if(!K||!G.members[n]) return []; k
 function passiveMap(n){ const o={}; for(const p of equippedPassives(n)){ o[p.id]=p.v; if(p.v2!==undefined) o[p.id+'2']=p.v2; } return o; }
 const RANKJP=r=>'★'+r;
 // 能力値に直接効くパッシブ
-const P_STATIC={bargain:v=>({dropUp:v}), resolve:v=>({resist:v}), innocent:v=>({resist:v}), dawnWatch:v=>({startGauge:v}), strongArm:v=>({critDmg:v}), swift:v=>({spdPct:v}), prep:v=>({startGauge:v}), wake:v=>({startGauge:v}), foresee:v=>({startGauge:v}), deepWound:v=>({critDmg:v})};
+const P_STATIC={bargain:v=>({dropUp:v}), resolve:v=>({resist:v}), innocent:v=>({resist:v}), dawnWatch:v=>({startGauge:v}), strongArm:v=>({critDmg:v}), swift:v=>({spdPct:v}), prep:v=>({startGauge:v}), wake:v=>({startGauge:v}), foresee:v=>({startGauge:v}), deepWound:v=>({critDmg:v}), thick:v=>({critDef:v}), crystal:v=>({startGauge:v})};
 
 // レベルが上がったときに覚えたこと
 function growthNews(n,lv){ const K=KIT[n]; if(!K) return []; const out=[];

@@ -301,7 +301,7 @@ function removeCompare(){ for(const n of ['新アルト','新リリィ','少年3
 const LOOK = {};
 for(const n in CHARS){ const c=CHARS[n]; LOOK[n]={hair:c.hair,col:c.col,col2:c.col2,style:c.style}; }
 // 歩行ドット絵（1コマ16×20、横3コマ×縦5段：下/左/右/上/技のポーズ）。細かい版（1コマ32×40）も同じ並びで使える
-const SPRITE_FILES={'アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png'};
+const SPRITE_FILES={'アルト':'img/alto.png','リリィ':'img/lily.png','ノア':'img/noah.png','ミナ':'img/mina.png','ガルド':'img/gard.png','オルガ':'img/olga.png','シオン':'img/sion.png','ドルク':'img/dork.png','ルガ':'img/luga.png','ゴード':'img/gord.png','イヴ':'img/eve.png','クロノ':'img/chrono.png','レオン':'img/leon.png','ロロ':'img/lolo.png','テオ':'img/teo.png','リュート':'img/lute.png','ミオ':'img/mio.png','ヨル':'img/yoru.png','モルド':'img/mord.png','ベラ':'img/bella.png','アルベルト':'img/albert.png','ピピ':'img/pipi.png','ザガン':'img/zagan.png','オーツ':'img/oats.png','ガロ':'img/garo.png','カスミ':'img/kasumi.png','ネフェ':'img/nefe.png','タオ':'img/tao.png'};
 const SPR_URL={};
 // 人物の絵は、ゲームを始める前に全部読み込み終わるまで待つ（読み込み前に別の絵が一瞬出ないように）
 const WAIT_IMGS=[];
@@ -335,7 +335,7 @@ function npcFaceURL(type){ const im=NPC_IMG[type]; if(!im) return null; const ke
 const SPEAKER_TYPE={'セイル':'priest','セイル司祭':'priest','王':'oldman','王さま':'oldman','ザガン':'soldier','黒将ザガン':'soldier','衛兵':'soldier','宿屋':'merchant','老婆':'oldwoman','村長':'oldman','神父':'priest'};
 // 名前を明かす前の呼び名でも、顔はその人物のもの（あとで仲間になる人も同じ顔のまま）
 const SPEAKER_CHAR={'銀髪の少女':'ノア','大剣の男':'ガルド','老魔導士':'ドルク','少年':'シオン','獣人の男':'ルガ','獣人の副官':'ルガ','白い髪の女':'イヴ','弓の少女':'ミオ','時の番人':'クロノ','初代勇者':'レオン',
-  '黒将ザガンの記憶':'ザガン','黒将ザガン':'ザガン','傭兵ギルドの長':'ベラ','旅の商人':'ロロ','見張りの娘':'ヨル','見習い騎士':'テオ','吟遊詩人':'リュート','墓守':'モルド','宿屋の主人':'ゴード','ソラの子ども':'ピピ','王':'アルベルト','王さま':'アルベルト'};
+  '黒将ザガンの記憶':'ザガン','黒将ザガン':'ザガン','傭兵ギルドの長':'ベラ','旅の商人':'ロロ','見張りの娘':'ヨル','見習い騎士':'テオ','吟遊詩人':'リュート','墓守':'モルド','宿屋の主人':'ゴード','ソラの子ども':'ピピ','王':'アルベルト','王さま':'アルベルト','ヤギの薬師':'オーツ','トカゲの男':'ガロ','覆面の女':'カスミ','星読みの女':'ネフェ','旅の料理人':'タオ'};
 function speakerFace(who){
   if(!who) return null;
   if(who.includes('|')) who=who.split('|')[1];

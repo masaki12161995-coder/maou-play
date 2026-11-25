@@ -20,7 +20,7 @@ const enemyExp = L => Math.round(6+0.55*Math.pow(L,1.95));
 const enemyGold = L => Math.round(4+0.4*Math.pow(L,1.6));
 const dmgF = (a,d) => a*a/(a+Math.max(0,d));
 
-// 仲間（23人）
+// 仲間（28人）
 const CHARS = {
   'アルト': {g:'BBAABBB', col:'#3b82f6', col2:'#1e3a8a', hair:'#1f2937', style:'short', role:'万能の剣士', wpn:'phys'},
   'リリィ': {g:'CSDCAAB', col:'#84cc16', col2:'#f8fafc', hair:'#92400e', style:'braid', role:'回復', wpn:'mag'},
@@ -46,6 +46,12 @@ const CHARS = {
   'アルベルト':{g:'BBAACBD', col:'#7c3aed', col2:'#fbbf24', hair:'#e5e7eb', style:'beard', role:'王', wpn:'phys', hidden:1},
   'ピピ':     {g:'SSSSSSS', col:'#fde047', col2:'#0284c7', hair:'#7dd3fc', style:'spiky', role:'ソラの子', wpn:'phys', hidden:1, expNeedMul:1.3},
   'ザガン':   {g:'SDSACBB', col:'#374151', col2:'#7f1d1d', hair:'#111827', style:'beast', role:'黒将', wpn:'phys', hidden:1},
+  // 寄り道で出会う仲間（2）
+  'オーツ':   {g:'BCDBAAC', col:'#92400e', col2:'#f5f5f4', hair:'#f5f5f4', style:'beast', role:'ヤギの薬師', wpn:'mag', hidden:1},
+  'ガロ':     {g:'SDBSDBD', col:'#0f766e', col2:'#a16207', hair:'#115e59', style:'beast', role:'トカゲの盾斧', wpn:'phys', hidden:1},
+  'カスミ':   {g:'CCADCCS', col:'#1e3a8a', col2:'#b91c1c', hair:'#111827', style:'short', role:'忍び', wpn:'phys', hidden:1},
+  'ネフェ':   {g:'CADCASB', col:'#7f1d1d', col2:'#ca8a04', hair:'#1f2937', style:'long', role:'星読みの魔族', wpn:'mag', hidden:1},
+  'タオ':     {g:'SDABDCC', col:'#dc2626', col2:'#111827', hair:'#f5f5f4', style:'beast', role:'パンダの拳士', wpn:'phys', hidden:1},
 };
 const CHAR_ORDER = Object.keys(CHARS);
 // 次のレベルまでに必要な経験値（晩成の仲間は多めに要る）
@@ -108,6 +114,9 @@ const UNIQ = [
   {k:'startFull', t:'戦闘開始時にゲージ満タン'},
   {k:'gShare', t:'アクティブを使うと仲間全員のゲージ+15'},
   {k:'gHalf', t:'アクティブのあと、ゲージが半分残る'},
+  {k:'rise', t:'倒れたとき1度だけ、HP40%で立ち上がる'},
+  {k:'raise', t:'1戦闘1回、倒れた仲間をHP30%で起こす'},
+  {k:'regenU', t:'毎ターン、HPが最大HPの4%回復する'},
 ];
 // 武器・防具の種類。種類ごとに素の強さと性格が違う（ランダムの効果とは別の、品そのものの強さ）
 //  m：主な能力の倍率（武器は攻撃/魔攻、防具は能力ごと）、add：レベル×値を足す、imp：最初から付いている効果 [能力, 基本, レベルごと]
@@ -251,6 +260,11 @@ const AFF = {
   'アルベルト':{fav:['rapier','sword'], ng:['axe','fist','scythe']},
   'ピピ':{fav:['fist'], ng:['great','axe']},
   'ザガン':{fav:['axe'], ng:['bow','rapier']},
+  'オーツ':{fav:['staff','scepter'], ng:['hex']},
+  'ガロ':{fav:['axe','club'], ng:['bow','rapier']},
+  'カスミ':{fav:['dagger','katana'], ng:['great','club']},
+  'ネフェ':{fav:['orb','hex'], ng:['scepter']},
+  'タオ':{fav:['fist'], ng:['bow','rapier']},
 };
 const FAV = {}; for(const n in AFF) FAV[n]=AFF[n].fav[0];
 function weaponAff(n,ty){ const a=AFF[n]; if(!a||!ty) return 0; return a.fav.includes(ty)?1: a.ng.includes(ty)?-1:0; }
