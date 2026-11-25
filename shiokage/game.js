@@ -11,12 +11,13 @@ import { installJourneys, journeys } from './journey.js';
 import { companionJourneys, relationshipJourneys } from './companion-journeys.js';
 import { installInquiries, inquiries } from './inquiries.js';
 import { trialEnemies, trials } from './trials.js';
-import { installAdventureWorld, adventureGateOpen, adventureBosses } from './adventure-world.js';
+import { installAdventureWorld, adventureGateOpen, adventureBosses, adventureDepthAt } from './adventure-world.js';
 import { adventureOpening, adventureChapters, adventureChapterCode, newAdventure, normalizeAdventure, availableAdventureEndings, adventureEndingPages } from './adventure-story.js';
-import { createEquipmentRolls, materializeRolledEquipment } from './adventure-loot.js';
+import { createEquipmentRolls, materializeRolledEquipment, equipmentDisplayName } from './adventure-loot.js';
 import { adventurePersonById, chapterDepartures, recruitmentReady } from './adventure-companions.js';
 import { createCompanionUI } from './adventure-companion-ui.js';
 import { huntBriefs, huntEdge, adventureBossMoves } from './adventure-hunts.js';
+import { adventureBattleExperience, adventureBossBalance, adventureBossLevel, adventureFieldLevel } from './adventure-balance.js';
 
 addCampaign(recruits,dangers);
 people.push(...mainCast,...recruits);
@@ -42,6 +43,10 @@ const KEY = 'shio-kage-shelf-v1';
 const ADVENTURE_KEY = 'shio-kage-adventure-v1';
 const SLOT = ['武器','頭','体','腕','装飾'];
 const ADVENTURE_SLOTS = [...SLOT,'装飾2'];
+const earlyCompanions=new Map([
+  [13,{town:'T01',line:'この舟さえ戻せば、私も行ける。道で何か来たら、先に私が受けるよ。',button:'護衛を頼む'}],
+  [8,{town:'T02',line:'風が強いね。魔物の前で同じ風に吹かれるより、私が横から吹かせた方がよさそうだ。',button:'風の術を頼む'}]
+]);
 const rankOrder = ['白','緑','青','紫','金','虹'];
 const TYPES = {剣:'sword',大剣:'great',短剣:'dagger',槍:'spear',斧:'axe',弓:'bow',杖:'staff',素手:'fist',盾:'club',その他:'club',なし:'fist'};
 const weaponNames = {sword:'剣',great:'大剣',dagger:'短剣',spear:'槍',axe:'斧',bow:'弓',staff:'杖',fist:'手甲',club:'棍'};
@@ -331,7 +336,10 @@ function adventureEnemy(id,options) {
   const mult=boss?1+(party-1)*.25:1+Math.max(0,party-2)*.15;
   const phases=boss?.chapter===12?3:1;
   const phaseSkills=adventureBossMoves(boss?.chapter,element);
-  return {...unit,name:boss?.title??unit.name,level,attribute:element,weaknesses,
+  const squadLevel=boss?.chapter===2||boss?.chapter===3
+    ?state.party.reduce((total,id)=>total+levelOf(memberData(id).xp),0)/party:level;
+  const champion=adventureBossBalance(boss?.chapter,level,party,squadLevel);
+  return {...unit,name:boss?.title??unit.name,level,attribute:element,weaknesses,bossVisual:!!boss,
     attack,magicAttack:Math.round(attack*1.02),defense,magicDefense:defense,openingAttack:edge?.attack,
     speed:Math.round((7+level*.7+(boss?2:0))*(edge?.speed??1)),evasion:Math.min(boss?8:10,Math.floor(level/7)),
     maxHp:Math.round((boss?(64+level*14+(phases-1)*level*5):(25+level*5.0))*mult),
@@ -341,6 +349,7 @@ function adventureEnemy(id,options) {
     phaseNames:phases===3?['浅瀬','骨の洞','岩の浜']:undefined,
     phaseThemes:phases===3?['coast','cave','final']:undefined,
     phaseShields:phases===3?[7,6,4]:undefined,
+    ...champion,
     skills:boss?phaseSkills.map((skill,index)=>({id:'adventure-boss-'+index,channel:'magic',target:'one',hits:1,cost:0,...skill})):unit.skills};
 }
 
@@ -412,13 +421,9 @@ function battleRewards(enemies,{party},options) {
     {xp:Math.round((10+scale*5)*enemies.length*prize),gold:Math.round((9+scale*7)*enemies.length*prize),items:[],levelUps:[]};
   if(options.encounterLevel){
     const company=1+Math.max(0,enemies.length-1)*.12;
-    reward.xp=plannedXp(options.encounterLevel,(options.boss ? .74 : .23)*company);
+    reward.xp=options.adventureBattle?adventureBattleExperience(memberData(hero).xp,options.encounterLevel,enemies.length,options.boss):
+      plannedXp(options.encounterLevel,(options.boss ? .74 : .23)*company);
     reward.gold=Math.round((26+options.encounterLevel*7)*(options.boss ? 1.3 : .55)*company);
-  }
-  if(options.adventureBoss){
-    const chapter=adventureBosses[options.adventureBoss]?.chapter;
-    const next=chapter && adventureChapters[chapter+1];
-    if(next) reward.xp=Math.max(reward.xp,startingXp(Math.max(1,next.level-2))-memberData(hero).xp);
   }
   for(const e of enemies) {
     if(e.human) continue;
@@ -431,7 +436,7 @@ function battleRewards(enemies,{party},options) {
   if(options.adventureBattle){
     const campaign=state.adventure;
     const boss=adventureBosses[options.adventureBoss];
-    const danger=options.encounterLevel??currentMap.level??1;
+    const danger=options.dropLevel??boss?.level??currentMap.level??options.encounterLevel??1;
     const deep=currentMap.kind==='cave'||/^R2\d$/.test(currentMap.id);
     const rolls=createEquipmentRolls({level:danger,deep,boss:!!boss,side:!!boss&&!boss.chapter,
       post:danger>=64,region:currentMap.palette,preferred:boss?.gear,
@@ -458,7 +463,7 @@ function showBattle(ids, options={}, resume) {
   const pids=options.duel?[duelActor]:state.party;
   if(options.duel&&battleActor(duelActor).hp<=0) return;
   if(!options.boss&&!options.duel&&options.quick===undefined){
-    options={...options,quick:state.skirmishes>0};
+    options={...options,quick:!state.adventure&&state.skirmishes>0};
     state.skirmishes++;
   }
   if(!resume&&options.storyBonus===undefined&&['chapter','post'].includes(options.progress)&&
@@ -516,7 +521,7 @@ function finishBattle(result, options) {
     const data=memberData(p.id);
     data.hp=p.hp;data.mp=p.mp;
   }
-  encounterDist=state.adventure?1350+Math.random()*620:220+Math.random()*270;
+  encounterDist=state.adventure?adventureEncounterDistance(currentMap):220+Math.random()*270;
   audio.scene(mapMusic(currentMap));
   if(result.won) {
     const {xp,gold,items,levelUps,reserveLevelUps}=result.rewards;
@@ -583,6 +588,10 @@ function refreshMap() {
 
 function recommendedLevel(scene, y) {
   if(!scene) return null;
+  if(scene.adventure&&scene.level){
+    const boss=scene.objects?.map(object=>adventureBosses[object.bossId]).find(entry=>entry?.chapter);
+    return boss?adventureBossLevel(boss):adventureFieldLevel(scene.level);
+  }
   if(scene.level) return scene.level;
   if(scene.id==='road') return Number.isFinite(y)?suggestedAtTier(roadZoneAt(y).tier):null;
   if(scene.encounters) return suggestedAtTier(scene.tier??0);
@@ -597,7 +606,8 @@ function partyLevel() {
 }
 
 function updateTime() {
-  const level=currentMap.kind!=='town'?recommendedLevel(currentMap,view.player.y):null;
+  const level=currentMap.kind==='town'?null:currentMap.adventure&&currentMap.kind==='cave'?
+    adventureFieldLevel(adventureDepthAt(currentMap,view.player)):recommendedLevel(currentMap,view.player.y);
   const name=(state.adventure?['朝','昼','夕方','夜'][phase()]:DAY[phase()])+(level?'　目安レベル '+level:'');
   if($('place-time').textContent!==name) $('place-time').textContent=name;
 }
@@ -620,13 +630,22 @@ function refreshHud(force=false) {
 
 function openMap(id,pos) {
   currentMap=maps[id];
+  const firstVisit=!state.discovered[id];
   $('game').classList.toggle('adventure-mode',!!currentMap.adventure);
   state.map=id;
   state.discovered[id]=1;
   view.setMap(currentMap,pos??currentMap.entry);
-  encounterDist=currentMap.encounters?(currentMap.adventure?1100:state.chapter<=2?230:166)+Math.random()*(currentMap.adventure?620:135):Infinity;
+  encounterDist=currentMap.encounters?(currentMap.adventure?adventureEncounterDistance(currentMap):(state.chapter<=2?230:166)+Math.random()*135):Infinity;
   refreshHud(true);
   audio.scene(mapMusic(currentMap));
+  if(firstVisit&&id==='T02'&&!state.adventure.flags.C02&&!state.members.includes(8)){
+    notify('宿の風よけのそばで、杖を持った人が旅人を助けている。');
+  }
+}
+
+function adventureEncounterDistance(scene) {
+  const [base,extra]=scene.field?.encounterSpacing??[940,480];
+  return base+Math.random()*extra;
 }
 
 async function transition(id,pos) {
@@ -648,7 +667,9 @@ function movement(p,distance) {
     if((currentMap.adventure&&currentMap.kind==='town')||currentMap.people?.some(n=>person(n.id)?.need?.kind==='phase')) refreshMap();
   }
   refreshHud();
-  if(nearest?.type==='exit'&&Math.hypot(p.x-nearest.x,p.y-nearest.y)<12) {
+  const routeTarget=view.route?.target;
+  const usingExit=!currentMap.adventure||!routeTarget||(routeTarget.type==='exit'&&routeTarget.id===nearest?.id);
+  if(usingExit&&nearest?.type==='exit'&&Math.hypot(p.x-nearest.x,p.y-nearest.y)<12) {
     interact(nearest);return;
   }
   const now=performance.now();
@@ -659,7 +680,10 @@ function movement(p,distance) {
   const pairs=(road?.packs??currentMap.encounters).filter(set=>set.every(id=>monsterDefs[id]));
   if(!pairs.length){encounterDist=200;return;}
   const options=pairs[(state.wins+Math.floor(Math.random()*pairs.length))%pairs.length];
-  showBattle(options,currentMap.adventure?{adventureBattle:true,encounterLevel:currentMap.level??1}:{tier:road?.tier});
+  if(currentMap.adventure){
+    const level=adventureDepthAt(currentMap,p);
+    showBattle(options,{adventureBattle:true,encounterLevel:adventureFieldLevel(level),dropLevel:level});
+  } else showBattle(options,{tier:road?.tier});
 }
 
 function active() {
@@ -824,7 +848,8 @@ function join(p) {
   if(state.members.includes(p.id)||state.lost[p.id]) return;
   state.members.push(p.id);
   const data=memberData(p.id),lead=levelOf(memberData(hero).xp);
-  if(lead>=9) data.xp=Math.max(data.xp,startingXp(lead-3));
+  if(state.adventure) data.xp=Math.max(data.xp,startingXp(Math.max(1,lead-1)));
+  else if(lead>=9) data.xp=Math.max(data.xp,startingXp(lead-3));
   if(state.party.length<4) state.party.push(p.id);
   memory(p.id).last='joined';
   state.history.unshift(p.name+'が旅に加わった。');
@@ -1745,6 +1770,8 @@ function adventurePerson(target) {
   if(!p) return;
   const a=state.adventure;
   const pending=p.need?.chapter&&!a.flags[p.need.chapter];
+  const starter=earlyCompanions.get(p.id);
+  const early=starter?.town===currentMap.id&&!a.flags.C02&&!a.seen['asked-'+p.id];
   const contact=()=>{
     focusedPerson=target;
     adventureContact(target,pending?{...p,hello:target.role+'の仕事をしている。'}:p);
@@ -1753,7 +1780,12 @@ function adventurePerson(target) {
   if(!pending&&p.arrival&&!a.seen[met]){
     a.seen[met]=true;
     save();
-    conversation([[0,p.arrival],[p.id,p.hello]],[],contact,'field');
+    if(early){
+      const invite=action=>{a.seen['asked-'+p.id]=true;save();action();};
+      conversation([[0,p.arrival],[p.id,p.hello],[p.id,starter.line]],
+        [{label:starter.button,primary:true,action:()=>invite(()=>companionUI.recruit(p))},
+          {label:'町の話を聞く',action:()=>invite(contact)}],undefined,'field');
+    } else conversation([[0,p.arrival],[p.id,p.hello]],[],contact,'field');
   } else contact();
 }
 
@@ -1869,10 +1901,11 @@ function inspectAdventureBoss(target) {
   if(a.cleared[target.bossId]) {resolveAdventureChapter(boss.chapter);return;}
   const chapter=adventureChapters[boss.chapter];
   const name=target.label??boss.title;
+  const level=adventureBossLevel(boss);
   const begin=()=>showBattle([boss.monsterId],{boss:true,adventureBattle:true,adventureBoss:target.bossId,
-    encounterLevel:boss.level,title:name});
+    encounterLevel:level,dropLevel:boss.level,title:name});
   const ask=()=>conversation([[0,boss.tell??'奥から大きな足音が聞こえる。']],
-    [{label:'戦う',detail:'目安レベル '+boss.level,primary:true,action:begin},
+    [{label:'戦う',detail:'目安レベル '+level,primary:true,action:begin},
       {label:'支度をする',action:closeStory}]);
   if(a.seen[target.bossId]) ask();
   else conversation(chapter.approach,[],()=>{a.seen[target.bossId]=true;save();ask();});
@@ -1882,7 +1915,7 @@ function inspectAdventureHunt(target,boss) {
   if(!adventureObjectVisible(target)){notify('足場の奥はまだ静かだ。');return;}
   const brief=huntBriefs[boss.id];
   const repeat=state.adventure.cleared[boss.id];
-  const fight=edge=>showBattle([boss.monsterId],{boss:true,adventureBattle:true,adventureBoss:boss.id,encounterLevel:boss.level,
+  const fight=edge=>showBattle([boss.monsterId],{boss:true,adventureBattle:true,adventureBoss:boss.id,encounterLevel:adventureBossLevel(boss),dropLevel:boss.level,
     huntEdge:edge,title:target.label??boss.title,quick:!!repeat});
   conversation([[0,(repeat?'戻ってみると、同じあたりから音がする。':'足元に、'+brief.trail+'がある。')],[0,boss.tell+'。']],
     [{label:brief.first,detail:huntEdge[brief.a].label,primary:true,action:()=>fight(brief.a)},
@@ -2276,7 +2309,7 @@ function showAdventureStatus({id,tab='status',from='party'}) {
   for(const key of ['attack','magicAttack','defense','magicDefense','speed','accuracy','evasion','crit']){
     const spec=abilityStats.find(stat=>stat.key===key);
     const line=el('div','sheet-stat');
-    line.append(el('span',null,spec.label),el('b',null,actor[key]+(spec.percent?'％':'')),bar(actor[key],statCeiling(key,actor.level),spec.tint));
+    line.append(el('span',null,spec.label),el('b',null,actor[key]+(spec.percent?'％':'')));
     stats.append(line);
   }
   panel.append(stats,el('h3',null,'装備'));
@@ -2302,21 +2335,28 @@ function showAdventureStatus({id,tab='status',from='party'}) {
   }
 }
 
-function showAdventureEquipment({id,slot,from='party',focus,resumeLoot}) {
+function setAdventureGear(id,slot,next) {
+  const gear=memberData(id).equip;
+  const old=gear[slot];
+  if(old===next?.id||(next&&!count(state.inventory,next.id))) return false;
+  if(old) gain(old,1);
+  if(next){gain(next.id,-1);gear[slot]=next.id;}
+  else delete gear[slot];
+  save();
+  return true;
+}
+
+function showAdventureEquipment({id,slot,from='party'}) {
   const actor=battleActor(id),data=memberData(id),old=registry.equipment.get(data.equip[slot]);
-  const back=()=>resumeLoot?openMenu('adventure-loot',resumeLoot):openMenu('adventure-status',{id,from});
+  const back=()=>openMenu('adventure-status',{id,from});
   const panel=adventureStatusFrame((slot==='装飾2'?'装飾':slot)+'を選ぶ',actor,back);
   const current=el('div','sheet-current');
   current.append(el('span',null,'いまの装備'),old?icon(old.id):el('i','sheet-art'),el('b',null,old?.name??'なし'));
   panel.append(current,el('small','sheet-instruction','タップで付け替えて戻る'));
   const listArea=el('div','sheet-list sheet-choices');
   const candidates=equipmentCandidates(id,slot);
-  if(focus) candidates.sort((a,b)=>Number(b.id===focus)-Number(a.id===focus));
   const select=next=>{
-    if(old) gain(old.id,1);
-    if(next){gain(next.id,-1);data.equip[slot]=next.id;}
-    else delete data.equip[slot];
-    save();audio.effect('click');back();
+    if(setAdventureGear(id,slot,next)) back();
   };
   if(old) listArea.append(row(icon(old.id),old.name,old.effectLabel??'','装備中'));
   for(const item of candidates){
@@ -2328,24 +2368,72 @@ function showAdventureEquipment({id,slot,from='party',focus,resumeLoot}) {
   if(old&&slot!=='武器') listArea.append(row('−','外す',comparison(old,null),'',()=>select(null)));
   if(!candidates.length&&!old) listArea.append(el('p','empty','付けられる装備はまだない。'));
   panel.append(listArea);
-  keepAdventureScroll(listArea,focus?`loot:${id}:${slot}`:`choose:${id}:${slot}`);
+  keepAdventureScroll(listArea,`choose:${id}:${slot}`);
+}
+
+function lootGearSide(label,item) {
+  const side=el('div','sheet-loot-side');
+  side.append(el('small',null,label),item?icon(item.id):el('i','sheet-art'),el('b',null,item?.name??'なし'));
+  return side;
+}
+
+function lootGearNumbers(id,slot,item) {
+  const data=memberData(id),actor=battleActor(id);
+  const nextEquipment=Object.entries({...data.equip,[slot]:item.id}).map(([,key])=>registry.equipment.get(key)).filter(Boolean);
+  const next=statLine(id,actor.level,nextEquipment,data.refine,person(id).adventureKit);
+  const values=el('div','sheet-loot-numbers');
+  for(const {key,label,short,percent} of abilityStats){
+    const delta=next[key]-actor[key];
+    if(!delta) continue;
+    const unit=percent?'％':'';
+    const line=el('div','sheet-loot-stat');
+    line.append(el('span',null,short??label),el('b',null,actor[key]+unit),el('span',null,'→'),
+      el('b',null,next[key]+unit),el('strong',delta>0?'delta-up':'delta-down',(delta>0?'＋':'−')+Math.abs(delta)+unit));
+    values.append(line);
+  }
+  if(!values.childElementCount) values.append(el('small',null,'能力値は同じ'));
+  return values;
 }
 
 function showAdventureLoot(args) {
+  $('notice').classList.remove('visible');
   const panel=panelFrame('手に入れた装備',()=>{closeMenu();args.after?.();});
-  panel.classList.add('adventure-sheet');
-  const items=el('div','sheet-list sheet-choices');
+  panel.classList.add('adventure-sheet','sheet-loot');
+  const header=panel.querySelector('.panel-head');
+  header.prepend(header.querySelector('button'));
+  const items=el('div','sheet-list sheet-loot-list');
+  const roster=[...state.party,...state.members.filter(id=>!state.party.includes(id))];
   for(const found of args.found){
     const item=registry.equipment.get(found.id);
     if(!item) continue;
-    items.append(row(icon(item.id),item.name,item.effectLabel,item.rarity));
-    const possible=state.members.filter(id=>equipmentCandidates(id,item.slot).some(candidate=>candidate.id===item.id));
+    const group=el('section','sheet-loot-group');
+    const itemName=el('h3','sheet-loot-name');
+    itemName.append(icon(item.id),el('span',null,item.name),el('small',null,item.rarity));
+    group.append(itemName);
+    const slots=item.slot==='装飾'?['装飾','装飾2']:[item.slot];
+    const possible=roster.filter(id=>item.slot!=='武器'||item.type===TYPES[weapon(id)]);
     for(const id of possible){
-      const old=registry.equipment.get(memberData(id).equip[item.slot]);
-      items.append(row(portrait(id,.7),person(id).name,comparison(old,item),'比べる',()=>openMenu('adventure-equip',{
-        id,slot:item.slot,focus:item.id,resumeLoot:args
-      })));
+      for(const slot of slots){
+        const old=registry.equipment.get(memberData(id).equip[slot]);
+        const equipped=old?.id===item.id;
+        const available=count(state.inventory,item.id)>0;
+        const label=slot==='装飾'?'装飾 1':slot==='装飾2'?'装飾 2':slot;
+        const card=button('',()=>{
+          adventureListPositions.set('recentLoot',items.scrollTop);
+          if(setAdventureGear(id,slot,item)) drawMenu();
+        },'sheet-loot-card',equipped||!available);
+        card.setAttribute('aria-label',person(id).name+'の'+label+'に'+item.name+'を装備する');
+        const owner=el('div','sheet-loot-owner');
+        owner.append(portrait(id,.48),el('b',null,person(id).name),el('small',null,label),el('strong',null,equipped?'装備中':available?'装備する':'使用中'));
+        const pair=el('div','sheet-loot-pair');
+        pair.append(lootGearSide('いまの装備',old),el('span',null,'→'),lootGearSide('新しい装備',item));
+        card.append(owner,pair,lootGearNumbers(id,slot,item));
+        if(item.effectLabel) card.append(el('small','sheet-loot-effect',item.effectLabel));
+        group.append(card);
+      }
     }
+    if(!possible.length) group.append(el('small','sheet-loot-unavailable','この武器を使える仲間がいない。'));
+    items.append(group);
   }
   panel.append(items,button('旅に戻る',()=>{closeMenu();args.after?.();},'game-button primary'));
   keepAdventureScroll(items,'recentLoot');
@@ -2365,7 +2453,7 @@ function drawMenu() {
       (state.discovered[boss.site]||a.flags.POST)&&(+boss.id.slice(1)<43||a.seen['trail-'+boss.id]));
     const rows=options.map(boss=>{
       const trail=maps[boss.site];
-      return row('♧',trail.name,'目安レベル '+boss.level,a.cleared[boss.id]?'討伐済み':'未討伐',()=>{
+      return row('♧',trail.name,'目安レベル '+adventureBossLevel(boss),a.cleared[boss.id]?'討伐済み':'未討伐',()=>{
         if(currentMap===trail){
           const spot=trail.objects.find(p=>p.bossId===boss.id);
           if(spot){closeMenu();view.path(spot.x,spot.y,{...spot,type:'object'});}
@@ -2578,7 +2666,7 @@ function drawMenu() {
         const road=Object.values(maps).find(map=>map.adventure&&map.exits?.some(e=>e.id===dest.id)&&map.kind==='road');
         const town=road&&Object.values(maps).find(map=>map.adventure&&map.kind==='town'&&map.exits?.some(e=>e.id===road.id));
         const guide=el('div','destination-level');
-        guide.append(el('b',null,dest.name),el('span','level-tag','目安レベル '+dest.level));
+        guide.append(el('b',null,dest.name),el('span','level-tag','目安レベル '+recommendedLevel(dest)));
         summary.append(guide,el('small',null,town&&road?town.name+' → '+road.name+' → '+dest.name:dest.name+'へ向かう。'));
         panel.append(summary);
         const nudge=preferredAdventureExit(dest.id);
@@ -2586,6 +2674,10 @@ function drawMenu() {
         if(dest.id===currentMap.id){
           const boss=currentMap.objects.find(object=>object.bossId===adventureBossCode(a.chapter));
           if(boss) panel.append(button('現場へ向かう',()=>{closeMenu();view.path(boss.x,boss.y,{...boss,type:'object'});},'game-button primary'));
+        }
+        if(!a.flags.C02){
+          const ally=view.targets.find(target=>target.type==='person'&&earlyCompanions.has(target.id));
+          if(ally) panel.append(button(person(ally.id).name+'の所へ歩く',()=>{closeMenu();view.path(ally.x,ally.y,ally);}));
         }
       } else {
         summary.append(el('small',null,'高い道から、さらに強い魔物のいる場所へ行ける。'));
@@ -2843,7 +2935,7 @@ function buildCatalog(data) {
     const isWeapon=slot==='武器',staff=type==='staff';
     const armour=['armor','helmet','shield','tower'].includes(type);
     const cloth=['robe','cloak','cap','circlet','amulet','plume','ring'].includes(type);
-    const appearance=a.説明.replace(/（.*）/,'').slice(0,17);
+    const appearance=equipmentDisplayName(a.説明,a.レア度).slice(0,17);
     const stats={id:a.id,name:tier===5?itemPrefixes[tier]+(weaponNames[type]??appearance):appearance,slot,type,rarity:a.レア度,
       attack:isWeapon?(staff?2+tier*3:3+tier*8+index%4):0,
       magicAttack:isWeapon?(staff?5+tier*9+index%4:1+tier*(a.素質.属性.length?5:2)):cloth?1+tier:0,

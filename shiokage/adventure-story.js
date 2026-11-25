@@ -3,7 +3,8 @@ export const adventureOpening = [
   [35,'夜潮よ。高い道なら届かない。ハル、蔵に戻った親子を見た？'],
   [84,'行ってくる。エナは宿の戸を開けて待ってて。'],
   [35,'待って。この小さい子も預かってくれる？　よく私の声に返事をするの。'],
-  [84,'暴れたら返すからね。ほら、こっちの腕においで。']
+  [84,'暴れたら返すからね。ほら、こっちの腕においで。'],
+  [35,'北東へ出るなら、途中で小舟のナギに声をかけて。先に人の前へ立ってくれる人よ。']
 ];
 
 const tale = (title,site,level,approach,aftermath,choice=null) => ({title,site,level,approach,aftermath,choice});

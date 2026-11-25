@@ -469,14 +469,26 @@ export class MapView {
   reposition(pos) {
     let loc={...pos};
     if(!this.preview&&!this.clear(loc.x,loc.y)){
+      const {scene}=this;
+      const legacy=scene.field?.legacySize;
+      if(legacy&&(loc.x>=scene.width||loc.y>=scene.height)) {
+        loc.x=loc.x*scene.width/legacy[0];
+        loc.y=loc.y*scene.height/legacy[1];
+      }
       const points=[];
+      if(this.clear(loc.x,loc.y)) points.push(loc);
       for(let ring=6;ring<=198&&!points.length;ring+=6){
         for(let i=0;i<16;i++){
           const x=loc.x+ring*Math.cos(i*TAU/16),y=loc.y+ring*Math.sin(i*TAU/16);
           if(this.clear(x,y)) points.push({x,y});
         }
       }
-      loc={...loc,...(points[0]??this.scene.entry)};
+      let nearest;
+      if(!points.length&&scene.field?.route) {
+        nearest=scene.field.route.reduce((best,point)=>
+          this.clear(point.x,point.y)&&(!best||distance(loc,point)<distance(loc,best))?point:best,null);
+      }
+      loc={...loc,...(points[0]??nearest??scene.entry)};
     }
     this.player={...loc,face:pos.face??0,walk:0,moving:false};
     this.pointer=null;this.route=null;this.keys.clear();
@@ -525,31 +537,51 @@ export class MapView {
     return !this.people.some(p=>Math.abs(x-p.x)<17&&Math.abs(y-p.y)<13);
   }
 
+  walkableLine(ax,ay,bx,by) {
+    const samples=Math.ceil(Math.hypot(bx-ax,by-ay)/2.5);
+    for(let index=1;index<=samples;index++){
+      const at=index/samples;
+      if(!this.clear(ax+(bx-ax)*at,ay+(by-ay)*at)) return false;
+    }
+    return true;
+  }
+
   path(x,y,target) {
-    const step=15, cols=Math.ceil(this.scene.width/step), rows=Math.ceil(this.scene.height/step);
-    const startX=Math.round(this.player.x/step),startY=Math.round(this.player.y/step);
+    const adventure=!!this.scene.field;
+    const step=this.scene.field?.type==='outdoor'?12:15,cols=Math.ceil(this.scene.width/step),rows=Math.ceil(this.scene.height/step);
+    let startX=Math.round(this.player.x/step),startY=Math.round(this.player.y/step);
+    if(adventure){
+      const {x:px,y:py}=this.player;
+      const options=[];
+      for(let col=startX-2;col<=startX+2;col++)for(let row=startY-2;row<=startY+2;row++) {
+        if(col<1||row<1||col>=cols-1||row>=rows-1) continue;
+        options.push({col,row,distance:Math.hypot(px-col*step,py-row*step)});
+      }
+      options.sort((a,b)=>a.distance-b.distance);
+      const anchor=options.find(p=>this.clear(p.col*step,p.row*step)&&this.walkableLine(px,py,p.col*step,p.row*step));
+      if(!anchor) {this.route={way:[],target,point:{x,y}};return;}
+      startX=anchor.col;startY=anchor.row;
+    }
     const start=startY*cols+startX;
     const came=new Int32Array(cols*rows).fill(-1);
     came[start]=start;
     const queue=[start];
     let best=start,bestDist=Infinity;
-    const padding=this.scene.field?Math.ceil(280/step):Math.max(cols,rows);
-    const limT=Math.min(startY,Math.floor(y/step))-padding,limB=Math.max(startY,Math.ceil(y/step))+padding;
-    const limL=Math.min(startX,Math.floor(x/step))-padding,limR=Math.max(startX,Math.ceil(x/step))+padding;
     for(let i=0;i<queue.length;i++){
       const k=queue[i],cx=k%cols,cy=Math.floor(k/cols),d=Math.hypot(cx*step-x,cy*step-y);
       if(d<bestDist){best=k;bestDist=d;}
       if(d<(target?26:11)) break;
       for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){
         const nx=cx+dx,ny=cy+dy,n=ny*cols+nx;
-        if(nx<=0||ny<=0||nx>=cols-1||ny>=rows-1||nx<limL||nx>limR||ny<limT||ny>limB||came[n]>=0||!this.clear(nx*step,ny*step)) continue;
+        if(nx<=0||ny<=0||nx>=cols-1||ny>=rows-1||came[n]>=0||!this.clear(nx*step,ny*step)) continue;
         if(dx&&dy&&(!this.clear(nx*step,cy*step)||!this.clear(cx*step,ny*step))) continue;
-        if(!this.clear((nx+cx)*step/2,(ny+cy)*step/2)) continue;
+        if(adventure ? !this.walkableLine(cx*step,cy*step,nx*step,ny*step) : !this.clear((nx+cx)*step/2,(ny+cy)*step/2)) continue;
         came[n]=k;queue.push(n);
       }
     }
     const way=[];
     for(let at=best;at!==start;at=came[at]) way.push({x:(at%cols)*step,y:Math.floor(at/cols)*step});
+    if(adventure&&way.length) way.push({x:startX*step,y:startY*step});
     this.route={way:way.reverse(),target,point:{x,y}};
   }
 

@@ -1,4 +1,5 @@
 import { bossData, monsterTraits, outsideData, townData } from './adventure-world-data.js';
+import { adventureLandscape } from './adventure-landscapes.js';
 
 const dimensions = {
   T01: [70, 73], T02: [76, 83], T03: [75, 77], T04: [68, 75], T05: [82, 75],
@@ -16,28 +17,7 @@ const townStyles = [
   ['moor','saltShed','meadow','bluff'], ['shrine','arcade','stone','city']
 ];
 const localSprites = [1,2,3,5,9,12,17,20,22,29,30,34,43,47,51,52,56,63,64,68,69,71,72,73,74,76,78,79,82,83,86,87,88,90,91,92,97,99,100,101,102,105,107,108,109,112,113,115,116,118,119,120,121,122,123];
-const terrainStyles = {
-  '帯状地': { profile:'ridge', wall:'cliff', radius:112 },
-  '水際': { profile:'water', wall:'water', radius:96 },
-  '折れ棚': { profile:'bend', wall:'cliff', radius:104 },
-  '平棚': { profile:'shelf', wall:'cliff', radius:115 },
-  '昇降地': { profile:'rise', wall:'cliff', radius:105 },
-  '中庭': { profile:'court', wall:'cliff', radius:110 }
-};
-// Match the atlas's walkable-area budgets while keeping the approaches and retreat paths independent.
-const roomWidth = {
-  R01:3.064,R02:2.327,R03:2.69,R04:2.845,R05:2.671,R06:2.516,R07:2.402,R08:2.337,R09:2.666,R10:2.407,R11:2.292,R12:2.422,
-  R13:2.974,R14:3.706,R15:2.143,R16:2.237,R17:2.551,R18:2.511,R19:2.128,R20:2.855,R21:2.242,R22:2.302,R23:2.935,R24:2.551,
-  R25:2.402,R26:2.302,R27:3.233,R28:2.436,R29:2.153,R30:2.626,R31:2.431,R32:2.685,R33:2.865,R34:2.94,R35:2.79,R36:2.402,
-  R37:2.476,R38:2.471,R39:2.456,R40:2.661,R41:2.417,R42:2.611,R43:2.621,R44:2.267,R45:2.785,R46:2.332,R47:2.685,R48:2.631,
-  R49:2.84,R50:2.382,R51:2.471,R52:2.616,R53:2.481,R54:2.601,R55:2.138,R56:2.77,R57:2.267,R58:2.83,R59:2.511,R60:2.476,
-  R61:2.651,R62:3.004,R63:3.547,R64:2.377,
-  D01:2.422,D02:2.182,D03:2.412,D04:2.441,D05:2.451,D06:2.825,D07:2.063,D08:2.531,D09:2.098,D10:2.516,D11:2.093,D12:2.705,
-  D13:2.78,D14:2.556,D15:2.207,D16:2.277,D17:2.397,D18:2.307,D19:1.914,D20:2.875,D21:2.516,D22:2.427,D23:2.317,D24:2.402,
-  D25:2.566,D26:2.685,D27:2.163,D28:2.347,D29:2.302,D30:2.262,D31:2.148,D32:2.441
-};
 const regionalPalettes = { A:'port', B:'moor', C:'shrine', D:'ember', E:'port', F:'cave', G:'frost' };
-const regionalGround = { A:'sand', B:'meadow', C:'slate', D:'ash', E:'slate', F:'stone', G:'stone' };
 const candidatePoint = (x,y) => ({x:Math.round(x),y:Math.round(y)});
 const pad = n => String(n).padStart(2,'0');
 const manhattan = (a,b) => Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1]);
@@ -144,7 +124,8 @@ function townScene(row,index) {
     const occupied = scene.people.filter(other=>other.cell===center.join(',')).length;
     const shiftX = occupied===0?0:occupied%2===1?20:-20;
     const shiftY = occupied===0?0:-17;
-    const position = pointOnTown(scene,center,shiftX,shiftY);
+    const earlyHelp=roleId==='P01'?[-13,5]:roleId==='P04'?[-15,-6]:[0,0];
+    const position = pointOnTown(scene,center,shiftX+earlyHelp[0],shiftY+earlyHelp[1]);
     const late = pointOnTown(scene,nCenter,shiftX,shiftY);
     const character = { ...position,nightPosition:late,face:[0,1,2,0][i%4],cell:center.join(','),name:localName,role };
     if (roleId.startsWith('P')&&sprite) scene.people.push({...character,id:sprite,adventureCompanion:roleId});
@@ -271,14 +252,6 @@ function addTownBuildings(scene,tiles,landmark,index) {
   }
 }
 
-const shapes = {
-  ridge:[[0,.64],[.20,.57],[.40,.61],[.62,.40],[.81,.43],[1,.35]],
-  water:[[0,.72],[.20,.70],[.38,.54],[.57,.57],[.75,.39],[1,.36]],
-  bend:[[0,.76],[.18,.66],[.32,.40],[.50,.57],[.66,.39],[.81,.55],[1,.38]],
-  shelf:[[0,.62],[.19,.68],[.36,.50],[.57,.48],[.80,.51],[1,.34]],
-  rise:[[0,.77],[.20,.70],[.36,.56],[.56,.60],[.72,.41],[1,.27]],
-  court:[[0,.72],[.17,.69],[.33,.51],[.56,.52],[.81,.30],[1,.28]]
-};
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const offsetFrom = (a,b,distance) => {
   const span=dist(a,b)||1;
@@ -297,85 +270,71 @@ const concealedPaths = {
   B51:['雨粒がそれる石段','足音は一つなのに、雨は二つの場所からはじかれている。奥に広い床がある。','boulder'],
   B52:['岸の外の足跡','海へ向いた岩に新しい爪跡がある。二つの岸から見えた影は、ここまで来ていた。','boulder']
 };
+const landmarkMix = {
+  breakwater:['breakwater','mooring','cliffVista'],windbreak:['windbreak','camp','windbreak'],
+  reedBridge:['reedBridge','mooring','reefStone'],roofRuin:['roofRuin','stoneShelves','camp'],
+  forestVista:['forestVista','fallenTrunks','cliffVista'],cliffVista:['cliffVista','camp','breakwater'],
+  stoneShelves:['stoneShelves','echoStones','stoneShelves'],camp:['camp','forestVista','windbreak'],
+  shelving:['shelving','supplies','shelving'],sluiceGate:['sluiceGate','reedBridge','mooring'],
+  fallenTrunks:['fallenTrunks','forestVista','stoneShelves'],waxPillars:['waxPillars','stoneShelves','echoStones'],
+  iceSpire:['iceSpire','cliffVista','echoStones'],furnace:['furnace','stoneShelves','camp'],
+  shipFrame:['shipFrame','shelving','mooring'],echoStones:['echoStones','stoneShelves','camp'],
+  reefStone:['reefStone','mooring','cliffVista'],boneRibs:['boneRibs','reefStone','cliffVista'],
+  mooring:['mooring','reedBridge','breakwater']
+};
 
-function routePoints(width,height,length,style,seed,vertical) {
-  const points=shapes[style];
-  const reversed=seed%3===0;
-  const major=vertical?height:width,minor=vertical?width:height;
-  const span=Math.min(major-.25*major,length*.90);
-  const margin=(major-span)/2;
-  const displacement=Math.min(minor*.55,length*.34);
-  return points.map(([progress,cross],index)=>{
-    const main=margin+(reversed?1-progress:progress)*span;
-    const across=minor*.5+(cross-.5)*displacement+Math.sin(index*2+seed)*Math.min(47,minor*.02);
-    return vertical?candidatePoint(across,main):candidatePoint(main,across);
-  });
-}
-
-function scenicKinds(id,terrain,palette) {
-  if (terrain==='water') return ['reeds','bollard','rock','supplies'];
-  if (palette==='ember') return ['rock','furnaceCrate','kiln','rock'];
-  if (id.startsWith('D')) return ['rock','ruin','crystal','supplies'];
-  if (terrain==='rise'||palette==='frost') return ['rock','pine','tuft','ruin'];
-  return ['tree','rock','tuft','crate'];
+function beside(a,b,offset,forward=0) {
+  const span=dist(a,b)||1, dx=(b.x-a.x)/span,dy=(b.y-a.y)/span;
+  return candidatePoint(a.x+dx*forward-dy*offset,a.y+dy*forward+dx*offset);
 }
 
 function outsideScene(row) {
-  const [id,name,region,,,gate,action,level,width,height,plannedArea,length,mapStyle,markers,packs,bosses] = row;
-  const [a] = region;
-  const s = Number(id.slice(1)), dungeon = id[0]==='D';
-  const style=terrainStyles[mapStyle]??terrainStyles['平棚'];
-  const palette=regionalPalettes[a];
-  const route=routePoints(width,height,length,style.profile,s+(dungeon?17:0),height>width*1.06||s%7===0);
-  const branches=[],rooms=[];
-  const baseRoom=Math.min(width,height)*(dungeon?.13:.12);
-  route.forEach((point,index)=>{
-    const radius=baseRoom*(.8+((s+index*4)%7)*.08);
-    const r = [point.x,point.y,radius*(style.profile==='shelf'?1.29:1),radius*(style.profile==='rise'?1.23:.86)];
-    if (index!==0&&index<route.length-1) rooms.push(r);
-    if (index<1||index>route.length-2||index%2!==s%2) return;
-    const dist=baseRoom*(1.05+(s%4)*.22), next=route[index+1], prev=route[index-1];
-    const [dx,dy]=[next.y-prev.y,prev.x-next.x];
-    const span=Math.hypot(dx,dy)||1,side=(index+s)%4===0?1:-1;
-    const dest = candidatePoint(point.x+dx/span*dist*side,point.y+dy/span*dist*side);
-    if(dest.x<180||dest.y<180||dest.x>width-180||dest.y>height-180) return;
-    branches.push([point,dest]);
-    rooms.push([dest.x,dest.y,radius*.72,radius*.64]);
-  });
+  const [id,name,region,,,gate,action,level,oldWidth,oldHeight,,,,markers,packs,bosses] = row;
+  const s=Number(id.slice(1)),dungeon=id[0]==='D';
+  const layout=adventureLandscape(id,level,markers);
+  const {width,height,route,branches,signature}=layout;
+  const palette=regionalPalettes[region[0]];
   const paths = [route,...branches].map(path=>path.map(({x,y})=>[x,y]));
   const encounterSpecies=packs.filter(num=>num!==27);
   const encounters = encounterSpecies.map((species,index)=>s<3?
     [species] : index%2 ? [species,encounterSpecies[(index+1)%encounterSpecies.length]] : [species]);
   if(level>20&&encounterSpecies.length>2) encounters.push(encounterSpecies.slice(0,3));
   const scene={id,name,width,height,palette,level,seed:s*97+(dungeon?1673:429),kind:dungeon?'cave':'road',
-    encounters,tier:Math.floor(level/4),paths,pathWidth:34,caveWidth:99,scatter:dungeon?210:175,props:[],objects:[],people:[],exits:[],adventure:true,
+    encounters,tier:Math.floor(level/4),paths,pathWidth:28,scatter:dungeon?9:28,props:[],objects:[],people:[],exits:[],adventure:true,
     adventureOpening:gate,adventureAction:/^A\d/.test(action)?action:null,
-    field:{type:'outdoor',profile:style.profile,wall:style.wall,ground:regionalGround[a],
-      rooms:rooms.map(([x,y,w,h])=>[x,y,w*roomWidth[id],h*roomWidth[id]]),
-      radius:style.radius,planArea:plannedArea,route} };
-  scene.entry=offsetFrom(route[0],route[1],56);
-  const decor=scenicKinds(id,style.profile,palette);
-  for (const [i,point] of route.entries()) {
+    field:{type:'outdoor',...layout,legacySize:[oldWidth,oldHeight],encounterSpacing:layout.spacing,scenery:[]} };
+  scene.entry=offsetFrom(route[0],route[1],48);
+  const signatures=landmarkMix[signature]??[signature];
+  for (const [i,a] of route.entries()) {
     if(i===0||i===route.length-1) continue;
-    const dx=(i%2===0?-1:1)*(73+(s%4)*11), dy=(i%3===0?1:-1)*(76+(s%5)*7);
-    scene.props.push([decor[(i+s)%decor.length],point.x+dx,point.y+dy,.75+(i%3)*.22,i%3]);
-    scene.props.push([decor[(i+2+s)%decor.length],point.x-dx*1.2,point.y-dy*.75,.68+i*.09,i%2]);
+    const b=route[i+1],side=i%2?-1:1;
+    const art=beside(a,b,side*(dungeon?67:94),23);
+    scene.field.scenery.push({...art,physical:signatures[(i-1)%signatures.length],variant:(i+s)%4,small:i%3!==1});
     const mark=markers[Math.min(markers.length-1,i)];
-    if(mark) scene.objects.push({id:id+'-mark-'+i,kind:'adventure-inspect',physical:physicalMark(mark,style.profile),
-      label:mark,text:landscapeLine(style.profile,dungeon,i),...candidatePoint(point.x+19+(i%2)*-38,point.y+43)});
+    if(mark) scene.objects.push({id:id+'-mark-'+i,kind:'adventure-inspect',physical:physicalMark(mark,layout),
+      label:mark,text:landscapeLine(id,mark,layout,i),...beside(a,b,side*(dungeon?19:28),15)});
+    if(!dungeon){
+      const near=beside(a,b,-side*67,53);
+      scene.props.push([layout.wall==='trees'?'pine':layout.wall==='water'?'reeds':'rock',near.x,near.y,.71+(i%3)*.10,i%2]);
+    }
   }
-  for(const [a,b] of branches) {
-    const spot=offsetFrom(b,a,-29),sp=offsetFrom(b,a,48);
-    scene.props.push([decor[1],spot.x,spot.y,.97,1],[decor[2],sp.x+46,sp.y+16,.84,2]);
+  for(const branch of branches){
+    const end=branch.at(-1),spot=beside(end,branch.at(-2),dungeon?52:60);
+    scene.field.scenery.push({...spot,physical:signature,variant:3,small:true});
   }
-  const trail=route[Math.floor(route.length/2)];
-  const safe=candidatePoint(trail.x-24,trail.y-51);
+  if(dungeon||!bosses.length){
+    for(const [index,treasure] of layout.treasure.entries()){
+      scene.objects.push({...treasure,id:id+'-chest-'+(index+1),kind:'chest'});
+    }
+  }
+  const middle=Math.floor(route.length/2), trail=route[middle],ahead=route[middle+1];
+  const safe=beside(trail,ahead,layout.radius*.56,49);
   if(dungeon || mainApproach.has(id)) scene.objects.push({id:id+'-rest',kind:'adventure-rest',physical:'hearth',label:'風よけの休み場',
     text:'火を絶やさずに休める。',...safe});
   addOutdoorConsequences(scene,trail);
   for(const [i,bossId] of bosses.entries()) {
     const boss=adventureBosses[bossId];
-    const target=(dungeon&&i===0)?route.at(-1):branches[i%Math.max(1,branches.length)]?.[1]??route.at(-2);
+    const target=dungeon&&i===0?route.at(-1):branches.at(-1)?.at(-1)??route.at(-2);
     const appearsAfter=bossId==='B43'?['W02','C03']:bossId==='B44'?['C06']:null;
     scene.objects.push({id:bossId,kind:'adventure-boss',label:boss.title,physical:'den',bossId,boss:[boss.monsterId],
       chapter:boss.chapter,postgame:boss.postgame,appearsAfter,portrait:boss.monsterId,level:boss.level,...target});
@@ -383,14 +342,14 @@ function outsideScene(row) {
     if(clues){
       const [label,text,physical]=clues;
       const landmark=scene.objects.find(o=>o.id===id+'-mark-3');
-      const position=offsetFrom(target,route[Math.floor(route.length/2)],96);
+      const position=offsetFrom(target,branches.at(-1)?.at(-2)??trail,56);
       Object.assign(landmark,{...position,label,text,physical:physical==='basin'?'cistern':physical,postgame:boss.postgame,appearsAfter});
     }
   }
   const prep = {
-    D10:['G01','高い避難所の火','hearth',candidatePoint(trail.x+78,trail.y-18)],
-    R50:['oar','外浜の櫂立て','tackle',candidatePoint(trail.x+72,trail.y-20)],
-    R57:['G02','沖へ出る救助舟','boat',candidatePoint(trail.x+79,trail.y-19)]
+    D10:['G01','高い避難所の火','hearth',beside(trail,ahead,-30,40)],
+    R50:['oar','外浜の櫂立て','tackle',beside(trail,ahead,-37,46)],
+    R57:['G02','沖へ出る救助舟','boat',beside(trail,ahead,-36,56)]
   }[id];
   if(prep) {
     const appearance = id==='D10'?[{flag:'W03',art:'coldHearth'}]:id==='R57'?
@@ -411,22 +370,44 @@ function addOutdoorConsequences(scene,trail) {
     D30:[{dx:98,dy:29,physical:'refuge',appearance:[{flag:'W06',art:'coldHearth'},{flag:'C11',art:'bench'}]}],
     R64:[{dx:98,dy:47,physical:null,appearance:[{endings:['E1'],art:'coldHearth'},{endings:['E2'],art:'readyBoat'},{endings:['E3'],art:'anchored'}]}]
   }[scene.id]??[];
-  scene.field.scenery=items.map(({dx,dy,...item})=>({...item,...candidatePoint(trail.x+dx,trail.y+dy)}));
+  scene.field.scenery.push(...items.map(({dx,dy,...item})=>({...item,...candidatePoint(trail.x+dx*.84,trail.y+dy*.84)})));
 }
 
-function physicalMark(name,profile) {
-  if (/屋|蔵|小戸|戸口|門|工房/.test(name)) return 'board';
-  if (/舟|水際|渡|桁|外浜|橋/.test(name)) return profile==='water'?'boat':'tackle';
-  if (/棚|薪|箱|台|道具/.test(name)) return 'supplies';
+function physicalMark(name,layout) {
+  if (/窯|炉|炭|焼/.test(name)) return 'furnace';
+  if (/屋|蔵|残り穴|梁|桁|干し|工房/.test(name)) return 'shelving';
+  if (/門|関|入口|停|出口/.test(name)) return 'board';
+  if (/舟|水際|波|渡|外浜|橋/.test(name)) return layout.wall==='water'?'mooring':'tackle';
+  if (/根|森|林|枝|草|木/.test(name)) return 'fallenTrunks';
+  if (/棚|薪|箱|台|道具/.test(name)) return 'stoneShelves';
   return 'boulder';
 }
 
-function landscapeLine(profile,dungeon,index) {
-  if(index%3===0) return '道が分かれている。来た方には、動かない足場が残っている。';
-  if(profile==='water') return '波が板を打っている。白くなった石より上は乾いている。';
-  if(profile==='rise') return '砂粒が斜面を落ちていく。固い岩の縁なら上へ回れる。';
-  if(profile==='bend') return '内側に風が当たらない窪みがある。奥へ出る前に一息つける。';
-  return dungeon?'入口の方から風が来る。壁沿いを見れば帰り道が分かる。':'先へ続く道と、脇に開けた静かな足場が見える。';
+function landscapeLine(id,mark,layout,index) {
+  const written={D01:['床の砂が浅い。低い梁なら、足を取られずにくぐれそうだ。','倒れた棚に爪跡がある。荷箱がたまった横道と、高い梁へ行く道が分かれる。','梁から砂がこぼれている。ここから先は足音を聞いたほうがいい。'],
+    D03:['水面の板がぶつかる。町へ戻る橋は、太い縄で結ばれている。','舟が水門に押しつけられている。手すりの方は石で組んである。','乾いた岩に綱が巻いてある。ここなら舟を止められる。'],
+    D05:['下草が揺れた。その奥で一回り大きな枝が揺れている。','折れた根の先で小石が跳ねる。荷が落ちた横道はまだ通れる。','高い岩から、根が集まっている場所を見下ろせる。']};
+  const lines=written[id];
+  if(lines) return lines[Math.min(index-1,lines.length-1)];
+  if (/砂|風/.test(mark)) return '風に飛ばされた砂が積もっている。石や板の出ている側は歩きやすい。';
+  if (/舟|波|水|橋|岸/.test(mark)) return '水面まで古い縄が垂れている。白くなった石より上は乾いている。';
+  if (/木|葉|根|林/.test(mark)) return '古い根に濡れた葉が引っかかっている。足跡は木の間へ続く。';
+  if (/薪|火|窯|焼|灰/.test(mark)) return '石の隙間に灰がたまっている。触れると、まだ少し温かい。';
+  if (/板|棚|箱|釘|道具/.test(mark)) return '残った道具は壁際に寄せてある。人が通った床だけ靴跡が重なっている。';
+  return layout.deep?'壁に擦れた跡が残る。狭い通路の向こうから足音がする。':'街道を通る旅人が、風を避けて座った跡がある。';
+}
+
+export function adventureDepthAt(scene,point) {
+  if(!scene?.field?.deep||!point) return scene?.level??1;
+  const {route}=scene.field;
+  let progress=0,best=Infinity;
+  for(let n=1;n<route.length;n++) {
+    const a=route[n-1],b=route[n], x=b.x-a.x, y=b.y-a.y;
+    const t=Math.min(1,Math.max(0,((point.x-a.x)*x+(point.y-a.y)*y)/(x*x+y*y)));
+    const d=(point.x-a.x-t*x)**2+(point.y-a.y-t*y)**2;
+    if(d<best){best=d;progress=(n-1+t)/(route.length-1);}
+  }
+  return Math.max(1,scene.level-2+Math.min(2,Math.floor(progress*3)));
 }
 
 export const adventureMaps = Object.fromEntries([
@@ -436,6 +417,14 @@ export const adventureMaps = Object.fromEntries([
 function addExit(scene,destination,position,spawn,settings={}) {
   scene.exits.push({id:destination.id,label:destination.name,kind:'adventure-gate',physical:scene.kind==='town'?'gate':'trailgate',
     ...position,spawn,...settings});
+}
+
+function dungeonPortal(scene) {
+  const theme=scene.field.theme;
+  if(['warehouse','dryHall','workshop','shipyard'].includes(theme)) return 'barnDoor';
+  if(theme==='sluice') return 'sluiceGate';
+  if(theme==='woodlot') return 'forestGate';
+  return 'tunnelMouth';
 }
 
 for (const row of outsideData) {
@@ -453,8 +442,9 @@ for (const row of outsideData) {
     addExit(road,to,finish,toMouth.retreat,{physicalLabel:toMouth.label,roadSide:'to'});
   } else {
     const dungeon=to.field.route;
-    addExit(road,to,finish,to.entry,{adventureGate:to.adventureOpening,adventureAction:to.adventureAction,physicalLabel:'奥へ続く入口',roadSide:'to'});
-    addExit(to,road,dungeon[0],finishSpawn,{physicalLabel:'野外へ戻る入口',roadSide:'from'});
+    const physical=dungeonPortal(to);
+    addExit(road,to,finish,to.entry,{adventureGate:to.adventureOpening,adventureAction:to.adventureAction,physical,physicalLabel:to.field.opening,roadSide:'to'});
+    addExit(to,road,dungeon[0],finishSpawn,{physical,physicalLabel:'野外へ戻る入口',roadSide:'from'});
   }
 }
 

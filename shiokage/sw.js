@@ -1,11 +1,11 @@
 const cachePrefix = 'shiokage-';
-const cacheName = `${cachePrefix}v6`;
+const cacheName = `${cachePrefix}v7`;
 const scope = new URL(self.registration.scope);
 const shell = [
   './', './index.html', './style.css', './battle.css', './adventure-ui.css', './game.js', './map.js', './content.js', './battle.js',
   './audio.js', './campaign.js', './dangers.js', './recruits.js', './town-landmarks.js', './characters.js', './expansion.js',
   './journey.js', './companion-journeys.js', './inquiries.js', './trials.js', './adventure-story.js', './adventure-world.js', './adventure-world-data.js',
-  './adventure-terrain.js', './adventure-loot.js', './adventure-hunts.js', './adventure-companions.js',
+  './adventure-terrain.js', './adventure-landscapes.js', './adventure-balance.js', './adventure-loot.js', './adventure-hunts.js', './adventure-companions.js',
   './adventure-companion-scenes.js', './adventure-companion-ui.js',
   './manifest.webmanifest', './icon.png', './icon-mask.png',
   './assets/catalog.json'

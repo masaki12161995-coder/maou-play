@@ -1,6 +1,6 @@
 const FRAMES = {
   back: [1, 3], step: [0, 3], nextStep: [2, 3],
-  face: [1, 0], attack: [1, 4], skill: [0, 4], fallen: [2, 4]
+  face: [1, 0], skill: [0, 4]
 };
 
 const attributes = {
@@ -115,13 +115,14 @@ function normalize(unit, ally, i) {
     weapon: unit.weapon || unit.attribute || '素手', boost: 1, maxShield, guard: Math.max(1,maxShield-(unit.openingShieldCuts??0)),
     skills: (unit.skills || []).map((skill, index) => normalizeSkill({ weapon: unit.weapon || 'なし', ...skill }, index)),
     weakness, broken: 0, guarding: false, weakened: 0, statuses: {}, gearUsed: {}, guardedAt:-2,
+    echoedAttribute:'', echoedHits:0,
     known: new Set(unit.knownWeaknesses?.filter(x => weakness.includes(x)) || [])
   };
 }
 
 function reportUnit(unit) {
   const result = { ...unit, knownWeaknesses: [...unit.known] };
-  for (const key of ['key', 'known', 'weakness', 'side', 'boost', 'guard', 'broken', 'guarding', 'weakened', 'maxShield', 'statuses','gearUsed','guardedAt']) delete result[key];
+  for (const key of ['key', 'known', 'weakness', 'side', 'boost', 'guard', 'broken', 'guarding', 'weakened', 'maxShield', 'statuses','gearUsed','guardedAt','echoedAttribute','echoedHits']) delete result[key];
   return result;
 }
 
@@ -146,6 +147,8 @@ function restoreCombatUnit(unit, saved) {
   unit.weakened = Math.max(0, Math.floor(cleanNumber(saved.weakened, 0)));
   unit.guarding = bounded(cleanNumber(saved.guarding, 0), 0, .9) || false;
   unit.guardedAt=cleanNumber(saved.guardedAt,-2);
+  unit.echoedAttribute=typeof saved.echoedAttribute==='string'?saved.echoedAttribute:'';
+  unit.echoedHits=bounded(Math.floor(cleanNumber(saved.echoedHits,0)),0,5);
   unit.gearUsed=saved.gearUsed&&typeof saved.gearUsed==='object'?{...saved.gearUsed}:{};
   unit.statuses = Object.fromEntries(Object.keys(statusInfo).flatMap(key => {
     const status = saved.statuses?.[key];
@@ -159,8 +162,8 @@ function restoreCombatUnit(unit, saved) {
 }
 
 function checkpointUnit(unit) {
-  const { id, hp, mp, boost, guard, broken, guarding, weakened, statuses, gearUsed, guardedAt } = unit;
-  return { id, hp, mp, boost, guard, broken, guarding, weakened, statuses: copy(statuses), gearUsed:{...gearUsed},guardedAt,knownWeaknesses: [...unit.known] };
+  const { id, hp, mp, boost, guard, broken, guarding, weakened, statuses, gearUsed, guardedAt, echoedAttribute, echoedHits } = unit;
+  return { id, hp, mp, boost, guard, broken, guarding, weakened, statuses: copy(statuses), gearUsed:{...gearUsed},guardedAt,echoedAttribute,echoedHits,knownWeaknesses: [...unit.known] };
 }
 
 function physicalScale(desired = 1) {
@@ -169,11 +172,12 @@ function physicalScale(desired = 1) {
 }
 
 function personScale() {
-  return physicalScale(window.innerHeight > 745 && window.innerWidth >= 370 ? 4 / 3 : 1);
+  return physicalScale(window.innerHeight > 745 && window.innerWidth >= 370 ? 5 / 3 : 4 / 3);
 }
 
-function monsterScale(width) {
-  return physicalScale(width <= 45 ? 5 / 3 : width <= 78 ? 4 / 3 : 1);
+function monsterScale(width, count) {
+  if (count === 1) return physicalScale(width >= 145 ? 5 / 3 : width >= 75 ? 2 : 8 / 3);
+  return physicalScale(width >= 90 ? 5 / 3 : width >= 53 ? 2 : 8 / 3);
 }
 
 const spriteUrl = source => `url(${JSON.stringify(source || '')})`;
@@ -191,8 +195,9 @@ function personFrame(node, source, pose, scale, flip) {
 function fillPortrait(holder, unit) {
   const portrait = element('i', 'cb-timeline-portrait');
   if (unit.side === 'ally' || unit.human) {
-    personFrame(portrait, unit.sprite, 'face', personScale(), unit.side === 'enemy');
-    portrait.style.top = `${-7 * personScale()}px`;
+    const scale = physicalScale(4 / 3);
+    personFrame(portrait, unit.sprite, 'face', scale, unit.side === 'enemy');
+    portrait.style.top = `${-7 * scale}px`;
   } else {
     portrait.classList.add('cb-timeline-monster');
     portrait.style.backgroundImage = spriteUrl(unit.sprite);
@@ -315,7 +320,7 @@ export function startBattle(config) {
   } = config;
   if (!mount || !config.party?.length || !config.enemies?.length) throw new Error('戦闘を開始できません');
   const party = config.party.slice(0, 4).map((unit, i) => normalize(unit, true, i));
-  const enemies = config.enemies.slice(0, 3).map((unit, i) => normalize(unit, false, i));
+  const enemies = config.enemies.slice(0, 4).map((unit, i) => normalize(unit, false, i));
   const units = [...party, ...enemies];
   const resumed = matchesCheckpoint(config.resume, party, enemies) ? config.resume : null;
   if (resumed) {
@@ -346,6 +351,7 @@ export function startBattle(config) {
   let boostMeter = null;
   let committed = makeCheckpoint();
   const acted = new Set();
+  const tacticalPlans = new Map();
   const totalXP = party.map(unit => unit.xp || 0);
   const refs = new Map();
 
@@ -378,6 +384,9 @@ export function startBattle(config) {
   const banner = element('div', 'cb-banner');
   const aim = element('div', 'cb-aim-label');
   aim.setAttribute('aria-live', 'polite');
+  const intent = element('aside', 'cb-tactical-intent');
+  intent.hidden = true;
+  intent.setAttribute('aria-live','polite');
   arena.append(backdrop, field, fxStage, aim, banner);
   field.append(monsterStage, partyStage);
   const commands = element('section', 'cb-commands');
@@ -462,7 +471,12 @@ export function startBattle(config) {
   function teamOrder(at = round) {
     const available = unit => remain(unit) && !broken(unit, at) && !statusOn(unit, 'stun', at);
     if (at === round && roundOrder) return roundOrder.filter(available);
-    const speedAt = unit => unit.speed * (1 - statusAmount(unit, 'slow', at));
+    const urgent = at === round && tacticalBeat(at) === 'surge' && enemies.some(unit=>unit.tactics&&available(unit));
+    const speedAt = unit => {
+      const prepared = urgent && unit.side === 'ally' &&
+        ['guard','ward','heal','revive'].includes(plan[unit.id]?.effect);
+      return unit.speed * (1 - statusAmount(unit, 'slow', at)) + (prepared ? 10000 : 0);
+    };
     return units.filter(available).sort((first, second) =>
       speedAt(second) - speedAt(first) || first.key.localeCompare(second.key));
   }
@@ -477,6 +491,7 @@ export function startBattle(config) {
         const slot = element('span', `cb-orderchip cb-order-${unit.side}${activeKey === unit.key && at === round ? ' is-active' : ''}`);
         const spent = at === round && acted.has(unit.key);
         slot.classList.toggle('is-spent', spent);
+        slot.classList.toggle('is-urgent', !!unit.tactics && tacticalBeat(at) === 'surge');
         slot.title = `${unit.name}　Lv ${battleLevel(unit)}`;
         slot.setAttribute('aria-label', spent ? `${slot.title}（行動済み）` : slot.title);
         fillPortrait(slot, unit);
@@ -489,21 +504,26 @@ export function startBattle(config) {
 
   function drawUnit(unit) {
     const ally = unit.side === 'ally';
+    const featured = !ally && unit.bossVisual && enemies.length === 1 && unit.width > 0 && unit.height > 0;
     const group = element('div', `cb-unit cb-${unit.side}`);
     if (!ally && unit.width >= 180) group.classList.add('is-wide');
+    if (featured) {
+      group.classList.add('is-featured');
+      group.style.setProperty('--cb-boss-ratio', unit.width / unit.height);
+    }
     const imageBox = element('div', 'cb-unit-image');
     const sprite = element(ally || unit.human ? 'div' : 'img', 'cb-sprite');
     const shadow = element('span', 'cb-shadow');
     if (ally || unit.human) {
       sprite.classList.add('cb-person');
-      personFrame(sprite, unit.sprite, remain(unit) ? (ally ? 'back' : 'face') : 'fallen', personScale(), false);
+      personFrame(sprite, unit.sprite, ally ? 'back' : 'face', personScale(), false);
     } else {
       sprite.classList.add('cb-monster');
       sprite.alt = '';
       sprite.draggable = false;
       sprite.src = unit.sprite;
-      if (unit.width) {
-        const rendered = unit.width * monsterScale(unit.width);
+      if (unit.width && !featured) {
+        const rendered = unit.width * monsterScale(unit.width, enemies.length);
         sprite.style.width = `${rendered}px`;
         shadow.style.setProperty('--cb-shadow-size', `${rendered * .76}px`);
       }
@@ -936,6 +956,7 @@ export function startBattle(config) {
     for (const unit of units) updateUnit(unit);
     showSpeed();
     markTargets();
+    showTacticalIntent();
     if (result) return showResult();
     if (resolving) {
       const status = element('div', 'cb-resolving');
@@ -1216,7 +1237,7 @@ export function startBattle(config) {
 
   function strike(actor, target, action) {
     const attr = action.attribute || action.weapon || actor.weapon;
-    const chance = bounded(actor.accuracy - target.evasion, 35, 100);
+    const chance = action.tacticalRelease ? 100 : bounded(actor.accuracy - target.evasion, 35, 100);
     if (chance < 100 && rng() * 100 >= chance) return { target, amount: null, miss: true };
     const shielded = target.side === 'enemy' && !broken(target);
     const weakness = target.side === 'enemy' && target.weakness.includes(attr);
@@ -1235,7 +1256,11 @@ export function startBattle(config) {
     const cover=action.shelterKey?(action.shelterKey===target.key ? .88 : .70) : 1;
     const echoFactor=action.echoKey===target.key ? .55 : 1;
     const firstRound=round===1?(actor.openingAttack??1):1;
-    const damage = phaseDamage(target, Math.max(1, Math.round(base * guarding * weaknessBonus * breakBonus * cover * echoFactor * firstRound * (critical ? 1.5 : 1) * (0.94 + 0.12 * rng()))));
+    const shell = shielded && target.tactics ? (weakness ? target.tactics.weakShielded : target.tactics.shielded) : 1;
+    const channelCover = shielded && target.tactics?.pattern === 'plate' && magic === (round % 2 === 0) ? .62 : 1;
+    const protection = action.tacticalRelease && actor.guard <= 1 ? .90 : 1;
+    const aftershock = action.tacticalFocus && action.tacticalFocus !== target.key ? .42 : 1;
+    const damage = phaseDamage(target, Math.max(1, Math.round(base * guarding * weaknessBonus * breakBonus * cover * echoFactor * firstRound * shell * channelCover * protection * aftershock * (critical ? 1.5 : 1) * (0.94 + 0.12 * rng()))));
     let shatter = false;
     if (weakness) target.known.add(attr);
     const extra = (action.effect === 'shatter' ? Math.max(1, Math.floor(cleanNumber(action.magnitude, 2))) : 0)+Number(shielded&&weakness&&useGearOnce(actor,'pierce'));
@@ -1246,6 +1271,10 @@ export function startBattle(config) {
         shatter = true;
         target.broken = round + 1;
       }
+    }
+    if (target.tactics?.pattern === 'echo') {
+      target.echoedHits = shatter ? 0 : target.echoedAttribute === attr ? Math.min(5, target.echoedHits + 1) : 1;
+      target.echoedAttribute = shatter ? '' : attr;
     }
     target.hp = Math.max(0, target.hp - damage);
     if(target.hp<target.maxHp*.22&&useGearOnce(target,'secondWind')){
@@ -1274,7 +1303,74 @@ export function startBattle(config) {
     return { target, amount: (useMp ? target.mp : target.hp) - before, heal: true, revive: action.effect === 'revive', status, element: action.attribute };
   }
 
+  function tacticalBeat(at) {
+    return ['probe','surge','open'][(at - 1) % 3];
+  }
+
+  function tacticalPlan(actor) {
+    if (tacticalPlans.has(actor.key)) return tacticalPlans.get(actor.key);
+    const {tactics} = actor;
+    const beat = tacticalBeat(round);
+    const charge = Math.floor((round - 1) / 3);
+    const attacks = actor.skills.filter(skill=>skill.power>0&&!beneficial.has(skill.effect));
+    const origin = attacks[(actor.phaseCount>1 ? healthPhase(actor)-1 : charge) % attacks.length] ?? basic(actor);
+    const ranked = [...living('ally')].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp);
+    if (tactics.pattern === 'copy') ranked.sort((a,b)=>statusAmount(b,'strengthen')-statusAmount(a,'strengthen'));
+    const target = ranked[0];
+    const wide = tactics.target === 'all' || (tactics.target === 'alternate' && charge % 2 === 0);
+    const amplify = tactics.pattern === 'echo' ? 1 + Math.max(0,actor.echoedHits-1)*.06 :
+      tactics.pattern === 'copy' && target ? 1 + .8*statusAmount(target,'strengthen') : 1;
+    const deliberate = beat==='probe' && tactics.pattern==='heat' ? actor.skills.find(skill=>skill.effect==='strengthen') : undefined;
+    const action = deliberate ? {...deliberate,targetKey:actor.key} : {
+      ...origin,
+      name:beat==='open'?'息を整える':origin.name,
+      power:beat==='surge'?tactics.chargedPower*amplify*(wide||tactics.target==='one'?1:1.15):
+        beat==='open'?.77:tactics.probingPower,
+      effect:beat==='surge'?origin.effect:undefined,
+      target:beat==='surge'?'all':'one', targetKey:target?.key,
+      hits:1, tacticalRelease:beat==='surge', tacticalFocus:beat==='surge'&&!wide?target?.key:undefined
+    };
+    const next = {...action, type:'skill', boost:0, cost:0};
+    tacticalPlans.set(actor.key,next);
+    return next;
+  }
+
+  function showTacticalIntent() {
+    const enemy = enemies.find(unit=>unit.tactics&&remain(unit));
+    const active = !!enemy && !resolving && !result;
+    intent.hidden = !active;
+    for (const unit of party) refs.get(unit.key).group.classList.remove('is-threatened','is-main-threat');
+    if (!active) return;
+    const {tactics} = enemy;
+    const beat = tacticalBeat(round);
+    const move = tacticalPlan(enemy);
+    const paused = broken(enemy) || statusOn(enemy,'stun');
+    intent.dataset.intent = paused ? 'halted' : beat;
+    intent.dataset.target = move.target;
+    const range = move.tacticalFocus ? `${byKey(move.tacticalFocus)?.name??'味方一人'}＋余波` :
+      move.target==='all' ? '味方全体' : move.target==='self' ? '自分' : byKey(move.targetKey)?.name ?? '味方一人';
+    const title = paused ? '好機　相手は今巡、動けない' : beat==='surge' ?
+      `大技の予告　${move.name} → ${range}` : beat==='open' ? '好機　相手は大技の反動で動きが鈍い' :
+        `次の巡に大技　${tactics.warning}`;
+    const wall = tactics.pattern==='plate' ? (round%2===0?'魔法に備えている。':'物理に備えている。') : '';
+    const echo = tactics.pattern==='echo' && enemy.echoedHits>=2 ? `反響 ${enemy.echoedHits}。 ` : '';
+    const detail = paused ? 'ブーストや技で攻めるなら今。' : beat==='surge' ?
+      `${wall}${echo}盾を割ると中断。守り・回復は先に行動。` :
+      beat==='probe' ? `${wall}大技の前に盾を戻す。先に割れば止まる。` : `${wall}${tactics.cue}`;
+    intent.replaceChildren(element('strong','',title),element('small','',detail));
+    if (!paused && beat==='surge') for (const ally of living('ally')) {
+      const group = refs.get(ally.key).group;
+      if (move.target==='all' || ally.key===move.targetKey) group.classList.add('is-threatened');
+      group.classList.toggle('is-main-threat',ally.key===move.tacticalFocus);
+    }
+  }
+
   function enemyAction(actor) {
+    if (actor.tactics) {
+      const announced=tacticalPlan(actor);
+      const target=byKey(announced.targetKey);
+      return target&&remain(target) ? announced : {...announced,targetKey:living('ally')[0]?.key};
+    }
     const targets = living('ally');
     const usable = actor.skills.filter(skill => {
       const candidates = targetSet(skill, actor);
@@ -1317,9 +1413,8 @@ export function startBattle(config) {
     syncEnemyPhase(true);
     for (const { target, weak, revive, shieldCut } of reports) {
       const ui = refs.get(target.key);
-      if (target.side === 'ally' || target.human) {
-        if (!remain(target)) personFrame(ui.sprite, target.sprite, 'fallen', personScale(), false);
-        else if (revive) personFrame(ui.sprite, target.sprite, target.side === 'ally' ? 'back' : 'face', personScale(), false);
+      if (revive && (target.side === 'ally' || target.human)) {
+        personFrame(ui.sprite, target.sprite, target.side === 'ally' ? 'back' : 'face', personScale(), false);
       }
       updateUnit(target);
       if (weak || shieldCut) animate(ui.guard, [
@@ -1334,11 +1429,18 @@ export function startBattle(config) {
 
   function approach(actor, target, boost) {
     const from = spritePoint(actor);
-    const to = target && target !== actor ? spritePoint(target) : from;
-    const towards = actor.side === 'ally' ? -1 : 1;
-    const more = actor.side === 'ally' ? 28 + boost * 3 : 22;
-    const space = to === from ? more : Math.max(9, Math.abs(to.y - from.y) * .34);
-    return { x: bounded((to.x - from.x) / 10, -15, 15), y: towards * Math.min(more, space) };
+    const to = target ? spritePoint(target) : from;
+    const difference = to.x - from.x;
+    if (actor.side !== 'ally') {
+      return { x: bounded(difference * .16, -31, 31), y: 34 };
+    }
+    if (!target || target.side === 'ally') {
+      return { x: bounded(difference * .14, -24, 24), y: -27 };
+    }
+    const attackerTop = refs.get(actor.key).sprite.getBoundingClientRect().top;
+    const cardsBottom = Math.max(...living('enemy').map(unit => refs.get(unit.key).card.getBoundingClientRect().bottom));
+    const gap = Math.max(14, attackerTop - cardsBottom - 5);
+    return { x: bounded(difference * .42, -106, 106), y: -Math.min(77 + boost * 4, gap) };
   }
 
   function showCutIn(actor, action, boost) {
@@ -1382,7 +1484,6 @@ export function startBattle(config) {
     showControls();
     const ui = refs.get(actor.key);
     const ally = actor.side === 'ally';
-    const humanoid = ally || actor.human;
     const boost = action.boost || 0;
     const isHeal = healing(action);
     const isGuard = action.type === 'guard' || action.effect === 'guard';
@@ -1397,7 +1498,6 @@ export function startBattle(config) {
     delete root.dataset.hit;
     const possibleTargets = targetSet(action, actor);
     const aimAt = possibleTargets.find(unit => unit.key === action.targetKey) ?? possibleTargets[0];
-    const direction = ally ? -1 : 1;
     const targetRight = aimAt ? spritePoint(aimAt).x > spritePoint(actor).x : !ally;
     const stepPlan = approach(actor, aimAt, boost);
     const lunge = motionOff() ? 'none' : `translate(${stepPlan.x}px,${stepPlan.y}px)`;
@@ -1408,7 +1508,7 @@ export function startBattle(config) {
       if (ally && !motionOff()) personFrame(ui.sprite, actor.sprite, 'step', personScale(), false);
       const step = animate(ui.imageBox, [
         { transform: 'none' },
-        { transform: `translateY(${direction * -5}px)`, offset: 0.22 },
+        { transform: `translate(${stepPlan.x * .12}px,${stepPlan.y * .48}px)`, offset: .42 },
         { transform: lunge }
       ], 275, { fill: 'forwards', easing: 'ease-in-out' });
       await wait(120);
@@ -1420,9 +1520,7 @@ export function startBattle(config) {
       step?.cancel();
     }
     setPhase('stance', actor);
-    if (humanoid && !isGuard) {
-      personFrame(ui.sprite, actor.sprite, physical ? 'attack' : ally ? 'back' : 'face', personScale(), physical && targetRight);
-    }
+    if (ally && !isGuard) personFrame(ui.sprite, actor.sprite, 'back', personScale(), false);
     ui.imageBox.classList.add(physical ? 'is-weapon-stance' : 'is-skill-stance');
     await wait(isGuard ? 125 : 165);
     if (closed) return;
@@ -1471,11 +1569,13 @@ export function startBattle(config) {
         const flight = physical ? (quickHit ? 184 : 275) : (quickHit ? 240 : 350);
         setPhase('launch', actor);
         delete root.dataset.hit;
+        if (ally && !motionOff()) personFrame(ui.sprite, actor.sprite, 'nextStep', personScale(), false);
         swing(ui.sprite, physical, targetRight);
         sfx(action.type === 'attack' ? ally ? 'attack' : 'enemyAttack' : 'skill');
         for (const target of liveTargets) bolt(actor, target, action, physical, flight);
         await wait(flight);
         if (closed) return;
+        if (ally && !motionOff()) personFrame(ui.sprite, actor.sprite, 'back', personScale(), false);
         setPhase('contact', actor);
         const reports = liveTargets.map(target => {
           if (isHeal) return restore(actor, target, action);
@@ -1508,14 +1608,19 @@ export function startBattle(config) {
     if (!isGuard) {
       if (ally && !motionOff()) personFrame(ui.sprite, actor.sprite, 'nextStep', personScale(), false);
       const returnTrip = animate(ui.imageBox, [
-        { transform: lunge }, { transform: `translateY(${direction * -2}px)`, offset: 0.78 }, { transform: 'none' }
+        { transform: lunge },
+        { transform: `translate(${stepPlan.x * .12}px,${stepPlan.y * .48}px)`, offset: .58 },
+        { transform: 'none' }
       ], 250, { fill: 'forwards', easing: 'ease-in-out' });
-      await wait(250);
+      await wait(130);
+      if (closed) return;
+      if (ally && !motionOff()) personFrame(ui.sprite, actor.sprite, 'step', personScale(), false);
+      await wait(120);
       ui.imageBox.style.removeProperty('transform');
       returnTrip?.cancel();
     } else await wait(130);
     if (closed) return;
-    if (humanoid) personFrame(ui.sprite, actor.sprite, remain(actor) ? (ally ? 'back' : 'face') : 'fallen', personScale(), false);
+    if (ally) personFrame(ui.sprite, actor.sprite, 'back', personScale(), false);
     ui.group.classList.remove('is-acting');
   }
 
@@ -1589,10 +1694,12 @@ export function startBattle(config) {
     }
     round++;
     roundOrder = null;
+    tacticalPlans.clear();
     for (const unit of units) {
       unit.guarding = false;
       if (unit.side === 'ally' && remain(unit) && !usingBoost.has(unit.key)) unit.boost = Math.min(5, unit.boost + 1);
       if (unit.broken === round - 1) unit.guard = unit.maxShield;
+      if (unit.tactics && tacticalBeat(round)==='surge' && !broken(unit)) unit.guard=unit.maxShield;
       for (const tag of Object.keys(unit.statuses)) if (unit.statuses[tag].until < round) delete unit.statuses[tag];
     }
     resolving = false;
@@ -1696,6 +1803,10 @@ export function startBattle(config) {
   }
 
   for (const unit of units) drawUnit(unit);
+  if (enemies.some(unit=>unit.tactics)) {
+    monsterStage.classList.add('cb-has-tactics');
+    monsterStage.append(intent);
+  }
   monsterStage.dataset.count = String(enemies.length);
   monsterStage.style.setProperty('--cb-count', enemies.length);
   partyStage.dataset.count = String(party.length);

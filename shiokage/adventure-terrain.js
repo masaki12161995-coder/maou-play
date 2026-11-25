@@ -12,8 +12,25 @@ const shades = {
   stairs:['#746f61','#8b8576','#655f52','#a49679','#53554f'],
   water:['#233e50','#2a495c','#203948','#315767','#1a313f'],
   cliff:['#282f36','#343c41','#20282f','#424a49','#19222b'],
+  timber:['#705b47','#826953','#634e42','#a58a65','#4c4038'],
+  frost:['#788d92','#879ca2','#657b83','#a2b0b0','#536d77'],
+  umber:['#68544a','#785e51','#594842','#987661','#4a3e3e'],
+  bedrock:['#292e35','#383f44','#21292f','#555850','#1b242b'],
+  cutStone:['#333c47','#46515b','#2b3540','#626b70','#202c36'],
+  plaster:['#635744','#75614e','#51443b','#92806b','#3b322c'],
+  ironWall:['#372c30','#463737','#2e2629','#644741','#251d23'],
+  redWall:['#453239','#583d41','#372c35','#765251','#2c232c'],
+  iceWall:['#395060','#4a6472','#293c4c','#6b8290','#233743'],
+  duneWall:['#615743','#746750','#524d3f','#9a8965','#453e32'],
+  trees:['#263f38','#304b40','#203630','#39584a','#172b2a'],
+  drop:['#273646','#354958','#20313e','#526977','#182735'],
   paving:['#7a7569','#878073','#696559','#a29a85','#5d5a53'],
   track:['#7a6f57','#877962','#695f50','#9d8d6b','#585449']
+};
+const blocked = new Set(['water','cliff','bedrock','cutStone','plaster','ironWall','redWall','iceWall','duneWall','trees','drop']);
+const underground = {
+  plaster:['#252422','#302b27','#211e1e'],bedrock:['#171f27','#202932','#151c24'],cutStone:['#202930','#27343d','#19222c'],
+  ironWall:['#251f25','#2c252b','#201b22'],redWall:['#2a242b','#362930','#241e27'],iceWall:['#24333e','#2b3e4b','#202d38']
 };
 
 const hash = (x,y,seed) => {
@@ -36,12 +53,15 @@ function pathRange(paths,x,y) {
 function outdoorSurface(scene,x,y) {
   const field=scene.field;
   const clearDist=pathRange(scene.paths,x,y);
-  const radius=field.radius+12*Math.cos(x*.012+y*.023)+10*Math.sin(y*.025-x*.016);
-  if(clearDist<33**2) return field.profile==='water'?'wood':field.profile==='rise'?'stairs':'track';
-  if(clearDist<radius**2) return field.ground;
-  for(const [cx,cy,rx,ry] of field.rooms) {
-    if(((x-cx)/rx)**2+((y-cy)/ry)**2<=.96+Math.sin((x+y)*.015)*.045) return field.ground;
+  const hard=field.chambers[0]?.shape==='brick';
+  const radius=field.radius+(hard?0:4*Math.cos(x*.012+y*.023)+4*Math.sin(y*.025-x*.016));
+  if(field.track==='wood'&&clearDist<29**2) return 'wood';
+  for(const room of field.chambers) {
+    const dx=Math.abs(x-room.x)/(room.w*.5),dy=Math.abs(y-room.y)/(room.h*.5);
+    const inRoom=room.shape==='brick'?Math.max(dx,dy)<1&&dx+dy<1.91:dx*dx+dy*dy<=.96+Math.sin((x+y)*.015)*.042;
+    if(inRoom) return room.material??(clearDist<20**2?field.track:field.ground);
   }
+  if(clearDist<radius**2) return hard||clearDist<30**2?field.track:field.ground;
   return field.wall;
 }
 
@@ -65,39 +85,55 @@ function surface(scene,x,y) {
 
 export function adventureTerrainClear(scene,x,y) {
   if(x<12||y<12||x>scene.width-12||y>scene.height-12) return false;
-  const ground=surface(scene,x,y);
-  return ground!=='water'&&ground!=='cliff';
+  return !blocked.has(surface(scene,x,y));
 }
 
 function paintCell(ctx,scene,x,y,lx,ly) {
   const base=surface(scene,x+STEP*.5,y+STEP*.5), normal=shades[base];
   const r=hash(x/STEP,y/STEP,scene.seed), smooth=Math.cos(x*.025-y*.031)+Math.sin(y*.036+x*.012);
-  const edge=(base==='cliff'||base==='water')&&surface(scene,x+4,y+17)!==base;
+  const outside=blocked.has(base);
+  const above=surface(scene,x+4,y-4),below=surface(scene,x+4,y+12);
+  const voidColors=scene.kind==='cave'?underground[base]:null;
+  if(voidColors) {
+    const lowerFloor=!blocked.has(below), face=lowerFloor||!blocked.has(surface(scene,x+4,y+20));
+    const side=!blocked.has(above)||!blocked.has(surface(scene,x-4,y+4))||!blocked.has(surface(scene,x+12,y+4));
+    const fill=face?normal[lowerFloor?1:0]:side?normal[4]:voidColors[r>.92?1:r<.15?2:0];
+    ctx.fillStyle=fill;
+    ctx.fillRect(lx,ly,STEP,STEP);
+    if(face) {
+      ctx.fillStyle=normal[lowerFloor?3:4];ctx.fillRect(lx,ly,STEP,2);
+      ctx.fillStyle='#161d2080';ctx.fillRect(lx,ly+7,STEP,1);
+      if((x+Math.floor(y/8)%2*8)%16===0) ctx.fillRect(lx,ly+2,1,5);
+    } else if(side) {
+      ctx.fillStyle=normal[3];ctx.fillRect(lx+2,ly+4,4,1);
+    }
+    return;
+  }
+  const edge=outside&&surface(scene,x+4,y+17)!==base;
   const color=normal[edge?3:r<.11?2:(r>.91||smooth>1.6)?1:0];
   ctx.fillStyle=color;
   ctx.fillRect(lx,ly,STEP,STEP);
-  if(edge&&base==='cliff') {
+  if(edge&&base!=='water') {
     ctx.fillStyle='#78807170';ctx.fillRect(lx,ly+STEP-2,STEP,2);
   }
-  const above=surface(scene,x+4,y-4),below=surface(scene,x+4,y+12);
-  if(base!=='cliff'&&above==='cliff') {
+  if(!outside&&blocked.has(above)&&above!=='water') {
     ctx.fillStyle='#292e3080';ctx.fillRect(lx,ly,STEP,3);
   }
   if(base!=='water'&&below==='water') {
     ctx.fillStyle='#8f8e7990';ctx.fillRect(lx,ly+4,STEP,2);
     ctx.fillStyle='#333e40';ctx.fillRect(lx,ly+6,STEP,2);
   }
-  if(base==='wood'||base==='stairs') {
+  if(base==='wood'||base==='stairs'||base==='timber') {
     ctx.fillStyle=normal[4];ctx.fillRect(lx,ly,STEP,1);
     if((x+(Math.floor(y/8)%4)*8)%40===0) ctx.fillRect(lx,ly,1,STEP);
     if(r>.78) {ctx.fillStyle=normal[3];ctx.fillRect(lx+1,ly+3,5,1);}
-  } else if(base==='paving') {
+  } else if(base==='paving'||base==='plaster'||base==='cutStone'||base==='ironWall') {
     const stitch=(x+(Math.floor(y/8)%2)*8)%16===0;
     ctx.fillStyle='#48464166';ctx.fillRect(lx,ly+7,STEP,1);
     if(stitch) ctx.fillRect(lx,ly,1,STEP);
     ctx.fillStyle=normal[3];
     if(r>.5) ctx.fillRect(lx+2,ly+1,4,1);
-  } else if (base==='track'||base==='stone'||base==='slate') {
+  } else if (base==='track'||base==='stone'||base==='slate'||base==='bedrock'||base==='drop'||base==='iceWall'||base==='redWall') {
     if(r>.70) {ctx.fillStyle=normal[3];ctx.fillRect(lx+1,ly+2,5,1);}
     if(r<.28) {ctx.fillStyle=normal[4];ctx.fillRect(lx+4,ly+7,4,1);}
   } else if(base==='water') {
@@ -105,7 +141,7 @@ function paintCell(ctx,scene,x,y,lx,ly) {
   } else if(r>.87||r<.09) {
     ctx.fillStyle=normal[r>.87?3:4];
     ctx.fillRect(lx+2,ly+3,2+r*2,1);
-    if(base==='marsh'||base==='meadow') ctx.fillRect(lx+4,ly+2,1,3);
+    if(base==='marsh'||base==='meadow'||base==='trees') ctx.fillRect(lx+4,ly+2,1,3);
   }
 }
 
@@ -339,8 +375,188 @@ function stall(ctx,x,y,style) {
   rectangle(ctx,dark,x-32,y-32,65,3);
 }
 
+function breakwater(ctx) {
+  for(let i=0;i<8;i++) {
+    const x=(i-4)*15,y=7-Math.round(Math.sin(i*.54)*21);
+    polygon(ctx,'#3c484c',[[x-10,y],[x-9,y-13],[x,y-22],[x+12,y-16],[x+13,y+1]]);
+    polygon(ctx,i%2?'#7b8580':'#89918a',[[x-8,y-11],[x,y-22],[x+11,y-16],[x+7,y-9]]);
+    rectangle(ctx,'#718f9065',x-2,y+3,17,2);
+  }
+}
+
+function windbreak(ctx) {
+  for(let i=0;i<10;i++) {
+    const x=i*12-61, top= -52+(i%3)*4;
+    rectangle(ctx,'#4f473b',x,top,9,50-(i%3)*4);
+    rectangle(ctx,i%2?'#806852':'#a38761',x+1,top+1,6,41-(i%3)*4);
+    rectangle(ctx,'#b29a72',x+1,top+2,6,2);
+  }
+  beam(ctx,'#584238',-63,-29,59,-23,5);
+  beam(ctx,'#765944',-63,-12,59,-5,4);
+}
+
+function reedBridge(ctx) {
+  for(const x of [-45,-25,0,25,46]) {
+    rectangle(ctx,'#463e39',x,-34,4,37);
+    rectangle(ctx,'#9c8865',x-2,-36,8,4);
+    for(let i=0;i<4;i++) {
+      const leaf=x-6+i*4, z=-10-i*3;
+      beam(ctx,i%2?'#627456':'#8d9770',leaf,5,leaf+(i%2?5:-4),z,2);
+    }
+  }
+  beam(ctx,'#a18e68',-45,-28,47,-28,3);
+  beam(ctx,'#5e6250',-45,-17,47,-17,2);
+}
+
+function roofRuin(ctx) {
+  shadow(ctx,0,0,56);
+  polygon(ctx,'#3d3a39',[[-53,1],[-53,-52],[-28,-54],[-8,-63],[13,-55],[23,-31],[39,-40],[48,-29],[48,1]]);
+  polygon(ctx,'#796d59',[[-50,-2],[-50,-48],[-27,-49],[-8,-58],[10,-49],[18,-25],[27,-28],[42,-27],[43,-2]]);
+  polygon(ctx,'#4b4a45',[[-54,-48],[-37,-67],[-13,-74],[9,-72],[27,-58],[24,-50],[3,-62],[-16,-61],[-46,-46]]);
+  rectangle(ctx,'#282c2d',-37,-35,14,24);rectangle(ctx,'#292d2f',17,-20,16,21);
+  for(const x of [-42,-33,-11,2,34]) rectangle(ctx,'#9a8870',x,-22-x%5,8,2);
+}
+
+function forestVista(ctx) {
+  for(const [x,y,size] of [[-32,0,.74],[1,-9,1.03],[34,2,.81]]){
+    rectangle(ctx,'#554a42',x-3,y-45*size,6,47*size);
+    for(let n=0;n<3;n++){
+      const leafY=y-73*size+n*14*size, half=(16+n*7)*size;
+      polygon(ctx,n===0?'#40614f':n===1?'#365745':'#304f42',[[x,leafY],[x-half,leafY+31*size],[x,leafY+27*size],[x+half,leafY+31*size]]);
+      beam(ctx,'#6c806052',x,leafY+4,x-half*.81,leafY+27*size,1);
+    }
+  }
+}
+
+function cliffVista(ctx) {
+  for(let i=0;i<4;i++) {
+    const x=-79+i*44,y=6-(i%2)*11;
+    polygon(ctx,i%2?'#455461':'#3c4b59',[[x-7,y],[x+4,y-17],[x+24,y-26],[x+38,y-17],[x+44,y-3],[x+44,y+8]]);
+    beam(ctx,'#82908a',x+5,y-17,x+25,y-25,2);
+    beam(ctx,'#677c83',x+23,y-10,x+31,y+4,1);
+  }
+}
+
+function shelving(ctx,stone) {
+  shadow(ctx,0,0,42);
+  const beamColor=stone?'#4d5050':'#493b33',front=stone?'#7a7970':'#8a6e51';
+  for(const x of [-39,33]) rectangle(ctx,beamColor,x,-53,7,55);
+  for(const y of [-50,-29,-9]) {
+    rectangle(ctx,beamColor,-41,y-4,82,8);
+    rectangle(ctx,front,-40,y-4,79,2);
+  }
+  for(const [x,y] of [[-32,-43],[-10,-24],[9,-46],[20,-25],[-33,-9]]){
+    rectangle(ctx,stone?'#6e6b61':'#785b45',x,y-7,13,9);
+    rectangle(ctx,stone?'#a39b83':'#b39166',x,y-6,11,2);
+    rectangle(ctx,'#4b423c',x+3,y-1,8,1);
+  }
+}
+
+function sluiceGate(ctx) {
+  shadow(ctx,0,0,47);
+  for(const x of [-43,32]) {
+    rectangle(ctx,'#343739',x,-61,11,62);
+    rectangle(ctx,'#777b72',x+2,-60,7,54);
+    rectangle(ctx,'#929488',x-3,-62,17,6);
+  }
+  rectangle(ctx,'#454643',-44,-57,89,10);
+  rectangle(ctx,'#826d53',-42,-56,85,4);
+  for(let i=0;i<8;i++){
+    const x=-29+i*8;
+    rectangle(ctx,i%2?'#665c4e':'#786855',x,-42,6,34);
+    rectangle(ctx,'#343e3e',x,-12,6,4);
+  }
+  beam(ctx,'#aaab9a',-6,-49,-6,-17,2);
+  beam(ctx,'#919589',-16,-44,4,-44,2);
+}
+
+function crystalCluster(ctx,color,light) {
+  shadow(ctx,0,0,42);
+  for(const [x,y,h,w] of [[-27,0,25,13],[-16,1,42,12],[2,-3,61,16],[21,0,31,10],[34,0,18,11]]){
+    polygon(ctx,color,[[x-w,y],[x-w*.55,y-h*.60],[x+1,y-h],[x+w*.72,y-h*.42],[x+w,y]]);
+    polygon(ctx,light,[[x+1,y-h],[x-w*.55,y-h*.60],[x-3,y-5],[x+4,y-h*.41]]);
+  }
+}
+
+function furnace(ctx) {
+  shadow(ctx,0,0,53);
+  polygon(ctx,'#3f3430',[[-49,1],[-48,-30],[-35,-59],[-20,-75],[21,-75],[42,-50],[49,-25],[49,1]]);
+  polygon(ctx,'#78604e',[[-45,-2],[-44,-29],[-30,-57],[-18,-68],[19,-68],[37,-49],[43,-28],[43,-2]]);
+  polygon(ctx,'#38282a',[[-21,-3],[-21,-24],[-13,-35],[14,-35],[22,-20],[22,-3]]);
+  for(const x of [-19,-9,1,10]) rectangle(ctx,'#cf804c',x,-7,8,2);
+  for(const [x,y,w] of [[-41,-29,17],[-21,-46,28],[-9,-56,27],[21,-39,19]]) rectangle(ctx,'#a27f61',x,y,w,2);
+}
+
+function ribs(ctx,bone) {
+  const ink=bone?'#71685b':'#544c41',color=bone?'#c2ae90':'#927456';
+  shadow(ctx,0,0,59);
+  for(const n of [-4,-3,-2,-1,0,1,2,3,4]){
+    const x=n*13,y=1-(n%2)*3,h=(5-Math.abs(n))*8;
+    beam(ctx,ink,x-4,y,x+8,y-h,5);
+    beam(ctx,color,x-3,y-4,x+7,y-h,3);
+    beam(ctx,color,x+7,y-h,x+15,y-h+5,2);
+  }
+  beam(ctx,ink,-57,3,59,3,5);
+}
+
+function fallenTrunks(ctx) {
+  shadow(ctx,0,0,47);
+  for(const [dx,dy,slope] of [[-18,-1,-16],[14,4,9]]){
+    beam(ctx,'#434538',dx-35,dy-slope,dx+36,dy+slope,14);
+    beam(ctx,'#77674d',dx-34,dy-slope-3,dx+34,dy+slope-3,7);
+    beam(ctx,'#a08a62',dx-32,dy-slope-4,dx+30,dy+slope-4,2);
+    rectangle(ctx,'#b49a71',dx+28,dy+slope-5,11,9);
+    beam(ctx,'#4d6049',dx-13,dy-2,dx-7,dy-22,3);
+  }
+}
+
+function barnDoor(ctx) {
+  shadow(ctx,0,0,45);
+  polygon(ctx,'#6e5b47',[[-43,1],[-43,-46],[-27,-59],[28,-59],[43,-46],[43,1]]);
+  polygon(ctx,'#4b4239',[[-45,-45],[-31,-62],[30,-62],[46,-45],[39,-43],[-39,-43]]);
+  rectangle(ctx,'#332e2c',-19,-41,38,42);
+  rectangle(ctx,'#947256',-25,-44,7,46);rectangle(ctx,'#947256',19,-44,7,46);
+  rectangle(ctx,'#a28862',-24,-44,50,4);
+  for(const x of [-41,-33,30,38]) rectangle(ctx,'#806752',x,-43,2,41);
+  rectangle(ctx,'#9b8865',-25,1,51,3);
+}
+
+function forestGate(ctx) {
+  shadow(ctx,0,0,44);
+  for(const x of [-34,24]) {
+    polygon(ctx,'#544738',[[x-8,2],[x-5,-34],[x+2,-45],[x+11,-40],[x+14,2]]);
+    beam(ctx,'#998665',x-4,-32,x+4,-43,2);
+    for(const move of [-1,1]) beam(ctx,'#614a3a',x+4,-2,x+18*move,4,3);
+  }
+  beam(ctx,'#89976e',-34,-30,-31,-50,2);beam(ctx,'#89976e',26,-30,30,-47,2);
+  rectangle(ctx,'#7a735a',-23,1,46,3);
+}
+
+function tunnelMouth(ctx) {
+  shadow(ctx,0,0,44);
+  polygon(ctx,'#424951',[[-46,1],[-44,-12],[-29,-42],[-17,-55],[12,-55],[28,-47],[45,-19],[46,1]]);
+  polygon(ctx,'#18252f',[[-28,0],[-27,-13],[-17,-35],[-5,-42],[12,-39],[21,-28],[28,0]]);
+  beam(ctx,'#787e75',-29,-42,-17,-54,3);beam(ctx,'#747b74',10,-53,27,-45,3);
+  rectangle(ctx,'#687572',-27,1,54,3);
+}
+
+const signatureArt = {
+  breakwater,windbreak,reedBridge,roofRuin,forestVista,cliffVista,shelving:ctx=>shelving(ctx,false),stoneShelves:ctx=>shelving(ctx,true),
+  sluiceGate,waxPillars:ctx=>crystalCluster(ctx,'#937650','#caa574'),iceSpire:ctx=>crystalCluster(ctx,'#4d7688','#a7c4c1'),
+  echoStones:ctx=>crystalCluster(ctx,'#6f7272','#a1a398'),reefStone:ctx=>crystalCluster(ctx,'#55696c','#77918b'),
+  furnace,shipFrame:ctx=>ribs(ctx,false),boneRibs:ctx=>ribs(ctx,true),fallenTrunks,barnDoor,forestGate,tunnelMouth
+};
+
 export function drawAdventureObject(ctx,object,palette,time,opened) {
   const {x,y,physical}=object;
+  const feature=signatureArt[physical];
+  if(feature) {
+    ctx.save();ctx.translate(x,y);
+    const marker=object.kind?.startsWith('adventure');
+    const size=object.small?.58:marker?.47:1;
+    ctx.scale(size,size);feature(ctx);ctx.restore();
+    return;
+  }
   switch(physical) {
     case null:return;
     case 'gate':return gate(ctx,x,y,palette,true);
@@ -349,6 +565,7 @@ export function drawAdventureObject(ctx,object,palette,time,opened) {
     case 'boat':case 'readyBoat':return boat(ctx,x,y,physical==='readyBoat');
     case 'mooring':case 'anchored':return mooring(ctx,x,y,physical==='anchored');
     case 'refuge':return refuge(ctx,x,y);
+    case 'camp':return refuge(ctx,x,y);
     case 'grove':case 'burntGrove':return grove(ctx,x,y,physical==='burntGrove');
     case 'tackle':return tackle(ctx,x,y);
     case 'cistern':return basin(ctx,x,y);

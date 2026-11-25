@@ -1,5 +1,12 @@
 const rankColors = ['白','緑','青','紫','金','虹'];
 
+export function equipmentDisplayName(description,rarity) {
+  const clean=description.replace(/（.*）/u,'');
+  const color=clean.match(/^([白緑青紫金虹])(?:色の|色に輝く|色に光る|の|い)/u);
+  if(color&&color[1]!==rarity&&clean.length>color[0].length) return clean.slice(color[0].length);
+  return clean;
+}
+
 const dropTables = {
   road: [
     [.28,[68,30,2,0,0,0]], [.30,[22,42,30,6,0,0]], [.34,[0,16,50,32,2,0]]
