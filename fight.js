@@ -576,7 +576,7 @@ async function hit(a,t,o){
     if(r.crit && !o.passive) for(const x of alive(B.party)) if(x.P.guildBond) addGauge(x,x.P.guildBond,x!==a);
     if(P.curseHit && t.hp>0 && !o.passive && Math.random()*100<P.curseHit) addCurse(t,1,a);
     if(nSt(t)>0){ if(P.stHunt) addGauge(a,P.stHunt); if(P.widen && t.hp>0 && Math.random()*100<P.widen){ const pool=['poison','paralyze','burn'].filter(x=>!t.st[x]); if(pool.length) addStatus(t,pick(pool),100,a); } }
-    const dr=(a.drain||0)/100+(o.drain||0); if(dr>0){ const h=Math.round(d*dr); if(h>0){ a.hp=Math.min(a.mhp,a.hp+h); meterAdd(a,o.skill||'攻撃','heal',h); } }
+    const dr=(a.drain||0)/100+(o.drain||0); if(dr>0&&a.hp>0){ const h=Math.min(Math.round(d*dr),a.mhp-a.hp); if(h>0){ a.hp+=h; meterAdd(a,o.skill||'攻撃','heal',h); pop(a,'吸収 +'+h,'#86efac'); } }
     if(o.status && t.hp>0) addStatus(t,o.status[0],o.status[1],a);
   }
   // ---- 味方が受けた ----
