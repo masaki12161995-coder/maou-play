@@ -257,7 +257,7 @@ const KIT = {
  N:[{nm:'影の手', d:'闇の魔法（{m}）＋呪い+1', k:'atk', tgt:'front', mag:1, el:'dark', m:[0.9,1.3], curse:1, r3:{curse:2}, r3d:'呪い+2に', r5:{gSelf:10}, r5d:'ゲージ+10'},
     {nm:'呪いの言葉', d:'敵全員に魔法{m}＋呪い+1', k:'atk', tgt:'all', mag:1, el:'dark', m:[0.4,0.6], curse:1, r3:{sd:1}, r3d:'速度ダウン', r5:{curse:2}, r5d:'呪い+2に'},
     {nm:'影縛り', d:'闇の魔法（{m}）＋麻痺{st.c}%', k:'atk', tgt:'front', mag:1, el:'dark', m:[0.6,1.0], st:{s:'paralyze',c:[20,40]}, r3:{curse:1}, r3d:'呪い+1', r5:{atkDown:1}, r5d:'攻撃ダウンも'}],
- A:[{nm:'呪詛爆ぜ', d:'HPが一番多い敵に闇の魔法{m}＋その敵の呪いをはじけさせる（呪い1つにつき{curseBurst%}）', k:'atk', tgt:'high', mag:1, el:'dark', m:[1.5,2.4], curseBurst:[0.6,0.9], tag:'ボス', r3:{keepCurse:1}, r3d:'はじけても呪いが半分残る', r5:{sc:1}, r5d:'かならず会心'},
+ A:[{nm:'呪詛爆ぜ', d:'呪いが一番多い敵に闇の魔法{m}＋その敵の呪いをはじけさせる（呪い1つにつき{curseBurst%}）', k:'atk', tgt:'mostCurse', mag:1, el:'dark', m:[1.5,2.4], curseBurst:[0.6,0.9], tag:'ボス', r3:{keepCurse:1}, r3d:'はじけても呪いが半分残る', r5:{sc:1}, r5d:'かならず会心'},
     {nm:'闇の大波', d:'敵全員に闇の魔法{m}＋呪い+1', k:'atk', tgt:'all', mag:1, el:'dark', m:[1.6,2.6], curse:1, tag:'雑魚', r3:{curse:2}, r3d:'呪い+2に', r5:{kG:15}, r5d:'倒した数×ゲージ+15'},
     {nm:'千年の守り歌', d:'味方全員の被ダメージ−{pCut.pct}%（2ターン）＋状態異常を治す', k:'support', pCut:{pct:[20,35],t:2}, cure:1, tag:'守る', r3:{pG:10}, r3d:'味方全員のゲージ+10', r5:{pCut:{pct:35,t:3}}, r5d:'3ターンに'}],
  P:[{id:'cursedDmg', nm:'呪いの深み', d:'呪われた敵への攻撃+{v}%（味方全員）', v:[8,18]},

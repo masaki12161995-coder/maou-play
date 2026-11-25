@@ -171,6 +171,7 @@ function pickTargets(tgt){ const en=alive(B.enemies); if(!en.length) return [];
   if(tgt==='all') return en;
   if(tgt==='low') return [en.slice().sort((a,b)=>a.hp-b.hp)[0]];
   if(tgt==='high') return [en.slice().sort((a,b)=>b.hp-a.hp)[0]];
+  if(tgt==='mostCurse') return [en.slice().sort((a,b)=>(b.curse||0)-(a.curse||0)||b.hp-a.hp)[0]];
   if(tgt==='mostSt') return [en.slice().sort((a,b)=>nSt(b)-nSt(a)||b.hp-a.hp)[0]];
   if(tgt==='random') return [pick(en)];
   return [en[0]]; }
@@ -263,7 +264,7 @@ async function runSkillCore(u,s,ctx){
         if(s.focus){ if(u.focusT!==t){ u.focusT=t; u.focusN=0; } mult*=1+s.focus*Math.min(10,u.focusN)/100; u.focusN++; }
         if(s.lucky && Math.random()*100<s.lucky.c){ mult*=s.lucky.x; pop(t,'大当たり！','#facc15'); }
         if(s.xLow && t.hp<=t.mhp*s.xLow.th) mult*=s.xLow.x;
-        if(s.xSelfLow && u.hp<=u.mhp*s.xSelfLow.th) mult*=s.xSelfLow.x;
+        if(s.xSelfLow && !s.xSelfScale && u.hp<=u.mhp*s.xSelfLow.th) mult*=s.xSelfLow.x; // ★3の「HPが低いほど最大2倍」と二重には掛けない
         if(s.xSelfScale) mult*=1+(s.xSelfScale-1)*(1-u.hp/u.mhp);
         if(s.xSt && (s.xSt.st==='defDown'?defDown(t):s.xSt.st==='mark'?t.mark>0:t.st[s.xSt.st])) mult*=s.xSt.x;
         if(s.xPerSt) mult*=1+s.xPerSt*nSt(t);
