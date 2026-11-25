@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14151f">
+<title>戦闘の試作</title>
+<link rel="icon" href="data:,">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#0d0e16;overscroll-behavior:none}
+body{position:fixed;inset:0;color:#eef0ff;font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#app{position:absolute;inset:0;display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top,0px) + 6px) 8px calc(env(safe-area-inset-bottom,0px) + 10px);
+  background:linear-gradient(#1b1d33 0%,#23264a 45%,#2b2a3d 62%,#1a1b29 100%)}
+.px{image-rendering:pixelated;image-rendering:crisp-edges}
+/* 行動順 */
+#order{flex:0 0 auto;display:flex;align-items:center;justify-content:center;height:52px;padding:0 6px;background:#0009;border:1px solid #ffffff1c;border-radius:10px}
+#order .lbl{font-size:10px;color:#aab;writing-mode:vertical-rl;letter-spacing:2px;margin-right:2px}
+.slot{flex:0 0 40px;height:40px;border-radius:8px;background:#ffffff10;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;transition:transform .25s}
+.slot.sh{background:#3b6fd44d;border:1px solid #6fa0ff66}
+.slot.se{background:#d43b4b40;border:1px solid #ff6f7f55}
+.slot.now{transform:scale(1.12);box-shadow:0 0 0 2px #ffe27a}
+.slot .face{width:40px;height:40px;background-size:120px 250px;background-position:-40px -3px}
+.slot img{max-width:34px;max-height:34px}
+.slot .big{position:absolute;right:1px;top:0;font-size:10px;color:#ff5d5d;font-weight:800}
+/* 敵 */
+#field{flex:1 1 auto;position:relative;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 0 14px;min-height:0}
+.enemy{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:opacity .4s,transform .15s}
+.enemy.dead{opacity:0;transform:scale(.8)}
+.enemy img{display:block}
+.enemy.pick img{filter:drop-shadow(0 0 4px #ffe27a) drop-shadow(0 0 2px #ffe27a)}
+.enemy.hit img{animation:hit .3s}
+.enemy.lunge{animation:lunge .35s}
+.enemy.charge img{animation:glow 1s infinite}
+@keyframes hit{0%,100%{transform:none}25%{transform:translateX(-5px);filter:brightness(2.5)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+@keyframes lunge{50%{transform:translateY(16px) scale(1.06)}}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 2px #ff4040)}50%{filter:drop-shadow(0 0 9px #ff2020)}}
+.intent{margin-bottom:6px;padding:3px 7px;border-radius:9px;font-size:11px;line-height:1.25;background:#000b;border:1px solid #ffffff30;text-align:center;white-space:nowrap}
+.intent.atk{border-color:#ffb36b88}
+.intent.charge{border-color:#ffd24d;color:#ffe48a}
+.intent.big{border-color:#ff4d4d;color:#ff8a8a;font-weight:800;animation:blink 1s infinite}
+@keyframes blink{50%{background:#5a0d0db0}}
+.ebar{width:64px;height:5px;background:#000a;border-radius:3px;margin-top:5px;overflow:hidden}
+.ebar i{display:block;height:100%;background:#ff6b6b;transition:width .3s}
+.ename{font-size:11px;color:#ccd;margin-top:2px;white-space:nowrap}
+.weak{font-size:10px;color:#9aa;white-space:nowrap}
+.weak b{color:#ffd36b}
+.weak s{color:#8aa0ff;text-decoration:none}
+.tag{position:absolute;top:-4px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;padding:1px 6px;border-radius:6px;background:#ffd24d;color:#3a2600;display:none}
+.enemy.pick .tag{display:block}
+.pop{position:absolute;left:50%;transform:translateX(-50%);font-weight:900;font-size:22px;color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000;pointer-events:none;animation:pop .9s forwards;white-space:nowrap;z-index:5}
+.pop.weak{color:#ffd24d;font-size:24px}
+.pop.res{color:#9ab3ff;font-size:18px}
+.pop.heal{color:#7dffa8}
+.pop.word{font-size:15px;color:#ffe27a}
+.pop.brk{font-size:17px;color:#ff7a7a}
+@keyframes pop{0%{opacity:0;margin-top:6px}15%{opacity:1;margin-top:-6px}75%{opacity:1}100%{opacity:0;margin-top:-26px}}
+/* 文 */
+#msg{flex:0 0 auto;height:40px;display:flex;align-items:center;padding:0 12px;background:#0008;border-radius:10px;font-size:14px;border:1px solid #ffffff18}
+/* 味方 */
+#party{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}
+.hero{position:relative;display:flex;flex-direction:column;align-items:center;border-radius:10px;padding:2px 0 5px;background:#ffffff08;border:1px solid #ffffff14;transition:background .2s}
+.hero.turn{background:#ffe27a22;border-color:#ffe27a}
+.hero.pick{border-color:#7dffa8;background:#7dffa822}
+.hero.dead{opacity:.45;filter:grayscale(1)}
+.hero .spr{width:48px;height:60px;background-size:144px 300px;background-position:-48px -180px;transform:scale(1.4);transform-origin:50% 100%;margin-top:26px;transition:transform .15s}
+.hero.turn .spr{transform:scale(1.4) translateY(-6px)}
+.hero.step .spr{transform:scale(1.4) translateY(-18px)}
+.hero.hurt .spr{animation:hit .3s}
+.hero .nm{font-size:12px;font-weight:700;margin-top:4px}
+.bar{width:84%;height:5px;background:#000a;border-radius:3px;overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;transition:width .3s}
+.bar.hp i{background:#5ee08a}.bar.hp.low i{background:#ffb84d}.bar.hp.crit i{background:#ff5757}
+.bar.mp i{background:#6aa8ff}
+.num{display:grid;grid-template-columns:auto 1fr;column-gap:3px;width:84%;font-size:10px;color:#cdd;margin-top:2px;font-variant-numeric:tabular-nums}
+.num span:nth-child(odd){color:#8f97b8}
+.num span:nth-child(even){text-align:right}
+.hero .gd{position:absolute;top:4px;right:4px;font-size:10px;color:#9ab3ff;display:none}
+.hero.guard .gd{display:block}
+.hero .pop{top:40px}
+/* 操作 */
+#cmd{flex:0 0 auto;height:146px;margin-top:6px;position:relative}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;height:100%}
+.btn{display:flex;align-items:center;justify-content:center;border-radius:12px;background:#2d3157;border:1px solid #ffffff30;color:#fff;font-size:17px;font-weight:700;letter-spacing:2px}
+.btn:active{background:#4a5190}
+.btn.off{opacity:.35}
+.list{display:flex;flex-direction:column;gap:5px;height:100%}
+.list .rows{flex:1;display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.row{flex:0 0 auto;display:grid;grid-template-columns:1fr 48px 44px;align-items:center;height:36px;padding:0 12px;border-radius:10px;background:#2d3157;border:1px solid #ffffff28;font-size:15px}
+.row:active{background:#4a5190}
+.row.off{opacity:.35}
+.row .el{font-size:12px;color:#ffd36b;text-align:center}
+.row .mp{font-size:12px;color:#9ab3ff;text-align:right;font-variant-numeric:tabular-nums}
+.row.sel{background:#5b5a2a;border-color:#ffe27a}
+.back{flex:0 0 32px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#ffffff14;font-size:14px;color:#ccd}
+.hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#aab}
+/* 技のポーズ */
+#cut{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(#0000 30%,#000a);z-index:20;pointer-events:none}
+#cut.on{display:flex;animation:cut .7s forwards}
+#cut .pose{width:48px;height:60px;background-size:144px 300px;background-position:0 -240px;transform:scale(4.2);transform-origin:50% 50%}
+#cut .sn{margin-top:150px;padding:4px 18px;border-radius:10px;background:#000a;font-size:22px;font-weight:900;letter-spacing:4px;text-shadow:0 2px 0 #000}
+@keyframes cut{0%{opacity:0}15%{opacity:1}80%{opacity:1}100%{opacity:0}}
+/* 幕 */
+#veil{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#000c;z-index:30;padding:20px;text-align:center}
+#veil.on{display:flex}
+#veil h1{font-size:28px;letter-spacing:4px}
+#veil p{font-size:14px;color:#ccd;line-height:1.7}
+#veil .btn{width:220px;height:56px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="order"><div id="slots" style="display:flex;gap:5px"></div></div>
+  <div id="field"></div>
+  <div id="msg"></div>
+  <div id="party"></div>
+  <div id="cmd"></div>
+  <div id="cut"><div class="pose px"></div><div class="sn"></div></div>
+  <div id="veil"></div>
+</div>
+<script src="engine.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
