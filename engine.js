@@ -582,9 +582,13 @@ function tapAt(clientX,clientY){
   const ox=r.left+(r.width-VW*sc)/2, oy=r.top+(r.height-VH*sc)/2;
   const tx=Math.floor(((clientX-ox)/sc+RT.cam.x)/TS), ty=Math.floor(((clientY-oy)/sc+RT.cam.y)/TS+4/TS);
   const ddx=tx-G.x, ddy=ty-G.y, dist=Math.abs(ddx)+Math.abs(ddy);
-  if(dist===1){ G.dir=ddx>0?'right':ddx<0?'left':ddy>0?'down':'up'; interact(); return; }
-  if(dist===0){ interact(); return; }
-  routeTo(tx,ty);
+  if(dist===1){ clearTimeout(RT.tapWait); RT.lastTap=null; G.dir=ddx>0?'right':ddx<0?'left':ddy>0?'down':'up'; interact(); return; }
+  if(dist===0){ clearTimeout(RT.tapWait); RT.lastTap=null; interact(); return; }
+  // 離れた場所：1回タップはこれまでどおり「向いている先を調べる」、すばやく2回タップでそこへ自動で歩く
+  const now=performance.now(), L=RT.lastTap;
+  if(L && now-L.t<320 && Math.abs(L.x-tx)<=1 && Math.abs(L.y-ty)<=1){ clearTimeout(RT.tapWait); RT.lastTap=null; routeTo(tx,ty); return; }
+  RT.lastTap={x:tx,y:ty,t:now}; clearTimeout(RT.tapWait);
+  RT.tapWait=setTimeout(()=>{ RT.lastTap=null; if(RT.mode==='field'&&!RT.busy&&!RT.moving&&!msgResolve) interact(); },320);
 }
 // ---------- タップした場所へ自動で歩く ----------
 // 歩ける所なら、そこまで歩く。人や物なら、となりまで歩いて、そちらを向いて話す・調べる
