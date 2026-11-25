@@ -558,15 +558,17 @@ function shopEquip(tab){
     const its=RT.shopStock.items;
     const who=it=>{ const sl=it.slot==='acc'?'acc1':it.slot; return G.party.map(n=>{ const m=G.members[n]; const bf=calcStats(n); const o=m.equip[sl]; m.equip[sl]=it; const af=calcStats(n); m.equip[sl]=o; const k=it.slot==='weapon'?(CHARS[n].wpn==='mag'?'mat':'atk'):it.slot==='acc'?'hp':'def'; const d=af[k]-bf[k]; return `<span class="wn">${n}</span><span class="ws">${STJP[k]}</span><b class="${d>0?'up':d<0?'dn':''}" style="${d?'':'color:var(--sub)'}">${d>0?'+':''}${d}</b>`; }).join(''); };
     openScreen('武具屋', head+`<div class="list scroll">${its.map((it,i)=>`<div class="item shopw"><span class="tag slab">${SLOTJP[it.slot]}</span>${itemLine(it)}<button class="cb sm pbtn" data-i="${i}">${(sellPrice(it)*4).toLocaleString()}G</button><div class="whog">${who(it)}</div></div>`).join('')}</div>`);
-    $('scrBody').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{ const it=its[+b.dataset.i], p=sellPrice(it)*4; if(G.gold<p){toast('お金が足りない');return;} G.gold-=p; const cp=JSON.parse(JSON.stringify(it)); cp.id=G.nid++; cp.isNew=true; G.gear.push(cp); sfx('buy'); toast(it.name+' を買った'); shopEquip('buy'); });
+    $('scrBody').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{ const it=its[+b.dataset.i], p=sellPrice(it)*4; if(G.gold<p){toast('お金が足りない');return;} G.gold-=p; const cp=JSON.parse(JSON.stringify(it)); cp.id=G.nid++; cp.isNew=true; G.gear.push(cp); sfx('buy'); toast(it.name+' を買った'); keepScroll(()=>shopEquip('buy')); });
   } else {
     const list=G.gear.slice().sort((a,b)=>a.r-b.r||a.iLv-b.iLv);
     openScreen('武具屋', head+`<div class="list scroll">${list.map((it,i)=>`<div class="item"><span class="tag slab">${SLOTJP[it.slot]}</span>${itemLine(it)}<button class="cb sm pbtn" data-s="${i}">${sellPrice(it).toLocaleString()}G</button></div>`).join('')||'<div class="card">売れる装備がない</div>'}</div><button class="cb sm" id="sellWB">白と青をまとめて売る</button>`);
-    $('scrBody').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ const it=list[+b.dataset.s]; if(it.r>=3 && !confirmSell(it)) return; G.gold+=sellPrice(it); G.gear=G.gear.filter(x=>x!==it); sfx('buy'); shopEquip('sell'); });
+    $('scrBody').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ const it=list[+b.dataset.s]; if(it.r>=3 && !confirmSell(it)) return; G.gold+=sellPrice(it); G.gear=G.gear.filter(x=>x!==it); sfx('buy'); keepScroll(()=>shopEquip('sell')); });
     $('sellWB').onclick=()=>{ let g=0; G.gear=G.gear.filter(x=>{ if(x.r<=1){ g+=sellPrice(x); return false;} return true; }); G.gold+=g; toast(`${g.toLocaleString()}G で売った`); shopEquip('sell'); };
   }
   $('tBuy').onclick=()=>shopEquip('buy'); $('tSell').onclick=()=>shopEquip('sell');
 }
+// 一覧で何かしたあと描き直しても、見ていた位置に戻す
+function keepScroll(fn){ const el=document.querySelector('#scrBody .scroll'); const t=el?el.scrollTop:0; fn(); const n=document.querySelector('#scrBody .scroll'); if(n) n.scrollTop=t; }
 function confirmSell(it){ if(RT.sellConfirm===it) return true; RT.sellConfirm=it; toast('レア装備です。もう一度押すと確定'); return false; }
 const MATS=[1,3,8,20,50], RRMAT=[0,2,5,12,30];
 // ===== 錬成屋：装備を選ぶ → その装備にできることが全部並ぶ =====
@@ -579,28 +581,44 @@ function smithGear(){ const out=[], seen=new Set(); const order=[...G.party, ...
 // 素の強さ（鍛えた分を足した数）
 function baseNow(it,plus){ const o={}; const pm=1+PLUS_STEP*(plus===undefined?(it.plus||0):plus); for(const k in it.base) o[k]=it.base[k]>0?Math.round(it.base[k]*pm):it.base[k]; return o; }
 function shopSmith(tab, it, flash){
-  tab=({forge:'up',polish:'up',reroll:'up',ascend:'up',craft:'make',mix:'mat',break:'mat'})[tab]||tab||'up';
+  tab=({forge:'up',polish:'up',reroll:'up',ascend:'up',craft:'make',mix:'mix',break:'brk',mat:'brk'})[tab]||tab||'up';
   if(tab==='made') return smithMade(it);
   navHere(it?'smithD':'smith', ()=>shopSmith(tab,it,flash));
-  const TABS=[['up','強くする'],['make','新しく作る'],['mat','調合・分解']];
+  const TABS=[['up','強くする'],['make','新しく作る'],['mix','調合'],['brk','分解']];
   const head=`<div class="smtabs">${TABS.map(([k,l])=>`<button class="cb sm ${tab===k?'on':''}" data-tab="${k}">${l}</button>`).join('')}</div><div class="ptitle"><span>錬成の素材 <b class="nums">${G.mat}</b></span><span style="color:var(--gold)">${G.gold.toLocaleString()}G</span></div>`;
   const bind=()=>{ $('scrBody').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{ sfx('tick'); shopSmith(b.dataset.tab); }); };
   const need=(rows)=>rows.map(([lab,have,want])=>`<div class="smneed"><span>${lab}</span><b class="nums" style="color:${have>=want?'#86efac':'#fca5a5'}">${have.toLocaleString()} / ${want.toLocaleString()}</b></div>`).join('');
-  const body=(html)=>{ openScreen('錬成屋', head+`<div class="scroll smbody">${html}</div>`); bind(); };
+  // 画面を描き直しても、見ていた位置はそのまま（一覧の途中で操作しても上に戻らない）
+  const key=tab+(it?'|'+(it.id!==undefined?it.id:it.mi):''); RT.smScroll=RT.smScroll||{};
+  { const old=document.querySelector('#scrBody .smbody'); if(old&&RT.smKey) RT.smScroll[RT.smKey]=old.scrollTop; }
+  const body=(html,foot)=>{ openScreen('錬成屋', head+`<div class="scroll smbody">${html}</div>${foot||''}`); bind(); RT.smKey=key; const nb=document.querySelector('#scrBody .smbody'); if(nb) nb.scrollTop=RT.smScroll[key]||0; };
 
-  // ---------- 調合・分解 ----------
-  if(tab==='mat'){
-    const list=G.gear.slice().sort((a,b)=>a.r-b.r||a.iLv-b.iLv);
-    body(`<div class="ptitle"><span>調合：魔物の素材から道具を作る</span></div><div class="list" style="overflow:visible">${MIX.map((R,i)=>{ const ok=R.need.every(([c,g,k])=>matCount(c,g)>=k);
-      return `<div class="item">${R.out==='mat'?'<span class="ico none">素材</span>':goodIconHTML(toolIcon(R.out))}<div class="grow"><div>${ITEMS[R.out]?ITEMS[R.out].n:'錬成の素材'} ×${R.k}</div><small>${R.need.map(([c,g,k])=>`${MATCAT[c]}${g>1?'★'+g+'以上':''}×${k}（${matCount(c,g)}）`).join('・')}</small></div><button class="cb sm pbtn ${ok?'':'dis'}" data-m="${i}">作る</button></div>`; }).join('')}</div>
-      <div class="ptitle" style="margin-top:6px"><span>分解：袋の中の装備を「錬成の素材」にする</span><span>装備中の品は出ない</span></div>
-      <div class="list" style="overflow:visible">${list.map((x,i)=>`<div class="item">${itemLine(x)}<button class="cb sm pbtn" data-b="${i}">分解 +${MATS[x.r]}</button></div>`).join('')||'<div class="card">分解できる装備がない</div>'}</div>`);
+  // ---------- 調合 ----------
+  if(tab==='mix'){
+    body(`<div class="smnote">魔物の素材から、道具を作る</div><div class="list">${MIX.map((R,i)=>{ const ok=R.need.every(([c,g,k])=>matCount(c,g)>=k);
+      return `<div class="item">${R.out==='mat'?'<span class="ico none">素材</span>':goodIconHTML(toolIcon(R.out))}<div class="grow"><div>${ITEMS[R.out]?ITEMS[R.out].n:'錬成の素材'} ×${R.k}<small style="margin-left:6px">持っている数 ${R.out==='mat'?G.mat:(G.inv[R.out]||0)}</small></div><small>${R.need.map(([c,g,k])=>`${MATCAT[c]}${g>1?'★'+g+'以上':''}×${k}（${matCount(c,g)}）`).join('・')}</small></div><button class="cb sm pbtn ${ok?'':'dis'}" data-m="${i}">作る</button></div>`; }).join('')}</div>`);
     $('scrBody').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ const R=MIX[+b.dataset.m]; if(!R.need.every(([c,g,k])=>matCount(c,g)>=k)){ toast('素材が足りない'); return; }
-      for(const [c,g,k] of R.need) matTake(c,g,k); if(R.out==='mat') G.mat+=R.k; else G.inv[R.out]=(G.inv[R.out]||0)+R.k; sfx('buy'); toast(`${R.out==='mat'?'錬成の素材':ITEMS[R.out].n} ×${R.k} を作った`); shopSmith('mat'); });
-    $('scrBody').querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{ const x=list[+b.dataset.b]; if(x.r>=3&&!confirmSell(x)) return; G.mat+=MATS[x.r]; G.gear=G.gear.filter(y=>y!==x); sfx('buy'); toast(`${x.name} を分解した（素材+${MATS[x.r]}）`); shopSmith('mat'); });
+      for(const [c,g,k] of R.need) matTake(c,g,k); if(R.out==='mat') G.mat+=R.k; else G.inv[R.out]=(G.inv[R.out]||0)+R.k; sfx('buy'); toast(`${R.out==='mat'?'錬成の素材':ITEMS[R.out].n} ×${R.k} を作った`); shopSmith('mix'); });
     return;
   }
-
+  // ---------- 分解：タップで選んで、まとめて分解 ----------
+  if(tab==='brk'){
+    const list=G.gear.slice().sort((a,b)=>a.r-b.r||a.iLv-b.iLv);
+    const sel=RT.smSel=(RT.smSel instanceof Set?RT.smSel:new Set()); for(const x of [...sel]) if(!G.gear.includes(x)) sel.delete(x);
+    const gain=[...sel].reduce((t,x)=>t+MATS[x.r],0), hasRare=[...sel].some(x=>x.r>=3);
+    const cnt=r=>list.filter(x=>x.r===r).length;
+    const quick=[0,1,2].map(r=>{ const n=cnt(r), all=n>0&&list.filter(x=>x.r===r).every(x=>sel.has(x)); return `<button class="cb sm ${all?'on':''} ${n?'':'dis'}" data-q="${r}"><span class="r${r}">${RARJP[r]}</span>を全部 <small>${n}</small></button>`; }).join('');
+    body(`<div class="smnote">袋の中の装備を「錬成の素材」にする（白1・青3・紫8・黄20・虹50）。装備中の品は出ない。タップで選んで、下のボタンでまとめて分解。</div>
+      <div class="smquick">${quick}<button class="cb sm ${sel.size?'':'dis'}" data-q="x">選ぶのをやめる</button></div>
+      <div class="list">${list.map((x,i)=>`<button class="item smpick ${sel.has(x)?'sel':''}" data-p="${i}" style="text-align:left"><span class="smck">${sel.has(x)?'✓':''}</span>${itemLine(x)}<b class="smgain">+${MATS[x.r]}</b></button>`).join('')||'<div class="card">分解できる装備がない</div>'}</div>`,
+      `<button class="cb ${sel.size?'go':'dis'}" id="smBrk">${sel.size?`選んだ${sel.size}個を分解する（素材 +${gain}）`:'分解する装備をタップで選ぶ'}</button>`);
+    $('scrBody').querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{ const x=list[+b.dataset.p]; if(sel.has(x)) sel.delete(x); else sel.add(x); RT.brkConfirm=0; sfx('tick'); shopSmith('brk'); });
+    $('scrBody').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ const q=b.dataset.q; if(q==='x') sel.clear(); else { const r=+q, L=list.filter(x=>x.r===r); if(!L.length) return; const all=L.every(x=>sel.has(x)); L.forEach(x=>all?sel.delete(x):sel.add(x)); } RT.brkConfirm=0; sfx('tick'); shopSmith('brk'); });
+    $('smBrk').onclick=()=>{ if(!sel.size){ toast('分解する装備をタップで選んでね'); return; }
+      if(hasRare && !RT.brkConfirm){ RT.brkConfirm=1; toast('黄や虹の装備が入っています。もう一度押すと分解'); return; }
+      RT.brkConfirm=0; const n=sel.size; G.mat+=gain; G.gear=G.gear.filter(y=>!sel.has(y)); sel.clear(); sfx('buy'); toast(`${n}個を分解した（錬成の素材 +${gain}）`); shopSmith('brk'); };
+    return;
+  }
   // ---------- 新しく作る（名品の鍛造） ----------
   if(tab==='make'){
     const lv=avgLv(), list=MEIHIN.map((M,i)=>({M,i})).filter(({M})=>!M.top && M.lv<=lv+8);
