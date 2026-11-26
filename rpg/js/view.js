@@ -4,11 +4,9 @@
 // 見せ方：物理攻撃は少し左前に出て5段目の真ん中の構え、術は5段目の左の技ポーズ、倒れた人は5段目の右。
 (() => {
 "use strict";
-const W = 301, H = 655;
-const DPR = window.devicePixelRatio || 2;
-const stage = document.getElementById("stage"), cv = document.getElementById("field"), ctx = cv.getContext("2d"), hud = document.getElementById("hud");
+const { W, H, DPR, stage, hud } = DM;
+const cv = document.getElementById("field"), ctx = cv.getContext("2d");
 ctx.imageSmoothingEnabled = false;
-let K = 2;
 
 // ---------- 位置（ドット） ----------
 // canvasは端末の点の細かさ（1204×2620、配置の1ドット＝4点）で持つ。
@@ -28,36 +26,13 @@ const SHEET = { fw: 48, fh: 60 };
 const FACE = [58, 4, 28, 30];
 const EL = { 斬: "#9aa0b4", 打: "#b8925a", 突: "#5f8fb0", 熱: "#d8573a", 冷: "#4a8ad8", 雷: "#c9a42a", 陽: "#d8b84a", 陰: "#7a5ab0" };
 
-const IM = {};
-function load(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = "img/" + src + ".png"; IM[src] = i; }); }
+const IM = window.IMG;
 
-const LO_KEY = "rpgRS2";
-let LO = (() => { try { const v = JSON.parse(localStorage.getItem(LO_KEY)); if (v && BT.FORMATIONS[v.form] && v.pos && v.pos.length === 5) return v; } catch (e) {} return BT.defLo(); })();
-function saveLo() { try { localStorage.setItem(LO_KEY, JSON.stringify(LO)); } catch (e) {} }
-
-let st = null, wave = 0, fast = false, autoMode = "normal", autoOn = false, support = true;
+let st = null, fast = false, autoMode = "normal", autoOn = false, support = true, active = false, onEnd = null;
 let last = 0, busy = false, pose = {}, fx = {}, scene = null, ended = false, cmdIdx = 0;
-const SCENES = [() => makeScene(), () => dungeonScene("canopy"), () => dungeonScene("gold")];
-
-function fit() {
-  const w = Math.min(innerWidth, innerHeight * W / H);
-  K = w / W;
-  stage.style.width = w + "px"; stage.style.height = (w * H / W) + "px";
-  if (st && !hud.querySelector(".veil")) buildHud();
-}
-const d = v => v * K + "px";
-function px(el, x, y, w, h) { el.style.left = d(x); el.style.top = d(y); if (w !== undefined) el.style.width = d(w); if (h !== undefined) el.style.height = d(h); return el; }
-function div(cls, html) { const e = document.createElement("div"); e.className = cls; if (html !== undefined) e.innerHTML = html; return e; }
-function spriteBox(img, sx, sy, sw, sh, wantPt) {
-  const s = Math.max(1, Math.round(wantPt * DPR / Math.max(sw, sh))) / DPR;
-  const e = div("face");
-  e.style.width = sw * s + "px"; e.style.height = sh * s + "px";
-  e.style.backgroundImage = `url(${img.src})`;
-  e.style.backgroundSize = `${img.naturalWidth * s}px ${img.naturalHeight * s}px`;
-  e.style.backgroundPosition = `${-sx * s}px ${-sy * s}px`;
-  return e;
-}
-const icon = (a, size) => `<b class="at" style="background:${EL[a]};width:${d(size)};height:${d(size)};line-height:${d(size)};font-size:${d(size * 0.72)}">${a}</b>`;
+const SCENES = { road: () => makeScene(), grass: () => dungeonScene("grass"), meadow: () => dungeonScene("meadow"), canopy: () => dungeonScene("canopy"), gold: () => dungeonScene("gold"), stone: () => dungeonScene("stone") };
+const d = DM.d, px = DM.px, div = DM.div, spriteBox = DM.spriteBox, icon = DM.icon;
+DM.onFit.push(() => { if (active && st && !ended) buildHud(); });
 
 // ---------- 位置 ----------
 function heroPos(u) { return { x: HERO_X[u.c], y: HERO_Y[u.r] }; }
@@ -121,9 +96,9 @@ function buildPanel(u) {
   const card = A("frame pcard", "", 12, 0, 277, 42);
   const nm = div("pn", u.nm); nm.style.fontSize = d(13); nm.style.left = d(12); nm.style.top = d(5); card.appendChild(nm);
   const sub = div("ps", `${BT.WTYPE[u.wt].nm}${u.heart ? "・" + BT.HEARTS[u.heart].nm : ""}`); sub.style.fontSize = d(8); sub.style.left = d(12); sub.style.top = d(25); card.appendChild(sub);
-  const fc = spriteBox(IM[u.img], FACE[0], FACE[1], FACE[2], FACE[3], 40 * K); fc.style.position = "absolute"; fc.style.right = d(8); fc.style.top = d(1); card.appendChild(fc);
+  const fc = spriteBox(IM[u.img], FACE[0], FACE[1], FACE[2], FACE[3], 40 * DM.K); fc.style.position = "absolute"; fc.style.right = d(8); fc.style.top = d(1); card.appendChild(fc);
   const dots = div("pdots", st.party.map((p, i) => `<i class="${i === cmdIdx ? "on" : st.cmd[p.id] ? "done" : ""}${p.down ? " ko" : ""}"></i>`).join("")); dots.style.left = d(120); dots.style.top = d(17); card.appendChild(dots);
-  [["HP", `${u.hp}<small>/${u.max}</small>`], ["LP", `${u.lp}<small>/${BT.HEROES.find(h => h.id === u.id).lp}</small>`], ["BP", `${u.bp}<small>/${BT.BP_MAX}</small>`]].forEach(([k, v], i) => {
+  [["HP", `${u.hp}<small>/${u.max}</small>`], ["LP", `${u.lp}<small>/${u.lp_max || BT.HEROES.find(h => h.id === u.id).lp}</small>`], ["BP", `${u.bp}<small>/${BT.BP_MAX}</small>`]].forEach(([k, v], i) => {
     const b = A("frame pst", `<span class="k">${k}</span><span class="v">${v}</span>`, 12 + i * 94, 46, 89, 18); b.style.fontSize = d(9.5);
   });
   const keys = ["attack", ...u.sk];
@@ -186,6 +161,7 @@ function hpBar(x, y, w, ratio) {
   ctx.fillStyle = ratio < 0.25 ? "#e0604a" : "#5fc26a"; ctx.fillRect(x, y, Math.ceil(w * ratio * 2) / 2, 2);
 }
 function draw(t) {
+  if (!active) { requestAnimationFrame(draw); return; }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, cv.width, cv.height);
   // 背景は上にずらし、地平線を一番上の人の足より上に持ってくる（空に浮いて見えないように）。空いた下は地面の帯をもう一度描く
@@ -330,68 +306,25 @@ async function turn() {
   await wait(160);
   els.banner.classList.remove("on");
   busy = false; refresh();
-  if (st.over) { ended = true; refresh(); setTimeout(result, 600 / spd()); return; }
+  if (st.over) { ended = true; refresh(); setTimeout(result, 900 / spd()); return; }
   if (st.phase === "run") setTimeout(turn, 80 / spd());
   else if (autoOn) setTimeout(go, 200 / spd());
   else { cmdIdx = aliveIdx()[0]; refresh(); }
 }
 
 // ---------- 始めと終わり ----------
-function start(w) {
-  wave = w; st = BT.newBattle(w, (Date.now() & 0xffff) + 1, LO); last = st.log.length; busy = false; ended = false; fx = {}; pose = {}; cmdIdx = 0;
-  scene = SCENES[w](); buildHud();
+// wave：{nm, foes, tier, bg}。roster：仲間の記録。終わると done(st) を呼ぶ（勝ち負け・ごほうびは呼んだ側で）
+function start(wave, roster, lo, done) {
+  st = BT.newBattle(wave, (Date.now() & 0xffff) + 1, lo, roster); last = st.log.length; busy = false; ended = false; fx = {}; pose = {}; cmdIdx = 0;
+  onEnd = done; active = true;
+  scene = (SCENES[wave.bg] || SCENES.grass)(); buildHud();
   if (autoOn) setTimeout(go, 600);
 }
 function result() {
-  const v = div("veil", "");
-  v.appendChild(div("big", st.over === "win" ? "勝利" : st.over === "time" ? "引き分け" : "全滅…"));
-  const fell = st.party.filter(u => u.downAt).map(u => `${u.nm} ${u.downAt}ターン目`).join("　");
-  v.appendChild(div("sub", `${st.turn}ターンで決着` + (fell ? `<br>倒れた仲間　${fell}` : "　倒れた仲間なし")));
-  const max = Math.max(...st.party.map(u => u.dealt), 1);
-  st.party.slice().sort((a, b) => b.dealt - a.dealt).forEach(u => {
-    const r = div("rank", ""); r.appendChild(spriteBox(IM[u.img], FACE[0], FACE[1], FACE[2], FACE[3], 30));
-    r.appendChild(div("", u.nm)); r.appendChild(div("bar2", `<i style="width:${u.dealt / max * 100}%"></i>`)); r.appendChild(div("v", u.dealt)); v.appendChild(r);
-  });
-  const again = div("frame btn pick", "もう一度"); again.onclick = () => start(wave); v.appendChild(again);
-  const next = div("frame btn pick", "戻る"); next.onclick = menu; v.appendChild(next);
-  hud.appendChild(v);
+  const s = st; active = false; hud.innerHTML = "";
+  if (onEnd) onEnd(s);
 }
-// 戦う前：陣形と並び、戦う場所
-let sel = -1;
-function menu() {
-  hud.innerHTML = ""; st = null;
-  const v = div("veil solid", ""); hud.appendChild(v);
-  const A = (el, x, y, w, h) => { px(el, x, y, w, h); el.style.position = "absolute"; v.appendChild(el); return el; };
-  const T = (x, y, w, h, html, size, cls) => { const e = A(div("t " + (cls || ""), html), x, y, w, h); e.style.fontSize = d(size); e.style.lineHeight = d(h); return e; };
-  T(17, 50, 267, 16, "陣形", 9, "dim");
-  Object.entries(BT.FORMATIONS).forEach(([k, f], i) => {
-    const b = A(div("frame btn chip" + (LO.form === k ? " sel" : ""), f.nm), 17 + i * 90, 68, 87, 24); b.style.fontSize = d(10.5);
-    b.onclick = () => { LO.form = k; saveLo(); menu(); };
-  });
-  const F = BT.FORMATIONS[LO.form];
-  T(17, 96, 267, 14, F.ds, 8, "dim2");
-  A(div("frame", ""), 17, 114, 267, 232);
-  T(26, 120, 60, 14, "← 敵", 8, "dim");
-  F.slots.forEach((sl, slot) => {
-    const h = BT.HEROES[LO.pos[slot]];
-    const cx = 52 + sl.c * 76, cy = 140 + sl.r * 41;
-    const t = A(div("frame tile" + (sel === slot ? " sel" : ""), ""), cx, cy, 80, 38); // 「狙われやすい」まで1行で入る幅
-    const fc = spriteBox(IM[h.img], FACE[0], FACE[1], FACE[2], FACE[3], 26 * K); fc.style.position = "absolute"; fc.style.left = d(2); fc.style.top = d(3); t.appendChild(fc);
-    const tx = div("tn", `${h.nm}<br><i>${sl.h >= 2 ? "狙われやすい" : sl.h < 1 ? "狙われにくい" : ""}</i>`); tx.style.fontSize = d(7.5); tx.style.left = d(24); tx.style.top = d(6); t.appendChild(tx);
-    t.onclick = () => { if (sel < 0) { sel = slot; menu(); return; } const a = LO.pos[sel]; LO.pos[sel] = LO.pos[slot]; LO.pos[slot] = a; sel = -1; saveLo(); menu(); };
-  });
-  T(17, 352, 267, 16, "戦う場所", 9, "dim");
-  BT.WAVES.forEach((w, i) => {
-    const b = A(div("frame btn pick2", ""), 17, 370 + i * 46, 267, 40);
-    const names = [...new Set(w.foes.map(f => BT.FOES[f.k].nm))].join("・");
-    b.innerHTML = `<div class="pn" style="font-size:${d(11.5)}">${w.nm}</div><div class="ps" style="font-size:${d(8)}">${names}</div>`;
-    b.onclick = () => { sel = -1; start(i); };
-  });
-}
-
-addEventListener("resize", fit);
 if (DEV) DEV_ERR = devCheck();
-Promise.all([...new Set([...BT.HEROES.map(h => h.img), ...Object.values(BT.FOES).map(f => f.img)])].map(load)).then(() => {
-  fit(); scene = SCENES[0](); requestAnimationFrame(draw); menu();
-});
+requestAnimationFrame(draw);
+window.BV = { start, get active() { return active; } };
 })();

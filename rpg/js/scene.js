@@ -345,7 +345,8 @@ function dungeonScene(skin) {
   const scene=document.createElement("canvas");
   scene.width=Math.round(SW*SF);scene.height=Math.round(SH*SF);
   const ctx=scene.getContext("2d");
-  if (["gold","grass","sails","canopy"].includes(skin)) {
+  if (["gold","grass","sails","canopy","meadow"].includes(skin)) {
+    const mead=skin==="meadow";
     const high=skin==="sails", leaves=skin==="canopy", rand=random(high?14920:leaves?67703:82031);
     rect(ctx,leaves?"#293e4b":"#334453",0,0,SW,SH);
     for(let y=25;y<161;y+=7) {
@@ -357,7 +358,7 @@ function dungeonScene(skin) {
       const x=i*19-20, y=145-Math.floor(rand()*40), w=36+Math.floor(rand()*40);
       polygon(ctx,leaves?"#2b4447":"#464955",[[x,163],[x+12,y],[x+22,y-6],[x+w,160],[x+w,185],[x,185]]);
     }
-    const ground=high?"#50404a":leaves?"#455345":"#655542";
+    const ground=high?"#50404a":leaves?"#455345":mead?"#4a5f3e":"#655542";
     polygon(ctx,ground,[[0,162],[49,154],[150,157],[201,171],[201,437],[0,437]]);
     if(leaves) {
       for(const [x,flip] of [[-8,1],[166,-1]]) {
@@ -376,7 +377,7 @@ function dungeonScene(skin) {
     } else {
       for(let n=0;n<95;n++){
         const x=Math.floor(rand()*201),y=137+Math.floor(rand()*195);
-        grass(ctx,x,y,n%4===1?"#bc9762":"#85704f",n%4===1?"#e1b479":"#a48857",3+Math.floor(rand()*9));
+        grass(ctx,x,y,mead?(n%4===1?"#6f8a55":"#3f5636"):(n%4===1?"#bc9762":"#85704f"),mead?(n%4===1?"#8aa66a":"#55704a"):(n%4===1?"#e1b479":"#a48857"),3+Math.floor(rand()*9));
       }
       if(skin==="gold")for(const [x,slant] of [[11,1],[186,-1]]){
         polygon(ctx,"#3d3038",[[x-19,161],[x-10,89],[x+slant*9,72],[x+slant*26,82],[x+17,172]]);
@@ -386,7 +387,7 @@ function dungeonScene(skin) {
     }
     for(let n=0;n<281;n++){
       const x=Math.floor(rand()*201),y=170+Math.floor(rand()*240);
-      rect(ctx,high?"#87655570":leaves?"#82a06b81":"#c4a36b79",x,y,n%8+1,1);
+      rect(ctx,high?"#87655570":leaves||mead?"#82a06b81":"#c4a36b79",x,y,n%8+1,1);
     }
     for(let k=0;k<26;k++){
       const y=184+k*7;

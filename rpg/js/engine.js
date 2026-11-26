@@ -56,6 +56,9 @@ const SKILLS = {
   stomp:     { nm: "地ならし", bp: 0, rank: "C", tg: "all", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
   fury:      { nm: "怒りの大振り", bp: 0, rank: "SS", tg: "all", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
   sweepclub: { nm: "なぎ倒し", bp: 0, rank: "B", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  bodyslam:  { nm: "ぷるぷる体当たり", bp: 2, rank: "E", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
+  rootlash:  { nm: "根の鞭", bp: 7, rank: "B", tg: "row", at: ["打"], dist: "遠", dir: "直接", kind: "攻撃" },
+  gnaw:      { nm: "かじりつき", bp: 2, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
 };
 
 // ---------- パッシブ ----------
@@ -83,40 +86,62 @@ const PASSIVES = {
 
 // ---------- 装備（ランクB〜SSS。st＝能力値の上乗せ、res＝耐性） ----------
 const GEAR = {
-  ironsword: { slot: "weapon", wt: "sword", nm: "鉄の剣", rank: "B", pow: 12, st: { str: 1 } },
-  knightswd: { slot: "weapon", wt: "sword", nm: "騎士の剣", rank: "A", pow: 14, st: { str: 2, vit: 1 }, ps: "w_sword" },
-  oakstaff:  { slot: "weapon", wt: "staff", nm: "樫の杖", rank: "B", pow: 6, st: { int: 2 }, ps: "w_fire" },
-  shortbow:  { slot: "weapon", wt: "bow", nm: "狩人の弓", rank: "B", pow: 11, st: { dex: 2 } },
-  ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp" },
-  plate:     { slot: "armor", kind: "重鎧", nm: "鉄の鎧", rank: "B", st: { vit: 3, agi: -3 }, res: { 斬: 20, 打: 15, 突: 20 } },
-  leather:   { slot: "armor", kind: "軽鎧", nm: "革の鎧", rank: "B", st: { vit: 1 }, res: { 斬: 10, 打: 10, 突: 10, 熱: 5, 冷: 5, 雷: 5 } },
-  robe:      { slot: "armor", kind: "ローブ", nm: "麻のローブ", rank: "B", st: { wil: 2 }, res: { 斬: -5, 打: -5, 突: -5, 熱: 15, 冷: 15, 雷: 15, 陽: 10, 陰: 10 } },
-  buckler:   { slot: "sub", nm: "小さな盾", rank: "B", st: { vit: 1 }, sres: { スタン: 20 } },
-  hood:      { slot: "sub", nm: "旅の頭巾", rank: "B", st: { wil: 1 }, sres: { 毒: 20 } },
-  ring:      { slot: "acc", nm: "力の指輪", rank: "B", st: { str: 2 } },
-  charm:     { slot: "acc", nm: "お守り", rank: "B", st: { lov: 2, cha: 1 } },
+  // 武器（威力powは武器の種類ごとに決まった値。拾った物には、まれに能力のおまけが付く）
+  ironsword: { slot: "weapon", wt: "sword", nm: "鉄の剣", rank: "B", pow: 12, st: { str: 1 }, price: 120, icon: "eq_sword_02" },
+  knightswd: { slot: "weapon", wt: "sword", nm: "騎士の剣", rank: "A", pow: 14, st: { str: 2, vit: 1 }, ps: "w_sword", price: 420, icon: "eq_sword_03" },
+  oakstaff:  { slot: "weapon", wt: "staff", nm: "樫の杖", rank: "B", pow: 6, st: { int: 2 }, ps: "w_fire", price: 110, icon: "eq_staff_02" },
+  sagestaff: { slot: "weapon", wt: "staff", nm: "賢者の杖", rank: "A", pow: 8, st: { int: 4, wil: 1 }, ps: "w_fire", price: 450, icon: "eq_staff_03" },
+  shortbow:  { slot: "weapon", wt: "bow", nm: "狩人の弓", rank: "B", pow: 11, st: { dex: 2 }, price: 120, icon: "eq_bow_01" },
+  longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
+  ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
+  oldblade:  { slot: "weapon", wt: "sword", nm: "古木の守り刀", rank: "S", pow: 18, st: { str: 3, agi: 2 }, ps: "w_bp", icon: "eq_sword_04" }, // 林の宝箱だけ
+  // 鎧・盾・飾り
+  plate:     { slot: "armor", kind: "重鎧", nm: "鉄の鎧", rank: "B", st: { vit: 3, agi: -3 }, res: { 斬: 20, 打: 15, 突: 20 }, price: 220, icon: "eq_armor_02" },
+  leather:   { slot: "armor", kind: "軽鎧", nm: "革の鎧", rank: "B", st: { vit: 1 }, res: { 斬: 10, 打: 10, 突: 10, 熱: 5, 冷: 5, 雷: 5 }, price: 120, icon: "eq_armor_01" },
+  chain:     { slot: "armor", kind: "軽鎧", nm: "鎖かたびら", rank: "A", st: { vit: 2 }, res: { 斬: 18, 打: 10, 突: 15, 熱: 5, 冷: 5, 雷: 5 }, price: 380, icon: "eq_vest_03" },
+  robe:      { slot: "armor", kind: "ローブ", nm: "麻のローブ", rank: "B", st: { wil: 2 }, res: { 斬: -5, 打: -5, 突: -5, 熱: 15, 冷: 15, 雷: 15, 陽: 10, 陰: 10 }, price: 110, icon: "eq_robe_01" },
+  buckler:   { slot: "sub", nm: "小さな盾", rank: "B", st: { vit: 1 }, sres: { スタン: 20 }, price: 80, icon: "eq_buckler_01" },
+  hood:      { slot: "sub", nm: "旅の頭巾", rank: "B", st: { wil: 1 }, sres: { 毒: 20 }, price: 70, icon: "eq_hood_02" },
+  ring:      { slot: "acc", nm: "力の指輪", rank: "B", st: { str: 2 }, price: 150, icon: "eq_ring_02" },
+  charm:     { slot: "acc", nm: "お守り", rank: "B", st: { lov: 2, cha: 1 }, price: 100, icon: "eq_charm_01" },
 };
+// 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
+const BONUS = { str: "力", vit: "体", dex: "器", agi: "速", int: "知" };
 
 // ---------- 魔物の心（本家のスタイル。もとの能力値に％を掛け、技を1つ足す） ----------
+// up＝この心を付けていると上がりやすい能力値（本家のスタイルの↑と同じ考え）
 const HEARTS = {
-  shroom: { nm: "毒キノコの心", col: "白", mul: { str: 80, vit: 100, dex: 95, agi: 95, int: 110, wil: 105, lov: 100, cha: 105 }, sk: "spore" },
-  bat:    { nm: "夜コウモリの心", col: "白", mul: { str: 95, vit: 90, dex: 105, agi: 110, int: 95, wil: 95, lov: 100, cha: 100 }, sk: "gust" },
-  rabbit: { nm: "角ウサギの心", col: "白", mul: { str: 105, vit: 95, dex: 100, agi: 108, int: 90, wil: 95, lov: 100, cha: 100 }, sk: "hornrush" },
+  slime:  { nm: "しずくの心", col: "白", mul: { str: 90, vit: 110, dex: 95, agi: 90, int: 100, wil: 110, lov: 105, cha: 100 }, sk: "bodyslam", up: ["vit", "wil"] },
+  rat:    { nm: "荷運びネズミの心", col: "白", mul: { str: 95, vit: 95, dex: 108, agi: 108, int: 95, wil: 95, lov: 100, cha: 100 }, sk: "gnaw", up: ["dex", "agi"] },
+  shroom: { nm: "毒キノコの心", col: "白", mul: { str: 80, vit: 100, dex: 95, agi: 95, int: 110, wil: 105, lov: 100, cha: 105 }, sk: "spore", up: ["int", "cha"]},
+  bat:    { nm: "夜コウモリの心", col: "白", mul: { str: 95, vit: 90, dex: 105, agi: 110, int: 95, wil: 95, lov: 100, cha: 100 }, sk: "gust", up: ["agi", "dex"]},
+  rabbit: { nm: "角ウサギの心", col: "白", mul: { str: 105, vit: 95, dex: 100, agi: 108, int: 90, wil: 95, lov: 100, cha: 100 }, sk: "hornrush", up: ["str", "agi"]},
+  dog:    { nm: "骨の犬の心", col: "白", mul: { str: 108, vit: 100, dex: 95, agi: 100, int: 85, wil: 95, lov: 90, cha: 100 }, sk: "bonebite", up: ["str", "vit"]},
+  treant: { nm: "古木の心", col: "白", mul: { str: 102, vit: 112, dex: 90, agi: 85, int: 100, wil: 110, lov: 105, cha: 95 }, sk: "rootlash", up: ["vit", "wil"] },
+  goblin: { nm: "ゴブリンの心", col: "白", mul: { str: 110, vit: 105, dex: 95, agi: 92, int: 85, wil: 95, lov: 95, cha: 100 }, sk: "pickaxe", up: ["str", "vit"]},
 };
 
 // ---------- 仲間（仮の5人） ----------
+// st＝始めの能力値、cap＝本人の上限、up＝上がりやすい能力値、hpCap＝HPの上限、rare＝レア度
 const HEROES = [
-  { id: "h1", nm: "レオン", img: "person_001", wt: "sword", hp: 230, lp: 8, st: { str: 30, vit: 22, dex: 18, agi: 22, int: 10, wil: 14, lov: 12, cha: 16 },
+  { id: "h1", nm: "レオン", img: "person_001", wt: "sword", rare: "S", hp: 200, hpCap: 1150, lp: 8, st: { str: 26, vit: 19, dex: 15, agi: 19, int: 9, wil: 12, lov: 10, cha: 14 },
+    cap: { str: 128, vit: 104, dex: 96, agi: 112, int: 62, wil: 80, lov: 70, cha: 88 }, up: ["str", "agi"],
     res: {}, sk: ["gale", "twin", "cleave"], ps: ["spirit", "momentum", "swordway"], gear: { weapon: "ironsword", armor: "leather", sub: "buckler", acc: "ring" } },
-  { id: "h2", nm: "アデラ", img: "person_006", wt: "sword", hp: 300, lp: 10, st: { str: 24, vit: 32, dex: 14, agi: 15, int: 12, wil: 22, lov: 14, cha: 20 },
+  { id: "h2", nm: "アデラ", img: "person_006", wt: "sword", rare: "S", hp: 260, hpCap: 1300, lp: 10, st: { str: 20, vit: 27, dex: 12, agi: 13, int: 10, wil: 19, lov: 12, cha: 17 },
+    cap: { str: 110, vit: 132, dex: 84, agi: 86, int: 70, wil: 118, lov: 90, cha: 100 }, up: ["vit", "wil"],
     res: {}, sk: ["guardcut", "cover", "holycut"], ps: ["ironwall", "standfast", "counter"], gear: { weapon: "knightswd", armor: "plate", sub: "buckler", acc: "charm" } },
-  { id: "h3", nm: "カイン", img: "person_032", wt: "staff", hp: 180, lp: 6, st: { str: 10, vit: 14, dex: 16, agi: 18, int: 32, wil: 26, lov: 16, cha: 18 },
-    res: {}, sk: ["fireball", "flamewall", "inferno"], ps: ["focus", "heatway", "afterglow"], gear: { weapon: "oakstaff", armor: "robe", sub: "hood", acc: "ring" }, heart: "shroom" },
-  { id: "h4", nm: "ミレイ", img: "person_017", wt: "bow", hp: 200, lp: 7, st: { str: 14, vit: 18, dex: 30, agi: 26, int: 14, wil: 20, lov: 28, cha: 22 },
+  { id: "h3", nm: "カイン", img: "person_032", wt: "staff", rare: "A", hp: 155, hpCap: 950, lp: 6, st: { str: 9, vit: 12, dex: 14, agi: 15, int: 27, wil: 22, lov: 14, cha: 15 },
+    cap: { str: 60, vit: 82, dex: 90, agi: 96, int: 130, wil: 116, lov: 92, cha: 98 }, up: ["int", "wil"],
+    res: {}, sk: ["fireball", "flamewall", "inferno"], ps: ["focus", "heatway", "afterglow"], gear: { weapon: "oakstaff", armor: "robe", sub: "hood", acc: "ring" } },
+  { id: "h4", nm: "ミレイ", img: "person_017", wt: "bow", rare: "A", hp: 170, hpCap: 1000, lp: 7, st: { str: 12, vit: 15, dex: 26, agi: 22, int: 12, wil: 17, lov: 24, cha: 19 },
+    cap: { str: 76, vit: 90, dex: 126, agi: 118, int: 84, wil: 100, lov: 124, cha: 104 }, up: ["dex", "lov"],
     res: {}, sk: ["aim", "healrain", "shower"], ps: ["bowway", "healer", "quickdraw"], gear: { weapon: "shortbow", armor: "leather", sub: "hood", acc: "charm" } },
-  { id: "h5", nm: "ガイ", img: "person_095", wt: "spear", hp: 240, lp: 8, st: { str: 29, vit: 24, dex: 20, agi: 20, int: 12, wil: 16, lov: 12, cha: 14 },
+  { id: "h5", nm: "ガイ", img: "person_095", wt: "spear", rare: "A", hp: 205, hpCap: 1100, lp: 8, st: { str: 25, vit: 20, dex: 17, agi: 17, int: 10, wil: 14, lov: 10, cha: 12 },
+    cap: { str: 124, vit: 110, dex: 100, agi: 100, int: 70, wil: 86, lov: 66, cha: 80 }, up: ["str", "dex"],
     res: {}, sk: ["thrust", "pierce", "lightning"], ps: ["spearway", "charge", "thunder"], gear: { weapon: "ironspear", armor: "leather", sub: "buckler", acc: "ring" } },
 ];
+// 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
+const AREA_CAP = { 1: { st: 30, hp: 260 }, 2: { st: 35, hp: 310 }, 3: { st: 41, hp: 370 }, 4: { st: 47, hp: 440 } };
 
 // ---------- 陣形（5か所。c＝敵に近い順の列0〜2、r＝段0〜4。b＝能力の％、h＝狙われやすさ） ----------
 const FORMATIONS = {
@@ -132,13 +157,16 @@ const FORMATIONS = {
 
 // ---------- 魔物（決まった動き方。plan: ターン→技、every: nターンごと、rageFrom: 長引くと毎ターン） ----------
 const FOES = {
-  rabbit: { nm: "角ウサギ", img: "monster_003", wt: "fang", pow: 10, hp: 120, st: { str: 22, vit: 14, dex: 14, agi: 24, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 斬: -45, 打: 20 }, every: { n: 3, sk: "hornrush" } },
-  bat:    { nm: "夜コウモリ", img: "monster_002", wt: "fang", pow: 9, hp: 110, st: { str: 20, vit: 12, dex: 20, agi: 28, int: 8, wil: 10, lov: 0, cha: 10 }, res: { 突: -50, 打: 30, 雷: -30 }, every: { n: 2, sk: "gust" } },
-  dog:    { nm: "骨の犬", img: "monster_006", wt: "fang", pow: 10, hp: 150, st: { str: 26, vit: 18, dex: 12, agi: 18, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 斬: 30, 熱: -40, 陽: -60 }, every: { n: 2, sk: "bonebite" } },
-  goblin: { nm: "ゴブリン", img: "monster_012", wt: "club", pow: 12, hp: 190, st: { str: 28, vit: 20, dex: 14, agi: 16, int: 6, wil: 10, lov: 0, cha: 12 }, res: { 突: -30 }, every: { n: 3, sk: "pickaxe" } },
-  shroom: { nm: "毒キノコ", img: "monster_009", wt: "fist", pow: 8, hp: 160, st: { str: 12, vit: 16, dex: 10, agi: 12, int: 24, wil: 14, lov: 0, cha: 22 }, res: { 熱: -60, 冷: 30 }, every: { n: 2, sk: "spore" } },
-  orc:    { nm: "オーク", img: "monster_116", wt: "club", pow: 14, hp: 2500, boss: 1, st: { str: 34, vit: 28, dex: 12, agi: 14, int: 8, wil: 14, lov: 0, cha: 20 },
-            res: { 斬: 30, 打: 50, 熱: -40, 雷: -20 }, plan: { 2: "sweepclub", 3: "stomp", 5: "sweepclub", 6: "fury" }, rageFrom: 7, rage: "fury", stunRes: 1 },
+  slime:  { nm: "しずく", img: "monster_001", wt: "fist", pow: 6, hp: 70, st: { str: 14, vit: 12, dex: 8, agi: 10, int: 6, wil: 14, lov: 0, cha: 6 }, res: { 打: 40, 熱: -40, 雷: -30 }, every: { n: 3, sk: "bodyslam" }, gold: 6, heart: "slime" },
+  rat:    { nm: "荷運びネズミ", img: "monster_011", wt: "fang", pow: 7, hp: 80, st: { str: 16, vit: 10, dex: 16, agi: 22, int: 5, wil: 8, lov: 0, cha: 8 }, res: { 斬: -30 }, every: { n: 3, sk: "gnaw" }, gold: 9, heart: "rat" },
+  rabbit: { nm: "角ウサギ", img: "monster_003", wt: "fang", pow: 10, hp: 120, st: { str: 22, vit: 14, dex: 14, agi: 24, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 斬: -45, 打: 20 }, every: { n: 3, sk: "hornrush" } , gold: 10, heart: "rabbit" },
+  bat:    { nm: "夜コウモリ", img: "monster_002", wt: "fang", pow: 9, hp: 110, st: { str: 20, vit: 12, dex: 20, agi: 28, int: 8, wil: 10, lov: 0, cha: 10 }, res: { 突: -50, 打: 30, 雷: -30 }, every: { n: 2, sk: "gust" } , gold: 9, heart: "bat" },
+  dog:    { nm: "骨の犬", img: "monster_006", wt: "fang", pow: 10, hp: 150, st: { str: 26, vit: 18, dex: 12, agi: 18, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 斬: 30, 熱: -40, 陽: -60 }, every: { n: 2, sk: "bonebite" } , gold: 14, heart: "dog" },
+  goblin: { nm: "ゴブリン", img: "monster_012", wt: "club", pow: 12, hp: 190, st: { str: 28, vit: 20, dex: 14, agi: 16, int: 6, wil: 10, lov: 0, cha: 12 }, res: { 突: -30 }, every: { n: 3, sk: "pickaxe" } , gold: 18, heart: "goblin" },
+  shroom: { nm: "毒キノコ", img: "monster_009", wt: "fist", pow: 8, hp: 160, st: { str: 12, vit: 16, dex: 10, agi: 12, int: 24, wil: 14, lov: 0, cha: 22 }, res: { 熱: -60, 冷: 30 }, every: { n: 2, sk: "spore" } , gold: 12, heart: "shroom" },
+  treant: { nm: "苔むす古木", img: "monster_083", wt: "club", pow: 22, hp: 1200, st: { str: 62, vit: 32, dex: 10, agi: 8, int: 20, wil: 26, lov: 0, cha: 20 }, res: { 打: 40, 突: 40, 熱: -50, 斬: -10 }, every: { n: 1, sk: "rootlash" }, stunRes: 1, gold: 90, heart: "treant" },
+  orc:    { nm: "オーク", img: "monster_116", wt: "club", pow: 14, hp: 1300, boss: 1, st: { str: 34, vit: 28, dex: 12, agi: 14, int: 8, wil: 14, lov: 0, cha: 20 },
+            res: { 斬: 30, 打: 50, 熱: -40, 雷: -20 }, plan: { 2: "sweepclub", 3: "stomp", 5: "sweepclub", 6: "fury" }, rageFrom: 7, rage: "fury", stunRes: 1, gold: 400 },
 };
 // 戦場：c＝列（0がこちらに近い）、r＝段0〜2。big＝マスを全部使う大きい敵
 const WAVES = [
@@ -163,14 +191,23 @@ function resMul(d, at) {
 }
 
 function defLo() { return { form: "arrow", pos: [1, 0, 4, 2, 3] }; }
-// 能力値：もとの能力×心の％＋装備の上乗せ。そこに陣形の％
-function heroStats(hi, slotDef) {
-  const h = HEROES[hi], heart = h.heart && HEARTS[h.heart], st = {}, res = { ...h.res }, ps = [...h.ps];
+// 遊んでいる記録（mem）から戦う人を作る。mem無しなら始めの状態（試しの計算用）
+//  mem = { st, hp(最大HP), lp(いまのLP), gear:{slot: {id, b}}, heart: 心のキー|null }
+function resolveHero(hi, mem) {
+  const def = HEROES[hi];
+  if (!mem) mem = { st: { ...def.st }, hp: def.hp, lp: def.lp, gear: Object.fromEntries(Object.entries(def.gear).map(([k, id]) => [k, { id, b: null }])), heart: def.heart || null };
+  return { ...def, hi, st: mem.st, hp: mem.hp, lpNow: mem.lp, gearList: Object.values(mem.gear).filter(Boolean), heart: mem.heart };
+}
+// 能力値：もとの能力×心の％＋装備の上乗せ（拾った物のおまけも）。そこに陣形の％
+function heroStats(h, slotDef) {
+  if (typeof h === "number") h = resolveHero(h);
+  const heart = h.heart && HEARTS[h.heart], st = {}, res = { ...h.res }, ps = [...h.ps];
   for (const k of STATS) st[k] = h.st[k] * (heart ? heart.mul[k] / 100 : 1);
   let pow = 6;
-  for (const id of Object.values(h.gear)) {
-    const g = GEAR[id]; if (!g) continue;
+  for (const it of h.gearList) {
+    const g = GEAR[it.id]; if (!g) continue;
     for (const k in (g.st || {})) st[k] += g.st[k];
+    for (const k in (it.b || {})) st[k] += it.b[k];
     for (const a in (g.res || {})) res[a] = (res[a] || 0) + g.res[a];
     if (g.ps) ps.push(g.ps);
     if (g.slot === "weapon") pow = g.pow;
@@ -183,17 +220,23 @@ function heroStats(hi, slotDef) {
 }
 function base(u) { return Object.assign(u, { down: false, poison: 0, stun: 0, cover: 0, stack: 0, dealt: 0, taken: 0, downAt: 0 }); }
 
-function newBattle(wave, seed, lo) {
+// wave：WAVESの番号か {nm, foes, tier}。roster：仲間ごとの記録（HEROESの並び。無ければ始めの状態）
+function newBattle(wave, seed, lo, roster) {
   lo = lo || defLo();
-  const st = { seed: seed || 1, turn: 0, actions: 0, queue: [], log: [], over: null, phase: "command", cmd: {}, focus: null, wave, lastCmd: {} };
+  const W = typeof wave === "number" ? WAVES[wave] : wave, tier = W.tier || 1, m = 1 + 0.2 * (tier - 1);
+  const st = { seed: seed || 1, turn: 0, actions: 0, queue: [], log: [], over: null, phase: "command", cmd: {}, focus: null, wave: W, lastCmd: {} };
   const F = FORMATIONS[lo.form];
   st.party = lo.pos.map((hi, slot) => {
-    const h = HEROES[hi], s = heroStats(hi, F.slots[slot]);
-    return base({ ...h, ...s, side: 0, slot, c: F.slots[slot].c, r: F.slots[slot].r, hate: F.slots[slot].h, max: h.hp, hp: h.hp, lp: h.lp, bp: BP0 });
+    const h = resolveHero(hi, roster && roster[hi]), s = heroStats(h, F.slots[slot]);
+    const u = base({ ...h, ...s, side: 0, slot, c: F.slots[slot].c, r: F.slots[slot].r, hate: F.slots[slot].h, max: h.hp, hp: h.hp, lp: h.lpNow, bp: BP0 });
+    if (u.lp <= 0) { u.down = true; u.hp = 0; } // LPが尽きた人は戦えない（宿で戻る）
+    return u;
   });
-  st.foes = WAVES[wave].foes.map((f, i) => {
-    const m = FOES[f.k];
-    return base({ ...m, st: { ...m.st }, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: m.hp, hp: m.hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
+  st.foes = W.foes.map((f, i) => {
+    const M = FOES[f.k], fst = {};
+    for (const k of STATS) fst[k] = Math.round(M.st[k] * m);
+    const hp = Math.round(M.hp * m);
+    return base({ ...M, st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
   });
   for (const u of st.party) {
     if (hasP(u, "spirit")) bpAdd(st, u, 2, "闘志");
@@ -354,7 +397,45 @@ function checkEnd(st) {
   if (!alive(st.foes).length) st.over = "win"; else if (!alive(st.party).length) st.over = "lose";
 }
 
+// ---------- 戦いのあと ----------
+// 成長：勝った戦いに出ていた人だけ。上がる先は「場所の上限」と「本人の上限」の低いほう。上限から遠いほど上がりやすい
+function grow(hi, mem, tier, rng) {
+  const def = HEROES[hi], A = AREA_CAP[tier] || AREA_CAP[1], heart = mem.heart && HEARTS[mem.heart], out = [];
+  for (const k of STATS) {
+    const cap = Math.min(A.st, def.cap[k]), v = mem.st[k];
+    if (v >= cap) continue;
+    let p = 0.10 + 0.5 * (1 - v / cap);
+    if (def.up.includes(k)) p *= 1.6;
+    if (heart && heart.up.includes(k)) p *= 1.6;
+    p = Math.min(0.85, p * 0.35);
+    if (rng() < p) { const add = rng() < 0.15 && v + 2 <= cap ? 2 : 1; mem.st[k] += add; out.push({ k, v: add }); }
+  }
+  const hcap = Math.min(A.hp, def.hpCap);
+  if (mem.hp < hcap && rng() < 0.25 + 0.6 * (1 - mem.hp / hcap)) { const add = Math.min(hcap - mem.hp, 4 + Math.floor(rng() * 9)); mem.hp += add; out.push({ k: "hp", v: add }); }
+  return out;
+}
+// 拾った武器・防具：決まった中身＋まれに能力のおまけ（(力)なら腕力＋3、さらにまれに＋付きで＋4）
+function rollItem(id, rng) {
+  const g = GEAR[id], it = { id, b: null, tag: "" };
+  if (!g || rng() > 0.22) return it;
+  const pool = g.slot === "weapon" ? (g.wt === "staff" ? ["int", "wil"] : g.wt === "bow" ? ["dex", "agi"] : ["str", "vit", "agi"]) : ["vit", "wil", "agi"];
+  const k = pool[Math.floor(rng() * pool.length)], plus = rng() < 0.15;
+  it.b = { [k]: plus ? 4 : 3 }; it.tag = "(" + BONUS[k] + (plus ? "+" : "") + ")";
+  return it;
+}
+// ごほうび：お金と、魔物の心・武器防具の落とし物
+function rewards(st, rng) {
+  const out = { gold: 0, hearts: [], items: [] }, tier = st.wave.tier || 1;
+  for (const f of st.foes) {
+    out.gold += Math.round((f.gold || 0) * (1 + 0.15 * (tier - 1)) * (0.8 + rng() * 0.4));
+    if (f.heart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(f.heart);
+  }
+  const drops = st.wave.drops || [];
+  for (const d of drops) if (rng() < d.p) out.items.push(rollItem(d.id, rng));
+  return out;
+}
+
 const api = { BP0, BP_TURN, BP_MAX, ATTR, RANK, STATS, ST_NM, RANGE_NM, WTYPE, SKILLS, PASSIVES, GEAR, HEARTS, HEROES, FORMATIONS, FOES, WAVES,
-  defLo, heroStats, newBattle, commit, step, alive, resMul };
+  BONUS, AREA_CAP, defLo, resolveHero, heroStats, newBattle, commit, step, alive, resMul, grow, rollItem, rewards };
 if (typeof module !== "undefined") module.exports = api; else root.BT = api;
 })(this);

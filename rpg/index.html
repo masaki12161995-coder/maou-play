@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>戦闘の試作</title>
+<title>新しいRPG（前半の試作）</title>
 <style>
 html,body{margin:0;height:100%;background:#0b0d14;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 body{display:flex;align-items:center;justify-content:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;color:#f3e4c8}
@@ -173,12 +173,57 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .bbtn.ff.lit{border-color:#ffd88a;color:#ffd88a}
 .tile .tn{position:absolute;color:#f3e4c8;font-weight:800;line-height:1.25;white-space:nowrap;font-family:"Hiragino Sans",system-ui,sans-serif}
 .tile .tn i{font-style:normal;color:#ffb08a;font-weight:700}
+
+/* フィールド */
+.fhud{pointer-events:none;display:flex;align-items:center;justify-content:space-between;padding:0 8px;box-sizing:border-box;white-space:nowrap}
+.fhud.place b{color:#ffe3a8;font-weight:800}
+.fhud.place span{color:#e8d5b0;font-family:"Avenir Next",system-ui,sans-serif;font-weight:800}
+.fbtn{pointer-events:auto;justify-content:center;padding:0;color:#ffe3a8;cursor:pointer}
+.battleflash{background:#fff;animation:bflash .42s ease-out forwards;pointer-events:none}
+@keyframes bflash{0%{opacity:0}20%{opacity:.9}45%{opacity:.2}65%{opacity:.85}100%{opacity:1;background:#05040a}}
+.uilayer{pointer-events:auto}
+.uilayer.talk{background:transparent}
+.dlg{box-sizing:border-box;background:linear-gradient(#1e1c2a,#14131d)}
+.dtext{position:absolute;color:#f3e4c8;white-space:pre-wrap;word-break:break-all}
+.darr{position:absolute;color:#ffd88a;animation:aim .6s ease-in-out infinite alternate;text-align:center}
+.nmtag{position:absolute;background:#2a2418;border:1px solid #c9963a;border-radius:3px;color:#ffe3a8;font-weight:800;white-space:nowrap;box-sizing:border-box}
+.chbox{box-sizing:border-box}
+.chrow{position:absolute;color:#f3e4c8;font-weight:700;padding-left:10px;box-sizing:border-box;border-radius:3px;cursor:pointer;white-space:nowrap}
+.chrow:active{background:#3a3428}
+.toast{position:absolute;text-align:center;color:#ffe3a8;font-weight:800;text-shadow:0 1px 0 #000,0 0 6px #000;pointer-events:none;animation:toastA 1.4s ease-out forwards}
+@keyframes toastA{0%{opacity:0;transform:translateY(4px)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+.t.center{text-align:center}
+.t .k{color:#8fd0c4;font-weight:800}
+.t small{font-size:.8em}
+.prow,.slotrow,.shoprow,.sbox,.grow,.cands{box-sizing:border-box;cursor:pointer}
+.prow:active,.slotrow:active,.shoprow:active{filter:brightness(1.25)}
+.slotrow.on{border-color:#ffd88a;background:#2a2418}
+.shoprow.poor{opacity:.55}
+.sbox{cursor:default;background:#15141e}
+.rare{display:inline-block;margin-left:6px;padding:0 4px;border-radius:2px;font-size:.72em;font-family:"Avenir Next",system-ui,sans-serif;font-weight:900;vertical-align:middle;line-height:1.35}
+.rare.rA{background:#3d8a4a;color:#eaffea}.rare.rS{background:#2f6fc0;color:#e8f2ff}.rare.rSS{background:#7a4ac0;color:#f2e8ff}
+.heartnm{color:#d8b8ff;font-weight:800}
+.bonus{color:#7ee08a;font-weight:800}
+.upm{color:#7ee08a;font-weight:900;letter-spacing:-1px}
+.t.ups b{color:#7ee08a;margin-left:1px}
+.cand2{position:absolute;border-bottom:1px solid #2e2a30;cursor:pointer}
+.cand2:active{background:#2a2a3a}
+.ico{position:absolute;image-rendering:pixelated}
+.cardframe{position:fixed;inset:0;width:100vw;height:100vh;border:0;z-index:50;background:#14111a}
+.dimchip{color:#a89a86;opacity:.8}
 </style>
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/scene.js?v=22"></script>
-<script src="js/engine.js?v=22"></script>
-<script src="js/view.js?v=22"></script>
+<script src="js/dom.js?v=32"></script>
+<script src="js/engine.js?v=32"></script>
+<script src="js/scene.js?v=32"></script>
+<script src="js/tiles.js?v=32"></script>
+<script src="js/game.js?v=32"></script>
+<script src="js/maps.js?v=32"></script>
+<script src="js/view.js?v=32"></script>
+<script src="js/ui.js?v=32"></script>
+<script src="js/field.js?v=32"></script>
+<script src="js/main.js?v=32"></script>
 </body>
 </html>
