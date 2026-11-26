@@ -68,7 +68,7 @@ const OPPS=[
   {nm:"流れ者の弓師ミレイ",who:"017",cap:18,depth:3,sig:"c31",pool:["c24","c25","c24","c34","c31","c27","c29","c14","c30"]},
   {nm:"札の王ヴァルド",who:"071",cap:21,depth:3,sig:"c32",pool:["c20","c21","c22","c23","c32","c33","c26","c28"]}
 ];
-const PRIZES=[["c30",300],["c28",500],["c26",800],["c33",1500],["e3",200],["e4",700]];
+const PRIZES=[["c30",300],["c28",500],["c26",800],["c33",1500]];
 const EQUIPS={
   e1:{nm:"鉄の剣",img:"eq_sword_02",w:1,ds:"いちばん大きい辺＋1"},
   e2:{nm:"木の盾",img:"eq_shield_01",w:1,ds:"いちばん小さい辺＋2"},
@@ -309,7 +309,7 @@ function prep(k){
   let mine=(S.last[k]||[]).slice(), eq=(S.lastEq[k]||[]).slice();
   const pool=owned();
   const can=(()=>{ const c=countOf(pool); for(const x of mine){ if(!c[x]) return false; c[x]--; } const ec={...S.eq}; for(const x of eq){ if(x&&!ec[x]) return false; if(x) ec[x]--; } return mine.length===5 && weight(mine,eq)<=o.cap; })();
-  if(!can){ mine=bestDeck(pool,o.cap,null); eq=[null,null,null,null,null]; }
+  if(!can){ mine=bestDeck(pool,o.cap,null); } eq=[null,null,null,null,null];
   const loan=pool.length<5;
   if(loan){ mine=pool.slice(); while(mine.length<5) mine.push("c05"); eq=[null,null,null,null,null]; }
   while(eq.length<mine.length) eq.push(null);
@@ -354,7 +354,6 @@ function drawPrep(){
     const n=el("div","",`${left}`); n.style.cssText="position:absolute;right:-4px;bottom:-6px;font-size:10px;color:#fff;background:#000a;border-radius:6px;padding:0 3px"; box.appendChild(n);
     box.onclick=()=>{ if(P.loan) return; say(e); if(left<=0&&P.eqSel!==e){ return; } P.eqSel=P.eqSel===e?null:e; drawPrep(); say(e); };
     er.appendChild(box); });
-  s.appendChild(er);
   const r=weight(P.mine,P.eq), m=el("div","meter"+(r>o.cap?" over":""),`手札の重さ <b>★${r}</b> ／ ★${o.cap}`); s.appendChild(m);
   s.appendChild(info);
   const g=el("div","grid"); g.style.flex="1";
