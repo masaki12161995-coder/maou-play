@@ -560,9 +560,6 @@ async function s10boat() {
 }
 T.sigVillage = () => talk(`シグ：夜明けに森を調べる。舟を出してもらうぞ。`);
 T.kuro = () => talk(`黒外套の兵：……。`);
-T.donaHome = () => talk(S() >= 14 ? `ドナ：礼は帰ってから言いな。舟は空けとくからね。` : `
-ドナ：森の岸にだけは、着けるんじゃないよ。
-ドナ：あそこは魔物の森だ。魔女も住んどる。`);
 
 // ---------- 場面11　夜の舟 ／ 場面12　夜明けの川 ----------
 T.s11 = async () => {
@@ -1509,15 +1506,40 @@ T.bookMan = async () => {
   await talk(`〔旅人に貸本屋の話をすると、頭をかいて、くたびれた本を1冊差し出した。返しそびれていたらしい。〕`);
   G().tools.hon = 1; SND.se("get"); await sys("「貸本」を受け取った。"); A.sync();
 };
-// ヤン爺から川魚を分けてもらう（第1章から）
+// ==================== 町の人の会話（TOWNTALK。物語の段階で切り替わる） ====================
+// 1回目は吹き出しを全部、2回目からは最後の1つだけ
+const STAGE_KEY = v => v === 0 ? "0a" : v === 0.5 ? "0b" : String(v);
+async function townTalk(place, who, n) {
+  const key = STAGE_KEY(root.townStage(G())), list = ((TOWNTALK[place] || {})[key] || []).filter(b => b.who === who);
+  const blk = list[n || 0] || list[0];
+  if (!blk) return false;
+  const f = F(); f.tk = f.tk || {}; const id = `${place}:${key}:${who}:${n || 0}`;
+  await talk(f.tk[id] ? blk.lines[blk.lines.length - 1] : blk.lines.join("\n"));
+  f.tk[id] = 1;
+  return key;
+}
+T.town = async n => {
+  const key = await townTalk("toruka", n.nm, n.n);
+  if (n.nm === "ドナ" && key && key !== "0a") { // 村長の弁当：段階ごとに1つ
+    const f = F(); f.bento = f.bento || {};
+    if (!f.bento[key]) { f.bento[key] = 1; give("bento", 1); SND.se("get"); await sys("「村長の弁当」を1つもらった。"); }
+  }
+};
+// よろず屋：話してから店を開く
+T.fuki = async n => {
+  await townTalk("toruka", "フキ", 0);
+  if (S() === 12) return; // 黒外套が来た日は店じまい
+  await UI.shop("よろず屋", ["t:onigiri", "tunic", "cloak", "hood", "buckler", "oakclub", "thinblade", "shortbow", "ironspear", "wraps"]);
+};
+// 簗場のヤン爺：第1章からは川魚を分けてくれる（第1章の最初の1回は、1匹ただで）
 T.yan = async () => {
-  if (S() < 14) return talk(S() === 3 ? `ヤン爺：桟橋で休め。その顔じゃ客が逃げるぞ。` : `
-ヤン爺：近ごろ川上から、焦げた木っぱがよく来るんだ。
-ヤン爺：北で山火事でもあったのかねえ。`);
-  const c = await UI.choose("ヤン爺", "近ごろ川上から、焦げた木っぱがよく来るんだ。", ["川魚を分けてもらう（10 G）", "やめる"]);
+  if (S() < 14) { if (S() === 3) return talk(`ヤン爺：桟橋で休め。その顔じゃ客が逃げるぞ。`); return townTalk("toruka", "ヤン爺", 0); }
+  const key = await townTalk("toruka", "ヤン爺", 0), f = F();
+  if (key === "1" && !f.yanFish) { f.yanFish = 1; give("uo", 1); SND.se("get"); await sys("「川魚」を1匹もらった。"); return; }
+  const c = await UI.choose("ヤン爺", "", ["川魚を分けてもらう（10 G）", "やめる"]);
   if (c !== 0) return;
   if (G().gold < 10) { DM.toast("お金が足りない", 300); return; }
-  G().gold -= 10; G().tools.uo = (G().tools.uo || 0) + 1; SND.se("get"); DM.toast(`川魚を手に入れた（${G().tools.uo}匹）`, 300);
+  G().gold -= 10; give("uo", 1); SND.se("get"); DM.toast(`川魚を手に入れた（${G().tools.uo}匹）`, 300);
 };
 
 // ---------- 舟 ----------

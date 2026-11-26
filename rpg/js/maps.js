@@ -7,6 +7,9 @@
 function grid(w, h, ch) { return Array.from({ length: h }, () => Array(w).fill(ch)); }
 function fill(g, ch, x, y, w, h) { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (g[j] && g[j][i] !== undefined) g[j][i] = ch; }
 const S = g => g.flags.s || 0, cut = (g, k) => g.flags.cut === k;
+// 町の会話の段階（骨組み0-4）。0＝序章の朝、0.5＝黒外套が来た後、1＝第1章、2＝第2章（第1章の場面10の後から）
+const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : 2; };
+root.townStage = townStage;
 
 // ---------- 渡し小屋の中 ----------
 function hut() {
@@ -107,16 +110,26 @@ function village() {
       { t: "kaeri", x: 13, y: 9, talk: "kaeri" },
       { t: "sign", x: 13, y: 10, text: ["トルカ村"] },
       { t: "sign", x: 14, y: 8, text: ["トルカ村の礼拝堂"] },
+      { t: "stall", x: 2, y: 15, w: 2, h: 1 },
+      { t: "sign", x: 2, y: 14, text: ["よろず屋"] },
     ],
     exits: [{ x: 15, y: 11, to: "ferry", tx: 1, ty: 17, dir: 2 }],
     npcs: [
-      { id: "dona", x: 5, y: 9, img: "person_077", dir: 0, nm: "ドナ", talk: "donaHome", when: g => S(g) !== 12 },
+      { id: "dona", x: 5, y: 9, img: "person_077", dir: 0, nm: "ドナ", talk: "town", when: g => S(g) !== 12 },
+      { id: "donaD", x: 5, y: 9, img: "person_077", dir: 0, nm: "ドナ", talk: "town", when: g => S(g) === 12 && !g.flags.cut },
+      // 村の人（台詞は TOWNTALK。物語の段階で切り替わる）
+      { id: "timV", x: 7, y: 8, img: "person_069", dir: 0, nm: "ティム", talk: "town", when: g => !g.flags.cut },
+      { id: "hopV", x: 6, y: 17, img: "person_071", dir: 1, nm: "ホップ", talk: "town", when: g => S(g) >= 2 && !g.flags.cut },
+      { id: "marthaV", x: 5, y: 14, img: "person_026", dir: 0, nm: "マーサ", talk: "town", when: g => S(g) >= 2 && !g.flags.cut },
+      { id: "orb", x: 10, y: 8, img: "person_078", dir: 0, nm: "オーブ司祭", talk: "town" },
+      { id: "fuki", x: 4, y: 15, img: "person_070f", dir: 0, nm: "フキ", talk: "fuki" },
+      { id: "gyosho", x: 11, y: 10, img: "person_075", dir: 1, nm: "行商人", talk: "town", when: g => townStage(g) >= 2 },
       // 集める仲間（序章のあいだは、会えるだけ）
       { id: "seri", x: 12, y: 14, img: "person_017", dir: 0, nm: "セリ", talk: "seri", when: g => !(g.roster || []).includes(7) },
       { id: "karin", x: 12, y: 8, img: "person_105", dir: 0, nm: "カリン", talk: "karin", when: g => !(g.roster || []).includes(11) },
       { id: "sig", x: 8, y: 9, img: "person_010", dir: 0, nm: "傷の男", talk: "sigVillage", when: g => S(g) === 12 },
-      { id: "k1", x: 6, y: 10, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
-      { id: "k2", x: 10, y: 10, mon: "monster_020", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
+      { id: "k1", x: 6, y: 10, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "town", n: 0, when: g => S(g) === 12 },
+      { id: "k2", x: 10, y: 10, mon: "monster_020", face: 1, nm: "黒外套の兵", talk: "town", n: 1, when: g => S(g) === 12 },
       { id: "k3", x: 9, y: 13, mon: "monster_021", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
       { id: "k4", x: 12, y: 11, mon: "monster_018", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
     ],
@@ -410,7 +423,7 @@ function toiya() {
     objs: [{ t: "counter", x: 3, y: 2 }, { t: "counter", x: 4, y: 2 }, { t: "counter", x: 5, y: 2 }, { t: "shelf", x: 1, y: 1 }, { t: "shelf", x: 7, y: 1 }, { t: "basket", x: 7, y: 5 }],
     exits: [{ x: 4, y: 7, to: "harune", tx: 14, ty: 9, dir: 0 }],
     npcs: [
-      { id: "mori", x: 4, y: 1, img: "person_078", dir: 0, nm: "モーリス", talk: "mori" },
+      { id: "mori", x: 4, y: 1, img: "person_099", dir: 0, nm: "モーリス", talk: "mori" },
       { id: "dakka", x: 3, y: 3, mon: "monster_010", face: 1, nm: "ダッカ", talk: "dakka" },
       { id: "gido", x: 6, y: 3, img: "person_030", dir: 1, nm: "ギド", talk: "gido" },
       { id: "yaji", x: 2, y: 5, img: "person_075", dir: 3, nm: "商人", talk: "yaji" },
@@ -444,7 +457,7 @@ function ohashi() {
     npcs: [
       // 場面10：塔から下りてきた巨人と、町の人たち
       { id: "garmS", x: 9, y: 11, mon: "monster_063", face: -1, sc: 0.8, nm: "ガルム", when: g => cut(g, "c1s10") },
-      { id: "moriS", x: 4, y: 12, img: "person_078", dir: 2, nm: "モーリス", when: g => cut(g, "c1s10") },
+      { id: "moriS", x: 4, y: 12, img: "person_099", dir: 2, nm: "モーリス", when: g => cut(g, "c1s10") },
       { id: "dakkaS", x: 4, y: 14, mon: "monster_010", face: 1, nm: "ダッカ", when: g => cut(g, "c1s10") },
       { id: "gidoS", x: 3, y: 13, img: "person_030", dir: 2, nm: "ギド", when: g => cut(g, "c1s10") },
       { id: "akinS", x: 2, y: 12, img: "person_075", dir: 2, nm: "商人", when: g => cut(g, "c1s10") },

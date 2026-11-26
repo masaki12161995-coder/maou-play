@@ -464,6 +464,20 @@ function shop(title, ids) {
       const x = A(L, div("frame btn chip", "×"), 263, 46, 26, 26); x.style.fontSize = d(14); x.onclick = () => { clearLayer(); GS.save(); res(); };
       T(L, 12, 78, 277, 16, `<span class="dim">お金</span> <b>${GS.G.gold.toLocaleString()}</b> G`, 10, "num2 right");
       ids.forEach((id, i) => {
+        if (id.startsWith("t:")) { // 道具（食べ物など）
+          const k = id.slice(2), t = BT.TOOLS[k], have = GS.G.tools[k] || 0;
+          const r = A(L, div("frame shoprow" + (GS.G.gold < t.price ? " poor" : ""), ""), 12, 100 + i * 40, 277, 36);
+          A(r, DM.iconImg(t.icon, 22 * DM.K), 6, 6, undefined, undefined);
+          T(r, 34, 2, 150, 17, `${t.nm}<small class="dim"> 道具</small>`, 10.5, "name");
+          T(r, 34, 18, 170, 14, t.ds, 8.5, "dim2");
+          T(r, 196, 2, 76, 17, `${t.price}<small> G</small>`, 11, "num2 right");
+          T(r, 196, 18, 76, 14, have ? `持っている ${have}` : "", 8, "dim right");
+          r.onclick = () => {
+            if (GS.G.gold < t.price) { DM.toast("お金が足りない", 560); return; }
+            GS.G.gold -= t.price; GS.G.tools[k] = have + 1; GS.save(); draw(); DM.toast(`${t.nm}を買った`, 560);
+          };
+          return;
+        }
         const g = BT.GEAR[id], have = GS.G.bag.filter(it => it.id === id).length + GS.G.party.filter(m => m && Object.values(m.gear).some(it => it && it.id === id)).length;
         const r = A(L, div("frame shoprow" + (GS.G.gold < g.price ? " poor" : ""), ""), 12, 100 + i * 40, 277, 36);
         A(r, DM.iconImg(g.icon, 22 * DM.K), 6, 6, undefined, undefined);

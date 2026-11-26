@@ -206,7 +206,7 @@ const TOOLS = {
   book2: { nm: "秘伝書・弐", icon: "tool_007", ds: "技の覚醒（2回目）に使う" },
   book3: { nm: "秘伝書・参", icon: "tool_013", ds: "技の覚醒（3回目）に使う" },
   // 食べ物：戦いの中で、技と同じように選んで食べる（food＝戻るHPの割合）。その人の1回の行動を使う
-  onigiri: { nm: "握り飯", icon: "tool_onigiri", ds: "戦いの中で食べると、HPが3割戻る", food: 0.3 },
+  onigiri: { nm: "握り飯", icon: "tool_onigiri", ds: "戦いの中で食べると、HPが3割戻る", food: 0.3, price: 20 },
   uo: { nm: "川魚", icon: "tool_uo", ds: "リム川でとれた魚。ヤン爺が分けてくれる" },
   hon: { nm: "貸本", icon: "mat_046", ds: "半年も返ってこなかった、ハルネの貸本屋の本", key: 1 },
   bento: { nm: "村長の弁当", icon: "tool_bento", ds: "戦いの中で食べると、HPが半分戻る", food: 0.5 },
