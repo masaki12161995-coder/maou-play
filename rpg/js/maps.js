@@ -361,12 +361,82 @@ function harune() {
     foes: [], chests: [],
     trigs: [
       { x: 1, y: 13, w: 1, h: 3, when: g => S(g) === 16, run: "c1s2" },
-      { x: 5, y: 8, w: 2, h: 1, run: "c1stop" },                        // かわうそ亭の戸口
-      { x: 14, y: 8, w: 2, h: 1, run: "innFirst" },                     // 問屋場の戸口
-      { x: 18, y: 13, w: 1, h: 3, run: "innFirst" },                    // 大橋への道
+      { x: 5, y: 8, w: 1, h: 1, run: "innDoor" },                       // かわうそ亭の戸口
+      { x: 14, y: 8, w: 1, h: 1, run: "toiyaDoor" },                    // 問屋場の戸口
+      { x: 18, y: 13, w: 1, h: 3, run: "eastRoad" },                    // 大橋への道
     ],
   };
 }
 
-root.MAPS = { hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune };
+// ---------- 宿「かわうそ亭」（土間の大部屋） ----------
+function kawauso() {
+  const g = grid(11, 10, "w"); fill(g, "p", 1, 1, 9, 8); g[9][5] = "D";
+  return {
+    id: "kawauso", nm: "かわうそ亭", g, tier: 0, bg: null, inside: 1, music: "town",
+    objs: [
+      { t: "counter", x: 4, y: 2 }, { t: "counter", x: 5, y: 2 }, { t: "counter", x: 6, y: 2 },
+      { t: "hearth", x: 2, y: 0 }, { t: "shelf", x: 8, y: 1 },
+      { t: "futon", x: 8, y: 3, w: 1, h: 2, talk: "innBed" }, { t: "futon", x: 9, y: 3, w: 1, h: 2, talk: "innBed" }, { t: "futon", x: 9, y: 6, w: 1, h: 2, talk: "innBed" },
+      { t: "basket", x: 1, y: 6 }, { t: "table", x: 3, y: 5 },
+    ],
+    exits: [{ x: 5, y: 9, to: "harune", tx: 5, ty: 9, dir: 0 }],
+    npcs: [
+      { id: "bela", x: 5, y: 1, img: "person_070", dir: 0, nm: "ベラ", talk: "bela" },
+      { id: "toto", x: 2, y: 7, img: "person_100", dir: 2, nm: "トト", talk: "toto" },
+      { id: "teo", x: 8, y: 7, img: "person_001", dir: 1, nm: "テオ", talk: "teo" },
+      { id: "liseN", x: 7, y: 5, img: "person_002", dir: 1, nm: "リゼット", when: g => cut(g, "c1s6") },
+      { id: "mukuN", x: 8, y: 6, img: "person_058h", dir: 0, nm: "ムク", when: g => cut(g, "c1s6") },
+    ],
+    foes: [], chests: [],
+    trigs: [],
+  };
+}
+
+// ---------- 問屋場（荷と馬を取りしきる役所） ----------
+function toiya() {
+  const g = grid(9, 8, "w"); fill(g, "p", 1, 1, 7, 6); g[7][4] = "D";
+  return {
+    id: "toiya", nm: "ハルネ問屋場", g, tier: 0, bg: null, inside: 1, music: "town",
+    objs: [{ t: "counter", x: 3, y: 2 }, { t: "counter", x: 4, y: 2 }, { t: "counter", x: 5, y: 2 }, { t: "shelf", x: 1, y: 1 }, { t: "shelf", x: 7, y: 1 }, { t: "basket", x: 7, y: 5 }],
+    exits: [{ x: 4, y: 7, to: "harune", tx: 14, ty: 9, dir: 0 }],
+    npcs: [
+      { id: "mori", x: 4, y: 1, img: "person_078", dir: 0, nm: "モーリス", talk: "mori" },
+      { id: "dakka", x: 3, y: 3, mon: "monster_010", face: 1, nm: "ダッカ", talk: "dakka" },
+      { id: "gido", x: 6, y: 3, img: "person_030", dir: 1, nm: "ギド", talk: "gido" },
+      { id: "yaji", x: 2, y: 5, img: "person_075", dir: 3, nm: "商人", talk: "yaji" },
+    ],
+    foes: [], chests: [],
+    trigs: [],
+  };
+}
+
+// ---------- ガルム大橋の西のたもと（W5の東の端）：深い谷。橋の真ん中が無い。北の丘に古い塔 ----------
+function ohashi() {
+  const W = 18, H = 27, g = grid(W, H, ".");
+  fill(g, "T", 0, 0, W, 4); fill(g, "T", 0, H - 5, W, 5); fill(g, "T", 0, 4, 2, 7); fill(g, "T", 0, 16, 2, 6);
+  fill(g, "c", 0, 12, 11, 3);                           // 町からの道
+  fill(g, "V", 11, 4, 7, H - 9);                        // 谷
+  fill(g, "c", 11, 12, 3, 3); fill(g, "E", 14, 12, 1, 3); // 橋（先は抜けている）
+  fill(g, "c", 17, 12, 1, 3);                           // 谷の向こうに残った橋
+  for (const [x, y] of [[12, 17], [14, 18], [15, 16], [13, 20], [16, 19], [15, 9], [13, 8]]) g[y][x] = "X"; // 谷底に散らばる石
+  fill(g, "=", 5, 6, 1, 6);                             // 北の丘への小道
+  for (const [x, y] of [[3, 9], [8, 8], [9, 17], [4, 18], [7, 20]]) g[y][x] = "T";
+  return {
+    id: "ohashi", nm: "ガルム大橋", g, tier: 0, bg: null,
+    objs: [
+      { t: "towerFar", x: 6, y: 3, w: 2, h: 3 },
+      { t: "plaque", x: 10, y: 11, text: ["ガルム大橋。建国の年、これを架く。", "名の由来は伝わっていない。"] },
+      { t: "bigStone", x: 9, y: 15, text: ["切り口がない。割れたのではないらしい。"], when: g => S(g) >= 20 },
+      { t: "sign", x: 4, y: 11, text: ["北　古い見張り塔"] },
+    ],
+    exits: [{ x: 0, y: 13, to: "harune", tx: 17, ty: 14, dir: 1 }],
+    npcs: [], foes: [], chests: [],
+    trigs: [
+      { x: 8, y: 12, w: 1, h: 3, when: g => S(g) === 19, run: "c1s5" },
+      { x: 5, y: 6, when: g => S(g) >= 20, run: "c1stop" },
+    ],
+  };
+}
+
+root.MAPS = { hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi };
 })(typeof window !== "undefined" ? window : globalThis);

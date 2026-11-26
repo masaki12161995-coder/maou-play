@@ -327,6 +327,29 @@ function cedar(c) { // 一本杉（縦3マス。いちばん下が幹）
   R(c, "#4d3727", 19, 96, 10, 44); R(c, "#6b4d34", 20, 96, 3, 42);
   for (let i = 0; i < 6; i++) { const w = 8 + i * 5, y = 8 + i * 18; blob(c, "#263f2f", 24, y + 10, w + 2, 12); blob(c, "#2f4a35", 23, y + 8, w, 10); blob(c, "#3b5a3e", 20, y + 4, Math.max(3, w - 6), 5); }
 }
+function canyon(c, x, y, nb) { // 深い谷（歩けない）。上が地面なら、崖の面を見せる
+  R(c, "#0e1016", 0, 0, T, T);
+  const r = rng(hash(x, y, 5) * 1e9);
+  for (let i = 0; i < 3; i++) R(c, "#161a22", (r() * 40) | 0, (r() * 40) | 0, 6 + ((r() * 8) | 0), 2);
+  if (nb(0, -1) !== "V" && nb(0, -1) !== "X" && nb(0, -1) !== "E") { R(c, "#4a4450", 0, 0, T, 16); R(c, "#35303a", 0, 16, T, 12); R(c, "#221f28", 0, 28, T, 8); for (let i = 0; i < 4; i++) R(c, "#2a2630", i * 12 + ((r() * 6) | 0), 2 + ((r() * 8) | 0), 2, 14); }
+}
+function fallen(c, x, y, nb) { canyon(c, x, y, nb); blob(c, "#2c2932", 24, 30, 18, 11); blob(c, "#4b4652", 22, 27, 15, 8); blob(c, "#625c68", 19, 24, 7, 4); } // 谷底の大きな石
+function bridgeEnd(c) { // 橋の切れ目（欠けた石組み）
+  R(c, "#0e1016", 0, 0, T, T); R(c, "#6d6670", 0, 0, 14, T); R(c, "#85808c", 0, 0, 14, 2); R(c, "#4f4a55", 12, 0, 4, T);
+  for (const yy of [10, 24, 38]) R(c, "#4f4a55", 0, yy, 14, 1);
+  R(c, "#6d6670", 14, 6, 6, 8); R(c, "#6d6670", 14, 30, 4, 10);
+}
+function plaque(c) { cobble(c, 0, 0, () => "c"); R(c, "#3a3640", 8, 14, 32, 24); R(c, "#8a7a52", 10, 16, 28, 20); R(c, "#c9b06a", 10, 16, 28, 2); for (const yy of [22, 27, 31]) R(c, "#5a4c2c", 14, yy, 20, 1); } // 銘板
+function bigStone(c) { blob(c, "#2a3a26", 24, 42, 22, 5); blob(c, "#3a3640", 24, 28, 22, 17); blob(c, "#625c68", 22, 24, 19, 13); blob(c, "#7a7380", 17, 19, 9, 5); } // 落ちてきた大きな石
+function towerFar(c) { // 丘の上の古い塔（遠くに見える。横2×縦3マス）
+  blob(c, "#34503a", 48, 136, 52, 12);
+  R(c, "#4f4a55", 26, 28, 44, 108); R(c, "#6d6670", 30, 28, 14, 108); R(c, "#3a3640", 62, 28, 8, 108);
+  for (let i = 0; i < 5; i++) R(c, "#3a3640", 26, 46 + i * 20, 44, 2);
+  for (let i = 0; i < 4; i++) R(c, "#4f4a55", 24 + i * 13, 18, 9, 12);
+  R(c, "#14121a", 42, 52, 10, 16); R(c, "#14121a", 42, 92, 10, 16); R(c, "#14121a", 40, 118, 16, 18);
+}
+function counter(c) { floor(c, 0, 0); R(c, "#3c2a1e", 0, 10, T, 30); R(c, "#7a5a3c", 0, 8, T, 8); R(c, "#93714d", 0, 8, T, 2); R(c, "#2a1d14", 0, 38, T, 3); } // 帳場の台
+function futon(c) { floor(c, 0, 0); R(c, "#3a4a66", 6, 6, 36, 86); R(c, "#56698c", 8, 8, 32, 60); R(c, "#d8d2c0", 10, 70, 28, 16); R(c, "#2a3550", 6, 44, 36, 2); } // 雑魚寝の布団（縦2マス）
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon };
 })(window);

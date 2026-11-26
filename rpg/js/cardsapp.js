@@ -4,24 +4,44 @@ const RARE=["","#cfcfcf","#56b35a","#4a90e2","#a66ad8","#e8b93c","#fff"];
 const base=id=>String(id).split("|")[0];
 const KIND_NM={"魔物":"魔物の札","色違い":"色違いの札","光る":"光る札","人物":"人物の札","限定":"限定の札"};
 const KEY="rpgCards1";
-// ---------- このRPGの最初の町に合わせる（試し） ----------
-// 手持ちは★1を5種類×5枚＝25枚。札の絵は、街道で出会う魔物
-START.length=0; ["m001","m002","m003","m009","m011"].forEach(c=>{ for(let i=0;i<5;i++) START.push(c); });
+// ---------- このRPGの世界の札（物語に出てくる魔物と人だけ。試作の240枚は使わない） ----------
+// n＝上・右・下・左の数字。★1は合計13前後、★2は16、★3は21、★4は25
+const WORLD={
+  w_koromochi:{nm:"コロモチ",r:1,n:[3,3,3,4],src:"img/m_koromochi.png",sz:[26,20],k:"魔物"},
+  w_kawauso:{nm:"カワウソ盗",r:1,n:[5,5,2,1],src:"img/monster_011.png",sz:[19,20],k:"魔物"},
+  w_mizugumo:{nm:"ミズグモ",r:1,n:[2,5,4,2],src:"img/m_mizugumo.png",sz:[57,40],k:"魔物"},
+  w_donguri:{nm:"ドングリ兵",r:1,n:[4,2,3,4],src:"img/m_donguri.png",sz:[28,30],k:"魔物"},
+  w_hane:{nm:"ハネネズミ",r:1,n:[5,2,5,1],src:"img/m_hanenezumi.png",sz:[55,29],k:"魔物"},
+  w_kakashi:{nm:"カカシ番",r:2,n:[2,6,5,3],src:"img/monster_088.png",sz:[65,70],k:"魔物"},
+  w_ookami:{nm:"モリオオカミ",r:2,n:[6,4,2,4],src:"img/m_ookami.png",sz:[56,45],k:"魔物"},
+  w_oya:{nm:"オヤミズグモ",r:3,n:[4,7,6,4],src:"img/m_oyagumo.png",sz:[114,80],k:"魔物"},
+  w_nushi:{nm:"ヌシガエル",r:4,n:[5,6,8,6],src:"img/m_nushi.png",sz:[129,98],k:"魔物"},
+  w_kai:{nm:"渡し守",r:3,n:[6,5,4,6],src:"img/c_kai.png",sz:[35,59],k:"人物"},
+  w_muku:{nm:"麦わら帽の子",r:3,n:[5,6,6,4],src:"img/c_muku.png",sz:[41,60],k:"人物"},
+};
+Object.keys(CARDS).forEach(k=>delete CARDS[k]);
+Object.keys(WORLD).forEach((k,i)=>{ CARDS[k]={...WORLD[k],im:k,no:i+1}; IMG[k]=WORLD[k].sz; });
+ORDER.length=0; Object.keys(WORLD).forEach(k=>ORDER.push(k));
+GLOWS.length=0;
+const PRACTICE=new URLSearchParams(location.search).get("practice")==="1"; // 1回目は賭けなしの練習
+const artSrc=c=>c.src||`../cards/img/c/${c.im}.png`;
+// 最初の札束：トトがくれる2枚と、おまけの札
+START.length=0; ["w_kai","w_muku","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_mizugumo","w_mizugumo","w_donguri","w_donguri"].forEach(c=>START.push(c));
+// 相手：0＝札売りのトト（看板はヌシガエル）、1＝かわうそ亭の女将ベラ
 OPPS.length=0; OPPS.push(
-  {nm:"荷運びのモルト",who:"074",cap:9,depth:1,sig:"p074",pool:["p074","m001","m001","m002","m002","m003","m003","m011","m011","m009","m001a","m011a"]},
-  {nm:"札読みの婆さま",who:"077",cap:11,depth:2,sig:"p077",pool:["p077","m009","m009","m002","m002","m006","m006","m009a","m002a","m003a","m001","m003"]},
-  {nm:"賭場の主ガロ",who:"030",cap:13,depth:2,sig:"p030",pool:["p030","m012","m012","m006","m006","m116","m012a","m006a","m003a","m002a","m011","m009"]});
-PRIZES.length=0; PRIZES.push(["m001a",60],["m011a",80],["m003a",120],["m012a",300],["m006a",500]);
-const SHOP_CARDS=["m001","m002","m003","m009","m011"], SHOP_PRICE=30;
+  {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_donguri","w_mizugumo","w_hane","w_hane","w_kakashi","w_ookami"]},
+  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_oya",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_mizugumo","w_donguri","w_kawauso","w_koromochi"]});
+PRIZES.length=0;
+const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）
 function rpgGold(add){ try{ const t=JSON.parse(localStorage.getItem("rpgPlay1")); if(add){ t.gold+=add; localStorage.setItem("rpgPlay1",JSON.stringify(t)); } return t.gold; }catch(e){ return 0; } }
 function goldTag(){ return `<span style="color:var(--text)">${rpgGold().toLocaleString()} G</span>`; }
 
 // ---------- 記録 ----------
 let S;
-function fresh(){ return {v:3,col:countOf(START),seen:{},op:OPPS.map(o=>({pool:o.pool.slice(),won:0,lost:0})),last:{},coin:0,games:0,shigoro:0}; }
+function fresh(){ return {v:4,col:countOf(START),seen:{},op:OPPS.map(o=>({pool:o.pool.slice(),won:0,lost:0})),last:{},coin:0,games:0,shigoro:0}; }
 function countOf(a){ const c={}; a.forEach(x=>c[x]=(c[x]||0)+1); return c; }
-function load(){ try{ const t=localStorage.getItem(KEY); S=t?JSON.parse(t):fresh(); }catch(e){ S=fresh(); } if(S.v!==3) S=fresh();
+function load(){ try{ const t=localStorage.getItem(KEY); S=t?JSON.parse(t):fresh(); }catch(e){ S=fresh(); } if(S.v!==4) S=fresh();
   while(S.op.length<OPPS.length){ const o=OPPS[S.op.length]; S.op.push({pool:o.pool.slice(),won:0,lost:0}); }
   Object.keys(S.col).forEach(k=>{ if(!CARDS[k]) delete S.col[k]; S.seen[k]=1; }); }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -45,7 +65,7 @@ function cardEl(cid,owner,w,h,o={}){
   const top=ih*sc<=bh?(bh-ih*sc)/2:0;
   const qn=q.map(k=>QK[k].nm).join("・");
   d.innerHTML=`<div class="face"></div>
-   <div class="art"><img src="../cards/img/c/${c.im}.png" style="width:${iw*sc}px;height:${ih*sc}px;top:${top}px"></div>
+   <div class="art"><img src="${artSrc(c)}" style="width:${iw*sc}px;height:${ih*sc}px;top:${top}px"></div>
    <div class="stars">★${c.r}</div><div class="shield"></div>
    <div class="n" style="font-size:${fs}px;left:0;right:0;top:${Math.round(h*0.03)}px">${N(nums[0])}</div>
    <div class="n" style="font-size:${fs}px;right:${Math.round(w*0.04)}px;top:${Math.round(h*0.42)}px">${N(nums[1])}</div>
@@ -63,7 +83,7 @@ function cardEl(cid,owner,w,h,o={}){
 function backEl(w,h){ const d=el("div","card back"); d.style.width=w+"px"; d.style.height=h+"px"; d.innerHTML='<div class="bk"></div>'; return d; }
 function who(id,box){ // 人物の正面の立ち姿（2倍、上半身で切る）
   const d=document.createElement("div"); d.className="sprite";
-  d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background-image:url(${id==="099"?"img/person_099.png":"../cards/img/person_"+id+".png"});background-size:288px 600px;background-position:${-(96)+(box[0]-96)/2}px ${box[1]>=120?0:-4}px`;
+  d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background-image:url(img/person_${id}.png);background-size:288px 600px;background-position:${-(96)+(box[0]-96)/2}px ${box[1]>=120?0:-4}px`;
   return d;
 }
 function desc(cid){ const c=CARDS[cid]; return `${c.nm}　${"★".repeat(c.r)}`+(c.q?"　"+c.q.map(k=>`${QK[k].nm}：${QK[k].ds}`).join("　"):"")+(c.only?`　（${c.only}）`:""); }
@@ -139,7 +159,7 @@ function collection(page){
     const box=el("div","bk1");
     if(S.col[id]){ box.appendChild(cardEl(id,"nb",66,86,{count:S.col[id]})); }
     else { const c=CARDS[id], sh=el("div","card shadow"); sh.style.cssText="width:66px;height:86px";
-      sh.innerHTML=S.seen[id]?`<div class="art"><img src="../cards/img/c/${c.im}.png" style="${(()=>{ const [iw,ih]=IMG[c.im], sc=iw<=58&&ih<=56?Math.max(1,Math.floor(Math.min(58/iw,56/ih))):1; return `width:${iw*sc}px;height:${ih*sc}px;top:${ih*sc<=56?(56-ih*sc)/2:0}px`; })()}"></div>`:`<div class="q">？</div>`;
+      sh.innerHTML=S.seen[id]?`<div class="art"><img src="${artSrc(c)}" style="${(()=>{ const [iw,ih]=IMG[c.im], sc=iw<=58&&ih<=56?Math.max(1,Math.floor(Math.min(58/iw,56/ih))):1; return `width:${iw*sc}px;height:${ih*sc}px;top:${ih*sc<=56?(56-ih*sc)/2:0}px`; })()}"></div>`:`<div class="q">？</div>`;
       box.appendChild(sh); }
     box.appendChild(el("div","no",String(CARDS[id].no).padStart(3,"0")));
     g.appendChild(box);
@@ -288,7 +308,7 @@ function prep(k){
   const can=(()=>{ const c=countOf(pool); for(const x of mine){ if(!c[x]) return false; c[x]--; } return mine.length===5 && rk(mine)<=o.cap; })();
   if(!can) mine=quickDeck(pool,o.cap);
   const loan=pool.length<5;
-  if(loan){ mine=pool.slice(); while(mine.length<5) mine.push("m001"); }
+  if(loan){ mine=pool.slice(); while(mine.length<5) mine.push("w_koromochi"); }
   P={k,op:opDeck,mine,target:null,loan,glow};
   drawPrep();
 }
@@ -299,7 +319,7 @@ function quickDeck(pool,cap){ // 上限の中で強い5枚（数字の合計の�
 }
 function weight(mine){ return rk(mine); }
 function oppPick(){ // 相手は、こちらの手札の一番いい札を狙う
-  if(P.loan) return null;
+  if(P.loan||PRACTICE) return null;
   return P.mine.slice().sort(byCard)[0];
 }
 function miniOrEmpty(cid,owner,lab,cls){
@@ -329,8 +349,8 @@ function drawPrep(){
   const vs=el("div","vsband");
   const lb=el("div",""); lb.style.cssText="display:flex;flex-direction:column;align-items:center;gap:3px;width:64px"; lb.appendChild(el("div","lbl","指名")); const q=backEl(40,52); q.querySelector(".bk").innerHTML="<b>？</b>"; lb.appendChild(q); vs.appendChild(lb);
   const mlab=()=>vs.querySelector(".vsmid .lbl");
-  const mid=el("div","vsmid"); mid.innerHTML=`<div class="vs">VS</div><div class="lbl">${P.loan?"貸し札の練習":"勝った方が受け取る"}</div>`; vs.appendChild(mid);
-  vs.appendChild(miniOrEmpty(P.loan?null:pick,"me","狙われる","danger"));
+  const mid=el("div","vsmid"); mid.innerHTML=`<div class="vs">VS</div><div class="lbl">${P.loan?"貸し札の練習":PRACTICE?"賭けなしの練習":"勝った方が受け取る"}</div>`; vs.appendChild(mid);
+  vs.appendChild(miniOrEmpty(P.loan||PRACTICE?null:pick,"me","狙われる","danger"));
   s.appendChild(vs);
   // 自分の手札
   const me=el("div","panel me");
@@ -385,7 +405,7 @@ let M=null;
 function startMatch(){
   const k=P.k, first=Math.random()<0.5?0:1;
   M={k,G:{b:Array(9).fill(null),h:[P.mine.slice(),P.op.slice()],lost:[0,0]},turn:-1,sel:null,busy:true,
-     wager:(P.target===null||P.loan)?null:{take:P.op[P.target],give:oppPick()},loan:P.loan,known:P.target};
+     wager:(P.target===null||P.loan||PRACTICE)?null:{take:P.op[P.target],give:oppPick()},loan:P.loan,known:P.target};
   drawMatch(); tossOnBoard(first);
 }
 function tossOnBoard(first){
@@ -469,14 +489,14 @@ function result(){
   const r=el("div","row"); r.style.gap="10px";
   const a=el("button","btn gold","もう一勝負"); a.onclick=()=>prep(M.k);
   const b=el("button","btn","卓を離れる"); b.onclick=town;
-  r.appendChild(a); r.appendChild(b); v.appendChild(r);
+  if(!PRACTICE) r.appendChild(a); r.appendChild(b); v.appendChild(r);
   document.querySelector(".screen").appendChild(v);
   setTimeout(()=>awards(),900);
 }
 // 限定の札：条件を満たしたら、まだ持っていなければ渡す
 function awards(){
   const won=k=>S.op[k].won, kinds=Object.keys(S.col).length, glows=GLOWS.filter(g=>S.col[g]).length;
-  const rules=[["L09",(S.shigoro||0)>=3],["L10",OPPS.every((o,k)=>won(k)>=1)]];
+  const rules=[["L09",(S.shigoro||0)>=3],["L10",OPPS.every((o,k)=>won(k)>=1)]].filter(([id])=>CARDS[id]); // 限定の札は、この世界のぶんを決めてから
   const due=rules.filter(([id,ok])=>ok&&!S.col[id]&&!S.gotL?.[id]).map(([id])=>id);
   if(!due.length) return;
   const id=due[0]; S.gotL=S.gotL||{}; S.gotL[id]=1; gain(id); reveal(id,"限定の札！",()=>awards());
