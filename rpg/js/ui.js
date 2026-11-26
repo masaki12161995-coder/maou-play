@@ -111,40 +111,26 @@ function result(r) {
 }
 
 // ---------- メニュー（仲間・陣形・札帳） ----------
-let tab = "party", who = -1, slotSel = null, fsel = -1;
+// ---------- メニュー：上に「仲間・持ち物・陣形・札帳」を並べ、押すとその画面に切り替わる ----------
+let tab = "party", who = 0, view = "stat", slotSel = null, fsel = -1, pickItem = null;
 function menu() {
   return new Promise(res => {
     const close = () => { clearLayer(); GS.save(); res(); };
     const draw = () => {
       const L = newLayer("veil solid menu");
-      [["party", "仲間"], ["form", "陣形"], ["book", "札帳"]].forEach(([k, nm], i) => {
-        const b = A(L, div("frame btn chip" + (tab === k ? " sel" : ""), nm), 12 + i * 82, 46, 78, 26); b.style.fontSize = d(11);
-        b.onclick = () => { if (k === "book") { cards("book").then(draw); return; } tab = k; who = -1; slotSel = null; fsel = -1; draw(); };
+      [["party", "仲間"], ["bag", "持ち物"], ["form", "陣形"], ["book", "札帳"]].forEach(([k, nm], i) => {
+        const b = A(L, div("frame btn chip" + (tab === k ? " sel" : ""), nm), 12 + i * 62, 46, 59, 28); b.style.fontSize = d(11);
+        b.onclick = () => { if (k === "book") { cards("book").then(draw); return; } tab = k; slotSel = null; fsel = -1; pickItem = null; draw(); };
       });
-      const x = A(L, div("frame btn chip", "×"), 263, 46, 26, 26); x.style.fontSize = d(14); x.onclick = close;
-      const gold = T(L, 12, 78, 277, 16, `<span class="dim">お金</span> <b>${GS.G.gold.toLocaleString()}</b> G`, 10, "num2 right");
-      if (tab === "party") who < 0 ? partyList(L, draw) : member(L, draw);
+      const x = A(L, div("frame btn chip", "×"), 261, 46, 28, 28); x.style.fontSize = d(14); x.onclick = close;
+      if (tab === "party") member(L, draw);
+      else if (tab === "bag") bag(L, draw);
       else formation(L, draw);
-      if (tab === "party" && who < 0) {
-        const r = A(L, div("frame btn chip dimchip", "はじめから"), 189, 596, 100, 24); r.style.fontSize = d(9.5);
-        r.onclick = async () => { const k = await choose("", "記録を消して、はじめから遊びますか？", ["はじめから", "やめる"]); if (k === 0) { GS.reset(); try { localStorage.removeItem("rpgCards1"); } catch (e) {} location.reload(); } else draw(); };
-      }
     };
     draw();
   });
 }
-function partyList(L, redraw) {
-  BT.HEROES.forEach((h, hi) => {
-    const m = GS.G.party[hi];
-    const row = A(L, div("frame prow", ""), 12, 100 + hi * 56, 277, 52);
-    const fc = DM.spriteBox(IM[h.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 40 * DM.K); fc.style.position = "absolute"; fc.style.left = d(4); fc.style.top = d(4); row.appendChild(fc);
-    T(row, 50, 4, 120, 18, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 12, "name");
-    T(row, 50, 26, 120, 16, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.HEARTS[m.heart].nm : ""}`, 9, "dim2");
-    T(row, 176, 6, 92, 16, `<span class="k">HP</span> ${m.hp}`, 10, "num2");
-    T(row, 176, 26, 92, 16, `<span class="k">LP</span> ${m.lp}<small>/${h.lp}</small>`, 10, "num2");
-    row.onclick = () => { who = hi; slotSel = null; redraw(); };
-  });
-}
+const faceAt = (parent, img, x, y, size) => { const fc = DM.spriteBox(IM[img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], size * DM.K); A(parent, fc, x, y, undefined, undefined); return fc; };
 function gearSummary(id) {
   const g = BT.GEAR[id], out = [];
   if (g.slot === "weapon") out.push(`威力${g.pow}`);
@@ -163,90 +149,175 @@ function heartSummary(k) {
   const ups = h.up.map(s => STAT_SHORT[s]).join("・");
   return `技：${BT.SKILLS[h.sk].nm}　${ups}が伸びやすい`;
 }
+// 技の1行（戦闘の技選びと同じ並び：属性・名前・威力・範囲・近遠・BP）
+function skillRow(parent, k, y, tag) {
+  const s = BT.SKILLS[k], at = s.at || [], row = A(parent, div("skrow", ""), 0, y, 277, 21);
+  const rank = s.kind === "攻撃" ? (s.rank && s.rank !== "N" ? s.rank : "—") : null;
+  row.innerHTML = `<span style="left:${d(6)};width:${d(24)};display:flex;gap:1px">${at.map(a => DM.icon(a, 10)).join("")}</span>` +
+    `<span class="sn" style="left:${d(32)};font-size:${d(10.5)}">${s.nm}${tag ? `<i class="tagh" style="font-size:${d(7.5)}">${tag}</i>` : ""}</span>` +
+    (rank ? `<span class="rk" style="left:${d(140)};font-size:${d(8)}">威力<b style="font-size:${d(9.5)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(140)};font-size:${d(8.5)}">${s.kind}</span>`) +
+    `<span class="rg" style="left:${d(180)};font-size:${d(8.5)}">${BT.RANGE_NM[s.tg]}</span>` +
+    (s.dist ? `<span class="ds ${s.dist === "近" ? "near" : "far"}" style="left:${d(212)};font-size:${d(7.5)};width:${d(12)};height:${d(12)};line-height:${d(12)}">${s.dist}</span>` : "") +
+    `<span class="bp" style="right:${d(8)};font-size:${d(9.5)}">${s.bp ? "BP" + s.bp : ""}</span>`;
+  return row;
+}
+// 仲間：上の顔を押すと人が替わる。下は「能力・技」と「装備」を切り替える
 function member(L, redraw) {
-  const h = BT.HEROES[who], m = GS.G.party[who];
-  const back = A(L, div("frame btn chip", "↩"), 12, 100, 30, 30); back.style.fontSize = d(13); back.onclick = () => { who = -1; slotSel = null; redraw(); };
-  const fc = DM.spriteBox(IM[h.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 44 * DM.K); A(L, fc, 48, 96, undefined, undefined);
-  T(L, 98, 98, 150, 22, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 14, "name");
-  T(L, 98, 120, 80, 16, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.HEARTS[m.heart].nm : ""}`, 9, "dim2");
-  // HPとLP
-  const hb = A(L, div("frame rbox", ""), 12, 140, 277, 26);
-  T(hb, 10, 0, 30, 24, "HP", 10, "k");
-  T(hb, 36, 0, 60, 24, `${m.hp}`, 13, "num2");
-  T(hb, 140, 0, 30, 24, "LP", 10, "k");
-  const pips = A(hb, div("lpips", Array.from({ length: h.lp }, (_, i) => `<i class="${i < m.lp ? "on" : ""}"></i>`).join("")), 164, 8, 106, 9);
-  // 能力値（装備・心を入れた値。↑は上がりやすい：緑＝本人、紫＝心）
-  const S = BT.heroStats(BT.resolveHero(who, m));
-  const heart = m.heart && BT.HEARTS[m.heart];
-  BT.STATS.forEach((k, i) => {
-    const col = i % 2, row = Math.floor(i / 2), x = 12 + col * 140, y = 172 + row * 27;
-    const box = A(L, div("frame sbox", ""), x, y, 137, 25);
-    T(box, 8, 0, 52, 23, BT.ST_NM[k], 10, "label");
-    T(box, 60, 0, 42, 23, `${S.st[k]}`, 13, "num2 right");
-    const up = (h.up.includes(k) ? '<span class="upm">↑</span>' : "") + (heart && heart.up.includes(k) ? '<span class="upm2">↑</span>' : "");
-    T(box, 106, 0, 28, 23, up, 10, "");
+  BT.HEROES.forEach((h, hi) => {
+    const b = A(L, div("frame facebtn" + (who === hi ? " sel" : ""), ""), 12 + hi * 56, 80, 53, 42);
+    faceAt(b, h.img, 8, 2, 36);
+    b.onclick = () => { who = hi; slotSel = null; redraw(); };
   });
-  // 装備と心（ラベルの幅をそろえて縦に並べる）
-  const slots = ["weapon", "armor", "sub", "acc", "heart"];
-  const ey = 284;
+  const h = BT.HEROES[who], m = GS.G.party[who];
+  T(L, 12, 128, 170, 20, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 13, "name");
+  T(L, 12, 148, 170, 14, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.HEARTS[m.heart].nm : ""}`, 8.5, "dim2");
+  T(L, 180, 128, 30, 20, "HP", 9.5, "k");
+  T(L, 204, 128, 85, 20, `${m.hp}`, 13, "num2");
+  T(L, 180, 148, 30, 14, "LP", 9.5, "k");
+  A(L, div("lpips", Array.from({ length: h.lp }, (_, i) => `<i class="${i < m.lp ? "on" : ""}"></i>`).join("")), 204, 151, 85, 8);
+  [["stat", "能力・技"], ["gear", "装備"]].forEach(([k, nm], i) => {
+    const b = A(L, div("frame btn chip" + (view === k ? " sel" : ""), nm), 12 + i * 140, 168, 137, 24); b.style.fontSize = d(10.5);
+    b.onclick = () => { view = k; slotSel = null; redraw(); };
+  });
+  view === "stat" ? statView(L, h, m) : gearView(L, redraw, h, m);
+}
+function statView(L, h, m) {
+  const S = BT.heroStats(BT.resolveHero(who, m)), heart = m.heart && BT.HEARTS[m.heart];
+  // 能力値：装備と心を入れた値。心を付けていると、その倍率を右に（上がれば青、下がれば赤。本家と同じ色）。↑は上がりやすい（緑＝本人・紫＝心）
+  BT.STATS.forEach((k, i) => {
+    const x = 12 + (i % 2) * 140, y = 200 + Math.floor(i / 2) * 25, box = A(L, div("frame sbox", ""), x, y, 137, 23);
+    T(box, 6, 0, 46, 21, BT.ST_NM[k], 9.5, "label");
+    T(box, 50, 0, 32, 21, `${S.st[k]}`, 12, "num2 right");
+    const pc = heart ? heart.mul[k] : 100;
+    if (pc !== 100) T(box, 84, 0, 30, 21, `${pc}%`, 8, "num2 right " + (pc > 100 ? "pcup" : "pcdn"));
+    const up = (h.up.includes(k) ? '<span class="upm">↑</span>' : "") + (heart && heart.up.includes(k) ? '<span class="upm2">↑</span>' : "");
+    T(box, 117, 0, 18, 21, up, 9, "");
+  });
+  // 技（通常攻撃＋本人の3つ＋心の技）
+  T(L, 14, 304, 100, 14, "技", 9, "label");
+  const box = A(L, div("frame rbox", ""), 12, 320, 277, 6 + (4 + (heart ? 1 : 0)) * 22);
+  ["attack", ...h.sk].forEach((k, i) => skillRow(box, k, 3 + i * 22));
+  if (heart) skillRow(box, heart.sk, 3 + 4 * 22, "心");
+  // パッシブ（本人の3つ＋装備に付いているもの）
+  const py = 320 + 6 + (4 + (heart ? 1 : 0)) * 22 + 8;
+  T(L, 14, py, 100, 14, "パッシブ", 9, "label");
+  const ps = [...h.ps.map(k => [k, ""]), ...Object.values(m.gear).filter(it => it && BT.GEAR[it.id].ps).map(it => [BT.GEAR[it.id].ps, "装備"])];
+  const pb = A(L, div("frame rbox", ""), 12, py + 16, 277, 6 + ps.length * 21);
+  ps.forEach(([k, tag], i) => {
+    const P = BT.PASSIVES[k];
+    T(pb, 8, 3 + i * 21, 70, 20, P.nm + (tag ? `<i class="tagw">${tag}</i>` : ""), 9.5, "name");
+    T(pb, 84, 3 + i * 21, 188, 20, P.ds, 8.5, "dim2");
+  });
+}
+function statDiff(hi, m, slot, item) { // 付け替えたら能力値がどう変わるか
+  const a = BT.heroStats(BT.resolveHero(hi, m)).st;
+  const m2 = { ...m, gear: { ...m.gear } };
+  if (slot === "heart") m2.heart = item; else m2.gear[slot] = item;
+  const b = BT.heroStats(BT.resolveHero(hi, m2)).st, out = [];
+  for (const k of BT.STATS) if (b[k] !== a[k]) out.push(`<span class="${b[k] > a[k] ? "pcup" : "pcdn"}">${STAT_SHORT[k]}${b[k] > a[k] ? "+" : ""}${b[k] - a[k]}</span>`);
+  return out.join(" ") || '<span class="dim">変わらない</span>';
+}
+function gearView(L, redraw, h, m) {
+  const slots = ["weapon", "armor", "sub", "acc", "heart"], ey = 200;
   slots.forEach((sl, i) => {
     const y = ey + i * 36, row = A(L, div("frame slotrow" + (slotSel === sl ? " on" : ""), ""), 12, y, 277, 34);
-    T(row, 8, 0, 44, 32, SLOT_NM[sl], 10, "label");
+    T(row, 8, 0, 46, 32, SLOT_NM[sl], 9.5, "label");
     if (sl === "heart") {
-      if (m.heart) { A(row, heartIcon(m.heart, 24), 50, 4, 24, 24); T(row, 80, 2, 192, 16, `<span class="heartnm">${BT.HEARTS[m.heart].nm}</span>`, 11, "name"); T(row, 80, 17, 192, 14, heartSummary(m.heart), 8.5, "dim2"); }
-      else T(row, 54, 0, 220, 32, "なし", 10.5, "dim");
+      if (m.heart) { A(row, heartIcon(m.heart, 24), 54, 4, 24, 24); T(row, 84, 2, 188, 16, `<span class="heartnm">${BT.HEARTS[m.heart].nm}</span>`, 10.5, "name"); T(row, 84, 17, 188, 14, heartSummary(m.heart), 8.5, "dim2"); }
+      else T(row, 58, 0, 210, 32, "なし", 10, "dim");
     } else {
       const it = m.gear[sl];
-      if (it) {
-        const g = BT.GEAR[it.id], ic = DM.iconImg(g.icon, 24 * DM.K); A(row, ic, 50, 4, undefined, undefined);
-        T(row, 80, 2, 192, 16, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, 11, "name");
-        T(row, 80, 17, 192, 14, itemSummary(it), 8.5, "dim2");
-      } else T(row, 54, 0, 220, 32, "なし", 10.5, "dim");
+      if (it) { const g = BT.GEAR[it.id]; A(row, DM.iconImg(g.icon, 24 * DM.K), 54, 4, undefined, undefined); T(row, 84, 2, 188, 16, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, 10.5, "name"); T(row, 84, 17, 188, 14, itemSummary(it), 8.5, "dim2"); }
+      else T(row, 58, 0, 210, 32, "なし", 10, "dim");
     }
     row.onclick = () => { slotSel = slotSel === sl ? null : sl; redraw(); };
   });
-  if (slotSel) candidates(L, redraw, ey + slots.length * 36 + 4);
-}
-function candidates(L, redraw, y0) {
-  const h = BT.HEROES[who], m = GS.G.party[who], G = GS.G, sl = slotSel, list = [];
+  if (!slotSel) return;
+  const G = GS.G, sl = slotSel, list = [];
   if (sl === "heart") {
-    if (m.heart) list.push({ nm: "外す", act: () => { G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; m.heart = null; } });
-    Object.keys(G.hearts).filter(k => G.hearts[k] > 0 && k !== m.heart).forEach(k => list.push({ html: `<span class="heartnm">${BT.HEARTS[k].nm}</span> <small>×${G.hearts[k]}</small>`, sub: heartSummary(k), act: () => { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[k]--; m.heart = k; } }));
+    if (m.heart) list.push({ nm: "外す", diff: statDiff(who, m, "heart", null), act: () => { G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; m.heart = null; } });
+    Object.keys(G.hearts).filter(k => G.hearts[k] > 0 && k !== m.heart).forEach(k => list.push({ heart: k, html: `<span class="heartnm">${BT.HEARTS[k].nm}</span><small> ×${G.hearts[k]}</small>`, diff: statDiff(who, m, "heart", k), act: () => { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[k]--; m.heart = k; } }));
   } else {
-    if (sl !== "weapon" && m.gear[sl]) list.push({ nm: "外す", act: () => { G.bag.push(m.gear[sl]); m.gear[sl] = null; } });
+    if (sl !== "weapon" && m.gear[sl]) list.push({ nm: "外す", diff: statDiff(who, m, sl, null), act: () => { G.bag.push(m.gear[sl]); m.gear[sl] = null; } });
     G.bag.filter(it => { const g = BT.GEAR[it.id]; return g.slot === sl && (sl !== "weapon" || g.wt === h.wt); }).forEach(it => {
       const g = BT.GEAR[it.id];
-      list.push({ icon: g.icon, html: `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, sub: itemSummary(it), act: () => { G.bag.splice(G.bag.indexOf(it), 1); if (m.gear[sl]) G.bag.push(m.gear[sl]); m.gear[sl] = it; } });
+      list.push({ icon: g.icon, html: `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, diff: statDiff(who, m, sl, it), act: () => { G.bag.splice(G.bag.indexOf(it), 1); if (m.gear[sl]) G.bag.push(m.gear[sl]); m.gear[sl] = it; } });
     });
   }
-  const box = A(L, div("frame cands", ""), 12, y0, 277, Math.max(34, Math.min(4, list.length) * 34 + 4));
+  const y0 = ey + 5 * 36 + 4, n = Math.min(6, list.length);
+  const box = A(L, div("frame cands", ""), 12, y0, 277, Math.max(34, n * 36 + 4));
   if (!list.length) { T(box, 10, 4, 257, 26, sl === "weapon" ? `使える${BT.WTYPE[h.wt].nm}を持っていない` : "替えられる物を持っていない", 9.5, "dim"); return; }
-  list.slice(0, 4).forEach((c, i) => {
-    const r = A(box, div("cand2", ""), 2, 2 + i * 34, 273, 32);
-    if (c.icon) A(r, DM.iconImg(c.icon, 22 * DM.K), 38, 4, undefined, undefined);
-    if (c.nm) T(r, 52, 0, 200, 32, c.nm, 10.5, "name");
-    else { T(r, 64, 1, 205, 16, c.html, 10.5, "name"); T(r, 64, 16, 205, 14, c.sub, 8.5, "dim2"); }
+  list.slice(0, 6).forEach((c, i) => {
+    const r = A(box, div("cand2", ""), 2, 2 + i * 36, 273, 34);
+    if (c.icon) A(r, DM.iconImg(c.icon, 22 * DM.K), 8, 5, undefined, undefined);
+    if (c.heart) A(r, heartIcon(c.heart, 22), 8, 5, 22, 22);
+    T(r, 38, 1, 230, 17, c.nm ? `<b>${c.nm}</b>` : c.html, 10.5, "name");
+    T(r, 38, 17, 230, 15, c.diff, 8.5, "");
     r.onclick = () => { c.act(); slotSel = null; GS.save(); redraw(); };
+  });
+}
+// 持ち物：装備していない武器・防具と、魔物の心。押すと、だれに付けるかを選ぶ
+function bag(L, redraw) {
+  const G = GS.G, rows = [];
+  const order = { weapon: 0, armor: 1, sub: 2, acc: 3 };
+  G.bag.slice().sort((a, b) => order[BT.GEAR[a.id].slot] - order[BT.GEAR[b.id].slot] || BT.GEAR[a.id].nm.localeCompare(BT.GEAR[b.id].nm)).forEach(it => rows.push({ it }));
+  Object.keys(G.hearts).filter(k => G.hearts[k] > 0).forEach(k => rows.push({ h: k }));
+  if (!rows.length) { T(L, 12, 90, 277, 24, "持ち物はない", 10.5, "dim center"); return; }
+  const per = 12, rh = 36;
+  rows.slice(0, per).forEach((r, i) => {
+    const row = A(L, div("frame prow" + (pickItem === r.it || (r.h && pickItem === r.h) ? " on" : ""), ""), 12, 84 + i * (rh + 2), 277, rh);
+    if (r.it) {
+      const g = BT.GEAR[r.it.id];
+      A(row, DM.iconImg(g.icon, 24 * DM.K), 6, 5, undefined, undefined);
+      T(row, 36, 2, 160, 17, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(r.it)}</span>`, 10.5, "name");
+      T(row, 36, 18, 236, 15, itemSummary(r.it), 8.5, "dim2");
+      T(row, 196, 2, 76, 17, g.slot === "weapon" ? BT.WTYPE[g.wt].nm : SLOT_NM[g.slot], 8.5, "dim right");
+    } else {
+      A(row, heartIcon(r.h, 26), 5, 4, 26, 26);
+      T(row, 36, 2, 160, 17, `<span class="heartnm">${BT.HEARTS[r.h].nm}</span><small> ×${G.hearts[r.h]}</small>`, 10.5, "name");
+      T(row, 36, 18, 236, 15, heartSummary(r.h), 8.5, "dim2");
+      T(row, 196, 2, 76, 17, "心", 8.5, "dim right");
+    }
+    row.onclick = () => { pickItem = pickItem === (r.it || r.h) ? null : (r.it || r.h); redraw(); };
+  });
+  if (!pickItem) return;
+  // だれに付けるか：付けられる人の顔だけ並べる
+  const isHeart = typeof pickItem === "string", g = !isHeart && BT.GEAR[pickItem.id];
+  const sheet = A(L, div("frame pickbar", ""), 12, 562, 277, 56);
+  T(sheet, 8, 2, 120, 14, "だれに付ける？", 8.5, "label");
+  BT.HEROES.forEach((h, hi) => {
+    const ok = isHeart || g.slot !== "weapon" || g.wt === h.wt;
+    const b = A(sheet, div("facebtn small" + (ok ? "" : " off"), ""), 8 + hi * 53, 16, 48, 36);
+    faceAt(b, h.img, 8, 1, 32);
+    if (!ok) return;
+    b.onclick = () => {
+      const m = G.party[hi];
+      if (isHeart) { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[pickItem]--; m.heart = pickItem; }
+      else { G.bag.splice(G.bag.indexOf(pickItem), 1); if (m.gear[g.slot]) G.bag.push(m.gear[g.slot]); m.gear[g.slot] = pickItem; }
+      DM.toast(`${h.nm}に付けた`, 540); pickItem = null; GS.save(); redraw();
+    };
   });
 }
 function formation(L, redraw) {
   const G = GS.G;
   Object.entries(BT.FORMATIONS).forEach(([k, f], i) => {
-    const b = A(L, div("frame btn chip" + (G.lo.form === k ? " sel" : ""), f.nm), 12 + i * 93, 100, 89, 26); b.style.fontSize = d(10.5);
+    const b = A(L, div("frame btn chip" + (G.lo.form === k ? " sel" : ""), f.nm), 12 + i * 93, 84, 89, 26); b.style.fontSize = d(10.5);
     b.onclick = () => { G.lo.form = k; fsel = -1; GS.save(); redraw(); };
   });
   const F = BT.FORMATIONS[G.lo.form];
-  T(L, 12, 130, 277, 16, F.ds, 8.5, "dim2");
-  A(L, div("frame", ""), 12, 150, 277, 236);
-  T(L, 20, 154, 60, 14, "← 敵", 8, "dim");
+  T(L, 12, 114, 277, 16, F.ds, 8.5, "dim2");
+  A(L, div("frame", ""), 12, 134, 277, 236);
+  T(L, 20, 138, 60, 14, "← 敵", 8, "dim");
   F.slots.forEach((sl, slot) => {
     const h = BT.HEROES[G.lo.pos[slot]];
-    const cx = 44 + sl.c * 80, cy = 168 + sl.r * 42;
+    const cx = 44 + sl.c * 80, cy = 152 + sl.r * 42;
     const t = A(L, div("frame tile" + (fsel === slot ? " sel" : ""), ""), cx, cy, 80, 38);
     const fc = DM.spriteBox(IM[h.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 26 * DM.K); fc.style.position = "absolute"; fc.style.left = d(2); fc.style.top = d(3); t.appendChild(fc);
     const tx = div("tn", `${h.nm}<br><i>${sl.h >= 2 ? "狙われやすい" : sl.h < 1 ? "狙われにくい" : ""}</i>`); tx.style.fontSize = d(7.5); tx.style.left = d(24); tx.style.top = d(6); t.appendChild(tx);
     t.onclick = () => { if (fsel < 0) { fsel = slot; redraw(); return; } const a = G.lo.pos[fsel]; G.lo.pos[fsel] = G.lo.pos[slot]; G.lo.pos[slot] = a; fsel = -1; GS.save(); redraw(); };
   });
+  const r = A(L, div("frame btn chip dimchip", "はじめから"), 189, 596, 100, 24); r.style.fontSize = d(9.5);
+  r.onclick = async () => { const k = await choose("", "記録を消して、はじめから遊びますか？", ["はじめから", "やめる"]); if (k === 0) { GS.reset(); try { localStorage.removeItem("rpgCards1"); } catch (e) {} location.reload(); } else redraw(); };
 }
 
 // ---------- 店 ----------
