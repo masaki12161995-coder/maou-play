@@ -66,9 +66,9 @@ function makeUnit(src,side,slot){
   u.sk=src.sk.slice();
   return u;
 }
-function newBattle(wave,seed){
+function newBattle(wave,seed,rows){
   const st={seed:seed||1, turn:0, log:[], over:null};
-  st.party=HEROES.map((h,i)=>makeUnit(h,0,i));
+  st.party=HEROES.map((h,i)=>makeUnit({...h,row:rows?rows[i]:h.row},0,i));
   st.foes=WAVES[wave].map((k,i)=>makeUnit({...FOES[k],id:"f"+i},1,i));
   for(const u of st.party) if(has(u,"first")) { u.gauge+=50; st.log.push({t:"passive",u:u.id,nm:"先手",v:"+50"}); }
   for(const u of [...st.party,...st.foes]) u.ct=100/u.spd*(0.8+rnd(st)*0.4);

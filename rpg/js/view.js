@@ -1,19 +1,19 @@
 // 戦闘の画面。敵は上、仲間は後ろ姿で前列・後列。行動の順番と下の札は正面の顔。
 (() => {
 "use strict";
-const W = 201, H = 437;
+const W = 301, H = 655; // 1ドット＝4画素（3倍の画面で1.33pt）。人物と背景を同じ細かさで描く
 const DPR = window.devicePixelRatio || 2;
 const stage = document.getElementById("stage"), cv = document.getElementById("field"), ctx = cv.getContext("2d"), hud = document.getElementById("hud");
 ctx.imageSmoothingEnabled = false;
 let K = 2; // 1ドットの大きさ（pt）
 
 // ---------- 位置（ドット） ----------
-const TL = { x: 22, y: 40, w: 157, h: 24 };
-const FOE_FEET = 150;
-const HERO_POS = { 0: [[58, 238], [143, 238]], 1: [[64, 294], [137, 294]] };
-const BANNER = { x: 22, y: 300, w: 157, h: 20 };
-const CARD = { y: 326, w: 41, h: 40, x0: 12, gap: 4 };
-const SPEED = { x: 72, y: 374, w: 57, h: 17 };
+const TL = { x: 33, y: 68, w: 235, h: 34 };
+const FOE_FEET = 228;
+const ROW_FEET = [332, 402]; // 前列・後列の足元。後列の頭が前列の足より下になるので、絵が重ならない
+const BANNER = { x: 33, y: 412, w: 235, h: 28 };
+const CARD = { y: 450, w: 62, h: 60, x0: 17, gap: 6 };
+const SPEED = { x: 108, y: 524, w: 85, h: 24 };
 const SHEET = { fw: 48, fh: 60 };
 const FACE = [58, 4, 28, 30]; // 正面の顔（シートの左上から）
 const POSE = [0, 240, 48, 46]; // 技のポーズ（上半身）
@@ -21,6 +21,7 @@ const POSE = [0, 240, 48, 46]; // 技のポーズ（上半身）
 const IM = {};
 function load(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = "img/" + src + ".png"; IM[src] = i; }); }
 
+let ROWS = BT.HEROES.map(h => h.row);
 let st = null, wave = 0, speed = 1, last = 0, busy = false, actor = null, poseUntil = {}, fx = {}, scene = null, ended = false;
 const SCENES = [() => makeScene(), () => dungeonScene("canopy"), () => dungeonScene("gold")];
 const PLACES = [
@@ -61,18 +62,18 @@ let els = {};
 function buildHud() {
   hud.innerHTML = ""; els = { cards: {}, st: {} };
   els.tl = px(div("px frame", ""), TL.x, TL.y, TL.w, TL.h); els.tl.id = "tl"; hud.appendChild(els.tl);
-  els.banner = px(div("px frame", ""), BANNER.x, BANNER.y, BANNER.w, BANNER.h); els.banner.id = "banner"; els.banner.style.fontSize = d(10); hud.appendChild(els.banner);
+  els.banner = px(div("px frame", ""), BANNER.x, BANNER.y, BANNER.w, BANNER.h); els.banner.id = "banner"; els.banner.style.fontSize = d(15); hud.appendChild(els.banner);
   st.party.forEach((u, i) => {
     const c = px(div("px frame card", ""), CARD.x0 + i * (CARD.w + CARD.gap), CARD.y, CARD.w, CARD.h);
-    const holder = div("px", ""); holder.style.left = "50%"; holder.style.top = d(2); holder.style.transform = "translateX(-50%)"; c.appendChild(holder);
-    const hp = div("bar", "<i></i>"); hp.style.bottom = d(6); c.appendChild(hp);
-    const g = div("bar g", "<i></i>"); g.style.bottom = d(2); g.style.height = d(2.2); c.appendChild(g);
+    const holder = div("px", ""); holder.style.left = "50%"; holder.style.top = d(3); holder.style.transform = "translateX(-50%)"; c.appendChild(holder);
+    const hp = div("bar", "<i></i>"); hp.style.bottom = d(9); c.appendChild(hp);
+    const g = div("bar g", "<i></i>"); g.style.bottom = d(3); g.style.height = d(3.3); c.appendChild(g);
     const sh = div("sh", ""); c.appendChild(sh);
     hud.appendChild(c); els.cards[u.id] = { c, holder, hp: hp.firstChild, g, sh, pose: null };
     setFace(u, false);
   });
   st.foes.forEach(u => { const s = div("st", ""); hud.appendChild(s); els.st[u.id] = s; });
-  const sp = px(div("px frame btn", ""), SPEED.x, SPEED.y, SPEED.w, SPEED.h); sp.style.fontSize = d(8.5);
+  const sp = px(div("px frame btn", ""), SPEED.x, SPEED.y, SPEED.w, SPEED.h); sp.style.fontSize = d(12.5);
   sp.onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; sp.innerHTML = `速さ　${speed}×`; };
   sp.innerHTML = `速さ　${speed}×`; hud.appendChild(sp);
   refresh();
@@ -82,17 +83,17 @@ function setFace(u, pose) {
   if (e.pose === pose) return; e.pose = pose;
   e.holder.innerHTML = "";
   const img = IM[u.img];
-  const f = pose ? spriteBox(img, POSE[0], POSE[1], POSE[2], POSE[3], 30 * K) : spriteBox(img, FACE[0], FACE[1], FACE[2], FACE[3], 28 * K);
+  const f = pose ? spriteBox(img, POSE[0], POSE[1], POSE[2], POSE[3], 45 * K) : spriteBox(img, FACE[0], FACE[1], FACE[2], FACE[3], 42 * K);
   e.holder.appendChild(f);
 }
 function refresh() {
   // 行動の順番（正面の顔）
   const q = BT.order(st, 7);
-  els.tl.innerHTML = `<div class="hg" style="font-size:${d(8)}">⌛</div>`;
+  els.tl.innerHTML = `<div class="hg" style="font-size:${d(12)}">⌛</div>`;
   q.forEach((u, i) => {
     const b = div("ic" + (u.side ? " foe" : "") + (i === 0 && busy ? " now" : ""), "");
-    b.style.width = d(17); b.style.height = d(17);
-    const f = faceOf(u, 17 * K); f.style.position = "absolute"; f.style.left = "50%"; f.style.top = "50%"; f.style.transform = "translate(-50%,-50%)";
+    b.style.width = d(26); b.style.height = d(26);
+    const f = faceOf(u, 26 * K); f.style.position = "absolute"; f.style.left = "50%"; f.style.top = "50%"; f.style.transform = "translate(-50%,-50%)";
     b.appendChild(f); els.tl.appendChild(b);
   });
   for (const u of st.party) {
@@ -102,12 +103,12 @@ function refresh() {
     e.g.firstChild.style.width = u.gauge + "%"; e.g.classList.toggle("full", u.gauge >= 100);
     e.c.classList.toggle("ko", u.dead); e.c.classList.toggle("on", actor === u);
     e.sh.textContent = u.shield > 0 ? "守" + u.shield : "";
-    e.sh.style.fontSize = d(5.5);
+    e.sh.style.fontSize = d(8);
   }
   for (const u of st.foes) {
     const s = els.st[u.id], p = foePos(u);
-    s.style.left = d(p.x); s.style.top = d(FOE_FEET + 8);
-    s.innerHTML = u.dead ? "" : (u.burn > 0 ? `<b class="burn" style="font-size:${d(5)}">火傷</b>` : "") + (u.mark > 0 ? `<b class="mark" style="font-size:${d(5)}">印</b>` : "");
+    s.style.left = d(p.x); s.style.top = d(FOE_FEET + 11);
+    s.innerHTML = u.dead ? "" : (u.burn > 0 ? `<b class="burn" style="font-size:${d(7.5)}">火傷</b>` : "") + (u.mark > 0 ? `<b class="mark" style="font-size:${d(7.5)}">印</b>` : "");
   }
 }
 
@@ -121,10 +122,11 @@ function layoutFoes() {
   foeLayout = sp.map(i => { const p = { left, x: left + Math.floor(i.naturalWidth / 2), w: i.naturalWidth, h: i.naturalHeight }; left += i.naturalWidth + gap; return p; });
 }
 function foePos(u) { return foeLayout[u.slot]; }
-function heroPos(u) {
-  const same = st.party.filter(p => p.row === u.row);
-  const [x, y] = HERO_POS[u.row][same.indexOf(u)] || HERO_POS[u.row][0];
-  return { x, y };
+function heroPos(u) { // 同じ列の人数で、左右に均等に並べる（1人なら真ん中）
+  const same = st.party.filter(p => p.row === u.row), n = same.length, i = same.indexOf(u);
+  const span = n === 1 ? 0 : n === 2 ? 120 : n === 3 ? 180 : 210;
+  const x = Math.round(W / 2 - span / 2 + (n === 1 ? 0 : span * i / (n - 1)) + (u.row ? 0 : 0));
+  return { x, y: ROW_FEET[u.row] };
 }
 
 // ---------- 描く ----------
@@ -148,24 +150,24 @@ function draw(t) {
     ctx.save();
     if (u.dead) ctx.globalAlpha = Math.max(0, (f.fade - t) / 500);
     // 影
-    ctx.fillStyle = "#0006"; ctx.fillRect(p.x - Math.floor(p.w * 0.35), FOE_FEET - 1, Math.floor(p.w * 0.7), 2);
+    ctx.fillStyle = "#0006"; ctx.fillRect(p.x - Math.floor(p.w * 0.35), FOE_FEET - 2, Math.floor(p.w * 0.7), 3);
     ctx.drawImage(img, p.left + ox, FOE_FEET - p.h + oy);
     ctx.restore();
     if (f.flash > t) { ctx.save(); ctx.globalAlpha = 0.7; ctx.drawImage(white(img), p.left + ox, FOE_FEET - p.h + oy); ctx.restore(); } // 白く光る
     if (!u.dead) { // 体力
-      const bw = Math.min(30, Math.max(18, Math.floor(p.w * 0.6))), bx = p.x - Math.floor(bw / 2), by = FOE_FEET + 3;
-      ctx.fillStyle = "#1a1016"; ctx.fillRect(bx - 1, by - 1, bw + 2, 4);
-      ctx.fillStyle = "#3a2531"; ctx.fillRect(bx, by, bw, 2);
-      ctx.fillStyle = "#e0604a"; ctx.fillRect(bx, by, Math.ceil(bw * u.hp / u.max), 2);
+      const bw = Math.min(44, Math.max(26, Math.floor(p.w * 0.6))), bx = p.x - Math.floor(bw / 2), by = FOE_FEET + 4;
+      ctx.fillStyle = "#1a1016"; ctx.fillRect(bx - 1, by - 1, bw + 2, 5);
+      ctx.fillStyle = "#3a2531"; ctx.fillRect(bx, by, bw, 3);
+      ctx.fillStyle = "#e0604a"; ctx.fillRect(bx, by, Math.ceil(bw * u.hp / u.max), 3);
     }
   }
   // 仲間（後ろ姿）。後列を先に描く
   for (const u of [...st.party].sort((a, b) => b.row - a.row)) {
     const p = heroPos(u), img = IM[u.img], f = fx[u.id] || {};
     let oy = 0, ox = 0, col = 1, row = 3;
-    if (f.hop > t) { oy = -Math.round(Math.sin(Math.min(1, (f.hop - t) / 260) * Math.PI) * 5); col = Math.floor(t / 90) % 2 ? 0 : 2; }
+    if (f.hop > t) { oy = -Math.round(Math.sin(Math.min(1, (f.hop - t) / 260) * Math.PI) * 7); col = Math.floor(t / 90) % 2 ? 0 : 2; }
     if (f.shake > t) ox = Math.round(Math.sin(t / 18) * 2);
-    ctx.fillStyle = "#0007"; ctx.fillRect(p.x - 12, p.y - 2, 24, 3);
+    ctx.fillStyle = "#0007"; ctx.fillRect(p.x - 13, p.y - 2, 26, 3);
     ctx.save();
     if (u.dead) ctx.globalAlpha = 0.35;
     ctx.drawImage(img, col * SHEET.fw, row * SHEET.fh, SHEET.fw, SHEET.fh, p.x - 24 + ox, p.y - 60 + oy, SHEET.fw, SHEET.fh);
@@ -182,15 +184,15 @@ function num(x, y, text, cls, size) {
 }
 function note(u, text) {
   let x, y;
-  if (u.side === 0) { const i = st.party.indexOf(u); x = CARD.x0 + i * (CARD.w + CARD.gap) + CARD.w / 2; y = CARD.y - 9; }
-  else { const p = foePos(u); x = p.x; y = FOE_FEET - p.h - 10; }
-  const e = div("note", text); e.style.left = d(x); e.style.top = d(y); e.style.fontSize = d(5.6);
+  if (u.side === 0) { const i = st.party.indexOf(u); x = CARD.x0 + i * (CARD.w + CARD.gap) + CARD.w / 2; y = CARD.y - 13; }
+  else { const p = foePos(u); x = p.x; y = FOE_FEET - p.h - 14; }
+  const e = div("note", text); e.style.left = d(x); e.style.top = d(y); e.style.fontSize = d(8.4);
   e.style.animationDuration = (1.1 / Math.sqrt(speed)) + "s";
   hud.appendChild(e); setTimeout(() => e.remove(), 1200);
 }
 function where(u) {
   if (u.side === 1) { const p = foePos(u); return { x: p.x, y: FOE_FEET - p.h * 0.55 }; }
-  const i = st.party.indexOf(u); return { x: CARD.x0 + i * (CARD.w + CARD.gap) + CARD.w / 2, y: CARD.y + 12 };
+  const i = st.party.indexOf(u); return { x: CARD.x0 + i * (CARD.w + CARD.gap) + CARD.w / 2, y: CARD.y + 18 };
 }
 function byId(id) { return [...st.party, ...st.foes].find(u => u.id === id); }
 
@@ -208,7 +210,7 @@ async function turn() {
     if (e.t === "act") {
       const s = BT.SKILLS[e.skill];
       els.banner.className = "px frame" + (e.k === "A" ? " act" : "");
-      els.banner.innerHTML = `<span class="k" style="font-size:${d(5.5)}">${e.k === "A" ? "技" : "通常"}</span><span>${s.nm}</span>`;
+      els.banner.innerHTML = `<span class="k" style="font-size:${d(8)}">${e.k === "A" ? "技" : "通常"}</span><span>${s.nm}</span>`;
       els.banner.classList.add("on");
       const a = byId(e.u);
       if (a.side === 0) { fx[a.id] = { ...(fx[a.id] || {}), hop: now() + 260 / speed }; if (e.k === "A") { setFace(a, true); poseUntil[a.id] = now() + 900 / speed; } }
@@ -218,8 +220,8 @@ async function turn() {
     } else if (e.t === "hit") {
       const t = byId(e.d), p = where(t);
       fx[t.id] = { ...(fx[t.id] || {}), flash: now() + 120 / speed, shake: now() + 220 / speed };
-      if (e.absorbed) num(p.x, p.y - 8, "守り " + e.absorbed, "guard", 8);
-      if (e.v > 0 || !e.absorbed) num(p.x, p.y, String(e.v), (e.crit ? "crit" : "") + (t.side === 0 ? " foe" : ""), e.crit ? 15 : 12);
+      if (e.absorbed) num(p.x, p.y - 12, "守り " + e.absorbed, "guard", 12);
+      if (e.v > 0 || !e.absorbed) num(p.x, p.y, String(e.v), (e.crit ? "crit" : "") + (t.side === 0 ? " foe" : ""), e.crit ? 22 : 18);
       if (e.syn) note(byId(e.a), e.syn[0]);
       refresh(); await wait(170);
     } else if (e.t === "passive") {
@@ -227,9 +229,9 @@ async function turn() {
     } else if (e.t === "status") {
       refresh(); await wait(40);
     } else if (e.t === "shield") {
-      const t = byId(e.d), p = where(t); num(p.x, p.y, "守り+" + e.v, "guard", 8); refresh(); await wait(60);
+      const t = byId(e.d), p = where(t); num(p.x, p.y, "守り+" + e.v, "guard", 12); refresh(); await wait(60);
     } else if (e.t === "burn") {
-      const t = byId(e.d), p = where(t); num(p.x, p.y, String(e.v), "foe", 10); note(t, "火傷"); refresh(); await wait(260);
+      const t = byId(e.d), p = where(t); num(p.x, p.y, String(e.v), "foe", 15); note(t, "火傷"); refresh(); await wait(260);
     } else if (e.t === "down") {
       const t = byId(e.d); fx[t.id] = { ...(fx[t.id] || {}), fade: now() + 500 / speed }; refresh(); await wait(200);
     }
@@ -245,7 +247,7 @@ function refreshTL(u) { refresh(); const first = els.tl.querySelector(".ic"); }
 
 // ---------- 始めと終わり ----------
 function start(w) {
-  wave = w; st = BT.newBattle(w, (Date.now() & 0xffff) + 1); last = 0; busy = false; ended = false; fx = {}; poseUntil = {};
+  wave = w; st = BT.newBattle(w, (Date.now() & 0xffff) + 1, ROWS); last = 0; busy = false; ended = false; fx = {}; poseUntil = {};
   scene = SCENES[w](); layoutFoes(); buildHud();
   setTimeout(turn, 700);
 }
@@ -268,6 +270,16 @@ function result() {
 }
 function menu() {
   hud.innerHTML = ""; const v = div("veil", "");
+  // 並び：顔を押すと前列と後列を行き来する（前列は1人以上）
+  const fm = div("", ""); fm.style.cssText = "display:flex;flex-direction:column;gap:6px;width:86%";
+  [0, 1].forEach(r => {
+    const line = div("frame", ""); line.style.cssText = "display:flex;align-items:center;gap:8px;padding:6px 10px;min-height:52px";
+    line.appendChild(div("", `<span style="font-size:13px;color:#c9b08c">${r ? "後列" : "前列"}</span>`));
+    BT.HEROES.forEach((h, i) => { if (ROWS[i] !== r) return; const f = spriteBox(IM[h.img], FACE[0], FACE[1], FACE[2], FACE[3], 40); f.style.cursor = "pointer";
+      f.onclick = () => { const nr = 1 - ROWS[i]; if (nr === 1 && ROWS.filter(x => x === 0).length <= 1) return; ROWS[i] = nr; menu(); }; line.appendChild(f); });
+    fm.appendChild(line);
+  });
+  v.appendChild(fm);
   v.appendChild(div("big", "どこで戦う？"));
   PLACES.forEach(([n, s], i) => { const b = div("frame btn pick", `<div style="text-align:center">${n}<small>${s}</small></div>`); b.onclick = () => start(i); v.appendChild(b); });
   hud.appendChild(v);

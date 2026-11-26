@@ -1,12 +1,15 @@
-// 戦闘の背景（ドット1つ＝1画素で描く）。WIDTH×HEIGHT は 201×437
-const SW=201, SH=437;
+// 戦闘の背景。下書きは 201×437 の座標で描き、SF倍の細かさの画素に置き直す（人物の絵と同じ点の細かさにする）
+const SW=201, SH=437, SF=1.5;
+const sc = v => Math.round(v * SF);
 function rect(ctx, color, x, y, w, h) {
   ctx.fillStyle = color;
-  ctx.fillRect(x, y, w, h);
+  const X = sc(x), Y = sc(y);
+  ctx.fillRect(X, Y, Math.max(1, sc(x + w) - X), Math.max(1, sc(y + h) - Y));
 }
 
 // Fill whole pixels so mountain ridges and edges use the same grid as the sprites.
 function polygon(ctx, color, points) {
+  points = points.map(([x, y]) => [x * SF, y * SF]);
   const minY = Math.max(0, Math.floor(Math.min(...points.map(point => point[1]))));
   const maxY = Math.min(ctx.canvas.height - 1, Math.ceil(Math.max(...points.map(point => point[1]))));
   ctx.fillStyle = color;
@@ -30,10 +33,11 @@ function polygon(ctx, color, points) {
 }
 
 function line(ctx, color, ax, ay, bx, by, width = 1) {
-  ax = Math.round(ax);
-  ay = Math.round(ay);
-  bx = Math.round(bx);
-  by = Math.round(by);
+  ax = sc(ax);
+  ay = sc(ay);
+  bx = sc(bx);
+  by = sc(by);
+  width = Math.max(1, Math.floor(width * SF));
   const dx = Math.abs(bx - ax);
   const dy = -Math.abs(by - ay);
   const sx = ax < bx ? 1 : -1;
@@ -51,6 +55,7 @@ function line(ctx, color, ax, ay, bx, by, width = 1) {
 
 function oval(ctx, color, x, y, rx, ry) {
   ctx.fillStyle = color;
+  x = sc(x); y = sc(y); rx = Math.max(1, sc(rx)); ry = Math.max(1, sc(ry));
   for (let offset = -ry; offset <= ry; offset++) {
     const wide = Math.floor(rx * Math.sqrt(1 - (offset / ry) ** 2));
     ctx.fillRect(x - wide, y + offset, wide * 2 + 1, 1);
@@ -312,8 +317,8 @@ function lantern(ctx, phase) {
 
 function makeScene() {
   const scene = document.createElement('canvas');
-  scene.width = SW;
-  scene.height = SH;
+  scene.width = Math.round(SW * SF);
+  scene.height = Math.round(SH * SF);
   const ctx = scene.getContext('2d');
   mountains(ctx);
   path(ctx);
@@ -341,7 +346,7 @@ function makeScene() {
 
 function dungeonScene(skin) {
   const scene=document.createElement("canvas");
-  scene.width=SW;scene.height=SH;
+  scene.width=Math.round(SW*SF);scene.height=Math.round(SH*SF);
   const ctx=scene.getContext("2d");
   if (["gold","grass","sails","canopy"].includes(skin)) {
     const high=skin==="sails", leaves=skin==="canopy", rand=random(high?14920:leaves?67703:82031);
