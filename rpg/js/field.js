@@ -38,7 +38,7 @@ function build(id) {
   const hasWater = M.g.some(r => r.includes("~") || r.includes("b") || r.includes("s"));
   ground = [paint(0)]; if (hasWater) ground.push(paint(1));
   over = paintOver();
-  npcs = M.npcs.map(n => ({ ...n, d: n.dir }));
+  syncNpcs();
   chests = M.chests.map(c => ({ ...c, open: !!G().chests[c.id] }));
   foes = M.foes.filter(f => !(f.boss && G().flags.boss)).map(f => ({ def: f, x: f.x, y: f.y, fx: f.x, fy: f.y, hx: f.x, hy: f.y, from: null, t0: 0, next: performance.now() + 400 + Math.random() * 900, face: 1, alive: true }));
 }
@@ -71,12 +71,19 @@ function paintOver() { // 木の葉（上の層）
   return c;
 }
 
+// 町の人：when（出てくる条件）が付いている人は、条件に合うときだけ居る。出来事のあとにも呼ぶ
+function syncNpcs() { npcs = M.npcs.filter(n => !n.when || n.when(G())).map(n => ({ ...n, d: n.dir })); }
+// 後ろを付いて歩くのは、戦う5人のうち先頭の人（主人公）以外
+function syncParty() {
+  const ids = GS.fighters().filter(hi => hi !== LEADER);
+  fol = ids.map((hi, i) => fol.find(f => f.hi === hi) || { hi, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
+}
 // ---------- 入る・出る ----------
 function enter(id, x, y, dir) { // x,y は足す前の地図の座標
   build(id); y += M.padTop;
   P = { x, y, dir: dir || 0, fx: x, fy: y, from: null, t0: 0 };
   hist = Array(6).fill(0).map(() => ({ x, y }));
-  fol = BT.HEROES.map((h, i) => i).filter(i => i !== LEADER).map(hi => ({ hi, x, y, fx: x, fy: y, from: null, dir: dir || 0 }));
+  fol = []; syncParty();
   const g = G(); g.map = id; g.x = x; g.y = y - M.padTop; g.dir = P.dir; GS.save();
   route = null; grace = performance.now() + 800;
   hudBuild();
@@ -181,37 +188,63 @@ function makeWave(def) {
   const order = def.g.slice().sort((a, b) => (["bat", "shroom"].includes(a) ? 1 : 0) - (["bat", "shroom"].includes(b) ? 1 : 0));
   return { nm: M.nm, foes: order.map((k, i) => ({ k, c: CELLS[i][0], r: CELLS[i][1] })), tier, bg: def.bg || M.bg, drops: DROPS[tier] || [] };
 }
-async function fight(f) {
-  if (busy) return;
-  busy = true; route = null; drag = null;
-  P.dir = dirOf(f.x - P.x, f.y - P.y);
-  if (f.def.boss) await UI.say("オーク", ["グオオオ……！", "ここはオレの寝床だ。荷車の食い物は、ぜんぶオレのものだ！"]);
+// 戦って、成長・ごほうび・結果の画面まで。戻り値は "win" / "lose" / "time"
+//  wave.solo＝その1人で戦う、wave.fixed＝決まった顔ぶれ、wave.until＝決まったターンで終わる
+//  wave.loseOk＝負けても物語が進む（お金もLPも減らない。結果の画面も出さない）
+async function runBattle(wave) {
   await flash();
   active = false; [...hud.querySelectorAll(".fhud")].forEach(e => e.remove());
-  const wave = makeWave(f.def);
-  BV.start(wave, G().party, G().lo, st => after(f, st, wave));
-}
-async function after(f, st, wave) {
+  const st = await new Promise(res => BV.start(wave, G().party, G().lo, res));
   const g = G();
-  for (const u of st.party) g.party[u.hi].lp = Math.max(0, u.lp);
+  if (!(wave.loseOk && st.over !== "win")) for (const u of st.party) g.party[u.hi].lp = Math.max(0, u.lp);
   if (st.over === "win") {
     const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, taken: u.taken, healed: u.healed, ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng) }));
     await BV.finish(growth);
     const rw = BT.rewards(st, rng);
     g.gold += rw.gold; rw.hearts.forEach(k => { g.hearts[k] = (g.hearts[k] || 0) + 1; }); rw.items.forEach(it => g.bag.push(GS.item(it.id, it.b, it.tag)));
-    g.wins++; f.alive = false; if (f.def.boss) g.flags.boss = 1;
-    GS.save();
+    g.wins++; GS.save();
     await UI.result({ win: true, gold: rw.gold, hearts: rw.hearts, items: rw.items, growth, turns: st.turn });
-    active = true; hudBuild(); grace = performance.now() + 1200; busy = false; fadeIn();
-    if (f.def.boss) { await UI.say("", ["坑道の主を倒した！", "これで街道の荷車も通れるはずだ。町の長に知らせよう。"]); }
+  } else if (wave.loseOk) {
+    await BV.finish(null);
   } else if (st.over === "lose") {
     await BV.finish(null); await UI.result({ win: false });
     g.gold = Math.floor(g.gold / 2); GS.restAll(); GS.save();
-    active = true; busy = false; enter("town", 6, 13, 3); fadeIn();
   } else {
     await BV.finish(null); await UI.result({ win: false, time: true });
-    active = true; hudBuild(); grace = performance.now() + 1500; busy = false; fadeIn();
   }
+  active = true; hudBuild(); grace = performance.now() + 1200; fadeIn();
+  return st.over;
+}
+function toInn() { enter("town", 6, 13, 3); fadeIn(); } // 全滅したら宿へ
+async function fight(f) {
+  if (busy) return;
+  busy = true; route = null; drag = null;
+  P.dir = dirOf(f.x - P.x, f.y - P.y);
+  if (f.def.boss) await UI.say("オーク", ["グオオオ……！", "ここはオレの寝床だ。荷車の食い物は、ぜんぶオレのものだ！"]);
+  const r = await runBattle(makeWave(f.def));
+  if (r === "win") {
+    f.alive = false; if (f.def.boss) { G().flags.boss = 1; GS.save(); }
+    busy = false;
+    if (f.def.boss) { await UI.say("", ["坑道の主を倒した！", "これで街道の荷車も通れるはずだ。町の長に知らせよう。"]); }
+  } else { busy = false; if (r === "lose") toInn(); }
+}
+// ---------- 出来事の小道具（話しかけたときの出来事から使う） ----------
+// 出来事の中の戦い。全滅（負けてもよい戦いは除く）なら宿へ戻り、false を返すので、出来事はそこでやめる
+async function battle(wave) {
+  const r = await runBattle({ tier: M.tier || 1, bg: M.bg || "meadow", ...wave });
+  if (r === "lose" && !wave.loseOk) { toInn(); return null; }
+  return r;
+}
+async function joinMember(hi) {
+  if (!GS.join(hi)) return;
+  syncParty(); syncNpcs();
+  const inFive = GS.fighters().includes(hi);
+  await UI.say("", [`${BT.HEROES[hi].nm}が仲間になった！`].concat(inFive ? [] : ["戦う5人がいっぱいなので、控えに入った。（メニューの「陣形」で入れ替えられる）"]));
+}
+async function leaveMember(hi, lines) {
+  if (!GS.leave(hi)) return;
+  syncParty(); syncNpcs();
+  await UI.say("", lines || [`${BT.HEROES[hi].nm}が一行を離れた。`, "付けていた装備と心は、持ち物に戻った。"]);
 }
 
 // ---------- 話す・調べる ----------
@@ -236,6 +269,38 @@ async function openChest(c) {
 }
 const stage1 = () => !!G().flags.boss;
 const TALK = {
+  // ---- 仕組みの試し（仮）：一人の決闘・人間の一団・負けても進む戦い・仲間の出入り ----
+  dojo: async n => {
+    const k = await UI.choose(n.nm, "ここは稽古場だ。腕を試していくか？", ["一騎打ち（レオン1人）", "雇われ兵の一団と戦う", "黒衣の将に挑む", "やめる"]);
+    if (k === 0) {
+      await UI.say(n.nm, ["一対一だ。仲間は手を出すなよ。"]);
+      const r = await battle({ nm: "一騎打ち", foes: [{ k: "h_sword", c: 0, r: 1 }], solo: LEADER, drops: [] });
+      if (r === "win") await UI.say(n.nm, ["見事だ。その剣、本物だな。"]); else if (r) await UI.say(n.nm, ["まだまだだな。出直してこい。"]);
+    } else if (k === 1) {
+      const r = await battle({ nm: "稽古場", foes: [{ k: "h_guard", c: 0, r: 0 }, { k: "h_guard", c: 0, r: 2 }, { k: "h_sword", c: 1, r: 1 }, { k: "h_archer", c: 2, r: 0 }, { k: "h_mage", c: 2, r: 2 }], drops: [] });
+      if (r === "win") await UI.say(n.nm, ["5人まとめて片づけるとはな。"]);
+    } else if (k === 2) {
+      await UI.say("黒衣の将", ["……来い。"]);
+      await battle({ nm: "稽古場", foes: [{ k: "h_lord", c: 1, r: 1 }], until: 3, loseOk: 1, drops: [] });
+      await UI.say("黒衣の将", ["その程度か。……だが、目は死んでいない。", "いずれ、また会おう。"]);
+      await UI.say(n.nm, ["……あの人には、まだ誰も勝てん。気にするな。"]);
+    }
+  },
+  roy: async n => {
+    const k = await UI.choose(n.nm, "あんたら、坑道へ行くんだろ？ おれも連れてってくれよ。剣なら少しは使える。", ["連れて行く", "やめる"]);
+    if (k === 0) await joinMember(5);
+  },
+  sera: async n => {
+    if (!G().flags.seraDuel) {
+      const k = await UI.choose(n.nm, "わたしは、自分より弱い人には付いて行かない。一対一で確かめさせて。", ["受けて立つ", "やめる"]);
+      if (k !== 0) return;
+      const r = await battle({ nm: "腕試し", foes: [{ k: "h_guard", c: 0, r: 1 }], solo: LEADER, drops: [] });
+      if (r !== "win") { if (r) await UI.say(n.nm, ["出直してきて。"]); return; }
+      G().flags.seraDuel = 1; GS.save();
+    }
+    await UI.say(n.nm, ["……参った。約束どおり、付いて行く。"]);
+    await joinMember(6);
+  },
   elder: n => UI.say(n.nm, stage1() ? ["坑道の主を追い払ってくれたそうじゃな！", "これで荷車が通れる。町の皆にかわって礼を言うぞ。", "崖崩れの片付けがすんだら、北へも行けるようになる。それまでゆっくりしていっておくれ。"]
     : ["わしはこの町の長じゃ。", "街道の先の古い坑道に、大きなオークが住みついてしもうた。", "荷車が襲われて、町に品が届かん。どうか追い払ってはくれんか。"]),
   inn: async n => {
@@ -352,5 +417,6 @@ function flash() { return new Promise(r => { const e = px(div("px battleflash", 
 
 requestAnimationFrame(draw);
 root.FD = { start, enter, get active() { return active; },
+  battle, joinMember, leaveMember, syncParty,
   _test: { fight: id => fight(foes.find(f => f.def.id === id)), talk: id => { const n = npcs.find(n => n.id === id); return interact(n.x, n.y); }, pos: () => ({ ...P, busy, drag, route, active }) } };
 })(window);

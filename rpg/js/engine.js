@@ -139,7 +139,15 @@ const HEROES = [
   { id: "h5", nm: "ガイ", img: "person_095", wt: "spear", rare: "A", hp: 205, hpCap: 1100, lp: 8, st: { str: 25, vit: 20, dex: 17, agi: 17, int: 10, wil: 14, lov: 10, cha: 12 },
     cap: { str: 124, vit: 110, dex: 100, agi: 100, int: 70, wil: 86, lov: 66, cha: 80 }, up: ["str", "dex"],
     res: {}, sk: ["thrust", "pierce", "lightning"], ps: ["spearway", "charge", "thunder"], gear: { weapon: "ironspear", armor: "leather", sub: "buckler", acc: "ring" } },
+  // ここから下は、あとから加わる仲間（仮。仲間の出入りと入れ替えを確かめるための2人）
+  { id: "h6", nm: "ロイ", img: "person_114", wt: "sword", rare: "A", hp: 190, hpCap: 1080, lp: 8, st: { str: 24, vit: 17, dex: 17, agi: 21, int: 8, wil: 11, lov: 9, cha: 13 },
+    cap: { str: 120, vit: 98, dex: 104, agi: 120, int: 58, wil: 76, lov: 64, cha: 84 }, up: ["str", "agi"],
+    res: {}, sk: ["gale", "twin", "cleave"], ps: ["momentum", "swordway", "charge"], gear: { weapon: "ironsword", armor: "leather", sub: null, acc: null } },
+  { id: "h7", nm: "セラ", img: "person_033", wt: "spear", rare: "A", hp: 215, hpCap: 1150, lp: 9, st: { str: 22, vit: 22, dex: 16, agi: 15, int: 9, wil: 16, lov: 11, cha: 12 },
+    cap: { str: 114, vit: 122, dex: 96, agi: 92, int: 66, wil: 100, lov: 72, cha: 82 }, up: ["str", "vit"],
+    res: {}, sk: ["thrust", "pierce", "guardcut"], ps: ["spearway", "ironwall", "standfast"], gear: { weapon: "ironspear", armor: "leather", sub: "buckler", acc: null } },
 ];
+const START = [0, 1, 2, 3, 4]; // はじめから居る仲間（仮）
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
 const AREA_CAP = { 1: { st: 30, hp: 260 }, 2: { st: 35, hp: 310 }, 3: { st: 41, hp: 370 }, 4: { st: 47, hp: 440 } };
 
@@ -168,6 +176,14 @@ const FOES = {
   orc:    { nm: "オーク", img: "monster_116", wt: "club", pow: 14, hp: 1150, boss: 1, st: { str: 34, vit: 28, dex: 12, agi: 14, int: 8, wil: 14, lov: 0, cha: 20 },
             res: { 斬: 30, 打: 50, 熱: -40, 雷: -20 }, plan: { 2: "sweepclub", 3: "stomp", 5: "sweepclub", 6: "fury" }, rageFrom: 7, rage: "fury", stunRes: 1, gold: 400 },
 };
+// 人間の敵：person＝人物の絵（歩く絵の型）で描く。心は落とさない。仲間と同じ技を使う
+Object.assign(FOES, {
+  h_sword: { nm: "流れの剣士", img: "person_010", person: 1, wt: "sword", pow: 12, hp: 420, st: { str: 30, vit: 20, dex: 18, agi: 24, int: 8, wil: 14, lov: 0, cha: 14 }, res: {}, plan: { 2: "gale", 4: "twin" }, every: { n: 3, sk: "gale" }, stunRes: 1, gold: 60 },
+  h_guard: { nm: "雇われ兵", img: "person_080", person: 1, wt: "spear", pow: 10, hp: 210, st: { str: 24, vit: 20, dex: 14, agi: 15, int: 6, wil: 12, lov: 0, cha: 10 }, res: { 突: 20, 雷: -30 }, every: { n: 3, sk: "thrust" }, gold: 22 },
+  h_archer:{ nm: "雇われ弓手", img: "person_085", person: 1, wt: "bow", pow: 9, hp: 150, st: { str: 12, vit: 13, dex: 24, agi: 22, int: 8, wil: 12, lov: 0, cha: 10 }, res: { 斬: -30 }, every: { n: 2, sk: "aim" }, gold: 22 },
+  h_mage:  { nm: "雇われ術師", img: "person_032", person: 1, wt: "staff", pow: 6, hp: 140, st: { str: 8, vit: 11, dex: 12, agi: 16, int: 26, wil: 20, lov: 0, cha: 12 }, res: { 熱: 30, 冷: -40 }, every: { n: 2, sk: "fireball" }, gold: 26 },
+  h_lord:  { nm: "黒衣の将", img: "person_023", person: 1, wt: "axe", pow: 30, hp: 9000, boss: 1, st: { str: 90, vit: 60, dex: 30, agi: 40, int: 20, wil: 50, lov: 0, cha: 30 }, res: {}, plan: { 1: "cleave", 2: "fury" }, rageFrom: 3, rage: "fury", stunRes: 1, gold: 0 },
+});
 // 戦場：c＝列（0がこちらに近い）、r＝段0〜2。big＝マスを全部使う大きい敵
 const WAVES = [
   { nm: "夜の街道", foes: [{ k: "rabbit", c: 0, r: 0 }, { k: "rabbit", c: 0, r: 2 }, { k: "bat", c: 1, r: 1 }, { k: "dog", c: 2, r: 0 }, { k: "dog", c: 2, r: 2 }] },
@@ -195,7 +211,7 @@ function defLo() { return { form: "arrow", pos: [1, 0, 4, 2, 3] }; }
 //  mem = { st, hp(最大HP), lp(いまのLP), gear:{slot: {id, b}}, heart: 心のキー|null }
 function resolveHero(hi, mem) {
   const def = HEROES[hi];
-  if (!mem) mem = { st: { ...def.st }, hp: def.hp, lp: def.lp, gear: Object.fromEntries(Object.entries(def.gear).map(([k, id]) => [k, { id, b: null }])), heart: def.heart || null };
+  if (!mem) mem = { st: { ...def.st }, hp: def.hp, lp: def.lp, gear: Object.fromEntries(Object.entries(def.gear).map(([k, id]) => [k, id ? { id, b: null } : null])), heart: def.heart || null };
   return { ...def, hi, st: mem.st, hp: mem.hp, lpNow: mem.lp, gearList: Object.values(mem.gear).filter(Boolean), heart: mem.heart };
 }
 // 能力値：もとの能力×心の％＋装備の上乗せ（拾った物のおまけも）。そこに陣形の％
@@ -226,9 +242,11 @@ function newBattle(wave, seed, lo, roster) {
   const W = typeof wave === "number" ? WAVES[wave] : wave, tier = W.tier || 1, m = 1 + 0.2 * (tier - 1);
   const st = { seed: seed || 1, turn: 0, actions: 0, queue: [], log: [], over: null, phase: "command", cmd: {}, focus: null, wave: W, lastCmd: {} };
   const F = FORMATIONS[lo.form];
-  st.party = lo.pos.map((hi, slot) => {
-    const h = resolveHero(hi, roster && roster[hi]), s = heroStats(h, F.slots[slot]);
-    const u = base({ ...h, ...s, side: 0, slot, c: F.slots[slot].c, r: F.slots[slot].r, hate: F.slots[slot].h, max: h.hp, hp: h.hp, lp: h.lpNow, bp: BP0 });
+  const SOLO = { c: 0, r: 2, b: {}, h: 1 };
+  const lineup = W.solo != null ? [[W.solo, SOLO]] : (W.fixed || lo.pos).slice(0, 5).map((hi, slot) => [hi, F.slots[slot]]);
+  st.party = lineup.filter(([hi]) => hi != null).map(([hi, sl], i) => {
+    const h = resolveHero(hi, roster && roster[hi]), s = heroStats(h, sl);
+    const u = base({ ...h, ...s, side: 0, slot: i, c: sl.c, r: sl.r, hate: sl.h, max: h.hp, hp: h.hp, lp: h.lpNow, bp: BP0 });
     if (u.lp <= 0) { u.down = true; u.hp = 0; } // LPが尽きた人は戦えない（宿で戻る）
     return u;
   });
@@ -389,6 +407,7 @@ function endTurn(st) {
     if (u.cover > 0) u.cover--;
   }
   checkEnd(st);
+  if (!st.over && st.wave.until && st.turn >= st.wave.until) st.over = st.wave.untilOver || "lose"; // 物語で決まっている終わり方
   if (!st.over && st.turn >= 30) st.over = "time";
 }
 function checkEnd(st) {
@@ -433,7 +452,7 @@ function rewards(st, rng) {
   return out;
 }
 
-const api = { BP0, BP_TURN, BP_MAX, ATTR, RANK, STATS, ST_NM, RANGE_NM, WTYPE, SKILLS, PASSIVES, GEAR, HEARTS, HEROES, FORMATIONS, FOES, WAVES,
+const api = { BP0, BP_TURN, BP_MAX, ATTR, RANK, STATS, ST_NM, RANGE_NM, WTYPE, SKILLS, PASSIVES, GEAR, HEARTS, HEROES, START, FORMATIONS, FOES, WAVES,
   BONUS, AREA_CAP, defLo, resolveHero, heroStats, newBattle, commit, step, alive, resMul, grow, rollItem, rewards };
 if (typeof module !== "undefined") module.exports = api; else root.BT = api;
 })(this);

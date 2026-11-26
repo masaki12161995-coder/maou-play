@@ -41,7 +41,8 @@ DM.onFit.push(() => { if (active && st && !ended) buildHud(); });
 function heroPos(u) { return { x: HERO_X[u.c], y: HERO_Y[u.r] }; }
 function foeBox(u) {
   const img = IM[u.img];
-  const w = img.naturalWidth * QM, h = img.naturalHeight * QM;
+  // 人間の敵は、仲間と同じ人物の絵・同じ大きさ（歩く絵の1コマ）
+  const w = u.person ? SHEET.fw * Q : img.naturalWidth * QM, h = u.person ? SHEET.fh * Q : img.naturalHeight * QM;
   if (u.big) { const y = Math.round((MID_Y + h / 2) * 4) / 4; return { x: BIG.x, y, w, h, left: Math.round((BIG.x - w / 2) * 4) / 4, top: y - h }; }
   const x = FOE_X[u.c], y = FOE_Y[u.r];
   return { x, y, w, h, left: Math.round((x - w / 2) * 4) / 4, top: y - h }; // 点の境目にそろえる
@@ -206,9 +207,17 @@ function draw(t) {
       ctx.save();
       if (u.down) ctx.globalAlpha = Math.max(0, (f.fade - t) / 500);
       ctx.fillStyle = "#0006"; ctx.fillRect(b.x - Math.floor(b.w * 0.35), b.y - 1, Math.floor(b.w * 0.7), 1.5);
-      ctx.translate(Math.round((b.left + ox + b.w) * 4) / 4, Math.round(b.top * 4) / 4); ctx.scale(-1, 1); // 点の境目にそろえて左右反転
-      ctx.drawImage(img, 0, 0, b.w, b.h);
-      if (f.flash > t) { ctx.globalAlpha = 0.7; ctx.drawImage(white(img), 0, 0, b.w, b.h); }
+      if (u.person) { // 人間の敵：ふだんは右向きの立ち姿。動くときは構えのコマ（左向きの絵）を裏返して右向きに
+        const ps = pose[u.id], act = ps && ps.until > t, col = act ? (ps.kind === "magic" ? 0 : 1) : 1, row = act ? 4 : 2;
+        if (act) { ctx.translate(Math.round((b.left + ox + b.w) * 4) / 4, Math.round(b.top * 4) / 4); ctx.scale(-1, 1); }
+        else ctx.translate(Math.round((b.left + ox) * 4) / 4, Math.round(b.top * 4) / 4);
+        ctx.drawImage(img, col * SHEET.fw, row * SHEET.fh, SHEET.fw, SHEET.fh, 0, 0, b.w, b.h);
+        if (f.flash > t) { ctx.globalAlpha = 0.7; ctx.drawImage(whiteCell(img, col, row), 0, 0, b.w, b.h); }
+      } else {
+        ctx.translate(Math.round((b.left + ox + b.w) * 4) / 4, Math.round(b.top * 4) / 4); ctx.scale(-1, 1); // 点の境目にそろえて左右反転
+        ctx.drawImage(img, 0, 0, b.w, b.h);
+        if (f.flash > t) { ctx.globalAlpha = 0.7; ctx.drawImage(white(img), 0, 0, b.w, b.h); }
+      }
       ctx.restore();
       if (!u.down) { const bw = Math.min(30, Math.max(16, Math.floor(b.w * 0.7))); hpBar(b.x - Math.floor(bw / 2), b.y + 2, bw, u.hp / u.max); }
     }
@@ -343,7 +352,7 @@ function note(u, text) {
 function showBanner(a, e) {
   els.banner.innerHTML = ""; els.banner.classList.add("on"); els.banner.classList.toggle("foe", a.side === 1);
   const box = div("sbn", ""); box.style.height = d(22); box.style.padding = `0 ${d(10)} 0 ${d(3)}`; box.style.gap = d(5);
-  if (a.side === 0) { const fc = spriteBox(IM[a.img], FACE[0], FACE[1], FACE[2], FACE[3], 18 * DM.K); fc.style.flex = "none"; box.appendChild(fc); }
+  if (a.side === 0 || a.person) { const fc = spriteBox(IM[a.img], FACE[0], FACE[1], FACE[2], FACE[3], 18 * DM.K); fc.style.flex = "none"; box.appendChild(fc); }
   else { const im = IM[a.img], sc = Math.min(18 / im.naturalWidth, 18 / im.naturalHeight), i = document.createElement("img"); i.src = im.src; i.style.cssText = `width:${d(im.naturalWidth * sc)};height:${d(im.naturalHeight * sc)};image-rendering:pixelated;transform:scaleX(-1);flex:none`; box.appendChild(i); }
   const s = BT.SKILLS[e.skill] || {}, at = s.at || (e.skill === "attack" && BT.WTYPE[a.wt] ? BT.WTYPE[a.wt].at : []);
   box.appendChild(div("sbn-nm", e.nm));
@@ -366,8 +375,8 @@ async function turn() {
       const a = byId(e.u), sk = BT.SKILLS[e.skill] || {}, idx = evs.indexOf(e);
       cur = { a, sk, at: (sk.at || BT.WTYPE[a.wt].at || [])[0], ranged: sk.dist === "遠" || !!sk.magic || (e.skill === "attack" && a.wt === "bow"), first: true, hits: 0 };
       showBanner(a, e);
-      if (a.side === 0) pose[a.id] = { kind: e.magic || e.kind === "回復" || e.kind === "防御" ? "magic" : "phys", until: now() + 650 / spd() };
-      else fx[a.id] = { ...(fx[a.id] || {}), lunge: now() + 220 / spd() };
+      if (a.side === 0 || a.person) pose[a.id] = { kind: e.magic || e.kind === "回復" || e.kind === "防御" ? "magic" : "phys", until: now() + 650 / spd() };
+      if (a.side === 1 && !(a.person && e.magic)) fx[a.id] = { ...(fx[a.id] || {}), lunge: now() + (a.person ? 650 : 220) / spd() };
       // 縦・横・全体の技は、当たるマスを先に光らせる
       if (["col", "row", "all"].includes(sk.tg)) {
         const tg = []; for (let j = idx + 1; j < evs.length && evs[j].t !== "act"; j++) if (evs[j].t === "hit" && !tg.includes(evs[j].d)) tg.push(evs[j].d);

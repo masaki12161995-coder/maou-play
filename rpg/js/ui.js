@@ -112,7 +112,7 @@ function result(r) {
 
 // ---------- メニュー（仲間・陣形・札帳） ----------
 // ---------- メニュー：上に「仲間・持ち物・陣形・札帳」を並べ、押すとその画面に切り替わる ----------
-let tab = "party", who = 0, view = "stat", slotSel = null, fsel = -1, pickItem = null;
+let tab = "party", who = 0, view = "stat", slotSel = null, fsel = -1, bsel = null, pickItem = null;
 function menu() {
   return new Promise(res => {
     const close = () => { clearLayer(); GS.save(); res(); };
@@ -120,7 +120,7 @@ function menu() {
       const L = newLayer("veil solid menu");
       [["party", "仲間"], ["bag", "持ち物"], ["form", "陣形"], ["book", "札帳"]].forEach(([k, nm], i) => {
         const b = A(L, div("frame btn chip" + (tab === k ? " sel" : ""), nm), 12 + i * 62, 46, 59, 28); b.style.fontSize = d(11);
-        b.onclick = () => { if (k === "book") { cards("book").then(draw); return; } tab = k; slotSel = null; fsel = -1; pickItem = null; draw(); };
+        b.onclick = () => { if (k === "book") { cards("book").then(draw); return; } tab = k; slotSel = null; fsel = -1; bsel = null; pickItem = null; draw(); };
       });
       const x = A(L, div("frame btn chip", "×"), 261, 46, 28, 28); x.style.fontSize = d(14); x.onclick = close;
       if (tab === "party") member(L, draw);
@@ -162,13 +162,32 @@ function skillRow(parent, k, y, tag, wt) {
     `<span class="bp" style="right:${d(8)};font-size:${d(9.5)}">${s.bp ? "BP" + s.bp : ""}</span>`;
   return row;
 }
+// 顔の並び：5人ずつ。5人より多いときだけ両端に◀▶が出て、めくれる
+//  list＝仲間の番号、o.sel＝選んでいる人、o.ok(hi)＝押せるか、o.pick(hi)＝押したとき、o.pg＝{n:今の枚目}、o.small＝小さい顔
+function faceStrip(parent, x, y, w, list, o, redraw) {
+  const many = list.length > 5, aw = many ? 17 : 0, per = 5, pages = Math.max(1, Math.ceil(list.length / per));
+  o.pg.n = Math.max(0, Math.min(pages - 1, o.pg.n));
+  const step = (w - aw * 2) / per, bw = step - 3, bh = o.small ? 36 : 42, fs = o.small ? 32 : 36;
+  list.slice(o.pg.n * per, o.pg.n * per + per).forEach((hi, i) => {
+    const ok = !o.ok || o.ok(hi);
+    const b = A(parent, div((o.small ? "facebtn small" : "frame facebtn") + (o.sel === hi ? " sel" : "") + (ok ? "" : " off"), ""), x + aw + i * step, y, bw, bh);
+    faceAt(b, BT.HEROES[hi].img, (bw - fs * 28 / 30) / 2, o.small ? 1 : 2, fs);
+    if (ok) b.onclick = () => o.pick(hi);
+  });
+  if (!many) return;
+  [["◀", -1, x], ["▶", 1, x + w - aw + 2]].forEach(([t, dv, bx]) => {
+    const on = o.pg.n + dv >= 0 && o.pg.n + dv < pages;
+    const b = A(parent, div("frame btn chip pgbtn" + (on ? "" : " off"), t), bx, y, aw - 2, bh); b.style.fontSize = d(9);
+    if (on) b.onclick = () => { o.pg.n += dv; redraw(); };
+  });
+}
+const roster = () => [...GS.fighters(), ...GS.bench()]; // 戦う5人が先、控えがあと
+const pgWho = { n: 0 }, pgPick = { n: 0 }, pgBench = { n: 0 }, pgBag = { n: 0 };
 // 仲間：上の顔を押すと人が替わる。下は「能力・技」と「装備」を切り替える
 function member(L, redraw) {
-  BT.HEROES.forEach((h, hi) => {
-    const b = A(L, div("frame facebtn" + (who === hi ? " sel" : ""), ""), 12 + hi * 56, 80, 53, 42);
-    faceAt(b, h.img, 8, 2, 36);
-    b.onclick = () => { who = hi; slotSel = null; redraw(); };
-  });
+  const list = roster();
+  if (!list.includes(who)) { who = list[0]; pgWho.n = 0; }
+  faceStrip(L, 12, 80, 280, list, { sel: who, pg: pgWho, pick: hi => { who = hi; slotSel = null; redraw(); } }, redraw);
   const h = BT.HEROES[who], m = GS.G.party[who];
   T(L, 12, 128, 170, 20, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 13, "name");
   T(L, 12, 148, 170, 14, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.HEARTS[m.heart].nm : ""}`, 8.5, "dim2");
@@ -264,8 +283,17 @@ function bag(L, redraw) {
   G.bag.slice().sort((a, b) => order[BT.GEAR[a.id].slot] - order[BT.GEAR[b.id].slot] || BT.GEAR[a.id].nm.localeCompare(BT.GEAR[b.id].nm)).forEach(it => rows.push({ it }));
   Object.keys(G.hearts).filter(k => G.hearts[k] > 0).forEach(k => rows.push({ h: k }));
   if (!rows.length) { T(L, 12, 90, 277, 24, "持ち物はない", 10.5, "dim center"); return; }
-  const per = 12, rh = 36;
-  rows.slice(0, per).forEach((r, i) => {
+  const per = 12, rh = 36, pages = Math.ceil(rows.length / per);
+  pgBag.n = Math.max(0, Math.min(pages - 1, pgBag.n));
+  if (pages > 1 && !pickItem) { // 13個より多いときは、下でめくる
+    [["◀", -1, 12], ["▶", 1, 249]].forEach(([t, dv, bx]) => {
+      const on = pgBag.n + dv >= 0 && pgBag.n + dv < pages;
+      const b = A(L, div("frame btn chip pgbtn" + (on ? "" : " off"), t), bx, 596, 40, 24); b.style.fontSize = d(10);
+      if (on) b.onclick = () => { pgBag.n += dv; redraw(); };
+    });
+    T(L, 52, 596, 197, 24, `${pgBag.n + 1} / ${pages}`, 9.5, "dim center");
+  }
+  rows.slice(pgBag.n * per, pgBag.n * per + per).forEach((r, i) => {
     const row = A(L, div("frame prow" + (pickItem === r.it || (r.h && pickItem === r.h) ? " on" : ""), ""), 12, 84 + i * (rh + 2), 277, rh);
     if (r.it) {
       const g = BT.GEAR[r.it.id];
@@ -286,18 +314,13 @@ function bag(L, redraw) {
   const isHeart = typeof pickItem === "string", g = !isHeart && BT.GEAR[pickItem.id];
   const sheet = A(L, div("frame pickbar", ""), 12, 562, 277, 56);
   T(sheet, 8, 2, 120, 14, "だれに付ける？", 8.5, "label");
-  BT.HEROES.forEach((h, hi) => {
-    const ok = isHeart || g.slot !== "weapon" || g.wt === h.wt;
-    const b = A(sheet, div("facebtn small" + (ok ? "" : " off"), ""), 8 + hi * 53, 16, 48, 36);
-    faceAt(b, h.img, 8, 1, 32);
-    if (!ok) return;
-    b.onclick = () => {
-      const m = G.party[hi];
+  faceStrip(sheet, 8, 16, 261, roster(), { small: 1, pg: pgPick, ok: hi => isHeart || g.slot !== "weapon" || g.wt === BT.HEROES[hi].wt,
+    pick: hi => {
+      const m = G.party[hi], h = BT.HEROES[hi];
       if (isHeart) { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[pickItem]--; m.heart = pickItem; }
       else { G.bag.splice(G.bag.indexOf(pickItem), 1); if (m.gear[g.slot]) G.bag.push(m.gear[g.slot]); m.gear[g.slot] = pickItem; }
       DM.toast(`${h.nm}に付けた`, 540); pickItem = null; GS.save(); redraw();
-    };
-  });
+    } }, redraw);
 }
 function formation(L, redraw) {
   const G = GS.G;
@@ -309,14 +332,27 @@ function formation(L, redraw) {
   T(L, 12, 114, 277, 16, F.ds, 8.5, "dim2");
   A(L, div("frame", ""), 12, 134, 277, 236);
   T(L, 20, 138, 60, 14, "← 敵", 8, "dim");
+  // マスを押してから別のマスを押すと場所が入れ替わる。マスと控えの顔を（どちらが先でも）押すと、その人が入れ替わる
+  const put = (slot, hi) => { G.lo.pos[slot] = hi; fsel = -1; bsel = null; GS.save(); if (window.FD) FD.syncParty(); redraw(); };
   F.slots.forEach((sl, slot) => {
-    const h = BT.HEROES[G.lo.pos[slot]];
+    const hi = G.lo.pos[slot], h = hi != null ? BT.HEROES[hi] : null;
     const cx = 44 + sl.c * 80, cy = 152 + sl.r * 42;
-    const t = A(L, div("frame tile" + (fsel === slot ? " sel" : ""), ""), cx, cy, 80, 38);
-    const fc = DM.spriteBox(IM[h.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 26 * DM.K); fc.style.position = "absolute"; fc.style.left = d(2); fc.style.top = d(3); t.appendChild(fc);
-    const tx = div("tn", `${h.nm}<br><i>${sl.h >= 2 ? "狙われやすい" : sl.h < 1 ? "狙われにくい" : ""}</i>`); tx.style.fontSize = d(7.5); tx.style.left = d(24); tx.style.top = d(6); t.appendChild(tx);
-    t.onclick = () => { if (fsel < 0) { fsel = slot; redraw(); return; } const a = G.lo.pos[fsel]; G.lo.pos[fsel] = G.lo.pos[slot]; G.lo.pos[slot] = a; fsel = -1; GS.save(); redraw(); };
+    const t = A(L, div("frame tile" + (fsel === slot ? " sel" : "") + (h ? "" : " empty"), ""), cx, cy, 80, 38);
+    if (h) { const fc = DM.spriteBox(IM[h.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 26 * DM.K); fc.style.position = "absolute"; fc.style.left = d(2); fc.style.top = d(3); t.appendChild(fc); }
+    const tx = div("tn", `${h ? h.nm : "空き"}<br><i>${sl.h >= 2 ? "狙われやすい" : sl.h < 1 ? "狙われにくい" : ""}</i>`); tx.style.fontSize = d(7.5); tx.style.left = d(24); tx.style.top = d(6); t.appendChild(tx);
+    t.onclick = () => {
+      if (bsel != null) { put(slot, bsel); return; }
+      if (fsel < 0) { fsel = slot; redraw(); return; }
+      const a = G.lo.pos[fsel]; G.lo.pos[fsel] = G.lo.pos[slot]; put(slot, a);
+    };
   });
+  const bench = GS.bench();
+  if (bench.length) {
+    T(L, 14, 376, 100, 14, "控え", 9, "label");
+    if (!bench.includes(bsel)) bsel = null;
+    faceStrip(L, 12, 392, 280, bench, { sel: bsel, pg: pgBench, pick: hi => { if (fsel >= 0) { put(fsel, hi); return; } bsel = bsel === hi ? null : hi; redraw(); } }, redraw);
+    if (bsel != null) { const h = BT.HEROES[bsel]; T(L, 12, 438, 277, 16, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>　${BT.WTYPE[h.wt].nm}`, 10, "name"); }
+  }
   const r = A(L, div("frame btn chip dimchip", "はじめから"), 189, 596, 100, 24); r.style.fontSize = d(9.5);
   r.onclick = async () => { const k = await choose("", "記録を消して、はじめから遊びますか？", ["はじめから", "やめる"]); if (k === 0) { GS.reset(); try { localStorage.removeItem("rpgCards1"); } catch (e) {} location.reload(); } else redraw(); };
 }
@@ -330,7 +366,7 @@ function shop(title, ids) {
       const x = A(L, div("frame btn chip", "×"), 263, 46, 26, 26); x.style.fontSize = d(14); x.onclick = () => { clearLayer(); GS.save(); res(); };
       T(L, 12, 78, 277, 16, `<span class="dim">お金</span> <b>${GS.G.gold.toLocaleString()}</b> G`, 10, "num2 right");
       ids.forEach((id, i) => {
-        const g = BT.GEAR[id], have = GS.G.bag.filter(it => it.id === id).length + GS.G.party.filter(m => Object.values(m.gear).some(it => it && it.id === id)).length;
+        const g = BT.GEAR[id], have = GS.G.bag.filter(it => it.id === id).length + GS.G.party.filter(m => m && Object.values(m.gear).some(it => it && it.id === id)).length;
         const r = A(L, div("frame shoprow" + (GS.G.gold < g.price ? " poor" : ""), ""), 12, 100 + i * 40, 277, 36);
         A(r, DM.iconImg(g.icon, 22 * DM.K), 6, 6, undefined, undefined);
         T(r, 34, 2, 150, 17, `<span style="color:${DM.RANKCOL[g.rank]}">${g.nm}</span><small class="dim"> ${g.slot === "weapon" ? BT.WTYPE[g.wt].nm : g.kind || SLOT_NM[g.slot]}</small>`, 10.5, "name");
