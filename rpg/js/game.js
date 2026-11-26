@@ -3,7 +3,7 @@
 "use strict";
 const KEY = "rpgPlay1";
 let uid = 1;
-function item(id, b, tag) { return { u: uid++, id, b: b || null, tag: tag || "" }; }
+function item(id, b, tag, el) { const it = { u: uid++, id, b: b || null, tag: tag || "" }; if (el) it.el = el; return it; } // el＝属性つきの武器の属性
 // 仲間1人ぶんの記録（加わったときに作る）
 function newMem(hi) {
   const h = BT.HEROES[hi];
@@ -30,7 +30,7 @@ const S = {
     while (S.G.party.length < BT.HEROES.length) S.G.party.push(null); // 仲間の顔ぶれが増えたぶん
     const mems = () => S.G.party.filter(Boolean);
     // 古い記録の直し：おまけの名前が欠けていたもの（精神のおまけ）を付け直す
-    const fix = it => { if (it && it.b && (!it.tag || it.tag.includes("undefined"))) { const k = Object.keys(it.b)[0]; it.tag = "(" + BT.BONUS[k] + (it.b[k] >= 4 ? "+" : "") + ")"; } };
+    const fix = it => { if (it && it.b && !it.el && (!it.tag || it.tag.includes("undefined"))) { const k = Object.keys(it.b)[0]; it.tag = "(" + BT.BONUS[k] + (it.b[k] >= 4 ? "+" : "") + ")"; } };
     S.G.bag.forEach(fix); mems().forEach(m => Object.values(m.gear).forEach(fix));
     uid = 1 + Math.max(0, ...S.G.bag.map(i => i.u), ...mems().flatMap(m => Object.values(m.gear).filter(Boolean).map(i => i.u)));
     return S.G;

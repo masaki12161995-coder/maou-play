@@ -148,7 +148,7 @@ function menu() {
 const faceAt = (parent, img, x, y, size) => { const fc = DM.spriteBox(IM[img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], size * DM.K); A(parent, fc, x, y, undefined, undefined); return fc; };
 function gearSummary(id) {
   const g = BT.GEAR[id], out = [];
-  if (g.slot === "weapon") out.push(`威力${g.pow}`);
+  if (g.slot === "weapon") { out.push(`威力${g.pow}`); for (const a in (g.mp || {})) out.push(`術威力(${a})${g.mp[a]}`); }
   for (const k in (g.st || {})) out.push(`${STAT_SHORT[k]}${g.st[k] > 0 ? "+" : ""}${g.st[k]}`);
   if (g.res) { const phys = Math.round(((g.res.斬 || 0) + (g.res.打 || 0) + (g.res.突 || 0)) / 3), mag = Math.round(((g.res.熱 || 0) + (g.res.冷 || 0) + (g.res.雷 || 0)) / 3); out.push(`物理${phys >= 0 ? "+" : ""}${phys}`); if (mag) out.push(`術${mag > 0 ? "+" : ""}${mag}`); }
   if (g.sres) for (const k in g.sres) out.push(`${k}よけ`);
@@ -156,6 +156,7 @@ function gearSummary(id) {
 }
 function itemSummary(it) {
   let s = gearSummary(it.id);
+  if (it.el) s += ` <span class="bonus">術威力(${it.el})${Math.round(BT.GEAR[it.id].pow * 0.8)}</span>`; // 属性つきの武器
   for (const k in (it.b || {})) s += ` <span class="bonus">${STAT_SHORT[k]}+${it.b[k]}</span>`;
   return s;
 }

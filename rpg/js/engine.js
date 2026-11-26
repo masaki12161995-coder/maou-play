@@ -118,8 +118,8 @@ const GEAR = {
   // 武器（威力powは武器の種類ごとに決まった値。拾った物には、まれに能力のおまけが付く）
   ironsword: { slot: "weapon", wt: "sword", nm: "鉄の剣", rank: "B", pow: 12, st: { str: 1 }, price: 120, icon: "eq_sword_02" },
   knightswd: { slot: "weapon", wt: "sword", nm: "騎士の剣", rank: "A", pow: 14, st: { str: 2, vit: 1 }, ps: "w_sword", price: 420, icon: "eq_sword_03" },
-  oakstaff:  { slot: "weapon", wt: "staff", nm: "樫の杖", rank: "B", pow: 6, st: { int: 2 }, ps: "w_fire", price: 110, icon: "eq_staff_02" },
-  sagestaff: { slot: "weapon", wt: "staff", nm: "賢者の杖", rank: "A", pow: 8, st: { int: 4, wil: 1 }, ps: "w_fire", price: 450, icon: "eq_staff_03" },
+  oakstaff:  { slot: "weapon", wt: "staff", nm: "樫の杖", rank: "B", pow: 5, mp: { 熱: 12 }, st: { int: 2 }, ps: "w_fire", price: 110, icon: "eq_staff_02" },
+  sagestaff: { slot: "weapon", wt: "staff", nm: "賢者の杖", rank: "A", pow: 6, mp: { 熱: 16 }, st: { int: 4, wil: 1 }, ps: "w_fire", price: 450, icon: "eq_staff_03" },
   shortbow:  { slot: "weapon", wt: "bow", nm: "狩人の弓", rank: "B", pow: 11, st: { dex: 2 }, price: 120, icon: "eq_bow_01" },
   longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
   ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
@@ -276,20 +276,20 @@ function heroStats(h, slotDef) {
   if (typeof h === "number") h = resolveHero(h);
   const heart = h.heart && HEARTS[h.heart], st = {}, res = { ...h.res }, ps = [...h.ps];
   for (const k of STATS) st[k] = h.st[k] * (heart ? heart.mul[k] / 100 : 1);
-  let pow = 6;
+  let pow = 6; const mp = {}; // mp＝属性ごとの術威力（術の技は、その属性の術威力で撃つ。無ければ素手と同じ6）
   for (const it of h.gearList) {
     const g = GEAR[it.id]; if (!g) continue;
     for (const k in (g.st || {})) st[k] += g.st[k];
     for (const k in (it.b || {})) st[k] += it.b[k];
     for (const a in (g.res || {})) res[a] = (res[a] || 0) + g.res[a];
     if (g.ps) ps.push(g.ps);
-    if (g.slot === "weapon") pow = g.pow;
+    if (g.slot === "weapon") { pow = g.pow; for (const a in (g.mp || {})) mp[a] = g.mp[a]; if (it.el) mp[it.el] = Math.max(mp[it.el] || 0, Math.round(g.pow * 0.8)); }
   }
   if (ps.includes("w_sword") && h.wt === "sword") st.str *= 1.05;
   const b = slotDef ? slotDef.b : {};
   for (const k of STATS) st[k] = Math.max(1, Math.round(st[k] * (1 + (b[k] || 0) / 100)));
   const sk = [...h.sk]; if (heart) sk.push(heart.sk);
-  return { st, res, ps, pow, sk };
+  return { st, res, ps, pow, mp, sk };
 }
 function base(u) { return Object.assign(u, { down: false, poison: 0, stun: 0, cover: 0, stack: 0, dealt: 0, taken: 0, healed: 0, downAt: 0 }); }
 
@@ -311,7 +311,7 @@ function newBattle(wave, seed, lo, roster) {
     const M = FOES[f.k], fst = {};
     for (const k of STATS) fst[k] = Math.round(M.st[k] * m);
     const hp = Math.round(M.hp * Math.pow(m, 2.2)), pow = Math.round(M.pow * m); // 体力は能力値より速く増える（こちらの攻撃も、能力×武器×技で掛け算に伸びるため）
-    return base({ ...M, pow, st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
+    return base({ ...M, pow, mag: Math.round(6 * m), st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
   });
   for (const u of st.party) {
     if (hasP(u, "spirit")) bpAdd(st, u, 2, "闘志");
@@ -371,7 +371,8 @@ function damage(st, a, d, s) {
   else if (wt.st === "fist") { A = a.st.str; statT = 1 + a.st.str * 2 + a.st.agi * 2.5 - d.st.vit * 1.2; }
   else { A = a.st[wt.st]; statT = 1 + A * 4 - d.st.vit * 1.5; }
   statT = Math.max(A, statT);
-  let v = ((magic ? 6 : a.pow) * 1.5 + RANK[s.rank || "N"]) * statT / 100;
+  const mpow = a.side === 1 ? (a.mag || 6) : Math.max(6, ...at.map(x => (a.mp || {})[x] || 0)); // 術の技の威力：敵は強さに応じて、仲間は武器の術威力
+  let v = ((magic ? mpow : a.pow) * 1.5 + RANK[s.rank || "N"]) * statT / 100;
   const rm = resMul(d, at); v *= rm;
   if (a.side === 0) v *= rankMul(a, s);
   if (hasP(a, "swordway") && at.includes("斬")) v *= 1.1;
@@ -503,7 +504,13 @@ function rankUp(mem, used, tier, rng) {
 }
 function rollItem(id, rng) {
   const g = GEAR[id], it = { id, b: null, tag: "" };
-  if (!g || rng() > 0.22) return it;
+  if (!g) return it;
+  // 属性つきの武器（ランクA以上・杖以外）：その属性の術威力が付き、知力＋3。心の技など、術の技を持つ人に向く
+  if (g.slot === "weapon" && g.wt !== "staff" && g.rank !== "B" && rng() < 0.12) {
+    const el = ["熱", "冷", "雷", "陽", "陰"][Math.floor(rng() * 5)];
+    it.el = el; it.b = { int: 3 }; it.tag = "(" + el + ")"; return it;
+  }
+  if (rng() > 0.22) return it;
   const pool = g.slot === "weapon" ? (g.wt === "staff" ? ["int", "wil"] : g.wt === "bow" ? ["dex", "agi"] : ["str", "vit", "agi"]) : ["vit", "wil", "agi"];
   const k = pool[Math.floor(rng() * pool.length)], plus = rng() < 0.15;
   it.b = { [k]: plus ? 4 : 3 }; it.tag = "(" + BONUS[k] + (plus ? "+" : "") + ")";

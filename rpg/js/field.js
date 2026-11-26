@@ -232,7 +232,7 @@ async function runBattle(wave) {
         ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng), ranks: BT.rankUp(g.party[u.hi], u.used, wave.tier, rng) }));
       await BV.finish(growth);
       const rw = BT.rewards(st, rng);
-      g.gold += rw.gold; rw.hearts.forEach(k => { g.hearts[k] = (g.hearts[k] || 0) + 1; }); rw.items.forEach(it => g.bag.push(GS.item(it.id, it.b, it.tag)));
+      g.gold += rw.gold; rw.hearts.forEach(k => { g.hearts[k] = (g.hearts[k] || 0) + 1; }); rw.items.forEach(it => g.bag.push(GS.item(it.id, it.b, it.tag, it.el)));
       rw.mats.forEach(k => { g.mats[k] = (g.mats[k] || 0) + 1; }); rw.tools.forEach(k => { g.tools[k] = (g.tools[k] || 0) + 1; });
       g.wins++; GS.save();
       await UI.result({ win: true, gold: rw.gold, hearts: rw.hearts, items: rw.items, mats: rw.mats, tools: rw.tools, growth, turns: st.turn });
