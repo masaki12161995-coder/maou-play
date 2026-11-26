@@ -19,6 +19,16 @@ const FACE = [58, 4, 28, 30]; // 正面の顔（シートの左上から）
 const POSE = [0, 240, 48, 46]; // 技のポーズ（上半身）
 
 const IM = {};
+const EL_COL = { water: "#4a90e2", fire: "#e0503a", wind: "#4cb860", earth: "#b8864a", light: "#f0c840", dark: "#9a5ad0" };
+function elChip(el, size) { const e = div("el", BT.ELEM[el]); e.style.background = EL_COL[el]; e.style.width = e.style.height = e.style.lineHeight = d(size); e.style.fontSize = d(size * 0.72); return e; }
+function chips(u) { // 状態の札（同じ大きさ・同じ並び）
+  const a = [];
+  if (u.ctl > 0) a.push(["ctl", u.ctlNm]);
+  if (u.burn > 0) a.push(["burn", "火傷"]);
+  if (u.poison > 0) a.push(["poison", "毒"]);
+  if (u.mark > 0) a.push(["mark", "印"]);
+  return a.map(([c, t]) => `<b class="${c}" style="font-size:${d(7)};line-height:${d(11)}">${t}</b>`).join("");
+}
 function load(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = "img/" + src + ".png"; IM[src] = i; }); }
 
 let ROWS = BT.HEROES.map(h => h.row);
@@ -69,7 +79,9 @@ function buildHud() {
     const hp = div("bar", "<i></i>"); hp.style.bottom = d(9); c.appendChild(hp);
     const g = div("bar g", "<i></i>"); g.style.bottom = d(3); g.style.height = d(3.3); c.appendChild(g);
     const sh = div("sh", ""); c.appendChild(sh);
-    hud.appendChild(c); els.cards[u.id] = { c, holder, hp: hp.firstChild, g, sh, pose: null };
+    const el = elChip(u.el, 11); el.style.position = "absolute"; el.style.left = d(3); el.style.top = d(3); c.appendChild(el);
+    const ss = div("st cs", ""); ss.style.left = d(3); ss.style.top = d(16); c.appendChild(ss);
+    hud.appendChild(c); els.cards[u.id] = { c, holder, hp: hp.firstChild, g, sh, ss, pose: null };
     setFace(u, false);
   });
   st.foes.forEach(u => { const s = div("st", ""); hud.appendChild(s); els.st[u.id] = s; });
@@ -88,10 +100,10 @@ function setFace(u, pose) {
 }
 function refresh() {
   // 行動の順番（正面の顔）
-  const q = BT.order(st, 7);
-  els.tl.innerHTML = `<div class="hg" style="font-size:${d(12)}">⌛</div>`;
+  const q = actor && !actor.dead ? [actor, ...BT.order(st, 5)] : BT.order(st, 6); // 先頭は今動いている人
+  els.tl.innerHTML = `<div class="hg" style="font-size:${d(12)};width:${d(30)}">${Math.max(1, st.round)}<small style="font-size:${d(8)}">/${BT.ROUNDS}</small></div>`;
   q.forEach((u, i) => {
-    const b = div("ic" + (u.side ? " foe" : "") + (i === 0 && busy ? " now" : ""), "");
+    const b = div("ic" + (u.side ? " foe" : "") + (i === 0 && actor ? " now" : ""), "");
     b.style.width = d(26); b.style.height = d(26);
     const f = faceOf(u, 26 * K); f.style.position = "absolute"; f.style.left = "50%"; f.style.top = "50%"; f.style.transform = "translate(-50%,-50%)";
     b.appendChild(f); els.tl.appendChild(b);
@@ -100,15 +112,17 @@ function refresh() {
     const e = els.cards[u.id];
     e.hp.style.width = (u.hp / u.max * 100) + "%";
     e.hp.style.background = u.hp < u.max * 0.25 ? "#e0604a" : "#6ab261";
-    e.g.firstChild.style.width = u.gauge + "%"; e.g.classList.toggle("full", u.gauge >= 100);
+    const cost = BT.costOf(u) || 100;
+    e.g.firstChild.style.width = Math.min(100, u.gauge / cost * 100) + "%"; e.g.classList.toggle("full", u.gauge >= cost);
+    e.ss.innerHTML = u.dead ? "" : chips(u);
     e.c.classList.toggle("ko", u.dead); e.c.classList.toggle("on", actor === u);
     e.sh.textContent = u.shield > 0 ? "守" + u.shield : "";
     e.sh.style.fontSize = d(8);
   }
   for (const u of st.foes) {
     const s = els.st[u.id], p = foePos(u);
-    s.style.left = d(p.x); s.style.top = d(FOE_FEET + 11);
-    s.innerHTML = u.dead ? "" : (u.burn > 0 ? `<b class="burn" style="font-size:${d(7.5)}">火傷</b>` : "") + (u.mark > 0 ? `<b class="mark" style="font-size:${d(7.5)}">印</b>` : "");
+    s.style.left = d(p.x); s.style.top = d(p.feet + 9);
+    s.innerHTML = u.dead ? "" : `<b class="elb" style="background:${EL_COL[u.el]};font-size:${d(7)};line-height:${d(11)}">${BT.ELEM[u.el]}</b>` + chips(u);
   }
 }
 
@@ -119,7 +133,7 @@ function layoutFoes() {
   const total = sp.reduce((s, i) => s + i.naturalWidth, 0);
   const gap = Math.max(2, Math.floor((W - total) / (sp.length + 1)));
   let left = Math.floor((W - total - gap * (sp.length - 1)) / 2);
-  foeLayout = sp.map(i => { const p = { left, x: left + Math.floor(i.naturalWidth / 2), w: i.naturalWidth, h: i.naturalHeight }; left += i.naturalWidth + gap; return p; });
+  foeLayout = sp.map((i, k) => { const p = { left, x: left + Math.floor(i.naturalWidth / 2), w: i.naturalWidth, h: i.naturalHeight, feet: FOE_FEET - (st.foes[k].row ? 26 : 0) }; left += i.naturalWidth + gap; return p; });
 }
 function foePos(u) { return foeLayout[u.slot]; }
 function heroPos(u) { // 同じ列の人数で、左右に均等に並べる（1人なら真ん中）
@@ -141,8 +155,8 @@ function draw(t) {
   ctx.clearRect(0, 0, W, H);
   if (scene) ctx.drawImage(scene, 0, 0);
   // 敵
-  for (const u of st.foes) {
-    const p = foePos(u), img = IM[u.img], f = fx[u.id] || {};
+  for (const u of [...st.foes].sort((a, b) => b.row - a.row)) {
+    const p = foePos(u), img = IM[u.img], f = fx[u.id] || {}, FEET = p.feet;
     if (u.dead && !(f.fade > t)) continue;
     let ox = 0, oy = 0;
     if (f.shake > t) ox = Math.round(Math.sin(t / 18) * 2);
@@ -150,12 +164,12 @@ function draw(t) {
     ctx.save();
     if (u.dead) ctx.globalAlpha = Math.max(0, (f.fade - t) / 500);
     // 影
-    ctx.fillStyle = "#0006"; ctx.fillRect(p.x - Math.floor(p.w * 0.35), FOE_FEET - 2, Math.floor(p.w * 0.7), 3);
-    ctx.drawImage(img, p.left + ox, FOE_FEET - p.h + oy);
+    ctx.fillStyle = "#0006"; ctx.fillRect(p.x - Math.floor(p.w * 0.35), FEET - 2, Math.floor(p.w * 0.7), 3);
+    ctx.drawImage(img, p.left + ox, FEET - p.h + oy);
     ctx.restore();
-    if (f.flash > t) { ctx.save(); ctx.globalAlpha = 0.7; ctx.drawImage(white(img), p.left + ox, FOE_FEET - p.h + oy); ctx.restore(); } // 白く光る
+    if (f.flash > t) { ctx.save(); ctx.globalAlpha = 0.7; ctx.drawImage(white(img), p.left + ox, FEET - p.h + oy); ctx.restore(); } // 白く光る
     if (!u.dead) { // 体力
-      const bw = Math.min(44, Math.max(26, Math.floor(p.w * 0.6))), bx = p.x - Math.floor(bw / 2), by = FOE_FEET + 4;
+      const bw = Math.min(44, Math.max(26, Math.floor(p.w * 0.6))), bx = p.x - Math.floor(bw / 2), by = FEET + 4;
       ctx.fillStyle = "#1a1016"; ctx.fillRect(bx - 1, by - 1, bw + 2, 5);
       ctx.fillStyle = "#3a2531"; ctx.fillRect(bx, by, bw, 3);
       ctx.fillStyle = "#e0604a"; ctx.fillRect(bx, by, Math.ceil(bw * u.hp / u.max), 3);
@@ -184,14 +198,14 @@ function num(x, y, text, cls, size) {
 }
 function note(u, text) {
   let x, y;
-  if (u.side === 0) { const i = st.party.indexOf(u); x = CARD.x0 + i * (CARD.w + CARD.gap) + CARD.w / 2; y = CARD.y - 13; }
-  else { const p = foePos(u); x = p.x; y = FOE_FEET - p.h - 14; }
+  if (u.side === 0) { const i = st.party.indexOf(u); x = CARD.x0 + i * (CARD.w + CARD.gap) + CARD.w / 2; y = CARD.y + 30; }
+  else { const p = foePos(u); x = p.x; y = p.feet - p.h - 14; }
   const e = div("note", text); e.style.left = d(x); e.style.top = d(y); e.style.fontSize = d(8.4);
   e.style.animationDuration = (1.1 / Math.sqrt(speed)) + "s";
   hud.appendChild(e); setTimeout(() => e.remove(), 1200);
 }
 function where(u) {
-  if (u.side === 1) { const p = foePos(u); return { x: p.x, y: FOE_FEET - p.h * 0.55 }; }
+  if (u.side === 1) { const p = foePos(u); return { x: p.x, y: p.feet - p.h * 0.55 }; }
   const i = st.party.indexOf(u); return { x: CARD.x0 + i * (CARD.w + CARD.gap) + CARD.w / 2, y: CARD.y + 18 };
 }
 function byId(id) { return [...st.party, ...st.foes].find(u => u.id === id); }
@@ -203,6 +217,7 @@ async function turn() {
   busy = true;
   const u = BT.step(st);
   actor = u;
+  if (!u) { busy = false; ended = true; setTimeout(result, 500 / speed); return; }
   const evs = st.log.slice(last); last = st.log.length;
   const now = () => performance.now();
   refreshTL(u);
@@ -221,17 +236,21 @@ async function turn() {
       const t = byId(e.d), p = where(t);
       fx[t.id] = { ...(fx[t.id] || {}), flash: now() + 120 / speed, shake: now() + 220 / speed };
       if (e.absorbed) num(p.x, p.y - 12, "守り " + e.absorbed, "guard", 12);
-      if (e.v > 0 || !e.absorbed) num(p.x, p.y, String(e.v), (e.crit ? "crit" : "") + (t.side === 0 ? " foe" : ""), e.crit ? 22 : 18);
+      if (e.v > 0 || !e.absorbed) num(p.x, p.y, String(e.v), (e.crit ? "crit" : "") + (t.side === 0 ? " foe" : ""), e.crit ? 22 : e.adv ? 20 : 18);
       if (e.syn) note(byId(e.a), e.syn[0]);
       refresh(); await wait(170);
     } else if (e.t === "passive") {
       const pu = byId(e.u); note(pu, e.nm + (e.v ? " " + e.v : "")); refresh(); await wait(140);
-    } else if (e.t === "status") {
-      refresh(); await wait(40);
     } else if (e.t === "shield") {
       const t = byId(e.d), p = where(t); num(p.x, p.y, "守り+" + e.v, "guard", 12); refresh(); await wait(60);
-    } else if (e.t === "burn") {
-      const t = byId(e.d), p = where(t); num(p.x, p.y, String(e.v), "foe", 15); note(t, "火傷"); refresh(); await wait(260);
+    } else if (e.t === "dot") {
+      const t = byId(e.d), p = where(t); num(p.x, p.y, String(e.v), e.nm === "毒" ? "poison" : "foe", 15); note(t, e.nm); refresh(); await wait(260);
+    } else if (e.t === "skip") {
+      const t = byId(e.u); note(t, e.nm + "で動けない"); refresh(); await wait(420);
+    } else if (e.t === "resist") {
+      const t = byId(e.d); note(t, "効かない"); refresh(); await wait(200);
+    } else if (e.t === "status") {
+      const t = byId(e.d); if (e.nm === "気絶" || e.nm === "凍結" || e.nm === "石化") { note(t, e.nm); await wait(240); } refresh(); await wait(40);
     } else if (e.t === "down") {
       const t = byId(e.d); fx[t.id] = { ...(fx[t.id] || {}), fade: now() + 500 / speed }; refresh(); await wait(200);
     }
@@ -254,7 +273,9 @@ function start(w) {
 function result() {
   const v = div("veil", "");
   const win = st.over === "win";
-  v.appendChild(div("big", win ? "勝利" : "全滅…"));
+  v.appendChild(div("big", win ? "勝利" : st.over === "time" ? "時間切れ…" : "全滅…"));
+  const fell = st.party.filter(u => u.dead).sort((a, b) => a.downAt - b.downAt).map(u => `${u.nm} ${u.downAt}ラウンド目`).join("　");
+  v.appendChild(div("sub", `${st.round}ラウンドで決着` + (fell ? `<br>倒れた仲間　${fell}` : "　倒れた仲間なし")));
   const max = Math.max(...st.party.map(u => u.dealt), 1);
   st.party.slice().sort((a, b) => b.dealt - a.dealt).forEach(u => {
     const r = div("rank", ""); const f = faceOf(u, 32); r.appendChild(f);
@@ -281,7 +302,9 @@ function menu() {
   });
   v.appendChild(fm);
   v.appendChild(div("big", "どこで戦う？"));
-  PLACES.forEach(([n, s], i) => { const b = div("frame btn pick", `<div style="text-align:center">${n}<small>${s}</small></div>`); b.onclick = () => start(i); v.appendChild(b); });
+  const me = BT.newBattle(0, 1, ROWS);
+  v.appendChild(div("sub", `こちらの戦力　<b>${BT.teamPower(me.party)}</b>` + (me.aura ? `　${me.aura.nm}` : "")));
+  PLACES.forEach(([n, s], i) => { const f = BT.newBattle(i, 1, ROWS); const b = div("frame btn pick", `<div style="text-align:center">${n}<small>${s}　戦力 ${BT.teamPower(f.foes)}</small></div>`); b.onclick = () => start(i); v.appendChild(b); });
   hud.appendChild(v);
 }
 
