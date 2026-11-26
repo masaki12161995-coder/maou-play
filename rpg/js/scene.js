@@ -221,10 +221,7 @@ function path(ctx) {
       rect(ctx, '#8e654c', xs + 5, ys - hs + 2, 1, 1);
     }
   }
-  // A dark, distant foreground keeps the action log and cards readable over the path.
-  for (const [top, shade] of [[251, '#141c2925'], [284, '#13192639'], [330, '#11182438'], [413, '#0e172442']]) {
-    rect(ctx, shade, 0, top, SW, SH - top);
-  }
+  // 下を暗くする帯は外した（横向きの画面では背景を上にずらすので、戦場の真ん中に出てしまう。下の操作欄は自分の下地を持つ）
 }
 
 function shack(ctx) {
@@ -396,8 +393,7 @@ function dungeonScene(skin) {
       if(high)line(ctx,"#312b3b",0,y,201,y,1);
       if(leaves)line(ctx,"#314037",Math.floor(rand()*90),y,90+Math.floor(rand()*94),y,1);
     }
-    rect(ctx,"#100f2254",0,253,SW,SH-253);
-    return scene;
+    return scene; // 下を暗くする帯は外した（上と同じ理由）
   }
   const bone=skin==="bone";
   rect(ctx,bone?"#222a3a":"#201f2d",0,0,SW,SH);

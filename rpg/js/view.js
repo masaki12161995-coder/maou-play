@@ -13,9 +13,10 @@ let K = 2;
 // ---------- 位置（ドット） ----------
 // 画面の点は2倍に細かい（canvasは602×1310）。素材の絵は元の大きさのまま置くので、配置の数字（ドット）では半分の大きさになる
 const Q = 0.5;
-const FOE_X = [128, 94, 60], FOE_Y = [212, 262, 312];             // 敵：列0がこちら寄り
-const HERO_X = [194, 226, 258], HERO_Y = [196, 229, 262, 295, 328]; // 仲間：列0が敵寄り。段の間は絵の高さ（30）より広い
+const FOE_X = [128, 96, 64], FOE_Y = [216, 264, 312];             // 敵：列0がこちら寄り
+const HERO_X = [198, 227, 256], HERO_Y = [204, 235, 266, 297, 328]; // 仲間：列0が敵寄り。段の間31は絵の高さ30ぎりぎり（横陣で縦1列でも重ならない）
 const BIG = { x: 86, y: 316 };
+const SCENE_UP = 100; // 背景を上にずらす量（ドット）
 const PANEL = { y: 398 };
 const BAR = { y: 604, h: 22 };
 const SHEET = { fw: 48, fh: 60 };
@@ -182,7 +183,12 @@ function hpBar(x, y, w, ratio) {
 function draw(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, cv.width, cv.height);
-  if (scene) ctx.drawImage(scene, 0, 0);
+  // 背景は上にずらし、地平線を一番上の人の足より上に持ってくる（空に浮いて見えないように）。空いた下は地面の帯をもう一度描く
+  if (scene) {
+    const up = SCENE_UP * 2, strip = up + 2;
+    ctx.drawImage(scene, 0, -up);
+    ctx.drawImage(scene, 0, scene.height - strip, scene.width, strip, 0, cv.height - strip, scene.width, strip);
+  }
   ctx.setTransform(2, 0, 0, 2, 0, 0); // ここから先はドットの座標で描く
   if (st) {
     ctx.fillStyle = "#000a"; ctx.fillRect(0, 44, W, 52); // 上の帯の下地
