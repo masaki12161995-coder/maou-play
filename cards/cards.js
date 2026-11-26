@@ -133,7 +133,7 @@ function town(){
   });
   s.appendChild(g);
   const r=el("div","row"); r.style.gap="8px";
-  const col=el("button","btn",`札帳　${Object.keys(S.col).length}/${ORDER.length}`); col.style.flex="1"; col.onclick=()=>collection(0); r.appendChild(col);
+  const col=el("button","btn","札帳"); col.style.flex="1"; col.onclick=()=>collection(0); r.appendChild(col);
   const cas=el("button","btn gold","遊び場"); cas.style.flex="1"; cas.onclick=casino; r.appendChild(cas);
   s.appendChild(r);
   const sp=el("div",""); sp.style.flex="1"; s.appendChild(sp);
@@ -143,12 +143,14 @@ function town(){
 }
 // 札帳：240種を番号の順に。持っていない札は影だけ
 function collection(page){
-  const s=screen(), per=25, pages=Math.ceil(ORDER.length/per); page=Math.max(0,Math.min(pages-1,page));
+  // 出会った札・持っている札だけが載る（全部で何種類あるかは見せない）
+  const list=ORDER.filter(id=>S.col[id]||S.seen[id]);
+  const s=screen(), per=25, pages=Math.max(1,Math.ceil(list.length/per)); page=Math.max(0,Math.min(pages-1,page));
   const have=Object.keys(S.col).length;
   const bar=el("div","bar"); const b=el("button","btn back","✕"); b.onclick=town;
-  bar.appendChild(el("div","title","札帳")); bar.appendChild(el("div","lbl",`集めた札 <b style="color:var(--gold)">${have}</b> / ${ORDER.length}`)); bar.appendChild(b); s.appendChild(bar);
+  bar.appendChild(el("div","title","札帳")); bar.appendChild(el("div","lbl",`持っている札 <b style="color:var(--gold)">${have}</b>種`)); bar.appendChild(b); s.appendChild(bar);
   const g=el("div","book");
-  ORDER.slice(page*per,(page+1)*per).forEach(id=>{
+  list.slice(page*per,(page+1)*per).forEach(id=>{
     const box=el("div","bk1");
     if(S.col[id]){ box.appendChild(cardEl(id,"nb",66,86,{count:S.col[id]})); }
     else { const c=CARDS[id], sh=el("div","card shadow"); sh.style.cssText="width:66px;height:86px";
