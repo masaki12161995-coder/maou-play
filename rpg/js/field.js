@@ -241,7 +241,7 @@ async function runBattle(wave) {
     if (wave.loseOk) { await BV.finish(null); break; }
     await BV.finish(null); await UI.result({ win: false, time: st.over === "time" });
     if (wave.retry) { GS.restAll(); GS.save(); continue; }
-    if (st.over === "lose") { g.gold = Math.floor(g.gold / 2); GS.restAll(); GS.save(); }
+    if (st.over === "lose") { g.gold -= Math.floor(g.gold / 10); GS.restAll(); GS.save(); } // 全滅：お金の1割を落として、休んだ所へ戻る
     break;
   }
   active = true; hudBuild(); grace = performance.now() + 1200; fadeIn();

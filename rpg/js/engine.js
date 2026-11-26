@@ -193,7 +193,10 @@ const HEROES = [
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
-const AREA_CAP = { 1: { st: 30, hp: 260 }, 2: { st: 35, hp: 310 }, 3: { st: 41, hp: 370 }, 4: { st: 47, hp: 440 }, 5: { st: 53, hp: 520 }, 6: { st: 60, hp: 610 }, 7: { st: 67, hp: 710 }, 8: { st: 75, hp: 820 }, 9: { st: 83, hp: 940 }, 10: { st: 92, hp: 1080 } };
+// 強さの物差し：物語が1〜10、やり込みが11〜20。能力値の上限は14あたりで本人の上限に届く（その先は装備・心・技で伸ばす）
+const AREA_CAP = { 1: { st: 30, hp: 260 }, 2: { st: 35, hp: 310 }, 3: { st: 41, hp: 370 }, 4: { st: 47, hp: 440 }, 5: { st: 53, hp: 520 }, 6: { st: 60, hp: 610 }, 7: { st: 67, hp: 710 }, 8: { st: 75, hp: 820 }, 9: { st: 83, hp: 940 }, 10: { st: 92, hp: 1080 },
+  11: { st: 101, hp: 1230 }, 12: { st: 110, hp: 1390 }, 13: { st: 120, hp: 1560 }, 14: { st: 130, hp: 1740 }, 15: { st: 140, hp: 1930 }, 16: { st: 150, hp: 2130 }, 17: { st: 160, hp: 2340 }, 18: { st: 170, hp: 2560 }, 19: { st: 180, hp: 2790 }, 20: { st: 190, hp: 3030 } };
+const capOf = tier => AREA_CAP[Math.max(1, Math.min(20, Math.floor(tier || 1)))];
 
 // ---------- 陣形（5か所。c＝敵に近い順の列0〜2、r＝段0〜4。b＝能力の％、h＝狙われやすさ） ----------
 const FORMATIONS = {
@@ -307,8 +310,8 @@ function newBattle(wave, seed, lo, roster) {
   st.foes = W.foes.map((f, i) => {
     const M = FOES[f.k], fst = {};
     for (const k of STATS) fst[k] = Math.round(M.st[k] * m);
-    const hp = Math.round(M.hp * m);
-    return base({ ...M, st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
+    const hp = Math.round(M.hp * Math.pow(m, 2.2)), pow = Math.round(M.pow * m); // 体力は能力値より速く増える（こちらの攻撃も、能力×武器×技で掛け算に伸びるため）
+    return base({ ...M, pow, st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
   });
   for (const u of st.party) {
     if (hasP(u, "spirit")) bpAdd(st, u, 2, "闘志");
@@ -473,7 +476,7 @@ function checkEnd(st) {
 // ---------- 戦いのあと ----------
 // 成長：勝った戦いに出ていた人だけ。上がる先は「場所の上限」と「本人の上限」の低いほう。上限から遠いほど上がりやすい
 function grow(hi, mem, tier, rng) {
-  const def = HEROES[hi], A = AREA_CAP[tier] || AREA_CAP[1], heart = mem.heart && HEARTS[mem.heart], out = [];
+  const def = HEROES[hi], A = capOf(tier), heart = mem.heart && HEARTS[mem.heart], out = [];
   for (const k of STATS) {
     const cap = Math.min(A.st, def.cap[k]), v = mem.st[k];
     if (v >= cap) continue;
@@ -510,7 +513,7 @@ function rollItem(id, rng) {
 function rewards(st, rng) {
   const out = { gold: 0, hearts: [], items: [], mats: [], tools: [] }, tier = st.wave.tier || 1;
   for (const f of st.foes) {
-    out.gold += Math.round((f.gold || 0) * (1 + 0.15 * (tier - 1)) * (0.8 + rng() * 0.4));
+    out.gold += Math.round((f.gold || 0) * Math.pow(1.3, tier - 1) * (0.8 + rng() * 0.4)); // お金は強さ1つごとに1.3倍
     if (f.heart && !st.wave.noHeart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(f.heart);
     if (f.mat && rng() < (f.boss ? 1 : 0.4)) out.mats.push(f.mat);
     if (f.book && f.boss) out.tools.push(f.book);
