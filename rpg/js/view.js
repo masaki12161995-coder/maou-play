@@ -14,9 +14,12 @@ let K = 2;
 // canvasは端末の点の細かさ（1204×2620、配置の1ドット＝4点）で持つ。
 // 人物は素材の1ドット＝2点（Q）、モンスターは全員そろえて1ドット＝3点（QM）。素材バンクの決まり：人物は整数倍、モンスターは全員同じ倍率
 const Q = 0.5, QM = 0.75;
-const FOE_X = [132, 90, 48], FOE_Y = [222, 284, 346];             // 敵：列0がこちら寄り。段の間は「ふつう」の大きさ（高さ50）の1.5倍が入る幅
+// 敵は3列×3段、仲間は3列×5段（決まりが別）。真ん中の段の高さ（中心線）だけそろえる
+const FOE_X = [132, 90, 48], FOE_Y = [222, 284, 346];             // 敵：列0がこちら寄り。段の間62は「ふつう」の魔物（高さ50）を1.5倍にしても入る
 const HERO_X = [204, 234, 264], HERO_Y = [218, 251, 284, 317, 350]; // 仲間：列0が敵寄り。段の間33（絵の高さ30より広く、横陣で縦1列でも重ならない）
-const BIG = { x: 88, y: 350 };
+const MID_Y = 284; // 中心線：敵の段1と仲間の段2
+const DEV = /[?&]dev=1/.test(location.search); // 開発用：マスの線を出す（ふだんの画面には出さない）
+const BIG = { x: 90 }; // 大きい敵はマス全体を使うので、体の真ん中を中心線に合わせる
 const SCENE_UP = 100; // 背景を上にずらす量（ドット）
 const PANEL = { y: 398 };
 const BAR = { y: 604, h: 22 };
@@ -60,7 +63,7 @@ function heroPos(u) { return { x: HERO_X[u.c], y: HERO_Y[u.r] }; }
 function foeBox(u) {
   const img = IM[u.img];
   const w = img.naturalWidth * QM, h = img.naturalHeight * QM;
-  if (u.big) return { x: BIG.x, y: BIG.y, w, h, left: Math.round((BIG.x - w / 2) * 4) / 4, top: BIG.y - h };
+  if (u.big) { const y = Math.round((MID_Y + h / 2) * 4) / 4; return { x: BIG.x, y, w, h, left: Math.round((BIG.x - w / 2) * 4) / 4, top: y - h }; }
   const x = FOE_X[u.c], y = FOE_Y[u.r];
   return { x, y, w, h, left: Math.round((x - w / 2) * 4) / 4, top: y - h }; // 点の境目にそろえる
 }
@@ -191,6 +194,7 @@ function draw(t) {
     ctx.drawImage(scene, 0, scene.height - strip, scene.width, strip, 0, cv.height - strip * 2, scene.width * 2, strip * 2);
   }
   ctx.setTransform(4, 0, 0, 4, 0, 0); // ここから先はドットの座標で描く
+  if (DEV && st) devGrid();
   if (st) {
     ctx.fillStyle = "#000a"; ctx.fillRect(0, 44, W, 52); // 上の帯の下地
     for (const u of st.foes) { // 敵（右向きにして描く）
@@ -224,6 +228,21 @@ function draw(t) {
     }
   }
   requestAnimationFrame(draw);
+}
+// 開発用のマス目：敵3×3と仲間3×5。足元が各マスの下辺の少し上に来る。黄色の点線が中心線
+function devGrid() {
+  ctx.save(); ctx.lineWidth = 0.25; ctx.font = "5px sans-serif";
+  const cell = (cx, cy, w, h, color, label) => {
+    ctx.strokeStyle = color; ctx.strokeRect(cx - w / 2, cy - h + 6, w, h);
+    ctx.fillStyle = color; ctx.fillText(label, cx - w / 2 + 1, cy - h + 11);
+  };
+  for (let c = 0; c < 3; c++) {
+    for (let r = 0; r < 3; r++) cell(FOE_X[c], FOE_Y[r], 42, 62, "#ff7a6a", `敵${c}-${r}`);
+    for (let r = 0; r < 5; r++) cell(HERO_X[c], HERO_Y[r], 30, 33, "#6ad0ff", `仲${c}-${r}`);
+  }
+  ctx.strokeStyle = "#ffe08a"; ctx.setLineDash([1, 1]);
+  ctx.beginPath(); ctx.moveTo(20, MID_Y); ctx.lineTo(282, MID_Y); ctx.stroke(); // 中心線
+  ctx.restore();
 }
 const WCELL = new Map();
 function whiteCell(img, col, row) {
