@@ -4,8 +4,8 @@
 const FIELD_PART_PLANS={
   town:{grid:`
 FFFFFFFFFFFFFFFcFFFFFFFFFFFFFFF
-FFFFFFFFFFFFFFFcFFFFFFFFFFFFFFF
-FFFFFFF########c########FFFFFFF
+FFFFFFFFFFFFFFcccFFFFFFFFFFFFFF
+FFFFFFF#######ccc#######FFFFFFF
 FFFFFFF########c########FFFFFFF
 FFFFFF#########c##########FFFFF
 FFFFFF#########c##########FFFFF
@@ -98,8 +98,8 @@ FFFFFFFFFFFFF~~~~~~~FFFFFFFFFFFFFFFF
   lamps:[], closures:[]},
   gate:{grid:`
 ^^^^^^^^^^^^^d^^^^^^d^^^^^^^^^^^^^^^^^^^^
-^^^^^^^^^^^^^d^^^^^^d^^^^^^^^^^^^^^^^^^^^
-^^^^^^^^^^^^^d^^^^^^d^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^ddd^^^^^ddd^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^ddd^^^^^ddd^^^^^^^^^^^^^^^^^^
 ^^^^^^^^####^d#####^d^##########^^^^^^^^^
 ^^^^^^^^####^d######d###########^^^^^^^^^
 ^^^^^^^^####pd######d###########^^^^^^^^^

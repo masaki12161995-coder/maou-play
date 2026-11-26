@@ -122,7 +122,10 @@ class Game {
     if(this.field===field && field.steps!==before && !this.panel && !this.cinematic && !this.dialogue.isOpen)this.stepped();
     if(this.battle||this.field!==field)return;
     this.ui.begin(this.surface);
-    if(!inFront&&!this.dialogue.isOpen)this.ui.exitNote();
+    if(!inFront&&!this.dialogue.isOpen){
+      if(field.parts?.plan.expanded)field.parts.exitLabel(this.ui,field);
+      else this.ui.exitNote();
+    }
     this.ui.hud();
     if(this.panel)this.ui.drawPanel();
     if(!this.dialogue.isOpen)this.ui.toast();

@@ -20,11 +20,6 @@ const CH1_ENCOUNTERS={
   climb:{groups:[["c1_horn","bat"],["c1_knuckle","bat"],["c1_horn","c1_knuckle"]],xp:14,loot:["hat","shield","bow"]},
   gate:{groups:[["c1_rim","c1_horn"],["c1_knuckle","c1_rust"],["c1_rim","c1_knuckle"]],
     xp:18,loot:["hat","coat","swordIron","shield"],quiet:[[20,25,2],[19,9,2]]},
-  hall:{groups:[["c1_rim","c1_rust"],["c1_paw","c1_rim"],["c1_rust","c1_knuckle"]],
-    xp:21,loot:["swordIron","steel","lantern","ring"],quiet:[[21,7,6],[21,19,2],[21,11,3]]},
-  service:{groups:[["c1_rust","c1_knuckle"],["c1_paw","c1_rim"],["c1_rust","c1_rim"]],xp:18,loot:["coat","steel","lantern"]},
-  wardhouse:{groups:[["c1_rust","c1_rim"],["c1_paw","c1_knuckle"]],
-    xp:18,loot:["shield","lantern","ring"],quiet:[[12,32,3],[17,20,2],[26,11,3]]},
 };
 
 function ch1Opponent(code,ward){

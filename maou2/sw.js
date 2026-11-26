@@ -1,6 +1,6 @@
 "use strict";
 
-const RELEASE="maou-rebuild-mobile-tiles-1";
+const RELEASE="maou-rebuild-mobile-ch1-maps-2";
 const OFFLINE=[
   "index.html",
   "manifest.webmanifest",
@@ -11,11 +11,13 @@ const OFFLINE=[
   "world.js",
   "chapter1-layouts.js",
   "chapter1-field-plans.js",
+  "chapter1-more-places.js",
   "chapter1-exits.js",
   "chapter1-text.js",
   "chapter1-world.js",
   "chapter1-scenes.js",
   "field-part-index.js",
+  "room-part-index.js",
   "field-parts.js",
   "field.js",
   "dialogue.js",
@@ -62,6 +64,7 @@ const OFFLINE=[
   "assets/book.png",
   "assets/ch1_edges.png",
   "assets/ch1_ground.png",
+  "assets/ch1_rooms.png",
   "assets/ch1_scenery.png",
   "assets/chest.png",
   "assets/cloth.png",

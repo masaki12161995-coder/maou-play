@@ -1,0 +1,674 @@
+"use strict";
+
+const CH1_MORE_FLOORS={
+  longhouses:`
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFgggggggggFFFFFFgggggggggFFFFFFFF
+FFFFFggggggggggggggggggggggggggggFFFFFF
+FFFFggggggggggggggggggggggggggggggFFFFF
+FFFgggBBBBgggggggggggBBBBggggggggggFFFF
+FFFggpBBBBppBBBBpppppBBBBppppBBBBgggFFF
+FFFggpBBBBppBBBBpggppBBBBppppBBBBppggFF
+FFFggpppppppBBBBggpppppppppppBBBBppggFF
+FFgggppppppBBBppppppppppppppppppppgggFF
+FFggpBBBpppBBBppppppppppgggpppppgggggFF
+FFggpBBBppppppppppppppppgggpppppppggggF
+FFggpppppppppppppppppppppppcppppppppppF
+FFgppppcccccccccccccccccccccccccccppppp
+FFggpppcccccccccccccccccccccccccccpppgF
+FFggppppppppppppppppppgggpppppcppggpggF
+FFggpcpcpppppppppppppppppppppppppppgggF
+FFggpppppppgggppcpppppppgggpppggcpppggF
+FFggppppppccccccpcccccBggggppgggpppgggF
+FFggppcpppccccccpcccccBBBcpppppppppggFF
+FFgggpppppccccccpcccccBBBcccccccccccggF
+FFFgggppppccccccpccSSSpSSSccccccccccppF
+FFFggggpppccccccpcccccpcccccccccccccppp
+FFF^^^^pppccccccBBBcccccccggggpppgggggF
+FFF^^^^gppppppppBBBpppp^^^^^^^BBBpppgFF
+FFF^^^^^^^^^ppppBBBpppp^^^^^^^BBBppgFFF
+FFF^^^^^^^^^ppppppppppp^^^^^^^^^ppgFFFF
+FFF^^^^^^^^^ggggggggggggggg^^^^^gFFFFFF
+FFFFFFF^^^^^ggggggggggggggg^^^^^FFFFFFF
+`.trim().split("\n"),
+  climb:`
+^^^^^^^^^^^^^^^^^^^^^c^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^ccc^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^ccc^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^c^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^c^^^^^^^^^^
+^^^^^^^^^^^^^gggg^^^^c^^^^^^^^^^
+^^^^^^^^^^gggggggppppcppg^^^^^^^
+^^^^^^^^^ggggppppppppcppgg^^^^^^
+^^^^^^^^gggpppppcccccccppgg^^^^^
+^^^^^^^ggpppppppccpccccppg^^^^^^
+^^^^^^gggpSSSSSSSSSpppppg^^^^^^^
+^^^^^^ggggSSSSSSSSSpppppg^^^^^^^
+^^^^^ggggpSSSSSSSSSpppggg^^^^^^^
+^^^^^gggggpppccccccccccgg^^^^^^^
+^^^^gggpppppppcccccccccpgg^^^^^^
+^^^ggggppppppccccccccccpgg^^^^^^
+^gggpppppppppccccccccccppg^^^^^^
+ppppppppppppppp^^^ppppppp^^^^^^^
+^^gppp^^ppppppp^^^pSSSSSS^^^^^^^
+^^^ggg^^ppppppp^^^pSSSSSSg^^^^^^
+^^^ggg^^pppppppppppSSSSSSpg^^^^^
+^^^^ggggggcccccccccSSSSSSpg^^^^^
+^^^^^gggggcccccccc^^cccccpgg^^^^
+^^^^^^ggggcccccccc^^ccccpppgg^^^
+^^^^^^ggggcccccccc^^ccpccpggg^^^
+^^^^^^^gggccccc^^^^ccccccgggg^^^
+^^^^^^gggpccccc^^^^ccccccgggg^^^
+^^^^^^gggpcccccccccccccccpgg^^^^
+^^^^^^gggppppppppppppppggggg^^^^
+^^^^^^ggpppppppppppppgggggg^^^^^
+^^^^^^ggSSSSpppppppggggggg^^^^^^
+^^^^^^ggSSSSppppppggggggg^^^^^^^
+^^^^^^ggppppppppppgggggg^^^^^^^^
+^^^^^^ggppppppppgggggggg^^^^^^^^
+^^^^^^ggpppppppppggggggg^^^^^^^^
+^^^^^^ggpppppppppgggggg^^^^^^^^^
+^^^^^^ggppppppppggggg^^^^^^^^^^^
+^^^^^^ggSSSSSSSggggg^^^^^^^^^^^^
+^^^^^^^gSSSSSSSggg^^^^^^^^^^^^^^
+^^^^^^^^gpppppggg^^^^^^^^^^^^^^^
+^^^^^^^^^ppppp^^^^^^^^^^^^^^^^^^
+^^^^^^^^^ppppp^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^p^^^^^^^^^^^^^^^^^^^^^
+`.trim().split("\n"),
+  court:`
+#####################################
+#####################################
+#####################################
+#####################################
+#####################################
+#####################################
+################dddddd###############
+#############ddddddddddd#############
+##########ddddddddddddddddddddd######
+########ddddd++++++++++++dddddd######
+#######dddddd++++++++++++ddddddd#####
+#######dddddd++++++++++++ddddddd#####
+#######dddddd++++++++++++ddddddd#####
+#######dddddd++++++++++++ddddddd#####
+#######dddddd++++++++++++ddddddd#####
+#######dddddd++++++++++++ddddddd#####
+#######dddddddSSSSSSSSSdddddddd######
+#######dddddddSSSSSSSSSdddddddd######
+######dddgggdddcccccccdddggg#dd######
+######dddgggdddcccccccdddgggddd######
+######dddgggdddcccccccdddgggddd######
+######dd#gggdddcccccccdddgggddd######
+######dddddd#ddcccccccdd#ddddddd#####
+######dddddddddcccccccdddddddddd#####
+######dddddddddcccccccdddddddddd#####
+#######ddddddddcccccccddddddddd######
+#######ddgggdddcccccccdddgggddd######
+#######ddgggdddcccccccdddgg#ddd######
+#######ddggg#ddcccccccdd#gggdddd#####
+#######ddddddddcccccccdddddddddd#####
+########dddddddcccccccdddddddddd#####
+########dddddddcccccccdddddddddd#####
+########dddgggdcccccccddgggdddd######
+#########ddgggdcccccccddgggdddd######
+#########dSgggSSSSSSSSddgggddd#######
+#########dSdddSSSSSSSSddddddd########
+#########dSdddddddddddddddddd########
+#########dddddddddddddddd############
+#########ddddddddddddddd#############
+##########S##dddddddddd##############
+##############ddddddd################
+#################d###################
+`.trim().split("\n"),
+  hall:`
+###########################################
+###########################################
+###########################################
+###########################################
+###########################################
+#######################d###################
+##################ddddddddd################
+#################ddddddddddd###############
+################ddddddddddddd##############
+###########dddd##dddddddddddd#dd###########
+##########ddddddddddd###dddddddddd#########
+########ddddddd#ddddddddddd#ddddddd########
+########ddddd####ddddddddddd###dddd########
+########dddd####ddddcccdddddd####ddd#######
+########dddd###dddddSSSSddd###ddddddd######
+########ddd###ddddddSSSSddd#ddddddddd######
+########dddd##ddddddcccd###ddddddddd#######
+########dddd##ddddddcccdddd#dddddddd#######
+#######ddd###dddddddcccdddddd##ddddd#######
+#######ddd###dddddddcccddddd##dddddd#######
+#######ddd####ddddddcccddddd###dddddd######
+#######dddddddddd##dcccdddddddd###ddd######
+#####dddddddddddd##dcccdddddddd###dd#######
+####ddddddddd##dd##dcccddddddd###ddd#######
+#####ddddddddddddd##ccc##ddddddddddd#######
+#######ddddddddddd##ccc###ddddddddddd######
+#######ddddddddddd##cccd##dddddddddddd#####
+#######ddddddddddd##cccd##dddddddddddd#####
+#######ddddddddddd##cccd##dddddddddddd#####
+########d#dddddddd##cccd##ddddddddddddd####
+#######ddddddddd##ddcccdddd##dddddddddd####
+########ddddddddddSSSSSSSSdddddddd###dd####
+#########dddddddddSSSSSSSSddddddddddddd####
+#########ddddddd#dddcccdddd#dddddddddddd###
+##########dddddd#dddcccdddd##dddddddddd####
+##########dddd##ddddddddddddd##dddddddd####
+##########ddd###ddddddddddddd##dddddddd####
+#############d##ddddddddddddd##dddddddd####
+###############dddddddddddddddddddddddd####
+##################d########################
+###########################################
+###########################################
+###########################################
+###########################################
+`.trim().split("\n"),
+  inn:`
+#######################
+#######################
+#######################
+#######################
+#######################
+######sssssssssssss####
+#####sssss#ss#sssss####
+#####sssss#ss#sssss####
+#####sssss#ss#sssss####
+#####sssss#ssssssss####
+#####ssssssssssssss####
+#####ssssssssssssss####
+#####ssssssssssssss####
+#####sssssdddddddsss###
+####s##sssdddddddsss###
+####ssssssdddddddsss###
+####ssssssssssssssss###
+####ssssssssssssssss###
+####ssssssssssssssss###
+####ssssssssssssssss###
+####sssssssssssss######
+#####sssssssssssssss###
+#####sssssssssssssss###
+######sssssssssssss####
+#######sssssssssss#####
+########sssssssss######
+#########sssssss#######
+############s##########
+#######################
+#######################
+`.trim().split("\n"),
+  workshop:`
+#########################
+#########################
+#########################
+#########################
+#########################
+#####dddddddddddddddd####
+#####dddddddddddddddd####
+#####dddddddddddddddd####
+#####dddddddddddddddd####
+####dddddddddddddddddd###
+####dddddddddddddddddd###
+####dddddddddddddddddd###
+####dddddddddddddddddd###
+####ddddddddddddsssssd###
+####ddddd#ddddddsssssd###
+####dssss#ddddddsssssd###
+####dssss#ddddddsssssd###
+#####sssssddddddsssssd###
+#####sssssdddddd###ssd###
+#####sssssdddddd###ddd###
+#####sssssdddddddddddd###
+#####sssssdddddddddddd###
+#####sssssdddddddddddd###
+######ddddddddd#####d####
+########ddddddddddd######
+########ddddddddddd######
+#########ddddddddd#######
+############d############
+#########################
+#########################
+`.trim().split("\n"),
+  service:`
+###################################
+###################################
+###################################
+###################################
+###################################
+###################################
+###################################
+#########dddddddddddddddd##########
+########ddddssssssddddddddd########
+########ddddssssssddddsssssss######
+########ssssssssssdddddssssss######
+########sssssssssddd#dsssssss######
+########sdssssssssdd#dsssssss######
+########ssss###sssdd#ddddddddd#####
+########ssss###sssdd#ddddddddd#####
+########ssss###sssdd#ddddddddd#####
+########ssssdddddddddddddddddd#####
+########ssss###dddddddddssdssd#####
+########ssss###dddddddddsssssd#####
+########ssss###ddddd##ddssdssd#####
+########ssss###ddddd##ddsssssd#####
+########ssss###ddddd##ddsssssd#####
+########dddd###ddddd##ddsssssd#####
+#######ddddd###ddddd##ddsssssd#####
+#######ddddddddddddd##ddSSSddd#####
+#######dsssssdddddddddddd###ddd####
+#######ddssssdddddddddddd###ddd####
+#######dsssssdddddddddddddddddd####
+#######dsssssdd########dddddddd####
+#######ddssssdd########dddddddd####
+#######dsssssdddddddddddddddddd####
+#######dssdssdddddddddddddddddd####
+##########d#######dddddddddddd#####
+###################################
+###################################
+###################################
+###################################
+`.trim().split("\n"),
+  cistern:`
+####################################
+####################################
+####################################
+####################################
+####################################
+####################################
+############################d#######
+####################ddddddddddd#####
+################dddddddddddddddd####
+#############dddddddddddddddddddd###
+#########dddddddddddddddddddddddd###
+########ddddddddddddddddSSdddddddd##
+#######dddddddddddddddddSSsssddddd##
+#######dssdsdddddddddddddssssddddd##
+#######dssssdddddddddddddssssddddd##
+#######dss##d~~~~~~~~dddddsssddddd##
+#######dss##d~~~~~~~~dddds#ssddddd##
+#######dssssd~~~~~~~~~ddds#ssddddd##
+#######dssssdd~~~~~~~~~dds#ssddddd##
+#######dssss=============d#ddddddd##
+#######ddddddd~~~~~~~~~~dddddddddd##
+#######dddddd~~~~~~~~~~~dddddddddd##
+#######dddSSS~~~~~~~~~~~~ddddddddd##
+#######dddSSS~~~~~~~~~~~~ddddddddd##
+#######dddddddddddddd~~~~ddddddddd##
+#######dddddddddddddd~~~~dddd##ddd##
+#######ddddddd~~ddd=======ddd##ddd##
+#######dddddddd~~~~~~~~~~ddddddddd##
+#######ddddddddd~~~~~~~~sssssssddd##
+#######ddddddddd~~~~~~~dssssssssdd##
+#######ddddddddd~~~~~~ddssssssssd###
+#######dssdssdddddddddddssssssss####
+#######dsssssdddddddddddssssssss####
+#######dsssssddddddddddddd##########
+#######dsssssddddddddd##############
+#######dddddddddd###################
+#########d##########################
+####################################
+####################################
+####################################
+`.trim().split("\n"),
+  overlook:`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^pppppppppppppp^^^^^^^^^^
+^^^^^^^^^^^^^pppppppppppppppppp^^^^^^^
+^^^^^^^^^^^^pppppppppppppppppppp^^^^^^
+^^^^^^^^^^^^pppdddddddddddddddpp^^^^^^
+^^^^^^^^^^^^pppdddddddddddddddppp^^^^^
+^^^^^^^^^^^^ppppddddddddddddddpppp^^^^
+^^^^^^^^^^^^ppppdddddddddddddddpppp^^^
+^^^^^^^^^^^pppp=d==dddddddddddddpp^^^^
+^^^^^^^^^^^pppddddddddddgggddddpp^^^^^
+^^^^^^^^^^ppppddddddddddgggddddpp^^^^^
+^^^^^^^^^^^^^pddddddddddgggddddppp^^^^
+^^^^^^^^^^^^^pdddddddddddddddBBBdpp^^^
+^^^^^^^^p^^^^dSSSSSSdddddddddBBBdppp^^
+^^^^^^^^pppppdSSSSSSdddddddddBBBdppp^^
+^^^^^^^ppppdpdddddddddddddddddddddpp^^
+^^^^^^^pppBBBBdddddddddddddddddddddpp^
+^^^^^^ppppBBBBdddddggdddddddddddddddp^
+^^^^^^ppppdddddddddggddddddddddddddddd
+^^^^^^pppppddddddddggddSSSSddddddddpp^
+^^^^^^pppppddddddddggddSSSSddddddppp^^
+^^^^^^^ppppppdddddddddddddddddggggpp^^
+^^^^^^^ppppppdddddddddddddddppggggp^^^
+^^^^^^^^ppSSSSppppppppppppppppgggg^^^^
+^^^^^^^^ppSSSSppppppp^^^pppppppp^^^^^^
+^^^^^^^pppppppppppppp^^^ppppp^^^^^^^^^
+^^^^^^^pppppppppppppp^^^ppp^^^^^^^^^^^
+^^^^^^^^ppppppppppppp^^^^^^^^^^^^^^^^^
+^^^^^^^^ppppppdpppppp^^^^^^^^^^^^^^^^^
+^^^^^^^^^pppppdppppp^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^ppp^^^ppp^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+`.trim().split("\n"),
+  wardhouse:`
+#######################################
+#######################################
+#######################################
+#######################################
+#######################################
+#######################################
+#######################################
+#################dddddddd##d###########
+###############ddddddddddddddd#########
+###########ddddddddddddddddddddd#######
+##########ddddddddddddddddddddddd######
+#########ddddddddddd###dddddddddd######
+#########ddddddddddd###dddddddddd######
+########dddddddddddd###ddddddddddd#####
+########ddddddddddddddddddddddddddd####
+#######dssssddddddddddddddddddddddd####
+#######dssssd###ddddddddddddddddddd####
+######ddssssd###ddddddddddddddddddd####
+######ddssssdddddddddddddddddSSSddd####
+######ddssssdddddddddddddddddSSSddd####
+#####dddssssddddddddddddddddd===ddd####
+#####dddssssddddddddddddd####===dddd###
+#####dddddddddddddddddddd####dddddd####
+#####dddddddddddddddddddd####dddddd####
+#####ddddSSSddd=====ddddddddddddddd####
+#####ddddSSSddd=====ddddddddddddddd####
+#####ddddSSSd###ddddddddddddddddddd####
+#####dddddddd###ddddddsssssssssssddd###
+#####dddddddd###ddddddsssssssssssddd###
+#####dsssssssssssddd###sssssssdssddd###
+#####dsssssdsssssddd###ssssssssssddd###
+#####dsssssssssssddd###sdssssssssdd####
+#####dsssssssssssdddddsssssssssssdd####
+#####dsssssssssssdddddsssssssssdd######
+#####dsssssssssssddddddddddddddddd#####
+####dddssssssssssdddddddddddddddd######
+###ddddssssssdsssddddddddddddddd#######
+####dddssssssssssdddddddddd############
+######dddddddddddddddddddd#############
+########dddddddddddddddd###############
+#######################################
+#######################################
+#######################################
+#######################################
+`.trim().split("\n"),
+};
+
+const morePieces=entries=>entries.map(([col,row,art,dx=0,dy=0])=>fieldPiece(col,row,art,dx,dy));
+const linePieces=(xs,row,art,dx=0,dy=0)=>xs.map(col=>fieldPiece(col,row,art,dx,dy));
+const span=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+
+const CH1_MORE_PLANS={
+  longhouses:{
+    pieces:[
+      ...fieldBuilding(8,10,"lichen",{entrance:true,sign:"sign"}),
+      ...fieldBuilding(14,11,"ridge",{shutters:true}),
+      ...fieldBuilding(23,10,"copper",{shutters:false}),
+      ...fieldBuilding(31,11,"slate",{shutters:true}),
+      ...fieldBuilding(6,14,"copper",{shutters:true}),
+      ...fieldBuilding(12,13,"lichen",{shutters:false}),
+      ...fieldBuilding(22,23,"slate",{entrance:true}),
+      ...fieldBuilding(17,27,"copper",{shutters:true}),
+      ...fieldBuilding(31,28,"ridge",{shutters:true}),
+      ...morePieces([
+        [7,16,"wood",-10,-3],[9,18,"barrels",10,0],[9,21,"table",9,-7],[11,22,"flowers-1",7,-5],[11,24,"wash-basin",-7,3],
+        [13,18,"cloth-pale",10,2],[15,17,"cargo",-7,3],[16,14,"flowers-0",16,-6],[18,13,"bench-wood",6,-2],
+        [23,15,"cloth-hung",-8,-7],[20,12,"wood",0,2],[24,17,"bench-wood",12,0],[30,18,"flowers-2",17,-3],
+        [24,13,"broad-2",6,-5],[34,13,"pine-3",0,6],[35,12,"pine-5",13,4],[25,18,"sacks",9,-1],
+        [25,20,"broad-1",12,4],[26,20,"flowers-1",13,6],[30,21,"rock-2",9,-8],[31,20,"broad-2",-8,0],
+        [34,17,"bench-wood",8,0],[34,24,"cargo",-14,-3],[33,26,"broad-1",12,-4],[29,26,"rock-1",-1,-8],
+        [34,19,"barrels",-5,4],[19,20,"wash-basin",0,0],[27,20,"cargo",11,0],[27,25,"flowers-0",0,7],
+        [24,25,"sacks",7,-5],[22,27,"barrels",2,0],[13,26,"rock-2",2,6],[15,28,"wood",6,-2],
+      ]),
+      ...linePieces([11,12,13,14,15],27,"parapet",0,-8),
+      ...linePieces([28,29,30,31],25,"fence",0,13),
+      ...linePieces([31,32,33],22,"fence",0,-9),
+      ...linePieces([2,3,4,5],24,"fence",0,12),
+      ...fieldGrove([[3,10],[4,8],[2,13],[2,17],[3,18],[3,22],[4,24],[4,27],[6,28],[6,30],
+        [8,29],[10,30],[12,29],[14,29],[20,29],[23,30],[27,30],[31,30],[35,28],[36,25],[36,20],[35,17],
+        [37,12],[34,11],[34,8],[32,6],[28,6],[25,6],[21,5],[18,7],[10,6],[7,6]],["pine-4","broad-1","pine-2","pine-1","broad-2","pine-5"]),
+    ],
+    lamps:[[7,11,-14,0],[9,11,12,0],[16,13,-10,0],[18,18,-12,1],[24,14,8,0],[30,16,8,0],[33,17,3,0],
+      [21,24,-8,0],[23,24,9,0],[26,22],[14,24],[8,24],[35,24],[37,15]],
+    floorDetails:[[10,19,"moss-1"],[14,24,"moss-0"],[18,22,"plaza-inlay",0,-10],[30,23,"moss-2"]],
+    blocks:[[9,21],[11,24],[13,18],[18,13],[23,15],[24,17],[25,20],[27,20],[31,20],[34,19],[13,26]],
+    passages:{townHomes:"path",lowerHomes:"path",homesForge:"builtDoor",homesStore:"builtDoor"},
+  },
+  climb:{
+    ground:"moor",earth:"gravel",
+    pieces:[
+      ...morePieces([
+        [21,6,"arch-town"],[19,6,"tower-a",6,0],[23,6,"tower-b",-6,0],[19,6,"banner-blue",8,-25],[23,6,"banner-red",-8,-25],
+        [18,7,"wall-span",-12,-11],[24,7,"wall-span",12,-11],[12,10,"horn-left",10,-9],[19,12,"horn-right",11,0],
+        [10,15,"fence-side",-22,-1],[10,17,"parapet",0,-12],[12,17,"parapet",0,-12],[16,17,"rock-0",0,0],
+        [8,21,"rock-1",8,-10],[15,23,"rock-3",5,0],[19,25,"rock-0",4,4],[24,25,"parapet-side",17,-5],
+        [11,32,"cargo",7,6],[7,34,"wood",11,3],[11,37,"parapet",-12,-2],[14,37,"parapet",8,13],
+        [8,40,"rock-1",-5,-4],[14,40,"pine-3",0,2],
+      ]),
+      ...linePieces([2,3,4],16,"fence",0,-9),...linePieces([7,8,9,10],26,"parapet",0,-14),
+      ...linePieces([11,12,13,14],28,"parapet",0,13),...linePieces([21,22,23,24],22,"parapet",0,-6),
+      ...fieldGrove([[6,8],[7,9],[7,10],[9,13],[8,14],[6,14],[3,15],[2,14],[4,19],[3,20],[4,21],[5,22],[5,23],[6,24],
+        [6,30],[7,28],[7,32],[6,34],[8,37],[8,38],[14,41],[14,39],[15,36],[20,34],[22,33],[24,32],[25,29],
+        [27,27],[27,25],[28,23],[27,20],[27,18],[26,16],[26,15],[25,13],[25,11],[27,9],[26,7],[27,4]],
+       ["pine-1","pine-0","pine-5","pine-2","pine-3","pine-4"]),
+      ...fieldGrove([[14,7],[16,8],[15,10],[11,14],[15,17],[17,18],[18,23],[16,26],[9,33],[7,35],[17,35],
+        [25,26],[25,22],[24,18],[26,12],[27,8]],["rock-1","rock-2","rock-0","rock-3"]),
+    ],
+    lamps:[[20,8,-15],[22,8,15],[15,11,1],[12,15,6],[20,16,13],[20,21,-14],[23,25,13],[13,25],
+      [7,17,-7],[3,17,-8],[12,29,7],[8,34,13],[11,39,11]],
+    floorDetails:[[13,17,"moss-0"],[19,20,"moss-1"],[22,25,"moss-2"],[14,27,"moss-0"]],
+    blocks:[[19,6],[23,6],[12,10],[16,17],[15,23],[19,25],[11,32],[7,34]],
+    closures:[["climbGate",21,5,null]],
+    passages:{townClimb:"path",climbOverlook:"path",climbGate:"builtDoor"},
+  },
+  court:{
+    room:"keep",surround:"castle",courtyard:true,
+    pieces:[
+      ...morePieces([
+        [18,9,"throne"],[18,10,"dais-front",0,2],[15,10,"pillar",-12,0],[21,10,"pillar",13,0],
+        [13,12,"shields",10,-2],[23,12,"shields",-10,-2],[14,9,"banner-red",-12,-14],[22,9,"banner-red",12,-14],
+        [9,11,"window-cool",2,-31],[28,10,"window-cool",0,-29],[7,17,"window-cool",8,-10],
+        [31,13,"pillar",-15,0],[28,14,"wall-span",8,-21],[31,8,"tower-b",10,0],
+        [12,22,"pillar",6,-1],[24,22,"pillar",-6,-1],[12,27,"pillar",7,0],[24,28,"pillar",-8,-4],
+        [9,24,"bench-wood",0,-3],[27,25,"bench-wood",8,0],[29,27,"urn",4,-7],[28,30,"pillar",14,-14],
+        [14,32,"shields",1,4],[22,32,"shields",-2,3],[12,34,"banner-blue",8,-1],[23,34,"banner-blue",5,-1],
+        [15,39,"pillar",-5,1],[19,39,"pillar",6,1],[17,41,"arch-town",0,-1],
+        [11,30,"flowers-1",-6,7],[13,29,"urn",-6,0],[22,29,"urn",11,4],
+        [14,32,"bench-wood",13,-3],[21,32,"bench-wood",15,-3],[12,32,"flowers-1",-2,-1],
+        [25,32,"flowers-2",-5,-4],[12,34,"broad-2",-15,0],[25,34,"broad-1",8,2],
+      ]),
+      ...linePieces([7,8,9],27,"parapet",0,-9),...linePieces([25,26,27],27,"parapet",0,-16),
+      ...fieldGrove([[7,27,5,0],[8,31,-7,-3],[9,34,0,2],[28,33,11,3],[30,36,6,-6],[31,28,-2,-6],
+        [6,23,0,-5],[30,19,-7,2]],["broad-1","pine-3","broad-2","pine-4"]),
+    ],
+    lamps:[[15,14,-9,6,"brazier"],[21,14,8,5,"brazier"],[12,20,13,0],[24,20,-11,0],[15,25,-13,3,"brazier"],
+      [21,25,14,1,"brazier"],[12,30,-3,0],[25,29,7,0],[16,37,-9,0],[18,37,9,0],[28,11,11,0],[10,38,-10,0]],
+    floorDetails:[[18,20,"rug-court",0,-19],[18,24,"rug-court",0,-17],[18,29,"rug-dais",0,-23],
+      [18,32,"keep-inlay",0,-10],[10,26,"moss-1"],[25,26,"moss-0"],[28,27,"moss-2"]],
+    blocks:[[18,9],[13,12],[23,12],[9,24],[27,25],[12,27],[14,32],[22,32],[15,39],[19,39]],
+    closures:[["courtHall",30,8,"door-keep"],["courtSide",10,39,"chain"],["hallMaintenance",31,31,"chain"]],
+    passages:{gateCourt:"builtDoor"},
+  },
+  hall:{
+    room:"keep",surround:"castle",
+    pieces:[
+      ...morePieces([
+        [20,8,"pillar",-15,-2],[26,8,"pillar",11,-2],[18,10,"shelf-parts",-1,-7],[25,10,"window-cool",16,-22],
+        [18,14,"pillar",-8,0],[26,14,"pillar",8,0],[21,15,"beam",0,-34],[17,16,"banner-blue",8,-14],[27,16,"banner-blue",-6,-14],
+        [13,17,"shelf-parts",5,-18],[30,17,"shelf-warm",4,-5],[12,23,"pillar",4,0],[32,23,"pillar",8,0],
+        [18,19,"pillar",-6,0],[26,19,"pillar",6,0],[21,19,"beam",0,-43],
+        [19,22,"pillar",-8,-4],[23,22,"pillar",8,-4],[19,24,"pillar",-8,0],[24,24,"pillar",8,-2],
+        [18,27,"pillar",-5,0],[24,27,"pillar",8,-2],[21,26,"beam",0,-55],
+        [15,26,"cargo",12,-6],[29,28,"sacks",3,-4],[30,31,"shields",6,0],[34,22,"shelf-warm",-14,0],
+        [13,33,"bench-wood",9,1],[17,35,"sacks",-9,1],[26,35,"barrels",9,1],[36,34,"cargo",6,3],
+        [19,37,"pillar",-8,-7],[23,37,"pillar",8,-7],[21,35,"beam",0,-45],[35,12,"window-cool",0,-19],
+      ]),
+      ...linePieces([19,20,21,22,23,24],31,"parapet",0,-15),
+      ...linePieces([17,18,19],17,"parapet",0,0),...linePieces([24,25,26],17,"parapet",0,0),
+      ...span(24,28).map(y=>fieldPiece(18,y,"parapet-side",9,-1)),
+      ...span(24,28).map(y=>fieldPiece(24,y,"parapet-side",-11,-2)),
+    ],
+    lamps:[[18,16,6,3],[27,16,-12,0],[13,15,-7,0],[31,15,4,1],[18,24,8,-1],[24,24,-10,-1],
+      [19,29,2,0],[23,29,-3,0],[19,35,6,0],[23,35,-5,0],[30,28,-6,0],[12,27,8,0],[32,34,5,4],
+      [20,9,-8,0],[24,9,7,0],[35,14,4,0],[35,33,11,-6]],
+    floorDetails:[[21,17,"runner-end",0,-11],[21,22,"runner",0,-18],[21,25,"runner",0,-16],[21,29,"runner",0,-15],
+      [21,33,"keep-inlay",0,-13],[12,28,"moss-2"],[33,30,"moss-1"]],
+    blocks:[[18,14],[26,14],[17,16],[27,16],[13,17],[30,17],[12,23],[32,23],[18,19],[26,19],[19,22],
+      [23,22],[15,26],[29,28],[34,22],[13,33],[17,35],[26,35]],
+    closures:[["hallNord",23,5,"town-shutter"],["upperService",36,15,"chain"],["hallTown",38,36,"chain"],
+      ["wardHigh",25,38,"chain"],["wardLow",10,29,"chain"]],
+    passages:{hallNord:"door-keep",hallService:"door-house"},
+  },
+  inn:{
+    room:"timber",surround:"oak",
+    pieces:morePieces([
+      [6,8,"bed-blue",-6,0],[8,8,"bed-red",8,0],[15,8,"bed-blue",-6,0],[18,10,"bed-red",2,1],
+      [6,10,"shelf-warm",-5,-2],[16,11,"sacks",3,-5],[9,13,"partition",-18,-10],[17,12,"partition",11,-7],
+      [11,9,"window-warm",0,-27],[15,7,"window-warm",0,-21],[8,7,"window-warm",-7,-15],[11,11,"hearth",8,-7],
+      [15,14,"counter",18,-1],[17,15,"shelf-parts",18,-7],[12,17,"bench-wood",7,2],[10,19,"round-table",8,-5],
+      [9,20,"chair",-2,3],[11,20,"chair",2,4],[8,22,"round-table",-6,4],[7,23,"chair",-3,4],[9,23,"chair",1,-3],
+      [17,22,"bench-wood",3,0],[14,24,"chair",2,0],[15,23,"bench-wood",0,5],
+      [7,16,"window-warm",-15,-22],[5,19,"barrels",3,-6],[5,16,"sacks",4,-1],[18,18,"bed-blue",9,0],
+      [17,24,"flowers-2",-8,-8],[10,25,"barrels",-10,-4],[14,26,"flowers-0",0,-9],
+    ]),
+    lamps:[[10,11,13,-4],[14,15,-6,1],[17,13,-9,-26,"sconce-wood"],[8,17,10,-6],[12,19,14,-7],[18,21,-15,-19,"sconce-wood"],
+      [8,23,12,1],[11,25,-8,-3],[13,25,11,-3]],
+    floorDetails:[[12,16,"rug-inn",0,-7],[12,20,"rug-inn",0,-16],[17,9,"rug-side",2,0],[7,9,"rug-side",1,0],
+      [12,24,"rug-side",0,-5]],
+    blocks:[[6,8],[8,8],[15,8],[18,10],[6,10],[16,11],[11,11],[15,14],[16,14],[17,15],[12,17],[10,19],
+      [9,20],[11,20],[8,22],[7,23],[9,23],[14,24],[15,23],[18,18],[5,19],[5,16]],
+    passages:{townInn:"door-house"},
+  },
+  workshop:{
+    room:"slate",surround:"oak",
+    pieces:morePieces([
+      [8,9,"smith-hearth",-13,-8],[10,9,"rack-tools",14,-11],[15,7,"window-warm",0,-21],[19,7,"window-warm",2,-25],
+      [5,9,"sacks",-7,-7],[5,14,"wood",12,-4],[7,13,"shelf-parts",9,-10],[13,10,"anvil",-7,0],
+      [16,10,"rack-tools",4,-11],[20,10,"shelf-parts",-1,-13],[20,13,"bench-wood",11,-8],[18,14,"worktable",3,-3],
+      [6,18,"worktable",10,-2],[7,20,"wash-basin",0,0],[9,21,"barrels",0,-2],[15,19,"sacks",5,3],
+      [13,21,"smith-bench",4,-4],[13,22,"sacks",-10,2],
+      [17,20,"shelf-parts",13,-8],[20,21,"wood",-1,6],[20,23,"cart",-9,-8],[14,25,"barrels",5,-2],
+      [10,25,"rack-tools",-6,-14],[9,24,"sacks",1,4],[15,17,"worktable",10,-3],
+    ]),
+    lamps:[[8,10,8,-6,"brazier"],[11,11,-9,0],[16,9,-6,0],[20,11,6,0],[7,16,2,2],[10,17,-8,-13,"sconce-stone"],
+      [14,18,5,0],[17,21,0,-4],[12,22,-7,1],[11,26,8,-7],[14,25,0,-3]],
+    floorDetails:[[10,10,"moss-1"],[10,16,"moss-0"],[14,20,"moss-2"],[14,24,"rug-side",0,-13]],
+    blocks:[[8,9],[10,9],[7,13],[13,10],[16,10],[20,10],[20,13],[18,14],[6,18],[7,20],[9,21],[17,20],[20,21],
+      [20,23],[9,24],[15,17],[13,21]],
+    passages:{homesForge:"door-house"},
+  },
+  service:{
+    room:"keep",surround:"castle",
+    pieces:morePieces([
+      [10,10,"shelf-parts",5,0],[13,8,"shelf-warm",5,2],[15,9,"shelf-parts",12,-6],[19,10,"window-cool",0,-18],
+      [25,10,"shelf-parts",6,-7],[27,11,"barrels",5,-8],[25,12,"rack-tools",-7,-16],
+      [17,14,"cloth-pale",4,-7],[17,16,"sacks",-6,0],[13,17,"shelf-parts",8,-3],[12,20,"partition",3,0],
+      [21,17,"barrels",10,-5],[26,16,"shelf-warm",9,-7],[24,18,"shelf-parts",-11,0],[27,21,"cloth-hung",7,-3],
+      [27,23,"cargo",8,0],[25,24,"sacks",-6,-14],[29,26,"cart",7,-5],[24,28,"worktable",0,-3],
+      [20,26,"shelf-warm",0,-8],[19,30,"barrels",-7,-2],[14,30,"wood",10,0],[12,27,"sacks",6,-8],
+      [15,23,"pillar",2,0],[14,22,"barrels",-6,-11],[9,24,"shelf-parts",4,-3],[8,30,"cargo",1,3],
+      [12,31,"flowers-1",-4,0],[13,26,"rack-tools",12,-13],[20,19,"pillar",-4,0],[24,23,"pillar",9,0],
+    ]),
+    lamps:[[10,12,10,-5],[14,11,7,0],[19,11,-9,2],[25,13,8,0],[26,18,9,1],[18,21,-11,3],
+      [9,21,-9,0],[13,24,6,1],[9,28,4,0],[13,31,6,-28,"sconce-stone"],[22,27,5,1],[28,23,-5,0],[28,28,-6,5]],
+    floorDetails:[[10,16,"moss-2"],[17,17,"rug-side",0,-11],[13,28,"moss-0"],[12,31,"rug-side",0,-10],
+      [24,29,"moss-1"],[27,24,"moss-0"]],
+    blocks:[[10,10],[13,8],[15,9],[25,10],[27,11],[17,14],[13,17],[12,20],[26,16],[24,18],[27,21],[29,26],
+      [24,28],[20,26],[12,27],[15,23],[9,24],[13,26],[24,23]],
+    closures:[["upperService",8,9,"chain"]],
+    passages:{hallService:"door-house"},
+  },
+  cistern:{
+    room:"slate",surround:"castle",
+    pieces:[
+      ...morePieces([
+        [9,12,"shelf-warm",0,-3],[12,12,"shelf-parts",6,-2],[15,10,"window-cool",0,-23],[18,11,"sacks",2,-3],
+        [23,10,"rack-tools",5,-12],[27,11,"wash-basin",4,3],[31,11,"barrels",3,-6],[31,14,"shelf-parts",-2,1],
+        [12,16,"pillar",6,-7],[12,21,"pillar",4,0],[24,18,"pillar",14,-8],[25,22,"pillar",3,-3],
+        [8,25,"bench-wood",1,-5],[10,28,"cloth-pale",12,-9],[10,33,"barrels",-6,0],[8,34,"sacks",-9,-2],
+        [13,31,"cargo",9,-1],[23,31,"barrels",7,0],[26,29,"worktable",2,-5],[31,30,"shelf-warm",-4,-3],
+        [30,31,"sacks",5,-2],[12,30,"wash-basin",-2,-3],[20,32,"wood",-5,-5],
+      ]),
+      ...linePieces([13,14,15,16,17,18,19,20],14,"parapet",0,-1),
+      ...linePieces([15,16,17,18,19,20],30,"fence",0,6),
+      ...span(15,18).map(y=>fieldPiece(13,y,"parapet-side",-22,-2)),
+      ...span(20,23).map(y=>fieldPiece(24,y,"parapet-side",17,-4)),
+    ],
+    lamps:[[8,34,4,0],[11,32,11,1],[12,28,7,-3],[12,24,-11,0],[17,24,-8,4],[23,26,4,-2],[25,29,-9,1],
+      [28,28,8,0],[26,23,5,1],[12,18,-10,0],[11,12,3,0],[16,12,3,-2],[22,12,-8,0],[26,9,10,0]],
+    floorDetails:[[10,29,"moss-1"],[14,30,"moss-2"],[10,24,"moss-0"],[26,27,"moss-0"],[29,23,"moss-1"],[23,13,"keep-inlay"]],
+    blocks:[[9,12],[12,12],[23,10],[27,11],[31,14],[12,16],[12,21],[25,22],[8,25],[10,28],[10,33],
+      [12,30],[26,29],[31,30],[30,31]],
+    closures:[["overlookStore",28,6,"chain"]],
+    passages:{homesStore:"door-house"},
+  },
+  overlook:{
+    ground:"moor",earth:"dirt",
+    pieces:[
+      ...fieldBuilding(12,22,"lichen",{shutters:true}),
+      ...fieldBuilding(30,19,"ridge",{shutters:false}),
+      ...morePieces([[29,20,"rock-0",16,5],[21,7,"tower-b",10,-2],[26,8,"arch-town",1,-22],[23,9,"banner-blue",-5,-14],
+        [16,11,"horn-left",-10,-3],[28,12,"horn-right",8,0],[19,16,"bench-wood",-8,-4],[9,25,"wood",-5,-6],
+        [15,28,"cargo",-12,1],[17,30,"sacks",7,0],[14,33,"arch-postern",0,-23],[20,27,"barrels",6,-1],
+        [24,25,"wash-basin",10,-6],[26,22,"rock-3",1,3],[33,24,"flowers-2",11,6],
+        [19,22,"broad-2",-4,3],[20,24,"broad-1",7,6],[24,14,"pine-4",5,-2],[30,26,"broad-2",14,0]]),
+      ...linePieces([16,17,18,19,20,21,22,23],7,"parapet",0,-15),
+      ...linePieces([12,13,14,15,16,17],21,"parapet",0,13),
+      ...linePieces([27,28,29,30,31,32,33],23,"fence",0,10),
+      ...linePieces([13,14,15,16],32,"fence",0,-16),
+      ...fieldGrove([[6,20],[7,19],[5,23],[5,27],[7,29],[7,32],[8,34],[10,35],[13,36],[15,36],[16,35],
+        [19,33],[22,32],[25,31],[29,29],[30,28],[33,27],[34,26],[35,24],[36,19],[35,17],[34,15],[34,12],
+        [33,9],[31,7],[29,5],[18,5],[15,5],[13,6]],["pine-5","pine-0","pine-4","broad-1","pine-2","pine-3"]),
+    ],
+    lamps:[[21,10,-7],[25,11,-10],[28,11,14],[21,17,10],[15,19,-5],[10,20,-8],[17,22,5],[23,22,-9],
+      [31,22,-8],[35,22,7],[26,25,13],[19,27,9],[12,29,9],[13,32,2],[15,33,12]],
+    floorDetails:[[24,16,"keep-inlay",0,-11],[22,23,"moss-0"],[24,25,"moss-2"],[11,28,"moss-1"]],
+    blocks:[[21,7],[16,11],[28,12],[19,16],[19,22],[20,24],[15,28],[17,30],[20,27],[24,25],[26,22]],
+    closures:[["overlookStore",14,33,"chain"]],
+    passages:{climbOverlook:"path"},
+  },
+  wardhouse:{
+    room:"slate",surround:"castle",
+    pieces:[
+      ...morePieces([
+        [18,8,"window-cool",2,-26],[22,8,"rack-tools",0,-14],[24,9,"shields",5,-2],[30,9,"window-cool",8,-21],
+        [13,11,"shelf-parts",-5,-10],[16,12,"pillar",2,-1],[19,12,"shields",1,-4],[24,13,"window-cool",1,-16],
+        [27,13,"shelf-warm",9,-6],[31,15,"barrels",3,0],[10,17,"bed-blue",3,-6],[11,19,"bed-red",4,1],
+        [13,19,"cloth-pale",3,-12],[15,18,"pillar",6,-1],[22,20,"pillar",3,-4],[18,23,"worktable",-8,-1],
+        [24,23,"sacks",7,-4],[28,25,"pillar",5,-6],[31,24,"rack-tools",2,-8],[31,27,"bed-blue",6,0],
+        [27,28,"bed-red",3,1],[26,30,"bench-wood",5,0],[23,31,"shields",14,-7],[30,34,"barrels",6,-6],
+        [7,30,"shelf-warm",-4,0],[10,34,"bed-blue",3,-4],[14,34,"bed-red",5,-1],[17,34,"worktable",10,1],
+        [8,37,"sacks",5,2],[5,35,"barrels",0,-6],[13,38,"shelf-parts",5,-4],[20,37,"pillar",0,-8],
+        [23,37,"shelf-warm",-3,0],[26,35,"wood",0,-5],
+      ]),
+      ...linePieces([14,15,16],24,"parapet",0,-9),...linePieces([27,28,29,30],19,"parapet",0,-13),
+      ...linePieces([17,18,19,20],36,"parapet",0,9),
+    ],
+    lamps:[[18,10,-2,-2],[24,11,4,0],[29,11,1,0],[10,16,4,0],[15,21,-4,3],[19,21,8,0,"brazier"],
+      [22,23,-5,1],[13,26,0,0],[24,28,-12,0],[30,26,14,0],[28,31,3,0],[20,34,9,0],[13,33,11,0],
+      [7,34,11,0],[5,37,10,-4],[17,37,7,0]],
+    floorDetails:[[19,18,"keep-inlay"],[10,29,"rug-side",0,-15],[13,36,"rug-inn",4,-9],[24,30,"rug-side",0,-13],
+      [29,30,"runner-end",3,-7],[20,32,"moss-0"]],
+    blocks:[[22,8],[24,9],[13,11],[16,12],[19,12],[27,13],[31,15],[10,17],[11,19],[13,19],[15,18],[22,20],
+      [18,23],[28,25],[31,24],[31,27],[27,28],[26,30],[23,31],[7,30],[10,34],[14,34],[17,34],
+      [5,35],[13,38],[23,37],[26,35]],
+    closures:[["wardHigh",19,7,"chain"],["wardLow",32,33,"chain"]],
+    passages:{gateWard:"door-keep"},
+  },
+};
+
+for(const [id,plan] of Object.entries(CH1_MORE_PLANS)){
+  plan.grid=CH1_MORE_FLOORS[id];
+  plan.closures??=[];
+  plan.expanded=true;
+  FIELD_PART_PLANS[id]=plan;
+  Object.assign(CHAPTER1_MAPS[id],{grid:plan.grid,partPlan:plan,backdrop:{props:[],front:[],lamps:[]}});
+}
