@@ -15,6 +15,9 @@ const WORLD={
   w_kakashi:{nm:"カカシ番",r:2,n:[2,6,5,3],src:"img/monster_088.png",sz:[65,70],k:"魔物"},
   w_ookami:{nm:"モリオオカミ",r:2,n:[6,4,2,4],src:"img/m_ookami.png",sz:[56,45],k:"魔物"},
   w_oya:{nm:"オヤミズグモ",r:3,n:[4,7,6,4],src:"img/m_oyagumo.png",sz:[114,80],k:"魔物"},
+  w_ishikoro:{nm:"イシコロ小僧",r:1,n:[3,4,4,2],src:"img/m_ishikoro.png",sz:[38,45],k:"魔物"},
+  w_tsuta:{nm:"ツタ鎧",r:2,n:[5,3,6,2],src:"img/monster_005.png",sz:[37,72],k:"魔物"},
+  w_garm:{nm:"石橋のガルム",r:4,n:[7,5,7,6],src:"img/monster_063.png",sz:[72,70],k:"魔物"},
   w_nushi:{nm:"ヌシガエル",r:4,n:[5,6,8,6],src:"img/m_nushi.png",sz:[129,98],k:"魔物"},
   w_kai:{nm:"渡し守",r:3,n:[6,5,4,6],src:"img/c_kai.png",sz:[35,59],k:"人物"},
   w_muku:{nm:"麦わら帽の子",r:3,n:[5,6,6,4],src:"img/c_muku.png",sz:[41,60],k:"人物"},
@@ -29,8 +32,8 @@ const artSrc=c=>c.src||`../cards/img/c/${c.im}.png`;
 START.length=0; ["w_kai","w_muku","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_mizugumo","w_mizugumo","w_donguri","w_donguri"].forEach(c=>START.push(c));
 // 相手：0＝札売りのトト（看板はヌシガエル）、1＝かわうそ亭の女将ベラ
 OPPS.length=0; OPPS.push(
-  {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_donguri","w_mizugumo","w_hane","w_hane","w_kakashi","w_ookami"]},
-  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_oya",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_mizugumo","w_donguri","w_kawauso","w_koromochi"]});
+  {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_donguri","w_mizugumo","w_hane","w_ishikoro","w_kakashi","w_ookami"]},
+  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_oya",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_ishikoro","w_ishikoro","w_tsuta","w_koromochi"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）

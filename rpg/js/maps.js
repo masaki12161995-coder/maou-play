@@ -433,10 +433,63 @@ function ohashi() {
     npcs: [], foes: [], chests: [],
     trigs: [
       { x: 8, y: 12, w: 1, h: 3, when: g => S(g) === 19, run: "c1s5" },
-      { x: 5, y: 6, when: g => S(g) >= 20, run: "c1stop" },
+      { x: 5, y: 6, when: g => S(g) === 20, run: "towerLater" },
+      { x: 5, y: 6, when: g => S(g) >= 21, run: "towerIn" },
+      { x: 8, y: 12, w: 1, h: 3, when: g => S(g) === 25, run: "c1stop" },
     ],
   };
 }
 
-root.MAPS = { hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi };
+// ---------- 古い見張り塔（W6。強さ2〜3）：1階の広間／中ほど／てっぺん ----------
+function tower1() {
+  const W = 13, H = 16, g = grid(W, H, "W");
+  fill(g, "_", 2, 2, 9, 12); g[14][6] = "_"; g[15][6] = "_"; g[2][10] = "S";
+  return {
+    id: "tower1", nm: "古い見張り塔", g, tier: 2, bg: "stone", inside: 1,
+    objs: [
+      { t: "desk", x: 3, y: 2, talk: "nisshi" },
+      { t: "bell", x: 7, y: 2, text: ["鳴らす者のいない警鐘。"] },
+    ],
+    exits: [{ x: 6, y: 15, to: "ohashi", tx: 5, ty: 7, dir: 0 }, { x: 10, y: 2, to: "tower2", tx: 2, ty: 17, dir: 3 }],
+    npcs: [
+      { id: "i1", x: 5, y: 8, mon: "m_ishikoro", face: 1, nm: "イシコロ小僧", when: g => S(g) <= 22 },
+      { id: "i2", x: 6, y: 8, mon: "m_ishikoro", face: 1, nm: "イシコロ小僧", when: g => S(g) <= 22 },
+      { id: "i3", x: 7, y: 8, mon: "m_ishikoro", face: -1, nm: "イシコロ小僧", when: g => S(g) <= 22 },
+    ],
+    foes: [{ id: "t1", x: 9, y: 6, k: "ishikoro", g: ["ishikoro", "ishikoro"], when: g => S(g) >= 23 }],
+    chests: [{ id: "c_tower1", x: 2, y: 13, gold: 60 }],
+    trigs: [{ x: 6, y: 13, when: g => S(g) === 21, run: "c1s7" }, { x: 2, y: 10, w: 9, h: 1, when: g => S(g) === 22, run: "c1s7b" }],
+  };
+}
+function tower2() {
+  const W = 13, H = 20, g = grid(W, H, "W");
+  fill(g, "_", 2, 11, 9, 7); fill(g, "_", 6, 8, 1, 3); fill(g, "_", 3, 3, 7, 5); g[17][2] = "S"; g[3][9] = "S";
+  return {
+    id: "tower2", nm: "見張り塔の中ほど", g, tier: 2, bg: "stone", inside: 1,
+    objs: [{ t: "campfire", x: 5, y: 5 }],
+    exits: [{ x: 2, y: 17, to: "tower1", tx: 10, ty: 3, dir: 0 }, { x: 9, y: 3, to: "towerTop", tx: 6, ty: 11, dir: 3 }],
+    npcs: [{ id: "bram", x: 4, y: 4, img: "person_005", dir: 0, nm: "ブラム", when: g => S(g) <= 23 }],
+    foes: [
+      { id: "t2", x: 6, y: 13, k: "tsutayoroi", g: ["tsutayoroi", "ishikoro"] },
+      { id: "t3", x: 9, y: 15, k: "ishikoro", g: ["ishikoro", "ishikoro", "tsutayoroi"] },
+    ],
+    chests: [{ id: "c_tower2", x: 10, y: 11, item: "leather" }],
+    trigs: [{ x: 6, y: 7, when: g => S(g) === 23, run: "c1s8" }],
+  };
+}
+function towerTop() {
+  const W = 13, H = 14, g = grid(W, H, "W");
+  fill(g, "_", 2, 2, 9, 10); fill(g, "V", 9, 1, 3, 5); g[11][6] = "S";
+  for (const [x, y] of [[3, 3], [4, 2], [8, 6], [3, 6]]) g[y][x] = "x";
+  return {
+    id: "towerTop", nm: "見張り塔のてっぺん", g, tier: 3, bg: "stone", inside: 1,
+    objs: [],
+    exits: [{ x: 6, y: 11, to: "tower2", tx: 9, ty: 4, dir: 0 }],
+    npcs: [{ id: "garm", x: 6, y: 4, mon: "monster_063", face: 1, sc: 0.8, nm: "ガルム", talk: "garm" }],
+    foes: [], chests: [],
+    trigs: [{ x: 2, y: 8, w: 9, h: 1, when: g => S(g) === 24, run: "c1s9" }],
+  };
+}
+
+root.MAPS = { hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

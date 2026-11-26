@@ -350,6 +350,14 @@ function towerFar(c) { // 丘の上の古い塔（遠くに見える。横2×縦
 }
 function counter(c) { floor(c, 0, 0); R(c, "#3c2a1e", 0, 10, T, 30); R(c, "#7a5a3c", 0, 8, T, 8); R(c, "#93714d", 0, 8, T, 2); R(c, "#2a1d14", 0, 38, T, 3); } // 帳場の台
 function futon(c) { floor(c, 0, 0); R(c, "#3a4a66", 6, 6, 36, 86); R(c, "#56698c", 8, 8, 32, 60); R(c, "#d8d2c0", 10, 70, 28, 16); R(c, "#2a3550", 6, 44, 36, 2); } // 雑魚寝の布団（縦2マス）
+function stairs(c) { // 塔の階段（歩いて乗ると、上か下の階へ）
+  R(c, "#2a2630", 0, 0, T, T);
+  for (let i = 0; i < 6; i++) { R(c, i % 2 ? "#6d6670" : "#7a7380", 4, i * 8, 40, 7); R(c, "#3a3640", 4, i * 8 + 6, 40, 2); }
+  R(c, "#3a3640", 0, 0, 4, T); R(c, "#3a3640", 44, 0, 4, T);
+}
+function campfire(c) { caveFloor(c, 0, 0); blob(c, "#2a2420", 24, 30, 15, 8); R(c, "#4d3727", 12, 28, 24, 4); R(c, "#6b4d34", 16, 24, 4, 10); blob(c, "#b8552b", 24, 24, 5, 6); blob(c, "#e8a23a", 24, 22, 3, 4); } // 消えかけた焚き火
+function bell(c) { caveFloor(c, 0, 0); R(c, "#4d3727", 8, 4, 4, 38); R(c, "#4d3727", 36, 4, 4, 38); R(c, "#6b4d34", 8, 4, 32, 4); blob(c, "#5a4a2c", 24, 22, 10, 11); blob(c, "#7b6a3a", 22, 20, 7, 8); R(c, "#3a3220", 14, 30, 20, 3); blob(c, "#3a3220", 24, 35, 2, 2); } // 錆びた鐘
+function desk(c) { caveFloor(c, 0, 0); R(c, "#3c2a1e", 6, 16, 36, 22); R(c, "#6b4d34", 6, 14, 36, 6); R(c, "#d8d2c0", 16, 9, 16, 9); R(c, "#8a8474", 24, 9, 1, 9); } // 机と日誌
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk };
 })(window);

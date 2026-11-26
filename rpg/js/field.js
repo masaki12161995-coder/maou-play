@@ -7,7 +7,7 @@ const IM = window.IMG;
 const cv = document.getElementById("field"), ctx = cv.getContext("2d");
 const TD = 24, TP = TL.T;         // 1マス＝24ドット（絵は48点）
 const STEP = 170;                 // 1歩の時間
-const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D"]);
+const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D", "S"]);
 const LEADER = 0;
 
 let M = null, ground = [], over = null, blocked = null;
@@ -60,7 +60,7 @@ function paint(frame) {
     ({ ".": () => TL.grass(x, tx, ty), "=": () => TL.dirt(x, tx, ty, nb), c: () => TL.cobble(x, tx, ty, nb), T: () => TL.treeBase(x, tx, ty, nb),
        "~": () => TL.water(x, tx, ty, nb, frame), b: () => TL.bridge(x, tx, ty, nb, frame), s: () => TL.stones(x, tx, ty, nb, frame), R: () => TL.rockWall(x, tx, ty, nb),
        f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x),
-       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x) }[ch] || (() => TL.grass(x, tx, ty)))();
+       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x) }[ch] || (() => TL.grass(x, tx, ty)))();
     x.restore();
   }
   for (const o of M.objs) {
@@ -88,6 +88,8 @@ function syncNpcs() { npcs = M.npcs.filter(n => !n.when || n.when(G())).map(n =>
 function syncParty() {
   const ids = M && M.noFollow ? [] : GS.fighters().filter(hi => hi !== LEADER);
   fol = ids.map((hi, i) => fol.find(f => f.hi === hi) || { hi, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
+  const gi = G().flags.guest; // 戦いには出ないが、後ろをついてくる人
+  if (gi && !(M && M.noFollow)) fol.push(fol.find(f => f.img === gi) || { hi: -1, img: gi, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
 }
 // ---------- 入る・出る ----------
 function enter(id, x, y, dir) { // x,y は足す前の地図の座標
@@ -203,6 +205,7 @@ function foeTick(now) {
 // 場所の強さごとの落とし物
 const DROPS = {
   1: [{ id: "oakclub", p: 0.04 }, { id: "needle", p: 0.04 }, { id: "ironfist", p: 0.04 }, { id: "tunic", p: 0.04 }, { id: "cloak", p: 0.04 }, { id: "hood", p: 0.04 }, { id: "buckler", p: 0.04 }, { id: "charm", p: 0.03 }],
+  3: [{ id: "ironspear", p: 0.05 }, { id: "needle", p: 0.05 }, { id: "ironfist", p: 0.05 }, { id: "leather", p: 0.05 }, { id: "buckler", p: 0.05 }, { id: "hood", p: 0.05 }, { id: "charm", p: 0.04 }, { id: "ring", p: 0.03 }],
   2: [{ id: "oakclub", p: 0.05 }, { id: "needle", p: 0.05 }, { id: "ironfist", p: 0.05 }, { id: "leather", p: 0.04 }, { id: "buckler", p: 0.05 }, { id: "hood", p: 0.05 }, { id: "charm", p: 0.04 }, { id: "ring", p: 0.02 }],
   6: [{ id: "mosssword", p: 0.06 }, { id: "chain", p: 0.10 }, { id: "plate", p: 0.08 }, { id: "ring", p: 0.10 }, { id: "longbow", p: 0.05 }],
 };
@@ -387,8 +390,8 @@ function draw(now) {
   // 人・宝箱・敵を奥から
   const ents = [];
   for (const c of chests) ents.push({ y: c.y, f: () => { ctx.save(); ctx.translate(c.x * TD, c.y * TD); ctx.scale(0.5, 0.5); TL.chest(ctx, c.open); ctx.restore(); } });
-  for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.big ? 0.42 : 0.5) : person(n.img, n.x, n.y, n.d, false, now, n.lift) });
-  for (const f of fol) { const [x, y] = lerp(f, now); ents.push({ y, f: () => person(BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); }
+  for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.sc || (n.big ? 0.42 : 0.5)) : person(n.img, n.x, n.y, n.d, false, now, n.lift) });
+  for (const f of fol) { const [x, y] = lerp(f, now); ents.push({ y, f: () => person(f.img || BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); }
   ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) });
   for (const f of foes) if (f.alive) {
     const k = f.from ? Math.min(1, (now - f.t0) / (STEP * 1.8)) : 1, x = f.from ? f.from.x + (f.x - f.from.x) * k : f.x, y = f.from ? f.from.y + (f.y - f.from.y) * k : f.y;

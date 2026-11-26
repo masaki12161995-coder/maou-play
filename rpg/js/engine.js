@@ -88,6 +88,10 @@ const SKILLS = {
   callkids:  { nm: "子を呼ぶ", bp: 0, tg: "summon", kind: "補助" },
   wingslap:  { nm: "羽耳はたき", bp: 3, rank: "D", tg: "row", at: ["斬"], dist: "遠", dir: "間接", kind: "攻撃" },
   sickle:    { nm: "錆び鎌", bp: 4, rank: "C", tg: "one", at: ["斬"], poison: 35, dist: "近", dir: "直接", kind: "攻撃" },
+  pebble:    { nm: "小石つぶて", bp: 2, rank: "D", tg: "one", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
+  vinewhip:  { nm: "蔦しばり", bp: 4, rank: "C", tg: "one", at: ["斬"], stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
+  stonethrow:{ nm: "石投げ", bp: 0, rank: "B", tg: "one", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
+  bridgequake:{ nm: "地ならし", bp: 0, rank: "C", tg: "all", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
   wolfbite:  { nm: "かみ裂き", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   dragontail:{ nm: "竜の尾", bp: 0, rank: "A", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
 };
@@ -161,6 +165,8 @@ const MATS = {
   kinoko:  { nm: "光るきのこ", icon: "mat_100", fam: "植物", rare: "白" },
   hane:    { nm: "灰色の羽耳", icon: "mat_015", fam: "羽", rare: "白" },
   wara:    { nm: "かかしの布きれ", icon: "mat_013", fam: "布・紙", rare: "白" },
+  koishi:  { nm: "丸い小石", icon: "mat_005", fam: "石・結晶", rare: "白" },
+  tsuta:   { nm: "鎧の蔦", icon: "mat_004", fam: "植物", rare: "白" },
   kiba:    { nm: "狼の牙", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
   ryurin:  { nm: "苔竜の鱗", icon: "mat_077", fam: "皮・鱗・甲羅", rare: "紫" },
 };
@@ -187,6 +193,8 @@ const HEARTS = {
   donguri:  { nm: "ドングリ兵の心", col: "白", mul: { str: 100, vit: 104, dex: 105, agi: 100, int: 95, wil: 100, lov: 100, cha: 104 }, sk: "acornshot", up: ["dex", "vit"] },
   hanenezumi:{ nm: "ハネネズミの心", col: "白", mul: { str: 94, vit: 92, dex: 106, agi: 114, int: 100, wil: 96, lov: 100, cha: 102 }, sk: "wingslap", up: ["agi", "dex"] },
   kakashi:  { nm: "カカシ番の心", col: "白", mul: { str: 108, vit: 106, dex: 98, agi: 88, int: 96, wil: 104, lov: 100, cha: 96 }, sk: "sickle", up: ["str", "vit"] },
+  ishikoro: { nm: "イシコロ小僧の心", col: "白", mul: { str: 104, vit: 110, dex: 100, agi: 92, int: 94, wil: 100, lov: 100, cha: 100 }, sk: "pebble", up: ["vit", "dex"] },
+  tsutayoroi:{ nm: "ツタ鎧の心", col: "緑", mul: { str: 108, vit: 112, dex: 96, agi: 90, int: 96, wil: 104, lov: 100, cha: 96 }, sk: "vinewhip", up: ["vit", "str"] },
   ookami:   { nm: "モリオオカミの心", col: "白", mul: { str: 106, vit: 96, dex: 100, agi: 110, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "wolfbite", up: ["agi", "str"] },
   nushi:    { nm: "ヌシガエルの心", col: "緑", mul: { str: 106, vit: 114, dex: 92, agi: 86, int: 102, wil: 112, lov: 105, cha: 102 }, sk: "bigyawn", up: ["vit", "wil"] },
   kokemusha:{ nm: "コケ武者の心", col: "緑", mul: { str: 114, vit: 110, dex: 100, agi: 90, int: 88, wil: 100, lov: 95, cha: 98 }, sk: "mosscut", up: ["str", "vit"] },
@@ -243,6 +251,12 @@ const FOES = {
   // 西街道
   hanenezumi:{ mat: "hane", nm: "ハネネズミ", img: "m_hanenezumi", wt: "fang", pow: 9, hp: 70, st: { str: 26, vit: 9, dex: 18, agi: 27, int: 8, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 打: 20 }, every: { n: 3, sk: "wingslap" }, gold: 8, heart: "hanenezumi" },
   kakashi:  { mat: "wara", nm: "カカシ番", img: "monster_088", wt: "claw", pow: 11, hp: 130, st: { str: 31, vit: 15, dex: 12, agi: 9, int: 5, wil: 12, lov: 0, cha: 9 }, res: { 熱: -60, 斬: -20, 突: 30, 打: 20 }, every: { n: 3, sk: "sickle" }, gold: 12, heart: "kakashi" },
+  // 古い見張り塔
+  ishikoro: { mat: "koishi", nm: "イシコロ小僧", img: "m_ishikoro", wt: "club", pow: 10, hp: 85, st: { str: 29, vit: 18, dex: 16, agi: 13, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 打: 20, 突: 30, 斬: 20, 冷: -30, 雷: -20 }, every: { n: 2, sk: "pebble" }, gold: 11, heart: "ishikoro" },
+  tsutayoroi:{ mat: "tsuta", nm: "ツタ鎧", img: "monster_005", wt: "sword", pow: 12, hp: 150, st: { str: 31, vit: 20, dex: 13, agi: 10, int: 8, wil: 14, lov: 0, cha: 10 }, res: { 熱: -50, 斬: -20, 突: 20, 打: 20, 冷: 20 }, every: { n: 3, sk: "vinewhip" }, gold: 15, heart: "tsutayoroi" },
+  // 石橋のガルム：3人で勝てる強さ。倒れる前に「参った」と言うので、心は落ちない
+  garm:     { mat: "koishi", book: "book1", nm: "石橋のガルム", img: "monster_063", wt: "fist", pow: 12, hp: 650, boss: 1, st: { str: 33, vit: 20, dex: 14, agi: 8, int: 8, wil: 18, lov: 0, cha: 16 },
+              res: { 斬: 30, 突: 10, 打: -10, 冷: -30, 雷: -20, 熱: 20 }, plan: { 2: "stonethrow", 4: "bridgequake", 6: "stonethrow", 7: "bridgequake" }, every: { n: 2, sk: "stonethrow" }, rageFrom: 10, rage: "bridgequake", stunRes: 1, gold: 120 },
   nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1130, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
               res: { 打: 20, 冷: 50, 雷: -40, 熱: -20 }, plan: { 2: "mudsplash", 3: "bodypress", 4: "bigyawn", 6: "swampquake", 7: "bodypress", 8: "mudsplash" }, every: { n: 2, sk: "bodypress" }, rageFrom: 9, rage: "swampquake", stunRes: 1, gold: 120, heart: "nushi" },
   // 黒外套の兵（人間）
