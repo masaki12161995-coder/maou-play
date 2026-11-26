@@ -114,7 +114,7 @@ function buildPanel(u) {
     const row = div("srow" + (ok ? "" : " dim") + (st.cmd[u.id] === k ? " sel" : "") + (u.heart && j === keys.length - 1 ? " heart" : ""), "");
     px(row, 4, 3 + j * 25.6, 269, 24.6);
     const rank = s.kind === "攻撃" ? (s.rank && s.rank !== "N" ? s.rank : "—") : null;
-    const dist = s.dist || (s.magic ? "遠" : "");
+    const dist = k === "attack" ? (u.wt === "bow" ? "遠" : "近") : s.dist || (s.magic ? "遠" : "");
     row.innerHTML = `<span class="ic" style="left:${d(4)};width:${d(26)}">${at.map(a => icon(a, 11)).join("")}</span>` +
       `<span class="sn" style="left:${d(32)};font-size:${d(11)}">${s.nm}</span>` +
       (rank ? `<span class="rk" style="left:${d(128)};font-size:${d(8)}">威力<b style="font-size:${d(10)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(128)};font-size:${d(8.5)}">${s.kind}</span>`) +

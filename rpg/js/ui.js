@@ -150,8 +150,9 @@ function heartSummary(k) {
   return `技：${BT.SKILLS[h.sk].nm}　${ups}が伸びやすい`;
 }
 // 技の1行（戦闘の技選びと同じ並び：属性・名前・威力・範囲・近遠・BP）
-function skillRow(parent, k, y, tag) {
-  const s = BT.SKILLS[k], at = s.at || [], row = A(parent, div("skrow", ""), 0, y, 277, 21);
+function skillRow(parent, k, y, tag, wt) {
+  const s0 = BT.SKILLS[k], s = k === "attack" && wt ? { ...s0, at: BT.WTYPE[wt].at, dist: wt === "bow" ? "遠" : "近" } : s0; // 通常攻撃は武器の属性・間合い
+  const at = s.at || [], row = A(parent, div("skrow", ""), 0, y, 277, 21);
   const rank = s.kind === "攻撃" ? (s.rank && s.rank !== "N" ? s.rank : "—") : null;
   row.innerHTML = `<span style="left:${d(6)};width:${d(24)};display:flex;gap:1px">${at.map(a => DM.icon(a, 10)).join("")}</span>` +
     `<span class="sn" style="left:${d(32)};font-size:${d(10.5)}">${s.nm}${tag ? `<i class="tagh" style="font-size:${d(7.5)}">${tag}</i>` : ""}</span>` +
@@ -188,15 +189,15 @@ function statView(L, h, m) {
     const x = 12 + (i % 2) * 140, y = 200 + Math.floor(i / 2) * 25, box = A(L, div("frame sbox", ""), x, y, 137, 23);
     T(box, 6, 0, 46, 21, BT.ST_NM[k], 9.5, "label");
     T(box, 50, 0, 32, 21, `${S.st[k]}`, 12, "num2 right");
-    const pc = heart ? heart.mul[k] : 100;
-    if (pc !== 100) T(box, 84, 0, 30, 21, `${pc}%`, 8, "num2 right " + (pc > 100 ? "pcup" : "pcdn"));
+    const pc = heart ? heart.mul[k] : 100; // 心の倍率をかっこで。100%（変わらない）は横棒
+    T(box, 78, 0, 38, 21, pc === 100 ? "(—)" : `(${pc}%)`, 8, "num2 right " + (pc > 100 ? "pcup" : pc < 100 ? "pcdn" : "zero"));
     const up = (h.up.includes(k) ? '<span class="upm">↑</span>' : "") + (heart && heart.up.includes(k) ? '<span class="upm2">↑</span>' : "");
-    T(box, 117, 0, 18, 21, up, 9, "");
+    T(box, 119, 0, 17, 21, up, 9, "");
   });
   // 技（通常攻撃＋本人の3つ＋心の技）
   T(L, 14, 304, 100, 14, "技", 9, "label");
   const box = A(L, div("frame rbox", ""), 12, 320, 277, 6 + (4 + (heart ? 1 : 0)) * 22);
-  ["attack", ...h.sk].forEach((k, i) => skillRow(box, k, 3 + i * 22));
+  ["attack", ...h.sk].forEach((k, i) => skillRow(box, k, 3 + i * 22, "", h.wt));
   if (heart) skillRow(box, heart.sk, 3 + 4 * 22, "心");
   // パッシブ（本人の3つ＋装備に付いているもの）
   const py = 320 + 6 + (4 + (heart ? 1 : 0)) * 22 + 8;
