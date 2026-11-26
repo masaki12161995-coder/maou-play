@@ -13,7 +13,7 @@ function newMem(hi) {
 function fresh() {
   const party = BT.HEROES.map((h, hi) => BT.START.includes(hi) ? newMem(hi) : null);
   return {
-    v: 3, gold: 0, map: "hut", x: 2, y: 2, dir: 0,
+    v: 4, gold: 0, map: "hut", x: 2, y: 2, dir: 0,
     party, roster: [...BT.START],
     lo: BT.defLo(), bag: [], hearts: {}, flags: {}, chests: {}, wins: 0,
     mats: {}, tools: {}, // 素材と道具（名前→個数）
@@ -24,7 +24,7 @@ const S = {
   G: null,
   load() {
     try { const t = localStorage.getItem(KEY); S.G = t ? JSON.parse(t) : fresh(); } catch (e) { S.G = fresh(); }
-    if (!S.G || S.G.v !== 3) S.G = fresh(); // 物語が入る前の試作の記録は使えない
+    if (!S.G || S.G.v !== 4) S.G = fresh(); // 物語の筋が変わる前の記録は使えない（序章の改訂）
     S.G.away = S.G.away || []; S.G.mats = S.G.mats || {}; S.G.tools = S.G.tools || {};
     S.G.party.forEach(m => { if (m) { m.sr = m.sr || {}; m.aw = m.aw || {}; } });
     while (S.G.party.length < BT.HEROES.length) S.G.party.push(null); // 仲間の顔ぶれが増えたぶん
@@ -53,7 +53,7 @@ const S = {
   // ---------- 仲間の出入り ----------
   has(hi) { return S.G.roster.includes(hi); },
   fighters() { return S.G.lo.pos.filter(hi => hi != null && !S.G.away.includes(hi)); },
-  valid() { try { const t = JSON.parse(localStorage.getItem(KEY)); return !!t && t.v === 3 && !!(t.flags && t.flags.s); } catch (e) { return false; } }, // つづきから遊べる記録があるか
+  valid() { try { const t = JSON.parse(localStorage.getItem(KEY)); return !!t && t.v === 4 && !!(t.flags && t.flags.s); } catch (e) { return false; } }, // つづきから遊べる記録があるか
   bench() { return S.G.roster.filter(hi => !S.G.lo.pos.includes(hi)); },
   // 加わる：戦う5人に空きがあればそこへ、無ければ控えへ。前に居た人は育ちをそのまま持って戻る
   join(hi) {

@@ -211,7 +211,7 @@ function makeWave(def) {
   const tier = def.tier || M.tier || 1;
   if (def.boss) return { nm: M.nm, foes: [{ k: def.g[0], big: 1 }], tier, bg: def.bg || M.bg, drops: DROPS[tier] || [] };
   const order = def.g.slice().sort((a, b) => (BACK.includes(a) ? 1 : 0) - (BACK.includes(b) ? 1 : 0));
-  return { nm: M.nm, foes: order.map((k, i) => ({ k, c: CELLS[i][0], r: CELLS[i][1] })), tier, bg: def.bg || M.bg, drops: DROPS[tier] || [] };
+  return { nm: M.nm, foes: order.map((k, i) => ({ k, c: CELLS[i][0], r: CELLS[i][1] })), tier, bg: def.bg || M.bg, drops: DROPS[tier] || [], noHeart: !G().flags.heartOk }; // 心は、受け取り方を教わってから
 }
 // いま離れている仲間（物語の都合で一時はずれている人）は、戦いにも出ない
 function battleLo() { const g = G(), away = g.away || []; return { form: g.lo.form, pos: g.lo.pos.map(hi => away.includes(hi) ? null : hi) }; }
@@ -224,8 +224,12 @@ async function runBattle(wave) {
   active = false; [...hud.querySelectorAll(".fhud")].forEach(e => e.remove());
   let st;
   for (;;) {
-    st = await new Promise(res => BV.start(wave, G().party, battleLo(), res));
     const g = G();
+    // 食べ物は戦いの中で使う。使ったぶんは、勝っても負けても減る。hurt＝傷を負ったままの主人公（HPの割合）
+    wave.items = Object.fromEntries(BT.FOODS.filter(k => g.tools[k] > 0).map(k => [k, g.tools[k]]));
+    wave.hp0 = g.flags.hurt ? { 0: g.flags.hurt } : null;
+    st = await new Promise(res => BV.start(wave, g.party, battleLo(), res));
+    for (const k of BT.FOODS) if (wave.items[k]) g.tools[k] = st.items[k] || 0;
     if (!(wave.loseOk && st.over !== "win")) for (const u of st.party) g.party[u.hi].lp = Math.max(0, u.lp);
     if (st.over === "win") {
       const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, taken: u.taken, healed: u.healed,
@@ -241,6 +245,7 @@ async function runBattle(wave) {
     if (wave.loseOk) { await BV.finish(null); break; }
     await BV.finish(null); await UI.result({ win: false, time: st.over === "time" });
     if (wave.retry) { GS.restAll(); GS.save(); continue; }
+    if (wave.soft) { GS.restAll(); break; } // 負けたら、出来事のほうで少し手前からやり直す（お金は減らない）
     if (st.over === "lose") { g.gold -= Math.floor(g.gold / 10); GS.restAll(); GS.save(); } // 全滅：お金の1割を落として、休んだ所へ戻る
     break;
   }
@@ -262,7 +267,7 @@ async function fight(f) {
 // 出来事の中の戦い。全滅（負けてもよい戦いは除く）なら宿へ戻り、false を返すので、出来事はそこでやめる
 async function battle(wave) {
   const r = await runBattle({ tier: M.tier || 1, bg: M.bg || "meadow", ...wave });
-  if (r === "lose" && !wave.loseOk) { toHome(); return null; }
+  if (r === "lose" && !wave.loseOk && !wave.soft) { toHome(); return null; }
   return r;
 }
 async function joinMember(hi) {
@@ -331,8 +336,14 @@ const endDrag = e => {
 stage.addEventListener("pointerup", endDrag); stage.addEventListener("pointercancel", endDrag);
 let talkTarget = null;
 function goTalk(tx, ty) {
-  if (Math.abs(tx - P.x) + Math.abs(ty - P.y) === 1) { interact(tx, ty); return; }
-  const r = findPath(tx, ty, true); if (!r) return;
+  // 大きな置き物（舟・家など）は、どのマスを押しても、いちばん近い端から調べる
+  const o = !npcs.some(n => n.x === tx && n.y === ty && n.talk) && !chests.some(c => c.x === tx && c.y === ty) && objAt(tx, ty);
+  const cells = []; if (o) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) cells.push([o.x + i, o.y + j]); else cells.push([tx, ty]);
+  const near = cells.find(([x, y]) => Math.abs(x - P.x) + Math.abs(y - P.y) === 1);
+  if (near) { interact(near[0], near[1]); return; }
+  let r = null;
+  for (const [x, y] of cells) { const q = findPath(x, y, true); if (q && (!r || q.length < r.length)) { r = q; tx = x; ty = y; } }
+  if (!r) return;
   route = r; talkTarget = { tx, ty };
   if (!P.from) { const n = route.shift(); stepTo(dirOf(n.x - P.x, n.y - P.y)); }
 }
@@ -340,10 +351,10 @@ function goTalk(tx, ty) {
 // ---------- 描く ----------
 let cam = { x: 0, y: 0 };
 function lerp(o, now) { if (!o.from) return [o.x, o.y]; const k = Math.min(1, (now - o.t0) / STEP); return [o.from.x + (o.x - o.from.x) * k, o.from.y + (o.y - o.from.y) * k]; }
-function person(img, x, y, dir, moving, now, alpha) {
+function person(img, x, y, dir, moving, now, lift) {
   const col = moving ? [0, 1, 2, 1][Math.floor(now / 130) % 4] : 1;
-  const px0 = x * TD + TD / 2, py0 = y * TD + TD - 1;
-  ctx.fillStyle = "#0006"; ctx.fillRect(px0 - 6, py0 - 1, 12, 2);
+  const px0 = x * TD + TD / 2, py0 = y * TD + TD - 1 - (lift || 0);
+  if (!lift) { ctx.fillStyle = "#0006"; ctx.fillRect(px0 - 6, py0 - 1, 12, 2); }
   ctx.drawImage(IM[img], col * 48, dir * 60, 48, 60, Math.round((px0 - 12) * 4) / 4, Math.round((py0 - 30) * 4) / 4, 24, 30);
 }
 function beast(name, x, y, face, sc) { // 魔物の絵の人（立っているだけ）
@@ -374,7 +385,7 @@ function draw(now) {
   // 人・宝箱・敵を奥から
   const ents = [];
   for (const c of chests) ents.push({ y: c.y, f: () => { ctx.save(); ctx.translate(c.x * TD, c.y * TD); ctx.scale(0.5, 0.5); TL.chest(ctx, c.open); ctx.restore(); } });
-  for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.big ? 0.42 : 0.5) : person(n.img, n.x, n.y, n.d, false, now) });
+  for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.big ? 0.42 : 0.5) : person(n.img, n.x, n.y, n.d, false, now, n.lift) });
   for (const f of fol) { const [x, y] = lerp(f, now); ents.push({ y, f: () => person(BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); }
   ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) });
   for (const f of foes) if (f.alive) {

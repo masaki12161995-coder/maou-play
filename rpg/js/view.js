@@ -93,7 +93,7 @@ function refresh() {
   if (cmdOn) { const al = aliveIdx(); if (!al.includes(cmdIdx)) cmdIdx = al[0]; }
   // 下の枠とボタンは、見た目が変わるときだけ作り直す（作り直しの最中に押すと、押したことが消えてしまうため）
   const u = st.party[cmdIdx];
-  const pk = cmdOn ? [cmdIdx, u.hp, u.bp, u.lp, st.cmd[u.id] || "", st.party.map(p => (st.cmd[p.id] ? 1 : 0) + (p.down ? 2 : 0)).join("")].join("|") : "off";
+  const pk = cmdOn ? [cmdIdx, u.hp, u.bp, u.lp, st.cmd[u.id] || "", st.party.map(p => (st.cmd[p.id] ? 1 : 0) + (p.down ? 2 : 0)).join(""), JSON.stringify(st.items)].join("|") : "off";
   if (pk !== els.pk) { els.pk = pk; els.panel.innerHTML = ""; els.panel.style.display = cmdOn ? "block" : "none"; if (cmdOn) buildPanel(u); }
   const canRep = cmdOn && Object.keys(st.lastCmd).length > 0, canBack = cmdOn && cmdIdx > aliveIdx()[0];
   const bk = [cmdOn, autoOn, autoMode, support, fast, canRep, canBack, ended].join("|");
@@ -111,17 +111,28 @@ function buildPanel(u) {
   });
   const keys = ["attack", ...u.sk];
   const listBox = A("frame plist", "", 12, 68, 277, 132);
+  const food = BT.foodLeft(st, u), rows = keys.length + (food ? 1 : 0), RH = Math.min(25.6, 128 / rows);
+  if (food) { // 食べ物：技と同じように、押すと決まる
+    const fk = food.slice(5), T = BT.TOOLS[fk], left = (st.items[fk] || 0) - Object.entries(st.cmd).filter(([id, c]) => id !== u.id && c === food).length;
+    const row = div("srow food" + (st.cmd[u.id] === food ? " sel" : ""), ""); px(row, 4, 3 + keys.length * RH, 269, RH - 1);
+    row.innerHTML = `<span class="ic" style="left:${d(4)};width:${d(26)}"><img src="${IM[T.icon].src}" style="width:${d(14)};height:${d(14)};image-rendering:pixelated"></span>` +
+      `<span class="sn" style="left:${d(32)};font-size:${d(11)}">${T.nm}</span>` +
+      `<span class="rk kind" style="left:${d(128)};font-size:${d(8.5)}">HP${Math.round(T.food * 100)}%回復</span>` +
+      `<span class="bp" style="right:${d(6)};font-size:${d(10)}">×${left}</span>`;
+    row.onclick = () => pick(food);
+    listBox.appendChild(row);
+  }
   keys.forEach((k, j) => {
     const s = BT.SKILLS[k], bp = BT.cost(u, s), ok = bp <= u.bp, fxs = BT.fxText(s), at = s.at || (s.kind === "攻撃" ? BT.WTYPE[u.wt].at : []);
     const row = div("srow" + (ok ? "" : " dim") + (st.cmd[u.id] === k ? " sel" : "") + (u.heart && j === keys.length - 1 ? " heart" : ""), "");
-    px(row, 4, 3 + j * 25.6, 269, 24.6);
+    px(row, 4, 3 + j * RH, 269, RH - 1);
     const rank = s.kind === "攻撃" ? (s.rank && s.rank !== "N" ? s.rank : "—") : null;
     const dist = k === "attack" ? (u.wt === "bow" ? "遠" : "近") : s.kind !== "攻撃" ? "" : s.dist || (s.magic ? "遠" : ""); // 近・遠は攻撃の技だけ
     row.innerHTML = `<span class="ic" style="left:${d(4)};width:${d(26)}">${at.map(a => icon(a, 11)).join("")}</span>` +
       `<span class="sn${fxs ? " up" : ""}" style="left:${d(32)};font-size:${d(11)}">${s.nm}</span>` + (fxs ? `<span class="fx" style="left:${d(32)};font-size:${d(6.8)}">${fxs}</span>` : "") +
       (rank ? `<span class="rk" style="left:${d(128)};font-size:${d(8)}">威力<b style="font-size:${d(10)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(128)};font-size:${d(8.5)}">${s.kind}</span>`) +
       `<span class="rg" style="left:${d(168)};font-size:${d(8.5)}">${BT.RANGE_NM[s.tg]}</span>` +
-      (dist ? `<span class="ds ${dist === "近" ? "near" : "far"}" style="left:${d(202)};font-size:${d(8)};width:${d(13)};height:${d(13)};line-height:${d(13)}">${dist}</span>` : "") +
+      (dist ? `<span class="ds ${dist === "近" ? "near" : "far"}" style="left:${d(206)};font-size:${d(8)};width:${d(13)};height:${d(13)};line-height:${d(13)}">${dist}</span>` : "") +
       `<span class="bp${bp < s.bp ? " cut" : ""}" style="right:${d(6)};font-size:${d(10)}">${bp ? "BP" + bp : ""}</span>`;
     if (ok) row.onclick = () => pick(k);
     listBox.appendChild(row);
@@ -155,7 +166,7 @@ function pick(key) {
   cmdIdx = next; refresh();
 }
 function back() { const prev = aliveIdx().filter(i => i < cmdIdx).pop(); if (prev !== undefined) { cmdIdx = prev; refresh(); } }
-function repeat() { for (const u of BT.alive(st.party)) { const k = st.lastCmd[u.id]; st.cmd[u.id] = k && BT.cost(u, BT.SKILLS[k]) <= u.bp ? k : "attack"; } go(); }
+function repeat() { for (const u of BT.alive(st.party)) { const k = st.lastCmd[u.id]; st.cmd[u.id] = k && BT.SKILLS[k] && BT.cost(u, BT.SKILLS[k]) <= u.bp ? k : "attack"; } go(); } // 食べ物は繰り返さない
 function go() {
   if (st.phase !== "command" || busy || ended) return;
   BT.commit(st, autoOn ? autoMode : null, support);
@@ -395,7 +406,11 @@ async function turn() {
       const tag = e.weak ? '<b class="tag weak">WEAK</b>' : e.resist ? '<b class="tag resist">RESIST</b>' : ""; // 弱点は赤、耐性は青（上の帯の▲▼と同じ色）
       num(p.x, p.y, tag + e.v, (t.side === 0 ? "foe" : "") + (e.weak ? " big" : ""), e.weak ? 19 : 16);
       refresh(); await wait(150);
-    } else if (e.t === "passive") { note(byId(e.u), e.nm + (e.v ? " " + e.v : "")); await wait(120); }
+    } else if (e.t === "item") { // 食べ物を食べる
+      const a = byId(e.u); cur = null; showBanner(a, { nm: e.nm }); pose[a.id] = { kind: "magic", until: now() + 650 / spd() }; await wait(380);
+    } else if (e.t === "summon") { const t = byId(e.d); fx[t.id] = {}; note(t, "呼ばれて出てきた"); refresh(); await wait(420); }
+    else if (e.t === "flee") { const t = byId(e.d); fx[t.id] = { ...(fx[t.id] || {}), fade: now() + 500 / spd() }; note(t, "逃げていった"); refresh(); await wait(120); }
+    else if (e.t === "passive") { note(byId(e.u), e.nm + (e.v ? " " + e.v : "")); await wait(120); }
     else if (e.t === "status") { note(byId(e.d), e.nm); refresh(); await wait(160); }
     else if (e.t === "heal" || e.t === "revive") { const t = byId(e.d), p = where(t); num(p.x, p.y, (e.t === "revive" ? "復活 " : "") + e.v, "heal", 14); refresh(); await wait(60); }
     else if (e.t === "dot") { const t = byId(e.d), p = where(t); num(p.x, p.y, String(e.v), "poison", 14); refresh(); await wait(200); }

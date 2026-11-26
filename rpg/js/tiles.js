@@ -277,6 +277,28 @@ function statue(c) { // 苔むした戦士の石像
 }
 function post(c) { R(c, "#3e2c1d", 20, 14, 8, 30); R(c, "#6e5238", 21, 14, 3, 30); blob(c, "#2a3a26", 24, 44, 8, 2); } // 杭
 
+function willow(c) { // 柳（縦2マス。上のマスが枝、下のマスが幹）。枝は左右のマスにも少しかかる
+  blob(c, "#2a3a26", 24, 90, 16, 4);
+  R(c, "#4d3727", 19, 30, 10, 60); R(c, "#6b4d34", 20, 30, 3, 58); R(c, "#3c2a1e", 26, 40, 2, 44);
+  blob(c, "#263f2f", 24, 18, 36, 26); blob(c, "#2f4a35", 22, 14, 32, 22); blob(c, "#3b5a3e", 18, 8, 22, 14); blob(c, "#4b6d47", 12, 2, 10, 5);
+  const r = rng(31);
+  for (let i = 0; i < 17; i++) { const x = -10 + i * 4 + r() * 2, len = 14 + r() * 26; R(c, i % 2 ? "#3b5a3e" : "#4b6d47", x, 30, 2, len); R(c, "#628350", x, 30 + len - 4, 2, 4); }
+}
+function weir(c, o) { // 簗（川に組んだ竹。横3マス）。web＝蜘蛛の糸でぐるぐる巻き
+  const W = T * 3;
+  R(c, "#1b2f3d", 4, 30, W - 8, 10);
+  for (let i = 0; i < 12; i++) { const x = 6 + i * 12; R(c, "#6f7a3a", x, 8, 4, 30); R(c, "#93a04e", x, 8, 1, 30); R(c, "#4d5628", x, 14, 4, 1); R(c, "#4d5628", x, 26, 4, 1); }
+  R(c, "#8a6a48", 2, 14, W - 4, 3); R(c, "#6e5238", 2, 26, W - 4, 3);
+  for (let i = 0; i < 20; i++) R(c, i % 2 ? "#a3815a" : "#8a6a48", 10 + i * 6, 30, 5, 8);
+  if (o && o.web) {
+    const r = rng(9);
+    c.strokeStyle = "#e8eef4"; c.lineWidth = 1.5;
+    for (let i = 0; i < 16; i++) { c.globalAlpha = 0.55 + r() * 0.4; c.beginPath(); c.moveTo(r() * W, 4 + r() * 10); c.lineTo(r() * W, 26 + r() * 14); c.stroke(); }
+    for (let i = 0; i < 7; i++) { c.beginPath(); c.moveTo(0, 8 + i * 5); c.quadraticCurveTo(W / 2, 14 + i * 5 + (r() - 0.5) * 10, W, 8 + i * 5); c.stroke(); }
+    c.globalAlpha = 0.8; for (let i = 0; i < 5; i++) blob(c, "#f4f8fb", 14 + r() * (W - 28), 12 + r() * 20, 5, 3);
+    c.globalAlpha = 1;
+  }
+}
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir };
 })(window);

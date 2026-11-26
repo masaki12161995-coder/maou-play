@@ -14,7 +14,7 @@ const ATTR = ["斬", "打", "突", "熱", "冷", "雷", "陽", "陰"];
 const RANK = { N: 7, E: 12, D: 18, C: 25, B: 33, A: 42, S: 52, SS: 64, SSS: 78 };
 const STATS = ["str", "vit", "dex", "agi", "int", "wil", "lov", "cha"];
 const ST_NM = { str: "腕力", vit: "体力", dex: "器用さ", agi: "素早さ", int: "知力", wil: "精神", lov: "愛", cha: "魅力" };
-const RANGE_NM = { one: "単体", col: "縦", row: "横", all: "全体", rand: "ランダム", self: "自分", allies: "味方全体" };
+const RANGE_NM = { one: "単体", col: "縦", row: "横", all: "全体", rand: "ランダム", self: "自分", allies: "味方全体", summon: "" };
 // 武器の種類：威力が決まる能力と、通常攻撃の属性
 const WTYPE = {
   sword: { nm: "剣", st: "str", at: ["斬"] }, great: { nm: "大剣", st: "str", at: ["斬"] }, axe: { nm: "斧", st: "str", at: ["斬"] },
@@ -84,6 +84,9 @@ const SKILLS = {
   stonefang: { nm: "石の牙", bp: 0, rank: "B", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   glowspore: { nm: "光る胞子", bp: 0, rank: "C", tg: "all", at: ["陽"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
   mossbreath:{ nm: "苔の息吹", bp: 0, rank: "A", tg: "all", at: ["冷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  silkbind:  { nm: "糸しばり", bp: 0, rank: "D", tg: "one", at: ["冷"], dist: "遠", dir: "間接", kind: "攻撃" },
+  callkids:  { nm: "子を呼ぶ", bp: 0, tg: "summon", kind: "補助" },
+  wolfbite:  { nm: "かみ裂き", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   dragontail:{ nm: "竜の尾", bp: 0, rank: "A", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
 };
 
@@ -154,6 +157,7 @@ const MATS = {
   oreha:   { nm: "錆びた折れ刃", icon: "mat_012", fam: "金属", rare: "緑" },
   ishi:    { nm: "祠の石くれ", icon: "mat_078", fam: "石・結晶", rare: "紫" },
   kinoko:  { nm: "光るきのこ", icon: "mat_100", fam: "植物", rare: "白" },
+  kiba:    { nm: "狼の牙", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
   ryurin:  { nm: "苔竜の鱗", icon: "mat_077", fam: "皮・鱗・甲羅", rare: "紫" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
@@ -161,7 +165,13 @@ const TOOLS = {
   book1: { nm: "秘伝書・壱", icon: "tool_001", ds: "技の覚醒（1回目）に使う" },
   book2: { nm: "秘伝書・弐", icon: "tool_007", ds: "技の覚醒（2回目）に使う" },
   book3: { nm: "秘伝書・参", icon: "tool_013", ds: "技の覚醒（3回目）に使う" },
+  // 食べ物：戦いの中で、技と同じように選んで食べる（food＝戻るHPの割合）。その人の1回の行動を使う
+  onigiri: { nm: "握り飯", icon: "tool_onigiri", ds: "戦いの中で食べると、HPが3割戻る", food: 0.3 },
+  bento: { nm: "村長の弁当", icon: "tool_bento", ds: "戦いの中で食べると、HPが半分戻る", food: 0.5 },
+  // 物語の品（使えない）
+  tsuno: { nm: "焦げた角飾り", icon: "mat_062", ds: "川の簗に引っかかっていた", key: 1 },
 };
+const FOODS = Object.keys(TOOLS).filter(k => TOOLS[k].food); // 弱いものから先に食べる
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
 const BONUS = { str: "力", vit: "体", dex: "器", agi: "速", int: "知", wil: "精", lov: "愛", cha: "魅" };
 
@@ -171,6 +181,7 @@ const HEARTS = {
   koromochi:{ nm: "コロモチの心", col: "白", mul: { str: 92, vit: 110, dex: 95, agi: 90, int: 100, wil: 108, lov: 105, cha: 100 }, sk: "mochislam", up: ["vit", "wil"] },
   mizugumo: { nm: "ミズグモの心", col: "白", mul: { str: 98, vit: 94, dex: 108, agi: 108, int: 102, wil: 96, lov: 100, cha: 100 }, sk: "waterthread", up: ["dex", "agi"] },
   donguri:  { nm: "ドングリ兵の心", col: "白", mul: { str: 100, vit: 104, dex: 105, agi: 100, int: 95, wil: 100, lov: 100, cha: 104 }, sk: "acornshot", up: ["dex", "vit"] },
+  ookami:   { nm: "モリオオカミの心", col: "白", mul: { str: 106, vit: 96, dex: 100, agi: 110, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "wolfbite", up: ["agi", "str"] },
   nushi:    { nm: "ヌシガエルの心", col: "緑", mul: { str: 106, vit: 114, dex: 92, agi: 86, int: 102, wil: 112, lov: 105, cha: 102 }, sk: "bigyawn", up: ["vit", "wil"] },
   kokemusha:{ nm: "コケ武者の心", col: "緑", mul: { str: 114, vit: 110, dex: 100, agi: 90, int: 88, wil: 100, lov: 95, cha: 98 }, sk: "mosscut", up: ["str", "vit"] },
   koma:     { nm: "祠守りの狛の心", col: "緑", mul: { str: 108, vit: 116, dex: 96, agi: 96, int: 90, wil: 110, lov: 100, cha: 95 }, sk: "stonefang", up: ["vit", "str"] },
@@ -215,9 +226,14 @@ const FORMATIONS = {
 const FOES = {
   // 西境：リム川・ささやきの森
   kawauso:  { mat: "kegawa", nm: "カワウソ盗", img: "m_kawauso", wt: "fang", pow: 6, hp: 80, st: { str: 14, vit: 10, dex: 16, agi: 18, int: 5, wil: 8, lov: 0, cha: 8 }, res: { 斬: -20 }, gold: 5 },
-  koromochi:{ mat: "mochi", nm: "コロモチ", img: "m_koromochi", wt: "fist", pow: 6, hp: 75, st: { str: 13, vit: 14, dex: 8, agi: 9, int: 6, wil: 14, lov: 0, cha: 6 }, res: { 打: 40, 熱: -40, 雷: -30 }, every: { n: 3, sk: "mochislam" }, gold: 6, heart: "koromochi" },
-  mizugumo: { mat: "ito", nm: "ミズグモ", img: "m_mizugumo", wt: "fang", pow: 7, hp: 95, st: { str: 17, vit: 11, dex: 16, agi: 22, int: 12, wil: 9, lov: 0, cha: 10 }, res: { 冷: 40, 熱: -40, 打: -20 }, every: { n: 2, sk: "waterthread" }, gold: 9, heart: "mizugumo" },
-  donguri:  { mat: "donguri", nm: "ドングリ兵", img: "m_donguri", wt: "spear", pow: 7, hp: 90, st: { str: 16, vit: 14, dex: 14, agi: 12, int: 5, wil: 10, lov: 0, cha: 8 }, res: { 熱: -50, 打: 20, 斬: -20 }, every: { n: 3, sk: "acornshot" }, gold: 8, heart: "donguri" },
+  koromochi:{ mat: "mochi", nm: "コロモチ", img: "m_koromochi", wt: "club", pow: 10, hp: 80, st: { str: 29, vit: 14, dex: 8, agi: 9, int: 6, wil: 14, lov: 0, cha: 6 }, res: { 打: 40, 熱: -40, 雷: -30 }, every: { n: 3, sk: "mochislam" }, gold: 6, heart: "koromochi" },
+  mizugumo: { mat: "ito", nm: "ミズグモ", img: "m_mizugumo", wt: "fang", pow: 11, hp: 90, st: { str: 31, vit: 11, dex: 16, agi: 22, int: 12, wil: 9, lov: 0, cha: 10 }, res: { 冷: 40, 熱: -40, 打: -20 }, every: { n: 2, sk: "waterthread" }, gold: 9, heart: "mizugumo" },
+  donguri:  { mat: "donguri", nm: "ドングリ兵", img: "m_donguri", wt: "spear", pow: 11, hp: 90, st: { str: 30, vit: 14, dex: 14, agi: 12, int: 5, wil: 10, lov: 0, cha: 8 }, res: { 熱: -50, 打: 20, 斬: -20 }, every: { n: 3, sk: "acornshot" }, gold: 8, heart: "donguri" },
+  // 親蜘蛛：カイ1人で戦う山場。子を呼ぶ。親を倒せば、子は逃げる
+  oyamizugumo:{ mat: "ito", nm: "オヤミズグモ", img: "m_oyagumo", wt: "fang", pow: 16, hp: 370, boss: 1, st: { str: 40, vit: 13, dex: 16, agi: 14, int: 14, wil: 12, lov: 0, cha: 14 },
+              res: { 冷: 40, 熱: -40, 打: -20 }, plan: { 2: "callkids", 4: "silkbind", 5: "callkids" }, every: { n: 4, sk: "callkids" }, every2: { n: 3, sk: "silkbind" }, stunRes: 1, gold: 45 },
+  komizu:   { nm: "子グモ", img: "m_mizugumo", wt: "fang", pow: 9, hp: 55, st: { str: 26, vit: 9, dex: 14, agi: 20, int: 8, wil: 7, lov: 0, cha: 8 }, res: { 冷: 40, 熱: -40, 打: -20 }, gold: 3 },
+  moriookami:{ mat: "kiba", nm: "モリオオカミ", img: "m_ookami", wt: "fang", pow: 11, hp: 110, st: { str: 32, vit: 12, dex: 14, agi: 24, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 熱: -30, 突: -20, 冷: 20 }, every: { n: 3, sk: "wolfbite" }, gold: 11, heart: "ookami" },
   nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1050, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
               res: { 打: 20, 冷: 50, 雷: -40, 熱: -20 }, plan: { 2: "mudsplash", 3: "bodypress", 4: "bigyawn", 6: "swampquake", 7: "bodypress", 8: "mudsplash" }, every: { n: 2, sk: "bodypress" }, rageFrom: 9, rage: "swampquake", stunRes: 1, gold: 120, heart: "nushi" },
   // 黒外套の兵（人間）
@@ -297,21 +313,24 @@ function base(u) { return Object.assign(u, { down: false, poison: 0, stun: 0, co
 function newBattle(wave, seed, lo, roster) {
   lo = lo || defLo();
   const W = typeof wave === "number" ? WAVES[wave] : wave, tier = W.tier || 1, m = 1 + 0.2 * (tier - 1);
-  const st = { seed: seed || 1, turn: 0, actions: 0, queue: [], log: [], over: null, phase: "command", cmd: {}, focus: null, wave: W, lastCmd: {} };
+  const st = { seed: seed || 1, turn: 0, actions: 0, queue: [], log: [], over: null, phase: "command", cmd: {}, focus: null, wave: W, lastCmd: {}, items: { ...(W.items || {}) } };
   const F = FORMATIONS[lo.form];
   const SOLO = { c: 0, r: 2, b: {}, h: 1 };
   const lineup = W.solo != null ? [[W.solo, SOLO]] : (W.fixed || lo.pos).slice(0, 5).map((hi, slot) => [hi, F.slots[slot]]);
   st.party = lineup.filter(([hi]) => hi != null).map(([hi, sl], i) => {
     const h = resolveHero(hi, roster && roster[hi]), s = heroStats(h, sl);
-    const u = base({ ...h, ...s, side: 0, slot: i, c: sl.c, r: sl.r, hate: sl.h, max: h.hp, hp: h.hp, lp: h.lpNow, bp: BP0 });
+    const u = base({ ...h, ...s, side: 0, slot: i, c: sl.c, r: sl.r, hate: sl.h, max: h.hp, hp: Math.max(1, Math.round(h.hp * ((W.hp0 || {})[hi] || 1))), lp: h.lpNow, bp: BP0 }); // hp0＝傷を負ったまま始まる人（HPの割合）
     if (u.lp <= 0) { u.down = true; u.hp = 0; } // LPが尽きた人は戦えない（宿で戻る）
     return u;
   });
   st.foes = W.foes.map((f, i) => {
     const M = FOES[f.k], fst = {};
     for (const k of STATS) fst[k] = Math.round(M.st[k] * m);
+    if (W.atk) fst.str = Math.round(fst.str * W.atk); // 物語の戦いで、相手が張り切っているとき（腕力だけ上げる）
     const hp = Math.round(M.hp * Math.pow(m, 2.2)), pow = Math.round(M.pow * m); // 体力は能力値より速く増える（こちらの攻撃も、能力×武器×技で掛け算に伸びるため）
-    return base({ ...M, pow, mag: Math.round(6 * m), st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
+    const u = base({ ...M, pow, mag: Math.round(6 * m), st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
+    if (f.wait) { u.down = true; u.hp = 0; u.wait = true; } // まだ出てきていない（呼ばれると出てくる）
+    return u;
   });
   for (const u of st.party) {
     if (hasP(u, "spirit")) bpAdd(st, u, 2, "闘志");
@@ -335,14 +354,23 @@ function beginTurn(st) {
   if (!f || f.down) st.focus = (alive(st.foes)[0] || {}).id;
   log(st, { t: "turn", n: st.turn });
 }
+// 全力AUTOが食べ物を食べるのは、立っているのが自分1人で、HPが4割を切ったときだけ（仲間がいるときは、食べ物を勝手に減らさない）
 // コマンドを選び終えたら動き出す。auto＝"normal"/"full"なら自動で選ぶ。support＝補助・防御・回復の技もオートで使うか
 function commit(st, auto, support) {
-  for (const u of alive(st.party)) if (auto || !st.cmd[u.id]) st.cmd[u.id] = keyOf(autoChoose(st, u, auto || "normal", support));
+  for (const u of alive(st.party)) if (auto || !st.cmd[u.id]) st.cmd[u.id] = (auto === "full" && u.hp < u.max * 0.4 && alive(st.party).length === 1 && foodLeft(st, u)) || keyOf(autoChoose(st, u, auto || "normal", support));
   st.lastCmd = { ...st.cmd };
   st.queue = alive(all(st)).map(u => ({ u, s: u.st.agi * (0.9 + rnd(st) * 0.2) })).sort((a, b) => b.s - a.s).map(x => x.u);
   st.phase = "run";
 }
 
+// 食べ物：いま選べるもの（ほかの人がこのターンに選んだぶんは引く）。無ければ null。選ぶときの名前は "item:名前"
+function foodLeft(st, u) {
+  for (const k of FOODS) {
+    const used = Object.entries(st.cmd).filter(([id, c]) => id !== u.id && c === "item:" + k).length;
+    if ((st.items[k] || 0) - used > 0) return "item:" + k;
+  }
+  return null;
+}
 // ---------- 範囲 ----------
 function targets(st, u, s) {
   const foes = alive(opps(st, u)); if (!foes.length) return [];
@@ -419,20 +447,37 @@ function autoChoose(st, u, mode, support) {
   return best;
 }
 function foeChoose(st, u) {
-  if (u.plan && u.plan[st.turn]) return SKILLS[u.plan[st.turn]];
-  if (u.rageFrom && st.turn >= u.rageFrom) return SKILLS[u.rage];
-  if (u.every && st.turn % u.every.n === 0) return SKILLS[u.every.sk];
-  return SKILLS.attack;
+  let s = SKILLS.attack;
+  if (u.plan && u.plan[st.turn]) s = SKILLS[u.plan[st.turn]];
+  else if (u.rageFrom && st.turn >= u.rageFrom) s = SKILLS[u.rage];
+  else if (u.every && st.turn % u.every.n === 0) s = SKILLS[u.every.sk];
+  else if (u.every2 && st.turn % u.every2.n === 0) s = SKILLS[u.every2.sk];
+  if (s.tg === "summon" && !st.foes.some(f => f.down && f !== u && !f.boss)) s = SKILLS.attack; // 呼べる子がいなければ、ふつうに攻める
+  return s;
 }
 
 function act(st, u) {
   let s;
+  const c = u.side === 0 ? st.cmd[u.id] || "" : "";
+  if (c.startsWith("item:")) { // 食べ物を食べる（無くなっていたら、ふつうに攻める）
+    const k = c.slice(5), T = TOOLS[k];
+    if (T && st.items[k] > 0) {
+      st.items[k]--; st.actions++;
+      const h = Math.min(u.max - u.hp, Math.round(u.max * T.food)); u.hp += h; u.healed += h;
+      log(st, { t: "item", u: u.id, k, nm: T.nm }); log(st, { t: "heal", d: u.id, v: h });
+      return;
+    }
+  }
   if (u.side === 1) s = foeChoose(st, u);
-  else { s = SKILLS[st.cmd[u.id]] || SKILLS.attack; if (cost(u, s) > u.bp) s = SKILLS.attack; }
+  else { s = SKILLS[c] || SKILLS.attack; if (cost(u, s) > u.bp) s = SKILLS.attack; }
   if (u.side === 0) { u.bp -= cost(u, s); if (s !== SKILLS.attack) (u.used = u.used || {})[keyOf(s)] = 1; }
   st.actions++;
   log(st, { t: "act", u: u.id, skill: keyOf(s), nm: s.nm, sk: s !== SKILLS.attack, magic: !!s.magic, kind: s.kind });
   if (s.tg === "self") { if (s.cover) { u.cover = s.cover; log(st, { t: "status", d: u.id, nm: "かばう構え" }); } }
+  else if (s.tg === "summon") { // 倒れている・まだ出ていない子を1体、呼び出す
+    const k = st.foes.find(f => f.down && f !== u && !f.boss);
+    if (k) { k.down = false; k.wait = false; k.hp = k.max; k.poison = 0; k.stun = 0; log(st, { t: "summon", d: k.id }); }
+  }
   else if (s.tg === "allies") {
     for (const p of st.party) {
       if (p.down && p.lp <= 0) continue;
@@ -471,6 +516,8 @@ function endTurn(st) {
   if (!st.over && st.turn >= 30) st.over = "time";
 }
 function checkEnd(st) {
+  const hd = st.wave.head != null ? st.foes[st.wave.head] : null;
+  if (hd && hd.down && !st.over) { for (const f of alive(st.foes)) { f.down = true; f.fled = true; log(st, { t: "flee", d: f.id }); } }
   if (!alive(st.foes).length) st.over = "win"; else if (!alive(st.party).length) st.over = "lose";
 }
 
@@ -520,6 +567,7 @@ function rollItem(id, rng) {
 function rewards(st, rng) {
   const out = { gold: 0, hearts: [], items: [], mats: [], tools: [] }, tier = st.wave.tier || 1;
   for (const f of st.foes) {
+    if (f.wait || f.fled) continue; // 出てこなかった者・逃げた者のぶんは無い
     out.gold += Math.round((f.gold || 0) * Math.pow(1.3, tier - 1) * (0.8 + rng() * 0.4)); // お金は強さ1つごとに1.3倍
     if (f.heart && !st.wave.noHeart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(f.heart);
     if (f.mat && rng() < (f.boss ? 1 : 0.4)) out.mats.push(f.mat);
@@ -531,6 +579,6 @@ function rewards(st, rng) {
 }
 
 const api = { BP0, BP_TURN, BP_MAX, ATTR, RANK, STATS, ST_NM, RANGE_NM, WTYPE, SKILLS, PASSIVES, GEAR, HEARTS, HEROES, START, FORMATIONS, FOES, WAVES,
-  BONUS, AREA_CAP, MATS, TOOLS, cost, awMax, rankMul, fxText, rankUp, defLo, resolveHero, heroStats, newBattle, commit, step, alive, resMul, grow, rollItem, rewards };
+  BONUS, AREA_CAP, MATS, TOOLS, FOODS, foodLeft, cost, awMax, rankMul, fxText, rankUp, defLo, resolveHero, heroStats, newBattle, commit, step, alive, resMul, grow, rollItem, rewards };
 if (typeof module !== "undefined") module.exports = api; else root.BT = api;
 })(this);

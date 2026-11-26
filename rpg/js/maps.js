@@ -22,14 +22,15 @@ function hut() {
     exits: [{ x: 3, y: 6, to: "ferry", tx: 4, ty: 16, dir: 0 }],
     npcs: [
       { id: "dona", x: 3, y: 5, img: "person_077", dir: 3, nm: "ドナ", when: g => cut(g, "s1") },
-      { id: "lise", x: 4, y: 3, img: "person_002", dir: 1, nm: "リゼット", when: g => cut(g, "s10") },
+      { id: "lise", x: 4, y: 3, img: "person_002", dir: 1, nm: "リゼット", when: g => cut(g, "s11") },
     ],
-    foes: [], chests: [], trigs: [{ x: 3, y: 5, when: g => S(g) === 10, run: "s10" }],
+    foes: [], chests: [], trigs: [{ x: 3, y: 5, when: g => S(g) === 12, run: "s11" }],
   };
 }
 
 // ---------- リム川の渡し（W2）：西に村、東は川。桟橋から舟が出る ----------
 function ferry() {
+  const wild = g => S(g) >= 2 && S(g) !== 11 && S(g) !== 12; // 半鐘が鳴ってからの夕暮れと夜は、魔物は出ない
   const W = 16, H = 34, g = grid(W, H, ".");
   fill(g, "T", 0, 0, W, 2); fill(g, "T", 0, 0, 1, H); fill(g, "T", 0, H - 2, W, 2);
   fill(g, "~", 10, 0, 6, H);
@@ -45,36 +46,47 @@ function ferry() {
       { t: "post", x: 9, y: 19, w: 1, h: 1 },
       { t: "kaeri", x: 8, y: 7, talk: "kaeri" },
       { t: "sign", x: 7, y: 16, text: ["リム川の渡し"] },
+      // 川下の簗場
+      { t: "weir", x: 10, y: 29, w: 3, h: 1, web: 1, when: g => S(g) <= 2 }, { t: "weir", x: 10, y: 29, w: 3, h: 1, when: g => S(g) > 2 },
+      { t: "willow", x: 9, y: 27, w: 1, h: 2 },
+      { t: "sign", x: 7, y: 26, text: ["この先　簗場"] },
     ],
     exits: [{ x: 4, y: 15, to: "hut", tx: 3, ty: 5, dir: 3 }, { x: 0, y: 17, to: "village", tx: 14, ty: 11, dir: 1 }],
     npcs: [
       { id: "hop", x: 8, y: 18, img: "person_071", dir: 3, nm: "ホップ", talk: "s2", when: g => S(g) === 1 },
       { id: "martha", x: 7, y: 18, img: "person_026", dir: 3, nm: "マーサ", talk: "s2", when: g => S(g) === 1 },
-      { id: "lise", x: 9, y: 18, img: "person_002", dir: 1, nm: "娘", talk: "s3", when: g => S(g) === 2 },
-      // 場面9：黒外套の一団と、村の人たち
-      { id: "sig", x: 8, y: 17, img: "person_010", dir: 1, nm: "傷の男", when: g => cut(g, "s9") },
-      { id: "k1", x: 8, y: 16, mon: "monster_019", face: -1, nm: "黒外套の兵", when: g => cut(g, "s9") },
-      { id: "k2", x: 8, y: 18, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => cut(g, "s9") },
-      { id: "k3", x: 9, y: 15, mon: "monster_021", face: -1, nm: "黒外套の兵", when: g => cut(g, "s9") },
-      { id: "dona", x: 6, y: 17, img: "person_077", dir: 2, nm: "ドナ", when: g => cut(g, "s9") || cut(g, "s9d") || cut(g, "s11") },
-      { id: "tim", x: 5, y: 18, img: "person_069", dir: 2, nm: "ティム", when: g => cut(g, "s9") },
-      { id: "hop9", x: 9, y: 18, img: "person_071", dir: 1, nm: "ホップ", when: g => cut(g, "s9") },
-      { id: "martha9", x: 9, y: 16, img: "person_026", dir: 1, nm: "マーサ", when: g => cut(g, "s9") },
-      // 場面10：夜の見張り
-      { id: "watch", x: 8, y: 17, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "s10b") },
-      { id: "dona10", x: 7, y: 17, img: "person_077", dir: 2, nm: "ドナ", when: g => cut(g, "s10b") },
-      // 場面11：土手の上の兵
-      { id: "ka", x: 5, y: 16, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "s11b") || cut(g, "s11c") },
-      { id: "kb", x: 4, y: 17, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "s11b") || cut(g, "s11c") },
-      { id: "sig11", x: 3, y: 17, img: "person_010", dir: 2, nm: "傷の男", when: g => cut(g, "s11c") },
+      { id: "lise", x: 9, y: 18, img: "person_002", dir: 1, nm: "娘", talk: "s4", when: g => S(g) === 3 },
+      // 場面3：簗場。柳の上のヤン爺と、簗の上の親蜘蛛
+      { id: "yanUp", x: 9, y: 27, img: "person_019", dir: 0, lift: 4, nm: "ヤン爺", when: g => S(g) <= 2 },
+      { id: "yan", x: 8, y: 29, img: "person_019", dir: 2, nm: "ヤン爺", talk: "yan", when: g => S(g) >= 3 && S(g) !== 11 && S(g) !== 12 },
+      { id: "oya", x: 11, y: 29, mon: "m_oyagumo", face: 1, big: 1, nm: "オヤミズグモ", when: g => S(g) === 2 },
+      // 場面10：黒外套の一団と、村の人たち
+      { id: "sig", x: 8, y: 17, img: "person_010", dir: 1, nm: "傷の男", when: g => cut(g, "s10") },
+      { id: "k1", x: 8, y: 16, mon: "monster_019", face: -1, nm: "黒外套の兵", when: g => cut(g, "s10") },
+      { id: "k2", x: 8, y: 18, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => cut(g, "s10") },
+      { id: "k3", x: 9, y: 15, mon: "monster_021", face: -1, nm: "黒外套の兵", when: g => cut(g, "s10") },
+      { id: "dona", x: 6, y: 17, img: "person_077", dir: 2, nm: "ドナ", when: g => cut(g, "s10") || cut(g, "s10d") || cut(g, "s12") },
+      { id: "tim", x: 5, y: 18, img: "person_069", dir: 2, nm: "ティム", when: g => cut(g, "s10") },
+      { id: "hop9", x: 9, y: 18, img: "person_071", dir: 1, nm: "ホップ", when: g => cut(g, "s10") },
+      { id: "martha9", x: 9, y: 16, img: "person_026", dir: 1, nm: "マーサ", when: g => cut(g, "s10") },
+      // 場面11：夜の見張り
+      { id: "watch", x: 8, y: 17, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "s11b") },
+      { id: "dona10", x: 7, y: 17, img: "person_077", dir: 2, nm: "ドナ", when: g => cut(g, "s11b") },
+      // 場面12：土手の上の兵
+      { id: "ka", x: 5, y: 16, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "s12b") || cut(g, "s12c") },
+      { id: "kb", x: 4, y: 17, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "s12b") || cut(g, "s12c") },
+      { id: "sig11", x: 3, y: 17, img: "person_010", dir: 2, nm: "傷の男", when: g => cut(g, "s12c") },
     ],
     foes: [
-      { id: "f1", x: 6, y: 9, k: "koromochi", g: ["koromochi"], when: g => S(g) >= 2 && S(g) !== 9 && S(g) !== 10 },
-      { id: "f2", x: 4, y: 6, k: "koromochi", g: ["koromochi", "koromochi"], when: g => S(g) >= 2 && S(g) !== 9 && S(g) !== 10 },
-      { id: "f3", x: 8, y: 24, k: "mizugumo", g: ["mizugumo"], when: g => S(g) >= 2 && S(g) !== 9 && S(g) !== 10 },
-      { id: "f4", x: 5, y: 28, k: "mizugumo", g: ["mizugumo", "koromochi"], when: g => S(g) >= 2 && S(g) !== 9 && S(g) !== 10 },
+      // 川べりの魔物：1体なら楽、2体はきつい。道の脇に居るので、避けて通れる
+      { id: "f1", x: 8, y: 9, k: "koromochi", g: ["koromochi"], when: wild },
+      { id: "f2", x: 4, y: 6, k: "koromochi", g: ["koromochi", "koromochi"], when: wild },
+      { id: "f3", x: 8, y: 21, k: "mizugumo", g: ["mizugumo"], when: wild },
+      { id: "f4", x: 3, y: 22, k: "koromochi", g: ["koromochi", "koromochi"], when: wild },
+      { id: "f5", x: 4, y: 30, k: "mizugumo", g: ["mizugumo", "koromochi"], when: g => wild(g) && S(g) >= 3 },
     ],
-    chests: [{ id: "c_ferry", x: 8, y: 29, gold: 40 }], trigs: [],
+    chests: [{ id: "c_ferry", x: 3, y: 31, gold: 40 }],
+    trigs: [{ x: 3, y: 27, w: 6, h: 1, when: g => S(g) === 2, run: "s3" }],
   };
 }
 
@@ -94,15 +106,19 @@ function village() {
       { t: "well", x: 8, y: 11 },
       { t: "kaeri", x: 13, y: 9, talk: "kaeri" },
       { t: "sign", x: 13, y: 10, text: ["トルカ村"] },
+      { t: "sign", x: 14, y: 8, text: ["トルカ村の礼拝堂"] },
     ],
     exits: [{ x: 15, y: 11, to: "ferry", tx: 1, ty: 17, dir: 2 }],
     npcs: [
-      { id: "dona", x: 5, y: 9, img: "person_077", dir: 0, nm: "ドナ", talk: "donaHome", when: g => S(g) !== 10 },
-      { id: "sig", x: 8, y: 9, img: "person_010", dir: 0, nm: "傷の男", talk: "sigVillage", when: g => S(g) === 10 },
-      { id: "k1", x: 6, y: 10, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 10 },
-      { id: "k2", x: 10, y: 10, mon: "monster_020", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 10 },
-      { id: "k3", x: 9, y: 13, mon: "monster_021", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 10 },
-      { id: "k4", x: 12, y: 11, mon: "monster_018", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 10 },
+      { id: "dona", x: 5, y: 9, img: "person_077", dir: 0, nm: "ドナ", talk: "donaHome", when: g => S(g) !== 12 },
+      // 集める仲間（序章のあいだは、会えるだけ）
+      { id: "seri", x: 12, y: 14, img: "person_017", dir: 0, nm: "セリ", talk: "seri" },
+      { id: "karin", x: 12, y: 8, img: "person_105", dir: 0, nm: "カリン", talk: "karin" },
+      { id: "sig", x: 8, y: 9, img: "person_010", dir: 0, nm: "傷の男", talk: "sigVillage", when: g => S(g) === 12 },
+      { id: "k1", x: 6, y: 10, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
+      { id: "k2", x: 10, y: 10, mon: "monster_020", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
+      { id: "k3", x: 9, y: 13, mon: "monster_021", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
+      { id: "k4", x: 12, y: 11, mon: "monster_018", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
     ],
     foes: [], chests: [], trigs: [],
   };
@@ -117,10 +133,10 @@ function river() {
     objs: [{ t: "boat", x: 5, y: 14, w: 3, h: 1 }],
     exits: [],
     npcs: [
-      { id: "hop", x: 5, y: 14, img: "person_071", dir: 2, nm: "ホップ", when: g => cut(g, "s2") || cut(g, "s9c") },
-      { id: "martha", x: 7, y: 14, img: "person_026", dir: 1, nm: "マーサ", when: g => cut(g, "s2") || cut(g, "s9c") },
-      { id: "lise", x: 5, y: 14, img: "person_002", dir: 2, nm: "リゼット", when: g => cut(g, "s3") || cut(g, "s9b") || cut(g, "s11d") },
-      { id: "muku", x: 7, y: 14, img: "person_058h", dir: 1, nm: "ムク", when: B("s11d") },
+      { id: "hop", x: 5, y: 14, img: "person_071", dir: 2, nm: "ホップ", when: g => cut(g, "s2") || cut(g, "s10c") },
+      { id: "martha", x: 7, y: 14, img: "person_026", dir: 1, nm: "マーサ", when: g => cut(g, "s2") || cut(g, "s10c") },
+      { id: "lise", x: 5, y: 14, img: "person_002", dir: 2, nm: "リゼット", when: g => cut(g, "s4") || cut(g, "s10b") || cut(g, "s12d") },
+      { id: "muku", x: 7, y: 14, img: "person_058h", dir: 1, nm: "ムク", when: B("s12d") },
     ],
     foes: [], chests: [], trigs: [],
   };
@@ -136,8 +152,8 @@ function sandbar() {
     exits: [],
     npcs: [
       { id: "otter", x: 6, y: 6, mon: "m_kawauso", face: 1, nm: "カワウソ盗", when: g => cut(g, "s2b") },
-      { id: "hop", x: 5, y: 10, img: "person_071", dir: 3, nm: "ホップ", when: g => cut(g, "s2b") || cut(g, "s2c") || cut(g, "s9c") },
-      { id: "martha", x: 7, y: 10, img: "person_026", dir: 3, nm: "マーサ", when: g => cut(g, "s2b") || cut(g, "s2c") || cut(g, "s9c") },
+      { id: "hop", x: 5, y: 10, img: "person_071", dir: 3, nm: "ホップ", when: g => cut(g, "s2b") || cut(g, "s2c") || cut(g, "s10c") },
+      { id: "martha", x: 7, y: 10, img: "person_026", dir: 3, nm: "マーサ", when: g => cut(g, "s2b") || cut(g, "s2c") || cut(g, "s10c") },
     ],
     foes: [], chests: [], trigs: [],
   };
@@ -157,6 +173,7 @@ function forest() {
   path(11, 6, 1, 5); open(10, 5, 3, 2);                                    // 獣道（北へ。茨でふさがっている）
   path(16, 14, 5, 1); open(17, 12, 5, 2);                                  // 庵への道
   path(20, 14, 1, 10);                                                     // 分かれ目から南へ
+  open(19, 16, 3, 2);                                                      // 狼の群れがふさぐ所
   open(19, 18, 5, 3); path(20, 18, 1, 3);                                  // 分かれ目（東に祠の門）
   open(12, 23, 11, 3); fill(g, "m", 12, 26, 11, 7); open(12, 25, 11, 1);   // ヌシの沼
   g[25][13] = "y"; g[25][16] = "y"; g[25][21] = "y"; g[24][12] = "y";
@@ -173,35 +190,48 @@ function forest() {
     ],
     exits: [{ x: 19, y: 11, to: "hermit", tx: 3, ty: 5, dir: 3 }, { x: 22, y: 19, to: "shrine", tx: 6, ty: 26, dir: 3 }],
     npcs: [
-      { id: "muku", x: 5, y: 30, img: "person_058", dir: 1, nm: "ムク", when: g => cut(g, "s4") },
-      { id: "muku9", x: 5, y: 30, img: "person_058", dir: 1, nm: "ムク", talk: "mukuWait", when: g => S(g) === 9 && !!g.flags.mukuStay },
-      { id: "nene10", x: 5, y: 30, img: "person_041", dir: 1, nm: "ネネ", when: g => ["s10c", "s10d", "s10e"].includes(g.flags.cut) },
-      { id: "muku10", x: 5, y: 31, img: "person_058", dir: 1, nm: "ムク", when: g => cut(g, "s10c") },
-      { id: "muku10h", x: 5, y: 31, img: "person_058h", dir: 1, nm: "ムク", when: g => cut(g, "s10d") },
-      { id: "d1", x: 8, y: 21, mon: "m_donguri", face: 1, nm: "ドングリ兵", when: g => S(g) <= 4 },
-      { id: "d2", x: 7, y: 21, mon: "m_donguri", face: 1, nm: "ドングリ兵", when: g => S(g) <= 4 },
-      { id: "d3", x: 9, y: 21, mon: "m_donguri", face: -1, nm: "ドングリ兵", when: g => S(g) <= 4 },
+      { id: "muku9", x: 5, y: 30, img: "person_058", dir: 1, nm: "ムク", talk: "mukuWait", when: g => S(g) === 11 && !!g.flags.mukuStay },
+      { id: "nene10", x: 5, y: 30, img: "person_041", dir: 1, nm: "ネネ", when: g => ["s11c", "s11d", "s11e"].includes(g.flags.cut) },
+      { id: "muku10", x: 5, y: 31, img: "person_058", dir: 1, nm: "ムク", when: g => cut(g, "s11c") },
+      { id: "muku10h", x: 5, y: 31, img: "person_058h", dir: 1, nm: "ムク", when: g => cut(g, "s11d") },
+      // 場面6：力比べのドングリ兵
+      { id: "d1", x: 8, y: 21, mon: "m_donguri", face: 1, nm: "ドングリ兵", when: g => S(g) <= 5 },
+      { id: "d2", x: 7, y: 21, mon: "m_donguri", face: 1, nm: "ドングリ兵", when: g => S(g) <= 5 },
+      { id: "d3", x: 9, y: 21, mon: "m_donguri", face: -1, nm: "ドングリ兵", when: g => S(g) <= 5 },
+      // 場面7：切り株の広場
       { id: "koke", x: 9, y: 13, mon: "monster_094", face: 1, nm: "コケ爺", talk: "koke" },
       { id: "owl", x: 10, y: 14, img: "person_054", dir: 0, nm: "夜番", talk: "owl" },
       { id: "da", x: 13, y: 12, mon: "m_donguri", face: -1, nm: "ドングリ兵", talk: "dongu" },
       { id: "db", x: 7, y: 16, mon: "m_donguri", face: 1, nm: "ドングリ兵", talk: "dongu" },
       { id: "north", x: 14, y: 17, img: "person_040", dir: 1, nm: "北の子", talk: "north" },
-      { id: "nushi", x: 17, y: 26, mon: "m_nushi", face: 1, big: 1, nm: "ヌシガエル", when: g => S(g) <= 7 },
+      { id: "mukuC", x: 13, y: 17, img: "person_058", dir: 2, nm: "ムク", talk: "mukuC", when: g => S(g) <= 7 },
+      // 場面9：沼への道をふさぐ狼の群れ
+      { id: "wa", x: 20, y: 17, mon: "m_ookami", face: 1, nm: "モリオオカミ", when: g => S(g) <= 8 },
+      { id: "wb", x: 19, y: 17, mon: "m_ookami", face: 1, nm: "モリオオカミ", when: g => S(g) <= 8 },
+      { id: "wc", x: 21, y: 17, mon: "m_ookami", face: -1, nm: "モリオオカミ", when: g => S(g) <= 8 },
+      { id: "wd", x: 20, y: 18, mon: "m_ookami", face: -1, nm: "モリオオカミ", when: g => S(g) <= 8 },
+      { id: "nushi", x: 17, y: 26, mon: "m_nushi", face: 1, big: 1, nm: "ヌシガエル", when: g => S(g) <= 9 },
+      // 集める仲間（序章のあいだは、会えるだけ）
+      { id: "toraji", x: 6, y: 32, img: "person_009", dir: 1, nm: "トラジ", talk: "toraji" },
+      { id: "komari", x: 10, y: 26, img: "person_046", dir: 1, nm: "コマリ", talk: "komari" },
     ],
     foes: [
-      { id: "w1", x: 8, y: 24, k: "donguri", g: ["donguri", "koromochi"], when: g => S(g) >= 5 },
-      { id: "w2", x: 14, y: 23, k: "koromochi", g: ["koromochi", "koromochi", "donguri"], when: g => S(g) >= 8 },
-      { id: "w3", x: 20, y: 16, k: "donguri", g: ["donguri", "donguri", "mizugumo"], when: g => S(g) >= 7 },
-      { id: "w4", x: 16, y: 24, k: "mizugumo", g: ["mizugumo", "mizugumo", "koromochi"], when: g => S(g) >= 8 },
+      { id: "w1", x: 8, y: 24, k: "donguri", g: ["donguri", "koromochi"], when: g => S(g) >= 6 },
+      { id: "w3", x: 18, y: 13, k: "donguri", g: ["donguri", "donguri", "mizugumo"], when: g => S(g) >= 9 },
+      { id: "w5", x: 19, y: 20, k: "moriookami", g: ["moriookami", "moriookami"], when: g => S(g) >= 9 },
+      { id: "w2", x: 14, y: 23, k: "koromochi", g: ["koromochi", "koromochi", "donguri"], when: g => S(g) >= 10 },
+      { id: "w4", x: 16, y: 24, k: "mizugumo", g: ["mizugumo", "moriookami", "koromochi"], when: g => S(g) >= 10 },
     ],
     chests: [{ id: "c_forest1", x: 6, y: 12, item: "oakclub" }, { id: "c_forest2", x: 22, y: 24, item: "needle" }, { id: "c_forest3", x: 15, y: 11, tool: "book1" }],
     trigs: [
-      { x: 8, y: 28, when: g => S(g) === 3, run: "s4b" },
-      { x: 8, y: 22, when: g => S(g) === 4, run: "s5" },
-      { x: 8, y: 18, when: g => S(g) === 5, run: "s6" },
-      { x: 20, y: 17, when: g => S(g) === 7 && !g.flags.fork, run: "s8a" },
-      { x: 20, y: 24, w: 1, h: 1, when: g => S(g) === 7, run: "s8" }, { x: 17, y: 25, when: g => S(g) === 7, run: "s8" }, { x: 16, y: 25, when: g => S(g) === 7, run: "s8" }, { x: 18, y: 25, when: g => S(g) === 7, run: "s8" },
-      { x: 20, y: 21, when: g => S(g) === 8, run: "s9" },
+      { x: 8, y: 28, when: g => S(g) === 4, run: "s5" },
+      { x: 8, y: 22, when: g => S(g) === 5, run: "s6" },
+      { x: 8, y: 18, when: g => S(g) === 6, run: "s7" },
+      { x: 19, y: 16, w: 3, h: 1, when: g => S(g) === 8, run: "s9a" },
+      { x: 19, y: 16, w: 3, h: 1, when: g => S(g) < 8, run: "wolfBlock" },
+      { x: 19, y: 19, w: 5, h: 1, when: g => S(g) === 9 && !g.flags.fork, run: "s9b" },
+      { x: 20, y: 24, w: 1, h: 1, when: g => S(g) === 9, run: "s9" }, { x: 17, y: 25, when: g => S(g) === 9, run: "s9" }, { x: 16, y: 25, when: g => S(g) === 9, run: "s9" }, { x: 18, y: 25, when: g => S(g) === 9, run: "s9" },
+      { x: 20, y: 21, when: g => S(g) === 10, run: "s10" },
     ],
   };
 }
@@ -220,8 +250,11 @@ function hermit() {
       { t: "hatWall", x: 4, y: 0, when: g => !g.flags.hat },
     ],
     exits: [{ x: 3, y: 6, to: "forest", tx: 19, ty: 12, dir: 0 }],
-    npcs: [{ id: "nene", x: 3, y: 2, img: "person_041", dir: 0, nm: "ネネ", talk: "nene", when: g => !["s10c", "s10d", "s10e"].includes(g.flags.cut) }],
-    foes: [], chests: [], trigs: [{ x: 3, y: 5, when: g => S(g) === 6, run: "s7" }],
+    npcs: [
+      { id: "nene", x: 3, y: 2, img: "person_041", dir: 0, nm: "ネネ", talk: "nene", when: g => !["s11c", "s11d", "s11e"].includes(g.flags.cut) },
+      { id: "mukuIn", x: 4, y: 5, img: "person_058", dir: 3, nm: "ムク", when: g => cut(g, "s8") },
+    ],
+    foes: [], chests: [], trigs: [{ x: 3, y: 5, when: g => S(g) === 7, run: "s8" }],
   };
 }
 

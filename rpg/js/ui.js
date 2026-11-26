@@ -179,11 +179,11 @@ function skillRow(parent, k, y, tag, wt, m, onTap) {
   const rank = s.kind === "攻撃" ? (s.rank && s.rank !== "N" ? s.rank : "—") : null;
   const bp = BT.cost(m, s0), sr = (m && m.sr && m.sr[k]) || 1, fxs = BT.fxText(s0);
   row.innerHTML = `<span style="left:${d(6)};width:${d(24)};display:flex;gap:1px">${at.map(a => DM.icon(a, 10)).join("")}</span>` +
-    `<span class="sn${fxs ? " up" : ""}" style="left:${d(32)};font-size:${d(10.5)}">${s.nm}${tag ? `<i class="tagh" style="font-size:${d(7.5)}">${tag}</i>` : ""}${sr > 1 ? `<i class="srk" style="font-size:${d(7.5)}">Rank${sr}</i>` : ""}</span>` +
+    `<span class="sn${fxs ? " up" : ""}" style="left:${d(32)};font-size:${d(10.5)}">${s.nm}${tag ? `<i class="tagh" style="font-size:${d(7.5)}">${tag}</i>` : ""}${sr > 1 ? `<i class="srk" style="font-size:${d(7.5)}">R${sr}</i>` : ""}</span>` +
     (fxs ? `<span class="fx" style="left:${d(32)};font-size:${d(6.6)}">${fxs}</span>` : "") +
     (rank ? `<span class="rk" style="left:${d(140)};font-size:${d(8)}">威力<b style="font-size:${d(9.5)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(140)};font-size:${d(8.5)}">${s.kind}</span>`) +
     `<span class="rg" style="left:${d(180)};font-size:${d(8.5)}">${BT.RANGE_NM[s.tg]}</span>` +
-    (s.dist ? `<span class="ds ${s.dist === "近" ? "near" : "far"}" style="left:${d(212)};font-size:${d(7.5)};width:${d(12)};height:${d(12)};line-height:${d(12)}">${s.dist}</span>` : "") +
+    (s.dist ? `<span class="ds ${s.dist === "近" ? "near" : "far"}" style="left:${d(217)};font-size:${d(7.5)};width:${d(12)};height:${d(12)};line-height:${d(12)}">${s.dist}</span>` : "") +
     `<span class="bp${bp < s0.bp ? " cut" : ""}" style="right:${d(8)};font-size:${d(9.5)}">${bp ? "BP" + bp : ""}</span>`;
   if (onTap && k !== "attack") row.onclick = () => onTap(k);
   return row;
@@ -404,8 +404,8 @@ function bag(L, redraw) {
     } }, redraw);
 }
 // 目的：いま向かう所。続きから遊ぶときに迷わないように
-const GOALS = { 1: "桟橋で待つホップ夫婦を、中州の畑まで渡す", 2: "桟橋に、見慣れない客が来ている", 3: "ムクの案内で、森の奥へ", 4: "森の小道を、奥へ進む", 5: "森の奥の、婆の庵へ", 6: "森の奥の、婆の庵へ",
-  7: "ヌシの沼で、月夜草を採る", 8: "森の岸へ戻る", 9: "森の岸から、舟で村へ戻る", 10: "濡れた網を、渡し小屋へ運ぶ", 12: "東の宿場町ハルネへ（この先は、第1章で）" };
+const GOALS = { 1: "桟橋で待つホップ夫婦を、中州の畑まで渡す", 2: "川下の簗場で、ヤン爺の様子を見る", 3: "桟橋へ戻って、ひと休みする", 4: "森の小道を、奥へ進む", 5: "森の小道を、奥へ進む", 6: "森の小道を、奥へ進む",
+  7: "森の奥の、婆の庵へ", 8: "庵から、沼への道を進む", 9: "ヌシの沼で、月夜草を採る", 10: "森の岸へ戻る", 11: "森の岸から、舟で村へ戻る", 12: "濡れた網を、渡し小屋へ運ぶ", 14: "東の宿場町ハルネへ（この先は、第1章で）" };
 function goal(L) {
   const G = GS.G, s = G.flags.s || 0;
   T(L, 14, 84, 200, 14, "いまの目的", 9, "label");
