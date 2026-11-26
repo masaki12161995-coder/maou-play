@@ -129,6 +129,7 @@ function makeTiles(kind,flags) {
   return Array.from({length:27},(_,y)=>Array.from({length:12},(_,x)=>wall(x,y)?"#":defs[kind](x,y)).join(""));
 }
 function sceneFor(id,g) {
+  if(CHAPTER1_MAPS[id])return chapterOneScene(id,g);
   const f=g.s.flags, base=AREAS[id];
   const layout={...base,npcs:[],objects:[],fixtures:[],lamps:[],exits:[]};
   const say=(...args)=>layout.npcs.push(faceAt(...args));
@@ -144,66 +145,10 @@ function sceneFor(id,g) {
     {open:Boolean(g.s.claims[key]),onEnd:()=>g.openChest(key,reward)});
   const monster=(col,row,code,key)=>place(col,row,null,ENEMIES[code].name,["魔物の目が光った。"],
     {image:ENEMIES[code].art,boss:true,onEnd:()=>g.fight([code],key)});
-  if (id==="town") {
-    say(3,8,"person_099","ヴェスター",["温かい湯を用意したよ。"],{onEnd:()=>g.rest()});
-    say(3,11,"person_101","露店の人",["刃や外套なら、ここに並べてあるよ。"],{activity:"sort",onEnd:()=>g.open("shop")});
-    say(3,21,"person_030","鍛冶屋",["冷える前の鉄は、まだしなる。"],{activity:"smith",onEnd:()=>g.open("forge")});
-    say(9,20,"person_074","荷運び",["城から、今朝の鐘が来ない。"],{activity:"crate"});
-    if (!f.joinH03) say(7,16,"H03","ブランカ",["支えを入れた。もう落ちない。","城門まで、一緒に行こう。"],
-      {approach:([x,y])=>Boolean(f.flagSeen) && x>=4&&x<=7&&y>=14&&y<=18,onEnd:()=>g.join("H03",1,"joinH03")});
-    if (!f.joinH04) say(5,8,"H04","グレン",f.joinH03?["戸は私が開ける。","この門を通すのは、私の判断だ。"]:["鎖に触るな。作業台の足場が悪い。"],
-      {onEnd:f.joinH03?()=>g.join("H04",1,"joinH04"):null});
-    say(7,8,"H17","ガルヴィン",["鍵は私が預かる。","城の中のことは、外では話せない。"]);
-    place(6,19,"flag","銅旗",["松葉が止まった。","旗の光だけが、風下と逆へ進む。"],{onEnd:flag("flagSeen")});
-    place(8,15,"lift","昇降機",f.joinH03?["木の支えが台を受けている。"]:["鎖が鳴っている。支えが外れかけている。"]);
-    place(5,4,"gate","黒牙城の門",f.joinH04?["鎖がゆるみ、戸が開いた。"]:["鉄の戸は閉じている。門番が上の広場にいる。"],
-      {walk:Boolean(f.joinH04),open:Boolean(f.joinH04),instant:Boolean(f.joinH04),onEnd:()=>g.travel("gate",[5,22],()=>f.joinH04)});
-    if (f.joinH04) layout.exits.push(ledge(5,4,"gate",[5,22],"黒牙城"));
-    exit(6,22,"road",ROAD_OUT,"松影の街道");
-    if (f.B01) exit(9,7,"nord",[5,22],"ノルド砦町");
-    place(8,12,"board","札の卓",["旅人が札を置いていった。"],{instant:true,onEnd:()=>g.open("cards")});
-    place(7,19,"rope","裂けた旗の綱",f.sewnFlag?["新しい縫い糸が、下の古い跡に沿っている。"]:["旗の端がほころんでいる。","外れた端を縫い合わせた。"],
-      {onEnd:()=>{if(!f.sewnFlag){g.mark("sewnFlag");g.grantQuest("sewnFlag","material");g.refresh();}}});
-    if (g.s.chapter>=2) place(4,9,"paper","閉門板",["板の内側だけが焦げている。","当番の印が端に残った。"],{onEnd:()=>g.grantQuest("postern","book")});
-  } else if(id==="road") {
-    say(7,13,"person_071","旅人",["橋の右の板だけ色が新しいだろう？","昨夜、見回りと張り替えたんだ。"],{activity:"map"});
-    say(10,13,"person_066","番小屋の人",["窓の灯はもう落とすよ。"],{activity:"crate"});
-    say(6,11,"person_019","見回り",["石段の先が町だ。段の端には松の根が出てる。"],{activity:"sweep"});
-    place(4,14,"board","案内板",["石段を上れば町。東の橋は番小屋へ。"]);
-    exit(8,4,"town",[5,22],"ベルグ門前町");
-    if (g.s.chapter>=2) exit(11,14,"pine",[5,22],"松煙小屋");
-  } else {
+  {
     layout.grid=makeTiles(id,f);
     layout.lamps=[[2,6],[9,6],[2,18],[9,18],[2,23],[9,23]];
-    if(id==="gate") {
-      fix(2,9,"bone");fix(9,9,"bone",{turn:1});fix(4,5,"gate",{open:true});
-      exit(5,5,"court",[5,22],"玉座庭");exit(6,22,"town",[5,6],"ベルグ門前町");
-      chest(8,14,"gateBox","hat");
-      place(3,11,"flag","門の旗",["旗の継ぎ目に、折れた針が残っている。"],{onEnd:flag("needles")});
-    } else if (id==="court") {
-      layout.blocks=[[4,11],[6,11]];
-      fix(5,7,"seat"); fix(4,9,"bone");fix(7,9,"bone",{turn:1});
-      place(5,11,null,"玉座の下",f.body?["辺りの灯りが揺れても、もう動かない。"]:["……王は死んでいる。","冠は床に置いてあった。"],
-        {image:"H16",bounds:[-48,-92,48,11],onEnd:()=>{
-          if (f.body) return;
-          g.mark("body");
-          g.effect("flight",1120,()=>g.refresh());
-        }});
-      if (!f.body) say(7,10,"H02","杖の旅人",["……。"]);
-      place(3,14,"crown","落ちた冠",["冠はひっくり返っていない。","そっと置いたように見える。"],{onEnd:flag("crown")});
-      place(8,14,"seal","黒鉄の板",["角の印の途中で、板が割れている。"],{onEnd:flag("seal")});
-      place(8,18,"paper","命令書",["『裏門は夜まで開けておけ』。","日付は昨日だ。"],{onEnd:flag("order")});
-      if(f.body) exit(8,7,"hall",[5,22],"黒天井の回廊");
-      exit(6,22,"gate",[5,7],"巨角門");
-    } else if (id==="hall") {
-      exit(6,22,"court",[8,8],"玉座庭");
-      fix(4,10,"bone");fix(7,10,"bone",{turn:true});
-      if (!f.B01) monster(5,6,"dragon","B01");
-      else exit(5,5,"nord",[5,22],"尾根の出口");
-      chest(8,13,"hallBox","steel");
-      place(3,10,"fire","守り火",["火のそばで息をついた。"],{onEnd:()=>g.rest()});
-      place(3,15,"board","擦れた柱",["ここだけ斬った跡が浅い。","灯りをよけた側に足場が続く。"]);
-    } else if(id==="nord") {
+    if(id==="nord") {
       fix(2,14,"house",{style:3});fix(10,17,"house",{style:2});fix(2,6,"house",{style:0});fix(10,9,"market",{style:1});
       say(4,9,"person_080","ニルス",["杖の足跡なら北へ続く。","折れた尾根と番小屋、どちらからでも橋へ行ける。"]);
       say(8,14,"person_100","宿の人",["軒の下なら風が弱い。湯を置いておいた。"],{onEnd:()=>g.rest()});

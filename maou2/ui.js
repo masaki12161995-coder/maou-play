@@ -282,6 +282,7 @@ class GameUI {
     const {g}=this;
     this.modal("地図","map");
     this.tabs([["地図",()=>g.open("map"),true],["帳面",()=>g.open("journal"),false],["記録",()=>g.open("save"),false]]);
+    if(g.area.scroll&&g.s.chapter===1){drawChapterAtlas(this,g);return;}
     const x=38,y=252,w=326,h=435;
     this.rec(x,y,w,h,"#5a584d");
     for(let row=0;row<27;row++)for(let col=0;col<20;col++){

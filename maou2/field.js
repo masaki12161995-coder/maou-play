@@ -96,6 +96,7 @@ const ROAD_LAMPS = [[6,5],[3,10],[7,14],[11,18],[3,18],[7,22],[3,25]];
 const TOWN_LAMPS = [[1,8],[8,8],[2,13],[10,14],[4,20],[8,20],[3,24],[9,24]];
 const WALKABLE = new Set(["p", "c", "g", "S", "=", "d", "s", "u"]);
 const FIELD_GRID = Object.freeze({ x: LEFT, y: TOP, columns: COLS, rows: ROWS, tileSize: SIZE });
+const ADV_WALK=new Set(["p","c","d","g","S","=","s","+"]);
 const ROAD_CELL_PROPS = [...ROAD_LAMPS,[11,13]];
 const TOWN_CELL_PROPS = [...TOWN_LAMPS,[2,8],[9,8],[1,9],[1,10],[2,12],[10,12],[10,13],[2,15],[10,15],[2,22],[10,21],[10,22],[1,23],[10,23],[2,24],[10,24]];
 
@@ -1015,6 +1016,10 @@ function paintArea(ctx,grid,skin,lamps,fixtures,site) {
 
 function fixture(ctx,object,bank,time) {
   const [x,y]=coordinate(object.col,object.row);
+  if(object.chapterProp) {
+    chapterProp(ctx,object,bank,time);
+    return;
+  }
   if (object.image) {
     const sprite=bank.stills?.[object.image];
     if (sprite) {
@@ -1144,14 +1149,507 @@ function fixture(ctx,object,bank,time) {
   }
 }
 
+const CHAPTER_PALETTES={
+  plaza:["#313743","#3d4350","#79644d","#4a5547","#b8a485","#555360","#26313d"],
+  houses:["#322c38","#3a3d46","#665847","#495447","#af9878","#675564","#26333a"],
+  road:["#23353b","#3d4850","#6e6250","#445848","#b39c74","#556160","#24333e"],
+  climb:["#292d3b","#3e414e","#685748","#414e44","#b59773","#555160","#242b3a"],
+  gate:["#242634","#333745","#66574f","#3d4d42","#b59e83","#4a4759","#222435"],
+  court:["#271f2e","#383442","#664b49","#4e453f","#b98571","#4b4055","#22212e"],
+  hall:["#231e2b","#3a3441","#5a4943","#3c4842","#b29170","#504153","#211d2d"],
+  inn:["#302631","#382e38","#6d5145","#4c453c","#be946c","#604954","#2b2733"],
+  forgeYard:["#302631","#40383f","#705546","#524e41","#b89371","#614d52","#292532"],
+  storeRooms:["#242231","#373845","#5b4748","#3a4240","#a89783","#52506b","#202433"],
+  wardhouse:["#2a2530","#473f40","#755643","#423c43","#be8b67","#68525a","#211e2c"],
+};
+const chapterPlanes=new Map();
+
+function chapterBackdrop(scene,bank) {
+  const old=chapterPlanes.get(scene.backdrop);
+  if(old){
+    chapterPlanes.delete(scene.backdrop);
+    chapterPlanes.set(scene.backdrop,old);
+    return old;
+  }
+  const canvas=document.createElement("canvas");
+  const grid=scene.grid, cols=grid[0].length, rows=grid.length;
+  canvas.width=LEFT*2+cols*SIZE;
+  canvas.height=TOP*2+rows*SIZE;
+  const ctx=canvas.getContext("2d",{alpha:false});
+  ctx.imageSmoothingEnabled=false;
+  const p=CHAPTER_PALETTES[scene.theme];
+  rect(ctx,p[6],0,0,canvas.width,canvas.height);
+  for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+    const [x,y]=tileTop(col,row),t=grid[row][col],seed=noise(col,row,144);
+    ctx.save();ctx.beginPath();ctx.rect(x,y,48,48);ctx.clip();
+    if(t==="~"){
+      const at=(dx,dy)=>grid[row+dy]?.[col+dx];
+      rect(ctx,"#2e4855",x,y,48,48);
+      scatterTile(ctx,x,y,seed,["#355665","#4b6970","#345060","#4b6370"],23);
+      for(const [dx,dy,ox,oy,w,h] of [[-1,0,0,0,7,48],[1,0,40,0,8,48],[0,-1,0,0,48,8],[0,1,0,41,48,7]]){
+        if(at(dx,dy)==="~")continue;
+        rect(ctx,"#223541",x+ox,y+oy,w,h);
+        rect(ctx,"#53615d",x+ox+(w<12?1:0),y+oy+(h<12?1:0),w<12?2:w,h<12?2:h);
+      }
+    } else if(t==="c") {
+      cobbleTile(ctx,x,y,row,col);
+      if(scene.theme==="court")rect(ctx,"#6f3f4a58",x,y,48,48);
+      if(scene.theme==="gate")rect(ctx,"#2720392a",x,y,48,48);
+    } else if(t==="S") stairTile(ctx,x,y,col,row);
+    else if(t==="="){
+      rect(ctx,p[0],x,y,48,48);
+      for(let k=0;k<6;k++){
+        const tone=["#674d44","#75584b","#7a6050","#644d43"][(seed+k*7)%4];
+        rect(ctx,tone,x,y+1+k*8,48,7);
+        rect(ctx,"#997658",x+(k*7)%16,y+2+k*8,31,1);
+        const nail=(seed+k*41)%39;
+        rect(ctx,"#4a4141",x+nail,y+5+k*8,2,2);
+      }
+    } else if(t==="d"){
+      rect(ctx,p[1],x,y,48,48);
+      if(scene.theme==="court"&&col>=15&&col<=21&&row<33){
+        rect(ctx,"#52383f",x,y,48,48);
+        if(col===15||col===21)rect(ctx,"#795047",x+(col===15?4:39),y,3,48);
+        scatterTile(ctx,x,y,seed,["#6b4449","#764c50","#825c50","#4c353d"],49);
+      } else {
+        for(let a=0;a<3;a++){
+          const n=(seed+a*7)%13;
+          rect(ctx,p[0],x,y+a*16+15,48,1);
+          rect(ctx,p[0],x+13+n,y+2+a*16,1,13);
+          rect(ctx,p[5],x+1,y+1+a*16,21+n,1);
+        }
+        scatterTile(ctx,x,y,seed,[p[0],p[5],p[1],p[2]],21);
+      }
+    } else if(t==="F") {
+      rect(ctx,p[6],x,y,48,48);
+      const first=seed%4;
+      if((seed>>>4)%4===0)sapling(ctx,x+24,y+46,seed%37);
+      else if(first===1)broadTree(ctx,x+25,y+59,seed%27);
+      else if(first===3)windsweptPine(ctx,x+22,y+66,seed%42);
+      else tree(ctx,x+23,y+68,seed%31);
+      scatterTile(ctx,x,y,seed,["#334947","#405650","#2b4346","#263a42"],21);
+    } else if(t==="^"){
+      rect(ctx,p[6],x,y,48,48);
+      const facing=ADV_WALK.has(grid[row-1]?.[col]);
+      if(facing || ADV_WALK.has(grid[row]?.[col+1]) || ADV_WALK.has(grid[row]?.[col-1])){
+        rect(ctx,p[0],x,y,48,27);
+        for(let k=0;k<6;k++){
+          const xx=x+k*9;
+          shape(ctx,k%3===0?p[5]:p[1],xx,y,[[0,0],[8,0],[9,19],[5,34],[0,38]]);
+          rect(ctx,p[2],xx+1,y+2,5,2);
+        }
+        rect(ctx,"#131b282b",x,y+27,48,11);
+      }
+      scatterTile(ctx,x,y,seed,[p[1],p[5],p[0],p[6]],18);
+    } else if(t==="#"||t==="B"){
+      rect(ctx,p[0],x,y,48,48);
+      for(let n=0;n<3;n++)for(let k=-1;k<3;k++){
+        const sx=x+k*21+(n%2)*11,sy=y+16*n;
+        rect(ctx,p[1],sx+1,sy+1,20,14);
+        rect(ctx,p[5],sx+2,sy+1,18,1);
+        if((seed+n+k)%5===0)rect(ctx,p[2],sx+6,sy+8,9,2);
+      }
+      if(ADV_WALK.has(grid[row+1]?.[col])){
+        rect(ctx,p[4],x,y+42,48,2);
+        rect(ctx,p[0],x,y+45,48,3);
+      }
+    } else {
+      const dirt=t!=="g";
+      rect(ctx,dirt?p[2]:p[3],x,y,48,48);
+      scatterTile(ctx,x,y,seed,[p[1],p[3],p[2],p[4]],dirt?41:38);
+      if(!dirt&&seed%3!==1)tuft(ctx,x+12+seed%22,y+18+(seed>>>15)%13,seed,(seed%2===1));
+      if(dirt&&seed%5===0)basalt(ctx,x+12,y+18,18,10,seed);
+      if(dirt)for(const [dx,dy,ox,oy,w,h] of [[-1,0,0,0,6,48],[1,0,42,0,6,48],[0,-1,0,0,48,5],[0,1,0,42,48,6]]){
+        if(grid[row+dy]?.[col+dx]==="g")rect(ctx,p[3]+"88",x+ox,y+oy,w,h);
+      }
+      // Tracks follow the stone path on the climb.
+      if(scene.theme==="climb"&&dirt&&seed%3===1){rect(ctx,"#a79171",x+21,y+15,3,7);rect(ctx,"#a79171",x+28,y+28,3,7);}
+    }
+    ctx.restore();
+  }
+  for(const lamp of scene.backdrop.lamps){
+    const [x,y]=coordinate(...lamp);
+    goldenFloor(ctx,x,y+3,57,32);
+  }
+  for(const item of scene.backdrop.props)chapterProp(ctx,item,bank,0);
+  for(const entry of scene.backdrop.lamps)lamp(ctx,...coordinate(...entry));
+  chapterPlanes.set(scene.backdrop,canvas);
+  if(chapterPlanes.size>2){
+    const [key,oldest]=chapterPlanes.entries().next().value;
+    chapterPlanes.delete(key);
+    oldest.width=1;
+    oldest.height=1;
+  }
+  return canvas;
+}
+
+function chapterProp(ctx,item,bank,time) {
+  const [x,y]=coordinate(item.col,item.row),v=item.look||0;
+  const dark="#252330",wood="#62463c",edge="#bd9367",iron="#505364",pale="#887f82";
+  const propRect=(color,dx,dy,w,h)=>rect(ctx,color,x+dx,y+dy,w,h);
+  const wedge=(color,list)=>shape(ctx,color,x,y,list);
+  switch(item.kind){
+    case "tower":
+      oval(ctx,"#24242b60",x+22,y+7,54,14);
+      wedge("#393646",[[-44,4],[-37,-47],[-30,-88],[-17,-120],[8,-131],[23,-105],[32,-73],[38,-54],[44,4]]);
+      wedge("#5d525e",[[-44,1],[-35,-53],[-28,-88],[-15,-115],[-1,-117],[-5,-76],[-1,-44],[-6,0]]);
+      wedge("#8a7271",[[-23,-93],[-16,-118],[3,-137],[6,-121],[-10,-111],[-22,-83]]);
+      for(let k=0;k<8;k++){const h=-13-k*11;propRect("#36313d",-31+k*2,h,61-k*5,2);}
+      propRect(dark,-4,-76,11,23);propRect("#b68764",1,-70,2,13);
+      propRect(pale,-33,-16,18,3);propRect("#6d5d65",19,-35,14,2);
+      break;
+    case "wallArch":
+    case "forgeArch":{
+      const forge=item.kind==="forgeArch";
+      const height=forge?91:108,width=v===3?52:65;
+      for(const d of [-1,1]){
+        const u=d*width;
+        propRect("#2a2432",u-13,-height+18,26,height-12);
+        propRect(forge?"#775648":"#777077",u-11,-height+19,22,height-28);
+        for(let j=0;j<7;j++){propRect("#464153",u-12,-height+23+j*11,24,1);propRect("#9b8782",u-8,-height+22+j*11,11,1);}
+        propRect(edge,u-8,-height+52,4,15);
+        propRect("#4c3a43",u-7,-height+59,8,2);
+      }
+      wedge("#373240",[[-width-14,-height+25],[-width+5,-height+3],[-28,-height-11],[28,-height-11],[width-6,-height+3],[width+14,-height+26],[width-6,-height+32],[31,-height+13],[-31,-height+13],[-width+3,-height+31]]);
+      propRect(forge?"#98604e":"#8d797f",-28,-height-10,57,4);
+      propRect(forge?"#e9aa71":"#be9165",-5,-height+1,10,8);
+      if(forge){propRect("#57303a",-34,-14,68,11);propRect("#b37654",-24,-12,48,5);}
+      break;
+    }
+    case "house":
+    case "watchRoof":
+    case "rowhome":
+      house(ctx,x-(item.kind==="rowhome"?62:49),y,item.kind==="rowhome"?124:97,v%4);
+      if(item.kind==="rowhome"){
+        barrel(ctx,x+43,y-3);windowFrame(ctx,x-35,y-26);windowFrame(ctx,x+28,y-28);
+      }
+      break;
+    case "stall":
+      stall(ctx,x-32,y-28,v%2?["#476566","#cfc395","#79735d","#839973"]:["#925449","#d5a275","#8f5d4d","#bf8f6e"]);
+      crate(ctx,x+24,y+6);
+      break;
+    case "bench":
+    case "table":{
+      const width=item.kind==="table"?39:34;
+      if(item.kind==="table")oval(ctx,"#201d2690",x,y+1,46,9);
+      propRect(dark,-width,-8,width*2,12);
+      propRect(wood,-width,-19,width*2,11);
+      propRect(edge,-width+1,-20,width*2-2,2);
+      propRect("#89614e",-width+4,-15,width*2-8,1);
+      for(const d of [-width+4,width-7])propRect("#967052",d,-8,4,10);
+      if(item.kind==="table"){plate(ctx,x-17,y-18);plate(ctx,x+12,y-15);propRect("#a69068",7,-14,5,3);}
+      break;
+    }
+    case "well": well(ctx,x,y);break;
+    case "fountain":
+      wedge("#38383e",[[-31,-4],[-28,-22],[25,-22],[32,-5],[18,4],[-21,4]]);
+      propRect("#858078",-28,-21,53,4);
+      propRect("#445b64",-25,-16,48,10);
+      propRect("#779e97",-18,-13,32,2);
+      propRect("#aab5ae",-8,-30,8,13);
+      propRect("#5b8183",-6,-17,4,10);
+      break;
+    case "wellBorder":
+      oval(ctx,"#25333a77",x,y+1,45,18);
+      for(let j=0;j<7;j++)basalt(ctx,x-41+j*12,y+9+(j<3?j:6-j),13,7,noise(j,3,v));
+      break;
+    case "plazaMark":
+    case "courtSeal":{
+      const size=item.kind==="courtSeal"?(v?55:84):41, w=size,h=v?13:25;
+      wedge("#2926309c",[[-w,0],[0,-h],[w,0],[0,h]]);
+      wedge(v%2?"#764d54":"#8c755f",[[-w+4,-1],[0,-h+3],[w-4,-1],[0,h-4]]);
+      wedge("#433b48",[[-w+9,-1],[0,-h+7],[w-9,-1],[0,h-8]]);
+      const limb=v%2?28:37;
+      wedge("#9e7b649d",[[-limb,-4],[-limb+7,-9],[-7,0],[0,-7],[4,0],[limb-5,-9],[limb,-4],[0,8]]);
+      for(let d=-1;d<=1;d+=2)propRect("#baa486",Math.trunc(d*w*.64),-2,3,2);
+      break;
+    }
+    case "wayStripe":
+    case "ribbonStep":{
+      const ribbon=item.kind==="ribbonStep";
+      for(let j=0;j<5;j++){
+        const k=ribbon?j*18-45:j*12-29;
+        propRect(ribbon?"#5d494e":"#5f655d",k,-4,ribbon?18:12,9);
+        propRect(ribbon?"#907563":"#87866e",k+1,-6,ribbon?15:9,2);
+        propRect("#3a3c43",k+3,3,ribbon?12:7,2);
+      }
+      break;
+    }
+    case "baskets":
+      for(const [dx,dy,rx] of [[-14,-7,12],[12,-9,9],[8,5,13]]){
+        oval(ctx,"#362f3a",x+dx,y+dy+3,rx,8);oval(ctx,"#957653",x+dx,y+dy,rx-2,7);
+        oval(ctx,"#654e42",x+dx,y+dy-2,rx-4,4);
+        for(let j=-3;j<=3;j++)if(rx>10)propRect("#ac885d",dx+j*2,dy+1,1,3);
+      }
+      break;
+    case "brushwork":
+      for(let i=0;i<5;i++){
+        const dx=i*14-25,dy=(i%2)*8;
+        wedge(v?"#454f48c0":"#4438455c",[[dx,-2+dy],[dx+7,-13+dy],[dx+16,-7+dy],[dx+10,2+dy]]);
+        propRect(v?"#81906c":"#9f876e",dx+2,dy-3,8,1);
+      }
+      break;
+    case "dais":
+      wedge("#383746",[[-47,1],[-35,-13],[35,-13],[46,4],[29,10],[-29,10]]);
+      wedge("#74676b",[[-43,-2],[-32,-12],[33,-12],[43,0],[28,4],[-27,4]]);
+      propRect("#9c876f",-23,-12,45,2);propRect("#4e4550",-28,4,58,3);
+      if(v)propRect("#c8ab7c",-17,-10,34,2);
+      break;
+    case "rockClump":
+    case "rocks":
+      for(let j=0;j<4;j++)basalt(ctx,x-24+j*13,y-9-(j%3)*5,17,13,noise(j,v,17));
+      break;
+    case "floorRig":
+      for(const d of [-1,1]){
+        const w=26;
+        propRect("#282634",d*29-8,-38,17,39);
+        propRect("#595364",d*29-7,-38,13,37);
+        propRect("#907770",d*29-7,-38,12,2);
+        propRect("#a28562",d*w-2,-16,3,7);
+      }
+      propRect("#604b53",-36,-5,72,8);propRect("#867073",-35,2,70,1);
+      for(let j=0;j<6;j++)propRect("#b29566",-23+9*j,-3,3,2);
+      break;
+    case "roll":
+      propRect("#4e3f46",-29,-12,57,12);propRect("#96756a",-28,-15,55,3);
+      oval(ctx,"#c0a484",x-26,y-8,6,7);oval(ctx,"#70575a",x-27,y-8,3,4);break;
+    case "waterwheel": {
+      const phase=v?Math.floor(time/190)%8:0;
+      oval(ctx,"#252934",x-9,y-20,35,35);oval(ctx,"#896a53",x-9,y-20,31,31);
+      oval(ctx,"#443743",x-9,y-20,24,24);
+      for(let k=0;k<8;k++){
+        const a=(k+phase/8)*Math.PI/4;
+        const vx=Math.round(Math.sin(a)*24),vy=Math.round(Math.cos(a)*25);
+        for(let n=0;n<8;n++)propRect("#a48262",-10+vx*n/8,-21+vy*n/8,3,3);
+      }
+      propRect("#ae8b67",-17,-24,17,8);propRect("#573b3d",3,-12,27,12);break;
+    }
+    case "rail":
+      fence(ctx,x-34,y,69);
+      if(v%2)propRect("#8b6651",-21,-5,45,2);
+      break;
+    case "posts":
+    case "bridgehead":
+      for(const d of [-22,21]){propRect(dark,d-1,-21,9,23);propRect(wood,d,-24,6,24);propRect(edge,d-2,-25,10,3);}
+      propRect(v?"#ad8665":"#785841",-20,-12,44,3);
+      if(item.kind==="bridgehead")for(let i=0;i<4;i++)propRect("#6c6367",-25,-6+i*3,51,1);
+      break;
+    case "tree": (v===1?broadTree:v===2?windsweptPine:tallPine)(ctx,x,y,49+(item.col%7)*8);break;
+    case "bough": broadTree(ctx,x,y,17+v);sapling(ctx,x+30,y+9,21+v);break;
+    case "sap":
+      for(const d of [-21,9,28]){sapling(ctx,x+d,y,30+d);propRect("#8b6048",d-5,-7,8,5);}
+      break;
+    case "fallenLog": lowRoot(ctx,x-7,y);rocks(ctx,x+13,y-3);break;
+    case "cart":
+    case "cargo":
+      for(const d of [-14,18]){oval(ctx,dark,x+d,y,11,10);oval(ctx,"#8a6750",x+d,y,8,7);propRect("#493642",d-1,-7,2,14);}
+      propRect(dark,-35,-17,70,10);propRect(wood,-34,-21,65,14);
+      propRect(edge,-33,-21,63,3);propRect("#a97a54",29,-16,17,3);propRect("#5b423b",-31,-12,63,2);
+      for(let i=0;i<2;i++)crate(ctx,x-18+i*22,y-22-(v%2)*3);
+      break;
+    case "woodpile":
+      for(let q=0;q<8;q++){
+        const yy=-5-(q%3)*6,xx=-29+Math.floor(q/3)*23;
+        propRect("#59453f",xx,yy,23,6);propRect("#8b6a4e",xx,yy,20,2);propRect(edge,xx+20,yy,4,5);
+      }
+      break;
+    case "wash":
+    case "clothRail":
+      for(const d of [-34,33]){propRect(wood,d,-46,4,46);propRect(edge,d-1,-48,6,4);}
+      propRect("#a4896b",-33,-43,69,2);
+      for(let k=0;k<3;k++){
+        const a=-27+k*21,h=16+(k%2)*7;
+        const tint=(v?["#607983","#c3a885","#924f54"]:["#a98e73","#556c6b","#987070"])[k];
+        propRect(tint,a,-42,16,h);propRect("#c2a087",a+1,-41,14,1);
+        propRect("#623d44",a+3,-42+h-3,10,2);
+      }
+      if(item.kind==="wash")barrel(ctx,x-23,y+3);
+      break;
+    case "beds":
+      for(let j=0;j<3;j++){
+        const yy=-16+7*j;propRect("#4f433c",-25,yy,52,6);
+        for(let k=0;k<7;k++)propRect((j+k)%3?"#6f8058":"#b28d61",-22+7*k,yy-2,3,4);
+      }
+      break;
+    case "bunks":
+      propRect(dark,-18,-45,37,49);propRect(wood,-17,-43,35,44);propRect("#8b6856",-14,-39,28,37);
+      propRect("#bba38b",-11,-36,23,9);propRect(v===1?"#3f686c":"#834f50",-13,-24,27,21);
+      propRect(edge,-9,-23,4,19);break;
+    case "stoneYard":
+    case "stones":
+      for(let j=0;j<5;j++)basalt(ctx,x-31+13*j,y-3-((j+v)%3)*8,21,15,noise(j,v,x));
+      break;
+    case "bags":
+    case "bundles":
+      for(let j=0;j<3;j++){oval(ctx,"#463944",x+j*19-19,y-8+(j%2)*4,12,11);
+        oval(ctx,j%2?"#9e7e63":"#8b6e61",x+j*19-19,y-10+(j%2)*4,9,8);
+        propRect("#b79b77",j*19-25,-17+(j%2)*4,8,2);}
+      break;
+    case "hornStone":{
+      const direction=v===1?-1:1;
+      wedge("#201f2d95",[[-37,5],[31,-1],[direction*81,45],[direction*139,47],[direction*14,18]]);
+      const sx=direction;
+      wedge("#33303b",[[-26,6],[-29,-24],[-17,-40],[sx*8,-64],[sx*15,-93],[sx*32,-90],[sx*34,-66],[25,-45],[25,6]]);
+      wedge("#68616b",[[-21,0],[-21,-27],[-13,-39],[sx*11,-65],[sx*17,-90],[sx*26,-84],[sx*17,-62],[12,-42],[10,1]]);
+      propRect("#a98c79",-15,-13,24,2);
+      break;
+    }
+    case "throne":
+      fixture(ctx,{...item,kind:"seat",chapterProp:false},bank,time);
+      propRect("#483943",-46,-24,92,8);propRect("#a17863",-38,-25,72,2);break;
+    case "catafalque":
+      propRect("#25212f",-50,-4,106,9);propRect("#554956",-46,-8,94,7);propRect("#71636b",-46,-9,94,2);break;
+    case "armorStand":
+      propRect("#292735",-26,-12,52,14);propRect(pale,-23,-13,46,2);
+      wedge(dark,[[-35,-15],[-27,-62],[-17,-89],[11,-94],[29,-65],[37,-27],[24,-11],[-17,-9]]);
+      wedge(v?"#6c5a6a":iron,[[-25,-18],[-20,-58],[-11,-80],[11,-80],[25,-58],[26,-25],[18,-17]]);
+      for(let j=0;j<5;j++)propRect("#8c8084",-12+j%2*6,-69+j*8,19,2);
+      if(v===1)propRect("#b88763",-6,-65,2,40);
+      break;
+    case "pier":
+    case "hanging":{
+      const high=item.kind==="pier"?104:145,cap=item.kind==="pier"?-4:-38;
+      wedge("#211f2a93",[[-18,2],[19,4],[41,14],[73,14],[41,7],[25,0]]);
+      propRect("#2b293a",-14,-high,31,high+cap);
+      propRect(iron,-11,-high,22,high+cap);
+      propRect("#716575",-10,-high,4,high+cap);
+      for(let k=0;k<7;k++)propRect("#373441",-10,-high+11+k*11,22,2);
+      propRect("#73616d",-16,cap-7,34,5);
+      propRect("#342937",-18,cap-3,37,5);
+      break;
+    }
+    case "wallRelief":
+      propRect("#3a3042",-36,-66,72,64);
+      propRect("#8b6e68",-35,-66,70,3);
+      for(let k=0;k<4;k++){propRect(iron,-27+k*14,-57,10,43);propRect("#a28a83",-25+k*14,-43+k%2*5,5,2);}
+      wedge("#b79a71",[[-17,-27],[-8,-49],[0,-44],[8,-49],[17,-27],[1,-15]]);break;
+    case "rack":
+      for(const d of [-31,28]){propRect(dark,d-2,-52,8,56);propRect(wood,d,-50,4,53);}
+      propRect(edge,-30,-49,64,3);propRect(wood,-31,-30,63,5);propRect(wood,-32,-10,64,6);
+      for(let k=0;k<5;k++){
+        propRect(k%2?edge:iron,-24+k*10,-44+k%3*4,3,36);
+        if(k%3===1)propRect("#c0a695",-27+k*10,-41,9,4);
+      }
+      break;
+    case "urn":
+      oval(ctx,dark,x,y,13,5);
+      wedge(v%2?"#876260":"#776877",[[-9,0],[-14,-14],[-12,-27],[-8,-33],[8,-33],[13,-26],[13,-11],[10,0]]);
+      propRect("#af8a7d",-7,-32,15,2);propRect("#534150",-10,-14,22,2);
+      break;
+    case "forgeAnvil":
+      propRect(dark,-23,-12,46,15);propRect(wood,-20,-12,40,11);
+      wedge(iron,[[-26,-34],[33,-34],[23,-26],[7,-23],[7,-14],[-11,-14],[-11,-25],[-26,-25]]);
+      propRect("#95818a",-24,-34,55,3);
+      break;
+    case "hearth":
+      propRect("#463746",-31,-41,62,45);propRect(pale,-30,-41,59,3);
+      propRect(dark,-22,-30,44,29);propRect("#a35342",-14,-10,30,9);
+      fixture(ctx,{...item,kind:"fire",chapterProp:false},bank,time);
+      break;
+    case "pump":
+      propRect(dark,-14,-19,32,20);propRect("#7b6e77",-13,-20,28,17);
+      propRect("#a8a393",-1,-64,5,44);propRect(iron,2,-61,14,4);
+      propRect(edge,14,-61,3,22);break;
+    case "signpost": sign(ctx,x,y,"route");break;
+    case "lanternStand": lamp(ctx,x,y);break;
+    case "barrier":
+      propRect("#201f2baa",-24,-6,48,9);
+      propRect("#412f34",-24,-24,48,9);
+      propRect(v?"#9b7560":"#78584b",-24,-25,48,3);
+      propRect("#604741",-23,-21,46,3);
+      for(const a of [-21,13]){
+        propRect(dark,a,-29,7,31);
+        propRect(iron,a+1,-27,5,24);
+        propRect(edge,a+2,-22,2,2);
+      }
+      propRect("#936c54",-6,-18,13,2);
+      break;
+    case "body":
+      if(bank.stills[item.image]){
+        const image=bank.stills[item.image];
+        const {naturalWidth:w,naturalHeight:h}=image;
+        oval(ctx,"#17142199",x,y-6,Math.ceil(Math.max(w,h)/2)+10,12);
+        if(w>h)ctx.drawImage(image,x-Math.floor(w/2),y-h);
+        else {
+          // The original, upright stand-in is turned on the native grid.
+          ctx.save();ctx.translate(x+Math.floor(h/2),y-w+16);
+          ctx.rotate(Math.PI/2);
+          ctx.drawImage(image,0,0);ctx.restore();
+        }
+      }
+      break;
+    case "repairFlag": {
+      // Flag cloth is a scene prop. The pin and sewn band are separate pieces.
+      const frame=Math.floor(time/180)%4;
+      propRect(dark,-6,-91,9,94);propRect(edge,-4,-90,3,89);
+      wedge("#503743",[[0,-81],[32+frame,-82],[42+frame,-73],[37+frame,-64],[45+frame,-58],[0,-58]]);
+      wedge(v?"#a96559":"#895350",[[1,-80],[30+frame,-81],[40+frame,-73],[34+frame,-64],[39+frame,-61],[1,-61]]);
+      propRect("#ce9c74",17,-78,3,14);propRect("#c59b75",11,-72,13,3);
+      propRect(v?"#d1ad79":"#634352",29,-76,2,14);
+      if(v)for(let j=0;j<7;j++)propRect("#e9c58d",28+(j%2),-76+j*2,3,1);
+      break;
+    }
+    case "floorLight":
+      propRect("#343344",-16,-12,32,14);propRect("#74708a",-15,-13,30,2);
+      propRect(v?"#d5b47c":"#6e6371",-9,-9,18,2);
+      if(v)for(let n=0;n<6;n++)propRect(n%3?"#b5926678":"#e1c483c2",n*8-16,4+n%3*3,5,1);
+      break;
+    default:
+      fixture(ctx,{...item,chapterProp:false},bank,time);
+  }
+  if(item.glint){
+    const q=Math.floor(time/170)%6;
+    if(q<4){
+      propRect("#f5daa6",4,-31-q,1,6);
+      propRect("#f5daa6",2,-28-q,5,1);
+    }
+  }
+}
+function plate(ctx,x,y){
+  oval(ctx,"#39323c",x,y,8,4);oval(ctx,"#ad927f",x,y-1,7,3);oval(ctx,"#6c5654",x+1,y-1,4,2);
+}
+function chapterMotion(ctx,field,time) {
+  const theme=field.theme, beat=field.shot?.freeze?0:Math.floor(time/145);
+  if(theme==="road"||theme==="climb"){
+    const [minCol,minRow]=tileAt(field.camera.x,field.camera.y);
+    for(let row=Math.max(0,minRow);row<Math.min(field.grid.length,minRow+29);row++){
+      for(let col=Math.max(0,minCol);col<Math.min(field.grid[0].length,minCol+14);col++){
+        if(field.grid[row][col]!=="~")continue;
+        const n=noise(col,row,129);
+        if(n%3===0){
+          const [x,y]=tileTop(col,row);
+          rect(ctx,n%2?"#87a69d69":"#759da45d",x+6+(n+beat)%26,y+4+((n>>>8)+beat*3)%36,4+n%7,1);
+        }
+      }
+    }
+  }
+  for(const item of field.backdrop.props){
+    if(!["hearth","forgeArch","forgeAnvil","bough","woodpile","stoneYard"].includes(item.kind))continue;
+    const [x,y]=coordinate(item.col,item.row);
+    if(!field.visible(x,y))continue;
+    for(let k=0;k<5;k++){
+      const q=(beat+k*3+item.col)%15, warm=item.kind==="forgeArch"||item.kind==="hearth"||item.kind==="forgeAnvil";
+      rect(ctx,warm?"#d89a614c":"#bea28343",x+q*2-13+(k%2)*6,y-36-q*2,2+(q%3),1);
+    }
+  }
+}
+
 class Field {
   constructor(mode, bank, scene = {}) {
+    this.scroll=Boolean(scene.scroll);
+    this.camera={x:0,y:0};
+    this.shot=null;
+    this.backdrop=scene.backdrop;
+    this.theme=scene.theme;
     this.mode = mode;
     this.bank = bank;
     this.grid = scene.grid || (mode === "town" ? TOWN_GRID : ROAD_GRID);
     this.skin = scene.skin || mode;
-    this.gridBounds = FIELD_GRID;
+    this.gridBounds = this.scroll?{
+      ...FIELD_GRID,columns:this.grid[0].length,rows:this.grid.length,
+    }:FIELD_GRID;
     this.cellProps = scene.grid ? (scene.blocks || []) : mode === "town" ? TOWN_CELL_PROPS : ROAD_CELL_PROPS;
+    this.barriers=scene.barriers||[];
     this.npcs = (scene.npcs || (mode === "town" ? TOWN_NPCS : ROAD_NPCS)).map(npc => ({ ...npc }));
     this.objects = scene.objects || (mode === "town" ? TOWN_OBJECTS : ROAD_OBJECTS);
     this.lamps = scene.lamps || (mode === "town" ? TOWN_LAMPS : ROAD_LAMPS);
@@ -1174,6 +1672,12 @@ class Field {
     this.approach = null;
     this.approachPlayed = false;
     this.paused = false;
+    if(this.scroll){
+      this.scene=chapterBackdrop(scene,bank);
+      this.centerCamera(0);
+      this.ready=true;
+      return;
+    }
     this.scene = document.createElement("canvas");
     this.scene.width = WIDTH;
     this.scene.height = HEIGHT;
@@ -1217,10 +1721,10 @@ class Field {
   }
 
   walkable(col,row) {
-    if (row < FIRST_PLAYABLE_ROW || row > LAST_PLAYABLE_ROW) return false;
+    if(!this.scroll && (row < FIRST_PLAYABLE_ROW || row > LAST_PLAYABLE_ROW))return false;
     const cell=this.gridCell(col,row);
     const bridgeOpen=cell!=="u" || this.liftOpen || this.trail.some(([x,y])=>x===col && (y===10 || y===11));
-    return bridgeOpen && WALKABLE.has(cell) &&
+    return bridgeOpen && (this.scroll?ADV_WALK:WALKABLE).has(cell) &&
       !this.cellProps.some(([x,y])=>x===col && y===row) &&
       !this.npcs.some(npc=>npc.col===col && npc.row===row) &&
       !this.objects.some(object=>!object.walk && object.col===col && object.row===row);
@@ -1300,11 +1804,17 @@ class Field {
     this.cancelRoute();
     this.facings[0]=direction([col,row],[target.col,target.row]);
     this.interacting={npc:target,since:this.time};
-    return {label:target.label,line:target.pages[0],pages:target.pages,choices:target.choices,source,sheet:target.sheet,icon:target.icon,instant:target.instant,onEnd:target.onEnd,onSelect:target.onSelect};
+    const pages=typeof target.pages==="function"?target.pages():target.pages;
+    return {label:target.label,line:pages[0],pages,choices:target.choices,source,sheet:target.sheet,icon:target.icon,
+      instant:target.instant,onEnd:target.onEnd,onSelect:target.onSelect};
   }
 
   tap(x,y,time=this.time) {
-    if (this.paused || this.approach || this.interaction || x<LEFT || x>=LEFT+COLS*SIZE || y<120 || y>=TOP+(LAST_PLAYABLE_ROW+1)*SIZE) return null;
+    if(this.paused||this.approach||this.interaction)return null;
+    if(this.scroll){
+      x+=this.camera.x;y+=this.camera.y;
+      if(x<LEFT||x>=LEFT+this.gridBounds.columns*SIZE||y<TOP||y>=TOP+this.gridBounds.rows*SIZE)return null;
+    } else if(x<LEFT||x>=LEFT+COLS*SIZE||y<120||y>=TOP+(LAST_PLAYABLE_ROW+1)*SIZE)return null;
     const destination=tileAt(x,y);
     const clickedPerson=this.npcs.find(npc=>{
       const [cx,feet]=coordinate(npc.col,npc.row);
@@ -1313,7 +1823,8 @@ class Field {
     const clicked=clickedPerson ?? this.objects.find(object=>{
       const [cx,feet]=coordinate(object.col,object.row);
       const asset=object.image&&this.bank.stills[object.image];
-      const box=asset?[-Math.ceil(asset.naturalWidth/2),-asset.naturalHeight,Math.ceil(asset.naturalWidth/2),10]:object.bounds;
+      const whole=asset&&!(object.kind==="body"&&asset.naturalWidth<=asset.naturalHeight);
+      const box=whole?[-Math.ceil(asset.naturalWidth/2),-asset.naturalHeight,Math.ceil(asset.naturalWidth/2),10]:object.bounds;
       return inBox(x-cx,y-feet,box);
     });
     const origin=this.moving?.to[0] ?? this.trail[0];
@@ -1475,25 +1986,62 @@ class Field {
   draw(ctx,time=0) {
     this.update(time);
     ctx.imageSmoothingEnabled=false;
+    if(this.scroll) {
+      this.centerCamera(time);
+      rect(ctx,"#1b232b",0,0,WIDTH,HEIGHT);
+      ctx.save();
+      ctx.translate(-this.camera.x,-this.camera.y);
+    }
     ctx.drawImage(this.scene,0,0);
     this.sceneryMotion(ctx,time);
+    for(const item of this.barriers){
+      if(this.visible(...coordinate(item.col,item.row)))chapterProp(ctx,item,this.bank,time);
+    }
     for (const object of this.objects) {
-      if (object.kind || object.image) fixture(ctx,object,this.bank,time);
+      if(this.scroll&&!this.visible(...coordinate(object.col,object.row)))continue;
+      if (object.kind || object.image) fixture(ctx,object,this.bank,this.shot?.freeze?0:time);
     }
     this.drawPeople(ctx,time);
+    if(this.scroll){
+      for(const item of this.backdrop.front || []) {
+        if(this.visible(...coordinate(item.col,item.row)))chapterProp(ctx,item,this.bank,time);
+      }
+    }
     this.drawIndicator(ctx,time);
+    if(this.scroll)ctx.restore();
   }
 
   advance(time) { this.update(time); }
+
+  centerCamera(time) {
+    const [x,y]=coordinate(...this.trail[0]);
+    const progress=this.moving?Math.max(0,Math.min(1,(time-this.moving.start)/STEP_MS)):0;
+    const [tx,ty]=this.moving?coordinate(...this.moving.to[0]):[x,y];
+    let focusX=lerp(x,tx,progress),focusY=lerp(y,ty,progress);
+    if(this.shot?.focus){
+      const {x:fx,y:fy,weight}=this.shot.focus;
+      focusX=lerp(focusX,fx,weight);focusY=lerp(focusY,fy,weight);
+    }
+    const frame=(p,length,span)=>Math.round(length<=span?(length-span)/2:Math.min(length-span,Math.max(0,p-span/2)));
+    this.camera.x=frame(focusX,this.scene.width,WIDTH);
+    this.camera.y=frame(focusY,this.scene.height,HEIGHT);
+  }
+
+  visible(x,y) {
+    const {x:a,y:b}=this.camera;
+    return x>=a-186&&x<a+WIDTH+186&&y>=b-170&&y<b+HEIGHT+210;
+  }
 
   sceneryMotion(ctx,time) {
     const beat=Math.floor(time/100);
     for (const [col,row] of this.lamps) {
       const [x,y]=coordinate(col,row);
+      if(this.scroll&&!this.visible(x,y))continue;
       const tone=beat%6<2 ? "#ffe6a1" : "#ffd283";
       rect(ctx,tone,x-1,y-29,3,3);
       if (beat%7===2) rect(ctx,"#b4825538",x+5,y-29,4,2);
     }
+    if(this.scroll){chapterMotion(ctx,this,time);return;}
     if(this.mode==="canopy")for(const x of [5,6])for(const y of [10,11]) {
       const [a,b]=tileTop(x,y);
       if(this.liftOpen)deckTile(ctx,a,b,y,this.grid,x);
@@ -1528,7 +2076,7 @@ class Field {
   }
 
   drawPeople(ctx,time) {
-    const cast=this.npcs.map(npc=>{
+    const cast=this.npcs.filter(npc=>!this.shot?.hidden?.includes(npc.sheet)).map(npc=>{
       let [x,y]=coordinate(npc.col,npc.row);
       const talking=this.interacting?.npc===npc && (this.paused || time-this.interacting.since<2500);
       const facing=talking ? direction([npc.col,npc.row],this.trail[0]) : npc.facing;
@@ -1554,9 +2102,14 @@ class Field {
     });
     this.renderedParty=party.map(({x,y,index})=>({x,y,index}));
     cast.push(...party);
+    for(const a of this.shot?.actors||[]){
+      const [sx,sy]=coordinate(...a.from),[dx,dy]=coordinate(...a.to);
+      cast.push({x:lerp(sx,dx,a.q),y:lerp(sy,dy,a.q),facing:a.dir??direction(a.from,a.to),
+        col:a.q>0&&a.q<1?stepColumn(time):STAND,sheet:this.bank.npcs[a.art]});
+    }
     cast.sort((a,b)=>a.y-b.y || (b.index??9)-(a.index??9));
     for (const member of cast) {
-      if (!member.sheet) continue;
+      if (!member.sheet || this.scroll&&!this.visible(member.x,member.y)) continue;
       const x=Math.round(member.x);
       const y=Math.round(member.y);
       oval(ctx,"#151f29a6",x+1,y-2,12,4);

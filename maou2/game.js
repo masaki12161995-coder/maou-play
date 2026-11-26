@@ -93,6 +93,7 @@ class Game {
     const inFront=Boolean(this.panel||this.dialogue.isOpen||this.cinematic);
     const field=this.field, before=field.steps;
     field.setPaused(inFront);
+    if(field.scroll)field.shot=ch1Frame(this.cinematic,time);
     field.draw(this.surface,time);
     if(field.approach && this.input?.kind==="walk")this.release();
     const request=field.takeInteraction();
@@ -112,16 +113,22 @@ class Game {
   newGame(force=false) {
     if(this.book.get(0) && !force){this.open("newConfirm");return;}
     this.s=makeAdventure();
-    this.enter(START.area,START.trail);
+    this.s.ch1Layout=1;
+    this.enter(START.area,[AREAS[START.area].start]);
+    this.s.checkpoint={area:this.area.id,trail:this.field.party};
     this.autosave();
+    ch1Intro(this);
   }
   load(index) {
     const save=this.book.get(index);
     if(!save)return;
+    ch1Migrate(save);
     this.s=save;
     this.release();this.panel=null;this.battle=null;this.result=null;this.toast=null;this.cinematic=null;
     this.dialogue.close();this.enter(save.position.area,save.position.trail);
     if(save.pending)this.beginFight(save.pending);
+    else if(save.chapter===1&&this.area.id==="town"&&!save.flags.ch1Arrival)ch1Intro(this);
+    else ch1OnEntry(this);
     this.autosave();
   }
   saveSlot(index) {
@@ -151,7 +158,8 @@ class Game {
     const next=new Field(id,this.bank,{...scene,trail:trail.map(c=>[...c])});
     if(!next.walkable(...next.trail[0])) {
       const [x,y]=next.trail[0],options=[];
-      for(let row=4;row<=24;row++)for(let col=0;col<12;col++)if(next.walkable(col,row))options.push([col,row]);
+      const {columns,rows}=next.gridBounds;
+      for(let row=0;row<rows;row++)for(let col=0;col<columns;col++)if(next.walkable(col,row))options.push([col,row]);
       options.sort((a,b)=>(Math.abs(a[0]-x)+Math.abs(a[1]-y))-(Math.abs(b[0]-x)+Math.abs(b[1]-y)));
       next.trail=[options[0]||[...scene.start]];
     } else {
@@ -178,9 +186,11 @@ class Game {
     if(!AREAS[id]||(condition&&!condition()))return;
     this.release();this.dialogue.close();this.panel=null;this.cinematic=null;
     this.s.chapter=Math.max(this.s.chapter,AREAS[id].chapter);
-    this.enter(id,[spawn||AREAS[id].start]);
+    const entry=ch1EntryPoint(this.area?.id,id,spawn||AREAS[id].start);
+    this.enter(id,[entry]);
     if(AREAS[id].safe)this.s.checkpoint={area:id,trail:this.field.party};
     this.autosave();
+    if(this.area.scroll)ch1OnEntry(this);
   }
   open(id,details={}) {
     if(!this.s&&!["titleSave","newConfirm"].includes(id))return;
@@ -271,8 +281,14 @@ class Game {
     }
     const passage=this.area.exits.find(e=>e.col===x&&e.row===y);
     if(passage&&steppingHere){
-      this.travel(passage.to,passage.spawn,passage.condition);return;
+      if(this.area.scroll){
+        const door=this.field.objects.find(o=>o.col===x&&o.row===y&&o.sceneId?.startsWith("exit-"));
+        if(door)door.onEnd();
+        else this.travel(passage.to,passage.spawn,passage.condition);
+      }else this.travel(passage.to,passage.spawn,passage.condition);
+      return;
     }
+    if(this.area.scroll)return;
     if(!POOLS[id] || id==="gate"&&!f.body)return;
     if(this.area.objects.some(o=>o.boss && Math.abs(o.col-x)+Math.abs(o.row-y)<=4))return;
     this.s.walkCount=(this.s.walkCount||0)+1;
@@ -291,6 +307,7 @@ class Game {
     const q=(time-c.at)/c.duration;
     if(q>=1){this.cinematic=null;c.finish?.();return;}
     const ui=this.ui;
+    if(c.kind==="chapter1"){drawCh1Scene(this,this.surface,c,q);return;}
     if(c.kind==="starroot") {
       const paint=(x,y,side)=>{
         for(let k=0;k<17;k++)if(k<=Math.floor(q*18)) {
@@ -346,13 +363,13 @@ class Game {
     if(this.battle||this.s.pending||key&&this.s.flags[key])return;
     this.release();this.dialogue.close();this.panel=null;
     const seed=this.s.seed+":"+this.s.battles+":"+this.area.id+":"+codes.join("-");
-    const pending={codes,key,seed,boss:Boolean(key),scenario};
+    const pending={codes,key,seed,boss:scenario?.track==="ch1"?scenario.boss:Boolean(key),scenario};
     this.s.pending=pending;
     this.autosave();this.beginFight(pending);
   }
   beginFight(pending) {
     this.pending=pending;
-    const foes=pending.codes.map(code=>ENEMIES[code]);
+    const foes=pending.codes.map(code=>ch1Opponent(code,this.s.flags.ch1WardStyle));
     const sim=resolveFight(this.s,foes,pending.seed);
     this.battle=new Battle({...this.bank,people:this.s.formation.map(id=>this.bank.images[id]||null),
       enemies:foes.map(foe=>this.bank.images[foe.art])},sim,this.area.arena||this.area.skin,this.s.speed);
@@ -362,12 +379,14 @@ class Game {
   finishFight() {
     const {victorious,stalemate,reasons,health}=this.battle.demo, p=this.pending, s=this.s;
     const baseGold=p.boss?52+p.codes.length*8:7+p.codes.length*5;
-    const baseXp=p.boss?105+s.chapter*25:((s.chapter===1?30:21)+p.codes.length*8+s.chapter*3);
+    const baseXp=p.scenario?.track==="ch1"?p.scenario.xp:
+      p.boss?105+s.chapter*25:((s.chapter===1?30:21)+p.codes.length*8+s.chapter*3);
     const r=seeded(mixSeed(p.seed+":bundle")),mat=Object.keys(MATERIALS)[Math.floor(r()*4)],quantity=p.boss?3:1;
     const drop=victorious?loot(p.seed,["swordIron","bow","coat","shield","ring","lantern"]):null;
     for(let i=0;i<4;i++)if(s.formation[i])s.members[s.formation[i]].hp=health[i];
     s.lastFight=p.codes.slice();s.battles++;s.pending=null;s.walkCount=0;
-    this.result={victorious,stalemate,reasons,gold:0,xp:0,mat,quantity,item:null,chest:false};
+    this.result={victorious,stalemate,reasons,gold:0,xp:0,mat,quantity,item:null,chest:false,
+      chapterOneWin:victorious&&p.key==="B01"&&this.area.scroll};
     if(victorious){
       if(p.key)s.flags[p.key]=true;
       s.gold+=baseGold;applyXP(s,baseXp);s.materials[mat]+=quantity;
@@ -389,7 +408,11 @@ class Game {
     this.battle=null;this.pending=null;this.open("result");
     this.autosave();
   }
-  leaveResult() {this.result=null;this.panel=null;this.setScreen("field");}
+  leaveResult() {
+    const chapterOneWin=this.result?.chapterOneWin;
+    this.result=null;this.panel=null;this.setScreen("field");
+    if(chapterOneWin)ch1Tidings(this);
+  }
   selectSlot(slot) {
     const p=this.panel,formation=this.s.formation;
     if(p.bench){formation[slot]=p.bench;this.formationChanged();return;}

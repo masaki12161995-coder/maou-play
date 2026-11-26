@@ -58,11 +58,14 @@ function pageList(value) {
   const input = Array.isArray(value) ? value : [value];
   const pages = [];
   for (const entry of input) {
-    const value = trimLettering(entry);
+    const part=entry&&typeof entry==="object"?entry:null;
+    const value = trimLettering(part?part.text:entry);
     if (!value) continue;
     const lines = wrap(value, 21);
     for (let idx = 0; idx < lines.length; idx += 3) {
-      pages.push(lines.slice(idx, idx + 3));
+      const page=lines.slice(idx,idx+3);
+      if(part&&(part.label||part.sheet||part.icon))page.voice={label:part.label,sheet:part.sheet,icon:part.icon};
+      pages.push(page);
     }
   }
   return pages;
@@ -319,8 +322,9 @@ class Dialogue {
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     warmFrame(ctx, LEFT, top, WIDTH, 116);
-    const badge = this.drawBadge(ctx, entry, 30, top + 11);
-    if (entry.label) labels.push(label(entry.label, badge ? 74 : 34, top + 26, 16, PALETTE.title));
+    const voice=entry.pages[entry.pageIndex]?.voice || entry;
+    const badge = this.drawBadge(ctx, voice, 30, top + 11);
+    if (voice.label) labels.push(label(voice.label, badge ? 74 : 34, top + 26, 16, PALETTE.title));
     rectangle(ctx, "#84624b", 33, top + 46, 336, 1);
     rectangle(ctx, "#392c36", 33, top + 47, 336, 1);
 
