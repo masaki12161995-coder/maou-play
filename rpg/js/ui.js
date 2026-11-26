@@ -51,28 +51,59 @@ function choose(name, text, opts) {
   });
 }
 
-// ---------- 戦いの結果 ----------
+// ---------- 戦いの結果（お金・手に入れた物・与えたダメージ・成長を、ひと目で） ----------
+function heartImg(k) { const f = Object.values(BT.FOES).find(f => f.heart === k); return f ? f.img : null; }
+function heartIcon(k, size) { // 心の絵：その魔物の姿を丸い枠に入れる
+  const box = div("hicon", ""); box.style.width = box.style.height = d(size);
+  const im = IM[heartImg(k)]; if (im) { const e = document.createElement("img"); e.src = im.src; const sc = Math.min(size * 0.86 / im.naturalWidth, size * 0.86 / im.naturalHeight); e.style.width = d(im.naturalWidth * sc); e.style.height = d(im.naturalHeight * sc); box.appendChild(e); }
+  return box;
+}
 function result(r) {
   return new Promise(res => {
-    const L = newLayer("veil solid");
-    T(L, 0, 56, W, 34, r.win ? "勝利" : r.time ? "引き分け" : "全滅…", 26, "gold center");
-    let y = 100;
-    if (r.win) {
-      T(L, 24, y, 253, 18, `<span class="dim">お金</span>　<b>+${r.gold}</b> G`, 11, "num2"); y += 22;
-      for (const h of r.hearts) { T(L, 24, y, 253, 18, `<span class="heartnm">${BT.HEARTS[h].nm}</span>を手に入れた`, 11); y += 20; }
-      for (const it of r.items) { T(L, 24, y, 253, 18, `<span style="color:${DM.RANKCOL[BT.GEAR[it.id].rank]}">${GS.itemName(it)}</span>を手に入れた`, 11); y += 20; }
-      y += 8;
-      r.growth.forEach(g => {
-        const row = A(L, div("frame grow", ""), 12, y, 277, 40);
-        const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 30 * DM.K); fc.style.position = "absolute"; fc.style.left = d(4); fc.style.top = d(4); row.appendChild(fc);
-        T(row, 40, 3, 70, 16, g.nm, 10.5, "name");
-        const ups = g.ups.map(u => u.k === "hp" ? `HP<b>+${u.v}</b>` : `${STAT_SHORT[u.k]}<b>+${u.v}</b>`).join("　");
-        T(row, 40, 20, 232, 16, ups || '<span class="dim">変わりなし</span>', 9.5, "ups");
-        y += 44;
-      });
-    } else if (!r.time) {
-      T(L, 0, y + 20, W, 20, "宿で目を覚ました……", 11, "center dim");
+    const L = newLayer("veil solid result");
+    if (!r.win) {
+      T(L, 0, 250, W, 40, r.time ? "引き分け" : "全滅……", 26, "gold center");
+      T(L, 0, 300, W, 20, r.time ? "戦いを切り上げた" : "宿で目を覚ました", 11, "center dim");
+      L.onclick = () => { clearLayer(); res(); }; return;
     }
+    T(L, 0, 48, W, 34, "勝利", 26, "gold center");
+    if (r.turns) T(L, 200, 58, 89, 18, `${r.turns}ターン`, 9.5, "dim right");
+    let y = 90;
+    const money = A(L, div("frame rbox", ""), 12, y, 277, 28);
+    T(money, 10, 0, 60, 26, "お金", 9.5, "label");
+    T(money, 70, 0, 100, 26, `+${r.gold.toLocaleString()} G`, 13, "num2 gold");
+    T(money, 150, 0, 118, 26, `持っている ${GS.G.gold.toLocaleString()} G`, 9, "dim right");
+    y += 36;
+    T(L, 14, y, 200, 14, "手に入れた物", 9, "label"); y += 16;
+    const drops = [...r.hearts.map(h => ({ h })), ...r.items.map(it => ({ it }))];
+    if (!drops.length) { T(L, 14, y, 260, 24, "なし", 10, "dim"); y += 26; }
+    drops.forEach((dp, i) => {
+      const x = 12 + (i % 2) * 140, yy = y + Math.floor(i / 2) * 32, t = A(L, div("frame dtile", ""), x, yy, 137, 29);
+      if (dp.h) { A(t, heartIcon(dp.h, 23), 3, 2, 23, 23); T(t, 30, 0, 104, 27, `<span class="heartnm">${BT.HEARTS[dp.h].nm}</span>`, 9.5, ""); }
+      else { const g = BT.GEAR[dp.it.id]; A(t, DM.iconImg(g.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(dp.it)}</span>`, 9.5, "name"); }
+    });
+    y += Math.ceil(drops.length / 2) * 32 + 8;
+    T(L, 14, y, 200, 14, "与えたダメージ", 9, "label"); y += 16;
+    const max = Math.max(1, ...r.growth.map(g => g.dealt || 0));
+    r.growth.slice().sort((a, b) => (b.dealt || 0) - (a.dealt || 0)).forEach(g => {
+      const row = A(L, div("dmgrow", ""), 12, y, 277, 22);
+      const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 20 * DM.K); A(row, fc, 0, 1, undefined, undefined);
+      T(row, 26, 0, 56, 22, g.nm, 10, "name");
+      const bar = A(row, div("dbar", `<i style="width:${(g.dealt || 0) / max * 100}%"></i>`), 84, 8, 140, 6);
+      T(row, 228, 0, 49, 22, `${(g.dealt || 0).toLocaleString()}`, 10.5, "num2 right");
+      y += 24;
+    });
+    y += 6;
+    T(L, 14, y, 200, 14, "成長", 9, "label"); y += 16;
+    r.growth.forEach(g => {
+      const row = A(L, div("frame grow", ""), 12, y, 277, 28);
+      const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 22 * DM.K); A(row, fc, 3, 2, undefined, undefined);
+      T(row, 30, 0, 52, 26, g.nm, 10, "name");
+      const chips = g.ups.map(u => `<span class="upchip">${u.k === "hp" ? "HP" : BT.ST_NM[u.k]}<b>+${u.v}</b></span>`).join("");
+      const c = A(row, div("chips", chips || '<span class="dim">変わりなし</span>'), 84, 0, 190, 26); c.style.fontSize = d(8.5);
+      y += 31;
+    });
+    const nx = T(L, 0, Math.min(612, y + 4), W, 14, "▼", 9, "center gold blink");
     L.onclick = () => { clearLayer(); res(); };
   });
 }
@@ -132,41 +163,47 @@ function heartSummary(k) {
 }
 function member(L, redraw) {
   const h = BT.HEROES[who], m = GS.G.party[who];
-  const back = A(L, div("frame btn chip", "↩"), 12, 100, 30, 26); back.style.fontSize = d(13); back.onclick = () => { who = -1; slotSel = null; redraw(); };
-  const fc = DM.spriteBox(IM[h.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 40 * DM.K); A(L, fc, 48, 96, undefined, undefined);
-  T(L, 92, 98, 150, 20, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 13, "name");
-  T(L, 92, 118, 197, 16, `${BT.WTYPE[h.wt].nm}　<span class="k">HP</span> ${m.hp}　<span class="k">LP</span> ${m.lp}/${h.lp}`, 9.5, "num2");
-  // 能力値（もとの値。↑は上がりやすい）
+  const back = A(L, div("frame btn chip", "↩"), 12, 100, 30, 30); back.style.fontSize = d(13); back.onclick = () => { who = -1; slotSel = null; redraw(); };
+  const fc = DM.spriteBox(IM[h.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 44 * DM.K); A(L, fc, 48, 96, undefined, undefined);
+  T(L, 98, 98, 150, 22, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 14, "name");
+  T(L, 98, 120, 80, 16, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.HEARTS[m.heart].nm : ""}`, 9, "dim2");
+  // HPとLP
+  const hb = A(L, div("frame rbox", ""), 12, 140, 277, 26);
+  T(hb, 10, 0, 30, 24, "HP", 10, "k");
+  T(hb, 36, 0, 60, 24, `${m.hp}`, 13, "num2");
+  T(hb, 140, 0, 30, 24, "LP", 10, "k");
+  const pips = A(hb, div("lpips", Array.from({ length: h.lp }, (_, i) => `<i class="${i < m.lp ? "on" : ""}"></i>`).join("")), 164, 8, 106, 9);
+  // 能力値（装備・心を入れた値。↑は上がりやすい：緑＝本人、紫＝心）
   const S = BT.heroStats(BT.resolveHero(who, m));
   const heart = m.heart && BT.HEARTS[m.heart];
   BT.STATS.forEach((k, i) => {
-    const col = i % 2, row = Math.floor(i / 2), x = 12 + col * 140, y = 142 + row * 22;
-    const up = (h.up.includes(k) ? "↑" : "") + (heart && heart.up.includes(k) ? "↑" : "");
-    const box = A(L, div("frame sbox", ""), x, y, 136, 20);
-    T(box, 6, 0, 50, 18, BT.ST_NM[k], 9.5, "label");
-    T(box, 58, 0, 40, 18, `${S.st[k]}`, 11, "num2 right");
-    T(box, 102, 0, 30, 18, `<span class="upm">${up}</span>`, 9, "");
+    const col = i % 2, row = Math.floor(i / 2), x = 12 + col * 140, y = 172 + row * 27;
+    const box = A(L, div("frame sbox", ""), x, y, 137, 25);
+    T(box, 8, 0, 52, 23, BT.ST_NM[k], 10, "label");
+    T(box, 60, 0, 42, 23, `${S.st[k]}`, 13, "num2 right");
+    const up = (h.up.includes(k) ? '<span class="upm">↑</span>' : "") + (heart && heart.up.includes(k) ? '<span class="upm2">↑</span>' : "");
+    T(box, 106, 0, 28, 23, up, 10, "");
   });
   // 装備と心（ラベルの幅をそろえて縦に並べる）
   const slots = ["weapon", "armor", "sub", "acc", "heart"];
-  const ey = 236;
+  const ey = 284;
   slots.forEach((sl, i) => {
-    const y = ey + i * 34, row = A(L, div("frame slotrow" + (slotSel === sl ? " on" : ""), ""), 12, y, 277, 32);
-    T(row, 6, 0, 44, 30, SLOT_NM[sl], 9.5, "label");
+    const y = ey + i * 36, row = A(L, div("frame slotrow" + (slotSel === sl ? " on" : ""), ""), 12, y, 277, 34);
+    T(row, 8, 0, 44, 32, SLOT_NM[sl], 10, "label");
     if (sl === "heart") {
-      if (m.heart) { T(row, 52, 1, 220, 16, `<span class="heartnm">${BT.HEARTS[m.heart].nm}</span>`, 10.5, "name"); T(row, 52, 16, 220, 14, heartSummary(m.heart), 8.5, "dim2"); }
-      else T(row, 52, 0, 220, 30, "なし", 10, "dim");
+      if (m.heart) { A(row, heartIcon(m.heart, 24), 50, 4, 24, 24); T(row, 80, 2, 192, 16, `<span class="heartnm">${BT.HEARTS[m.heart].nm}</span>`, 11, "name"); T(row, 80, 17, 192, 14, heartSummary(m.heart), 8.5, "dim2"); }
+      else T(row, 54, 0, 220, 32, "なし", 10.5, "dim");
     } else {
       const it = m.gear[sl];
       if (it) {
-        const g = BT.GEAR[it.id], ic = DM.iconImg(g.icon, 22 * DM.K); A(row, ic, 50, 4, undefined, undefined);
-        T(row, 76, 1, 196, 16, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, 10.5, "name");
-        T(row, 76, 16, 196, 14, itemSummary(it), 8.5, "dim2");
-      } else T(row, 52, 0, 220, 30, "なし", 10, "dim");
+        const g = BT.GEAR[it.id], ic = DM.iconImg(g.icon, 24 * DM.K); A(row, ic, 50, 4, undefined, undefined);
+        T(row, 80, 2, 192, 16, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, 11, "name");
+        T(row, 80, 17, 192, 14, itemSummary(it), 8.5, "dim2");
+      } else T(row, 54, 0, 220, 32, "なし", 10.5, "dim");
     }
     row.onclick = () => { slotSel = slotSel === sl ? null : sl; redraw(); };
   });
-  if (slotSel) candidates(L, redraw, ey + slots.length * 34 + 4);
+  if (slotSel) candidates(L, redraw, ey + slots.length * 36 + 4);
 }
 function candidates(L, redraw, y0) {
   const h = BT.HEROES[who], m = GS.G.party[who], G = GS.G, sl = slotSel, list = [];
@@ -180,9 +217,9 @@ function candidates(L, redraw, y0) {
       list.push({ icon: g.icon, html: `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, sub: itemSummary(it), act: () => { G.bag.splice(G.bag.indexOf(it), 1); if (m.gear[sl]) G.bag.push(m.gear[sl]); m.gear[sl] = it; } });
     });
   }
-  const box = A(L, div("frame cands", ""), 12, y0, 277, Math.max(34, Math.min(5, list.length) * 34 + 4));
+  const box = A(L, div("frame cands", ""), 12, y0, 277, Math.max(34, Math.min(4, list.length) * 34 + 4));
   if (!list.length) { T(box, 10, 4, 257, 26, sl === "weapon" ? `使える${BT.WTYPE[h.wt].nm}を持っていない` : "替えられる物を持っていない", 9.5, "dim"); return; }
-  list.slice(0, 5).forEach((c, i) => {
+  list.slice(0, 4).forEach((c, i) => {
     const r = A(box, div("cand2", ""), 2, 2 + i * 34, 273, 32);
     if (c.icon) A(r, DM.iconImg(c.icon, 22 * DM.K), 38, 4, undefined, undefined);
     if (c.nm) T(r, 52, 0, 200, 32, c.nm, 10.5, "name");

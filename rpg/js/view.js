@@ -29,6 +29,8 @@ const EL = { 斬: "#9aa0b4", 打: "#b8925a", 突: "#5f8fb0", 熱: "#d8573a", 冷
 const IM = window.IMG;
 
 let st = null, fast = false, autoMode = "normal", autoOn = false, support = true, active = false, onEnd = null;
+try { const a = JSON.parse(localStorage.getItem("rpgAuto") || "{}"); if (a.mode) autoMode = a.mode; autoOn = !!a.on; fast = !!a.fast; } catch (e) {}
+const keepAuto = () => { try { localStorage.setItem("rpgAuto", JSON.stringify({ mode: autoMode, on: autoOn, fast })); } catch (e) {} };
 let last = 0, busy = false, pose = {}, fx = {}, scene = null, ended = false, cmdIdx = 0;
 const SCENES = { road: () => makeScene(), grass: () => dungeonScene("grass"), meadow: () => dungeonScene("meadow"), canopy: () => dungeonScene("canopy"), gold: () => dungeonScene("gold"), stone: () => dungeonScene("stone") };
 const d = DM.d, px = DM.px, div = DM.div, spriteBox = DM.spriteBox, icon = DM.icon;
@@ -87,9 +89,13 @@ function refresh() {
   for (const u of st.foes) els.foeHit[u.id].style.pointerEvents = u.down ? "none" : "auto";
   const cmdOn = commanding();
   if (cmdOn) { const al = aliveIdx(); if (!al.includes(cmdIdx)) cmdIdx = al[0]; }
-  els.panel.innerHTML = ""; els.panel.style.display = cmdOn ? "block" : "none";
-  if (cmdOn) buildPanel(st.party[cmdIdx]);
-  buildBar(cmdOn);
+  // 下の枠とボタンは、見た目が変わるときだけ作り直す（作り直しの最中に押すと、押したことが消えてしまうため）
+  const u = st.party[cmdIdx];
+  const pk = cmdOn ? [cmdIdx, u.hp, u.bp, u.lp, st.cmd[u.id] || "", st.party.map(p => (st.cmd[p.id] ? 1 : 0) + (p.down ? 2 : 0)).join("")].join("|") : "off";
+  if (pk !== els.pk) { els.pk = pk; els.panel.innerHTML = ""; els.panel.style.display = cmdOn ? "block" : "none"; if (cmdOn) buildPanel(u); }
+  const canRep = cmdOn && Object.keys(st.lastCmd).length > 0, canBack = cmdOn && cmdIdx > aliveIdx()[0];
+  const bk = [cmdOn, autoOn, autoMode, support, fast, canRep, canBack, ended].join("|");
+  if (bk !== els.bk) { els.bk = bk; buildBar(cmdOn); }
 }
 function buildPanel(u) {
   const P = els.panel, A = (cls, html, x, y, w, h) => { const e = px(div("px " + cls, html), x, y, w, h); P.appendChild(e); return e; };
@@ -122,14 +128,14 @@ function buildBar(cmdOn) {
   if (!autoOn) btn("↩", 12, 34, cmdOn && cmdIdx > aliveIdx()[0] ? back : null, cmdOn && cmdIdx > aliveIdx()[0] ? "" : "dim").style.fontSize = d(13);
   const ab = btn("", autoOn ? 12 : 50, autoOn ? 142 : 104, null, "auto" + (autoOn ? " lit" : ""));
   const sw = div("sw", "⟳"); sw.style.width = sw.style.height = d(16); sw.style.fontSize = d(10);
-  sw.onclick = e => { e.stopPropagation(); autoMode = autoMode === "normal" ? "full" : "normal"; refresh(); };
+  sw.onclick = e => { e.stopPropagation(); autoMode = autoMode === "normal" ? "full" : "normal"; keepAuto(); refresh(); };
   const lb = div("lb", autoMode === "normal" ? "通常AUTO" : "全力AUTO");
   ab.appendChild(sw); ab.appendChild(lb);
-  ab.onclick = () => { if (ended) return; autoOn = !autoOn; refresh(); if (autoOn && st.phase === "command" && !busy) go(); };
+  ab.onclick = () => { if (ended) return; autoOn = !autoOn; keepAuto(); refresh(); if (autoOn && st.phase === "command" && !busy) go(); };
   btn(`補助/防御 <b>${support ? "ON" : "OFF"}</b>`, 158, 76, () => { support = !support; refresh(); }, "two");
   const canRep = cmdOn && Object.keys(st.lastCmd).length;
   if (!autoOn) btn("Repeat", 238, 51, canRep ? repeat : null, "rep" + (canRep ? "" : " dim"));
-  else btn(fast ? "▶▶▶" : "▶▶", 238, 51, () => { fast = !fast; refresh(); }, "ff" + (fast ? " lit" : ""));
+  else btn(fast ? "▶▶▶" : "▶▶", 238, 51, () => { fast = !fast; keepAuto(); refresh(); }, "ff" + (fast ? " lit" : ""));
 }
 function aliveIdx() { return st.party.map((p, i) => i).filter(i => !st.party[i].down); }
 function pick(key) {
@@ -192,7 +198,9 @@ function draw(t) {
     for (const u of [...st.party].sort((a, b) => heroPos(a).y - heroPos(b).y)) { // 仲間（左向き）。奥から描く
       const p = heroPos(u), img = IM[u.img], f = fx[u.id] || {}, ps = pose[u.id];
       let col = 1, row = 1, ox = 0;
+      const sp = spin[u.id];
       if (u.down) { col = 2; row = 4; }
+      else if (sp && t >= sp.t0 && t < sp.t1) { row = [1, 0, 2, 3, 1][Math.min(4, Math.floor((t - sp.t0) / (sp.t1 - sp.t0) * 5))]; }
       else if (ps && ps.until > t) { row = 4; col = ps.kind === "magic" ? 0 : 1; if (ps.kind === "phys") ox = -6; }
       if (f.shake > t) ox += Math.round(Math.sin(t / 18) * 2);
       const fw = SHEET.fw * Q, fh = SHEET.fh * Q;
@@ -320,11 +328,31 @@ function start(wave, roster, lo, done) {
   scene = (SCENES[wave.bg] || SCENES.grass)(); buildHud();
   if (autoOn) setTimeout(go, 600);
 }
-function result() {
-  const s = st; active = false; hud.innerHTML = "";
-  if (onEnd) onEnd(s);
+function result() { if (onEnd) onEnd(st); }
+// 勝ったあと：能力が上がった人はくるっと回り、上がった能力をその場で見せる（本家と同じ見せ方）。そのあと結果の画面へ
+let spin = {};
+function finish(growth) {
+  return new Promise(res => {
+    const done = () => { active = false; hud.innerHTML = ""; spin = {}; res(); };
+    if (!growth || !growth.some(g => g.ups.length)) { setTimeout(done, st.over === "win" ? 500 : 200); return; }
+    els.panel.style.display = "none"; els.bar.style.display = "none";
+    const now = performance.now();
+    growth.forEach((g, i) => {
+      const u = st.party.find(p => p.hi === g.hi); if (!u || !g.ups.length) return;
+      const t0 = now + i * 180; spin[u.id] = { t0, t1: t0 + 640 };
+      const p = heroPos(u);
+      g.ups.forEach((up, k) => setTimeout(() => {
+        const nm = up.k === "hp" ? "HP" : BT.ST_NM[up.k];
+        const e = div("growpop", `${nm}<b>+${up.v}</b>`); e.style.left = d(p.x); e.style.top = d(p.y - 34 - k * 11); e.style.fontSize = d(8.5);
+        hud.appendChild(e);
+      }, i * 180 + 380 + k * 160));
+    });
+    const total = Math.max(...growth.map((g, i) => i * 180 + 380 + g.ups.length * 160)) + 1300;
+    const veil = px(div("px skipveil", ""), 0, 0, W, H); hud.appendChild(veil);
+    let t = setTimeout(done, total); veil.onclick = () => { clearTimeout(t); done(); };
+  });
 }
 if (DEV) DEV_ERR = devCheck();
 requestAnimationFrame(draw);
-window.BV = { start, get active() { return active; } };
+window.BV = { start, finish, get active() { return active; } };
 })();

@@ -211,19 +211,43 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .ico{position:absolute;image-rendering:pixelated}
 .cardframe{position:fixed;inset:0;width:100vw;height:100vh;border:0;z-index:50;background:#14111a}
 .dimchip{color:#a89a86;opacity:.8}
+
+.growpop{position:absolute;transform:translate(-50%,0);color:#9dff8a;font-weight:900;white-space:nowrap;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000;pointer-events:none;animation:growup 1.6s ease-out forwards;font-family:"Hiragino Sans",system-ui,sans-serif}
+.growpop b{color:#fff;margin-left:2px;font-family:"Avenir Next",system-ui,sans-serif}
+@keyframes growup{0%{opacity:0;transform:translate(-50%,6px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}25%{transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
+.skipveil{pointer-events:auto}
+.result .label{color:#c9a46c;font-weight:800;letter-spacing:.06em}
+.rbox{box-sizing:border-box;background:#15141e}
+.dtile{box-sizing:border-box;background:#15141e;overflow:hidden}
+.hicon{position:absolute;border-radius:50%;background:radial-gradient(circle at 50% 45%,#5a3a7a,#2a1a3a);box-shadow:0 0 0 1px #b07ae8;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hicon img{image-rendering:pixelated}
+.dmgrow{position:absolute}
+.dbar{position:absolute;background:#2a2430;border-radius:2px;overflow:hidden}
+.dbar i{display:block;height:100%;background:linear-gradient(90deg,#c9963a,#ffd88a)}
+.chips{position:absolute;display:flex;align-items:center;gap:3px;flex-wrap:nowrap;overflow:hidden}
+.upchip{background:#1e3a22;border:1px solid #4a9a54;color:#bff0b4;border-radius:3px;padding:0 4px;line-height:1.6;white-space:nowrap;font-family:"Hiragino Sans",system-ui,sans-serif;font-weight:700}
+.upchip b{color:#fff;margin-left:1px;font-family:"Avenir Next",system-ui,sans-serif}
+.t.gold{color:#ffd88a;font-weight:800}
+.blink{animation:blink .7s ease-in-out infinite alternate}
+@keyframes blink{from{opacity:.35}to{opacity:1}}
+.t.k{color:#8fd0c4;font-weight:800}
+.lpips{position:absolute;display:flex;gap:3px;align-items:center}
+.lpips i{flex:1;height:100%;background:#2a2a36;border-radius:1px;box-shadow:inset 0 0 0 1px #4a4a5a}
+.lpips i.on{background:#6ad0ff;box-shadow:none}
+.upm2{color:#d8a8ff;font-weight:900}
 </style>
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/dom.js?v=32"></script>
-<script src="js/engine.js?v=32"></script>
-<script src="js/scene.js?v=32"></script>
-<script src="js/tiles.js?v=32"></script>
-<script src="js/game.js?v=32"></script>
-<script src="js/maps.js?v=32"></script>
-<script src="js/view.js?v=32"></script>
-<script src="js/ui.js?v=32"></script>
-<script src="js/field.js?v=32"></script>
-<script src="js/main.js?v=32"></script>
+<script src="js/dom.js?v=34"></script>
+<script src="js/engine.js?v=34"></script>
+<script src="js/scene.js?v=34"></script>
+<script src="js/tiles.js?v=34"></script>
+<script src="js/game.js?v=34"></script>
+<script src="js/maps.js?v=34"></script>
+<script src="js/view.js?v=34"></script>
+<script src="js/ui.js?v=34"></script>
+<script src="js/field.js?v=34"></script>
+<script src="js/main.js?v=34"></script>
 </body>
 </html>

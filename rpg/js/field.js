@@ -195,20 +195,21 @@ async function after(f, st, wave) {
   const g = G();
   for (const u of st.party) g.party[u.hi].lp = Math.max(0, u.lp);
   if (st.over === "win") {
-    const rng = Math.random, growth = st.party.map(u => ({ nm: u.nm, img: u.img, ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng) }));
+    const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng) }));
+    await BV.finish(growth);
     const rw = BT.rewards(st, rng);
     g.gold += rw.gold; rw.hearts.forEach(k => { g.hearts[k] = (g.hearts[k] || 0) + 1; }); rw.items.forEach(it => g.bag.push(GS.item(it.id, it.b, it.tag)));
     g.wins++; f.alive = false; if (f.def.boss) g.flags.boss = 1;
     GS.save();
-    await UI.result({ win: true, gold: rw.gold, hearts: rw.hearts, items: rw.items, growth });
+    await UI.result({ win: true, gold: rw.gold, hearts: rw.hearts, items: rw.items, growth, turns: st.turn });
     active = true; hudBuild(); grace = performance.now() + 1200; busy = false; fadeIn();
     if (f.def.boss) { await UI.say("", ["坑道の主を倒した！", "これで街道の荷車も通れるはずだ。町の長に知らせよう。"]); }
   } else if (st.over === "lose") {
-    await UI.result({ win: false });
+    await BV.finish(null); await UI.result({ win: false });
     g.gold = Math.floor(g.gold / 2); GS.restAll(); GS.save();
     active = true; busy = false; enter("town", 6, 13, 3); fadeIn();
   } else {
-    await UI.result({ win: false, time: true });
+    await BV.finish(null); await UI.result({ win: false, time: true });
     active = true; hudBuild(); grace = performance.now() + 1500; busy = false; fadeIn();
   }
 }
