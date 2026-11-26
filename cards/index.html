@@ -34,8 +34,8 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .card .art{position:absolute;left:6%;right:6%;top:14%;bottom:20%;overflow:hidden;background:radial-gradient(circle at 50% 60%,#ffffff30,#0000 70%)}
 .card .art img{position:absolute;left:50%;transform:translateX(-50%);image-rendering:pixelated}
 .card .n{position:absolute;font-family:"Avenir Next",system-ui,sans-serif;font-weight:800;color:#fff;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000;line-height:1;text-align:center}
-.card .stars{position:absolute;left:3px;top:2px;color:#ffe08a;font-size:9px;text-shadow:0 1px 0 #000;letter-spacing:-1px}
-.card .qk{position:absolute;left:0;right:0;bottom:0;text-align:center;background:#0009;color:#ffe9b8;font-size:9px;padding:1px 0 2px}
+.card .stars{position:absolute;left:3px;top:2px;color:#ffe08a;font-size:9px;font-weight:800;font-family:"Avenir Next",system-ui,sans-serif;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000;line-height:1}
+.card .qk{position:absolute;left:0;right:0;bottom:0;text-align:center;white-space:nowrap;overflow:hidden;background:#0009;color:#ffe9b8;font-size:9px;padding:1px 0 2px}
 .card .shield{position:absolute;right:3px;top:3px;width:12px;height:12px;border-radius:2px;background:#ffe08a;box-shadow:0 0 0 1px #000;display:none}
 .card.shielded .shield{display:block}
 .card.sel{outline:3px solid #ffe08a;outline-offset:1px;transform:translateY(-8px)}
@@ -52,6 +52,27 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .mark.t{background:#ffe08a;color:#3a2a10;left:50%;transform:translateX(-50%);bottom:-15px}
 .mark.d{background:#ff5b5b;color:#fff;left:50%;transform:translateX(-50%);bottom:-15px}
 /* town */
+.opp2{display:flex;align-items:center;gap:6px;padding:5px 6px;min-height:72px}
+.opp2 .who{width:44px;height:58px;flex:none;position:relative;overflow:hidden}
+.opp2 .info{flex:1;min-width:0}
+.opp2 .nm{font-size:13px;font-weight:700;line-height:1.25}
+.opp2 .sub{font-size:11px;color:var(--sub)}
+.opp2.out{opacity:.45}
+.book{display:grid;grid-template-columns:repeat(5,1fr);gap:8px 4px;justify-items:center;align-content:start;flex:1}
+.bk1{display:flex;flex-direction:column;align-items:center;gap:2px}
+.bk1 .no{font-size:10px;color:var(--sub);font-family:"Avenir Next",system-ui,sans-serif}
+.card.shadow{background:#0004;border-color:#3a3038;border-style:dashed}
+.card.shadow .art img{filter:brightness(0) opacity(.55)}
+.card.shadow .q{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5a4d52;font-size:22px;font-weight:800}
+.pager{display:flex;align-items:center;gap:8px}
+.pager .btn{width:52px;padding:10px 0}
+.dots{flex:1;display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.dots i{width:9px;height:9px;border-radius:50%;background:#4a3d3a}
+.dots i.on{background:var(--gold)}
+.card.glow{animation:glw 1.6s linear infinite}
+@keyframes glw{0%,100%{box-shadow:0 0 0 2px #e8f2ff,0 0 6px #bcd6ff}50%{box-shadow:0 0 0 2px #fff6d0,0 0 14px #ffe9a8}}
+.card.glow .face{background:linear-gradient(160deg,#9aa8bd,#4b5566)!important}
+.card.sealed .qk{text-decoration:line-through;opacity:.6}
 .opp{display:flex;align-items:center;gap:10px;padding:8px}
 .opp .who{width:72px;height:90px;flex:none;position:relative;overflow:hidden}
 .opp .info{flex:1;min-width:0}
@@ -116,6 +137,8 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 </head>
 <body>
 <div id="app"></div>
-<script src="cards.js"></script>
+<script src="cards-data.js?v=3"></script>
+<script src="rules.js?v=3"></script>
+<script src="cards.js?v=3"></script>
 </body>
 </html>
