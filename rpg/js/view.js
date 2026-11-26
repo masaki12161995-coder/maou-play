@@ -57,7 +57,7 @@ function buildHud() {
   hud.innerHTML = ""; els = {};
   els.top = px(div("px topbar", ""), 0, 44, W, 16); hud.appendChild(els.top);
   els.info = px(div("px info", ""), 0, 62, W, 32); hud.appendChild(els.info);
-  els.banner = px(div("px skillname", ""), 40, 98, 221, 18); els.banner.style.fontSize = d(11); hud.appendChild(els.banner);
+  els.banner = px(div("px skillname", ""), 0, 99, W, 24); els.banner.style.fontSize = d(11.5); hud.appendChild(els.banner);
   els.foeHit = {};
   st.foes.forEach(u => {
     const b = foeBox(u);
@@ -113,10 +113,14 @@ function buildPanel(u) {
     const s = BT.SKILLS[k], ok = s.bp <= u.bp, at = s.at || (s.kind === "攻撃" ? BT.WTYPE[u.wt].at : []);
     const row = div("srow" + (ok ? "" : " dim") + (st.cmd[u.id] === k ? " sel" : "") + (u.heart && j === keys.length - 1 ? " heart" : ""), "");
     px(row, 4, 3 + j * 25.6, 269, 24.6);
+    const rank = s.kind === "攻撃" ? (s.rank && s.rank !== "N" ? s.rank : "—") : null;
+    const dist = s.dist || (s.magic ? "遠" : "");
     row.innerHTML = `<span class="ic" style="left:${d(4)};width:${d(26)}">${at.map(a => icon(a, 11)).join("")}</span>` +
-      `<span class="sn" style="left:${d(34)};font-size:${d(11)}">${s.nm}</span>` +
-      `<span class="rg" style="left:${d(150)};font-size:${d(7.5)}">${BT.RANGE_NM[s.tg]}${s.kind && s.kind !== "攻撃" ? "・" + s.kind : ""}</span>` +
-      `<span class="bp" style="right:${d(8)};font-size:${d(10)}">${s.bp ? "BP " + s.bp : ""}</span>`;
+      `<span class="sn" style="left:${d(32)};font-size:${d(11)}">${s.nm}</span>` +
+      (rank ? `<span class="rk" style="left:${d(128)};font-size:${d(8)}">威力<b style="font-size:${d(10)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(128)};font-size:${d(8.5)}">${s.kind}</span>`) +
+      `<span class="rg" style="left:${d(168)};font-size:${d(8.5)}">${BT.RANGE_NM[s.tg]}</span>` +
+      (dist ? `<span class="ds ${dist === "近" ? "near" : "far"}" style="left:${d(202)};font-size:${d(8)};width:${d(13)};height:${d(13)};line-height:${d(13)}">${dist}</span>` : "") +
+      `<span class="bp" style="right:${d(6)};font-size:${d(10)}">${s.bp ? "BP" + s.bp : ""}</span>`;
     if (ok) row.onclick = () => pick(k);
     listBox.appendChild(row);
   });
@@ -281,6 +285,19 @@ function note(u, text) {
   hud.appendChild(e); setTimeout(() => e.remove(), 1200);
 }
 
+// 技の名前：だれが使ったか分かるように、顔（敵は姿）と属性を添えて上の帯の下に出す
+function showBanner(a, e) {
+  els.banner.innerHTML = ""; els.banner.classList.toggle("on", !!e.sk); els.banner.classList.toggle("foe", a.side === 1);
+  if (!e.sk) return;
+  const box = div("sbn", ""); box.style.height = d(22); box.style.padding = `0 ${d(10)} 0 ${d(3)}`; box.style.gap = d(5);
+  if (a.side === 0) { const fc = spriteBox(IM[a.img], FACE[0], FACE[1], FACE[2], FACE[3], 18 * DM.K); fc.style.flex = "none"; box.appendChild(fc); }
+  else { const im = IM[a.img], sc = Math.min(18 / im.naturalWidth, 18 / im.naturalHeight), i = document.createElement("img"); i.src = im.src; i.style.cssText = `width:${d(im.naturalWidth * sc)};height:${d(im.naturalHeight * sc)};image-rendering:pixelated;transform:scaleX(-1);flex:none`; box.appendChild(i); }
+  const s = BT.SKILLS[e.skill] || {}, at = s.at || [];
+  box.appendChild(div("sbn-nm", e.nm));
+  if (at.length) box.appendChild(div("sbn-at", at.map(x => icon(x, 11)).join("")));
+  els.banner.appendChild(box);
+}
+
 // ---------- 進める ----------
 const wait = ms => new Promise(r => setTimeout(r, ms / spd()));
 async function turn() {
@@ -293,7 +310,7 @@ async function turn() {
   for (const e of evs) {
     if (e.t === "act") {
       const a = byId(e.u);
-      els.banner.innerHTML = e.sk ? e.nm : ""; els.banner.classList.toggle("on", !!e.sk);
+      showBanner(a, e);
       if (a.side === 0) pose[a.id] = { kind: e.magic || e.kind === "回復" || e.kind === "防御" ? "magic" : "phys", until: now() + 650 / spd() };
       else fx[a.id] = { ...(fx[a.id] || {}), lunge: now() + 220 / spd() };
       await wait(e.sk ? 360 : 220);

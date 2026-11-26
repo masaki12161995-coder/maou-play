@@ -16,6 +16,9 @@ const S = {
   load() {
     try { const t = localStorage.getItem(KEY); S.G = t ? JSON.parse(t) : fresh(); } catch (e) { S.G = fresh(); }
     if (!S.G || S.G.v !== 1) S.G = fresh();
+    // 古い記録の直し：おまけの名前が欠けていたもの（精神のおまけ）を付け直す
+    const fix = it => { if (it && it.b && (!it.tag || it.tag.includes("undefined"))) { const k = Object.keys(it.b)[0]; it.tag = "(" + BT.BONUS[k] + (it.b[k] >= 4 ? "+" : "") + ")"; } };
+    S.G.bag.forEach(fix); S.G.party.forEach(m => Object.values(m.gear).forEach(fix));
     uid = 1 + Math.max(0, ...S.G.bag.map(i => i.u), ...S.G.party.flatMap(m => Object.values(m.gear).filter(Boolean).map(i => i.u)));
     return S.G;
   },

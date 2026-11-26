@@ -195,7 +195,7 @@ async function after(f, st, wave) {
   const g = G();
   for (const u of st.party) g.party[u.hi].lp = Math.max(0, u.lp);
   if (st.over === "win") {
-    const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng) }));
+    const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, taken: u.taken, healed: u.healed, ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng) }));
     await BV.finish(growth);
     const rw = BT.rewards(st, rng);
     g.gold += rw.gold; rw.hearts.forEach(k => { g.hearts[k] = (g.hearts[k] || 0) + 1; }); rw.items.forEach(it => g.bag.push(GS.item(it.id, it.b, it.tag)));

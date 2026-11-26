@@ -106,7 +106,7 @@ const GEAR = {
   charm:     { slot: "acc", nm: "お守り", rank: "B", st: { lov: 2, cha: 1 }, price: 100, icon: "eq_charm_01" },
 };
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
-const BONUS = { str: "力", vit: "体", dex: "器", agi: "速", int: "知" };
+const BONUS = { str: "力", vit: "体", dex: "器", agi: "速", int: "知", wil: "精", lov: "愛", cha: "魅" };
 
 // ---------- 魔物の心（本家のスタイル。もとの能力値に％を掛け、技を1つ足す） ----------
 // up＝この心を付けていると上がりやすい能力値（本家のスタイルの↑と同じ考え）
@@ -218,7 +218,7 @@ function heroStats(h, slotDef) {
   const sk = [...h.sk]; if (heart) sk.push(heart.sk);
   return { st, res, ps, pow, sk };
 }
-function base(u) { return Object.assign(u, { down: false, poison: 0, stun: 0, cover: 0, stack: 0, dealt: 0, taken: 0, downAt: 0 }); }
+function base(u) { return Object.assign(u, { down: false, poison: 0, stun: 0, cover: 0, stack: 0, dealt: 0, taken: 0, healed: 0, downAt: 0 }); }
 
 // wave：WAVESの番号か {nm, foes, tier}。roster：仲間ごとの記録（HEROESの並び。無ければ始めの状態）
 function newBattle(wave, seed, lo, roster) {
@@ -361,8 +361,8 @@ function act(st, u) {
     for (const p of st.party) {
       if (p.down && p.lp <= 0) continue;
       const v = Math.round((s.heal + u.st.lov * 1.6) * (hasP(u, "healer") ? 1.2 : 1));
-      if (p.down) { p.down = false; p.hp = Math.min(p.max, v); log(st, { t: "revive", d: p.id, v }); }
-      else { const h = Math.min(p.max - p.hp, v); p.hp += h; log(st, { t: "heal", d: p.id, v: h }); }
+      if (p.down) { p.down = false; p.hp = Math.min(p.max, v); u.healed += p.hp; log(st, { t: "revive", d: p.id, v }); }
+      else { const h = Math.min(p.max - p.hp, v); p.hp += h; u.healed += h; log(st, { t: "heal", d: p.id, v: h }); }
     }
   } else if (s.tg === "rand") {
     for (let k = 0; k < s.hits; k++) { const l = alive(opps(st, u)); if (!l.length) break; damage(st, u, l[Math.floor(rnd(st) * l.length)], s); }

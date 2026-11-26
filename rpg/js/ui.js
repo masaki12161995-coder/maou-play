@@ -5,7 +5,7 @@ const { hud, W, H } = DM, d = DM.d, px = DM.px, div = DM.div;
 const IM = window.IMG;
 const A = (parent, el, x, y, w, h) => { px(el, x, y, w, h); el.style.position = "absolute"; parent.appendChild(el); return el; };
 const T = (parent, x, y, w, h, html, size, cls) => { const e = A(parent, div("t " + (cls || ""), html), x, y, w, h); e.style.fontSize = d(size); e.style.lineHeight = d(h); return e; };
-const SLOT_NM = { weapon: "武器", armor: "鎧", sub: "盾・頭", acc: "飾り", heart: "心" };
+const SLOT_NM = { weapon: "武器", armor: "主防具", sub: "副防具", acc: "装飾品", heart: "心" }; // 本家と同じ呼び方
 const STAT_SHORT = { str: "腕力", vit: "体力", dex: "器用", agi: "素早", int: "知力", wil: "精神", lov: "愛", cha: "魅力" };
 
 let layer = null;
@@ -83,16 +83,18 @@ function result(r) {
       else { const g = BT.GEAR[dp.it.id]; A(t, DM.iconImg(g.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(dp.it)}</span>`, 9.5, "name"); }
     });
     y += Math.ceil(drops.length / 2) * 32 + 8;
-    T(L, 14, y, 200, 14, "与えたダメージ", 9, "label"); y += 16;
-    const max = Math.max(1, ...r.growth.map(g => g.dealt || 0));
-    r.growth.slice().sort((a, b) => (b.dealt || 0) - (a.dealt || 0)).forEach(g => {
-      const row = A(L, div("dmgrow", ""), 12, y, 277, 22);
-      const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 20 * DM.K); A(row, fc, 0, 1, undefined, undefined);
-      T(row, 26, 0, 56, 22, g.nm, 10, "name");
-      const bar = A(row, div("dbar", `<i style="width:${(g.dealt || 0) / max * 100}%"></i>`), 84, 8, 140, 6);
-      T(row, 228, 0, 49, 22, `${(g.dealt || 0).toLocaleString()}`, 10.5, "num2 right");
-      y += 24;
+    // 戦いの記録（本家と同じ：与えたダメージ・受けたダメージ・回復）。列ごとに一番の人を金色に
+    const cols = [["dealt", "与ダメージ"], ["taken", "被ダメージ"], ["healed", "回復"]], best = {};
+    cols.forEach(([k]) => { best[k] = Math.max(...r.growth.map(g => g[k] || 0)); });
+    const tb = A(L, div("frame rbox", ""), 12, y, 277, 22 + r.growth.length * 22);
+    cols.forEach(([k, nm], i) => T(tb, 96 + i * 60, 2, 56, 16, nm, 8, "label right"));
+    r.growth.forEach((g, j) => {
+      const yy = 20 + j * 22;
+      const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 18 * DM.K); A(tb, fc, 6, yy + 1, undefined, undefined);
+      T(tb, 28, yy, 64, 20, g.nm, 9.5, "name");
+      cols.forEach(([k], i) => { const v = g[k] || 0; T(tb, 96 + i * 60, yy, 56, 20, v.toLocaleString(), 10.5, "num2 right" + (v && v === best[k] ? " top" : v ? "" : " zero")); });
     });
+    y += 22 + r.growth.length * 22 + 2;
     y += 6;
     T(L, 14, y, 200, 14, "成長", 9, "label"); y += 16;
     r.growth.forEach(g => {

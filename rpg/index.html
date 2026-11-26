@@ -138,7 +138,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .ri i{font-style:normal;height:1em;line-height:1em;font-weight:900}
 .ri i.up{color:#ff5a4a}.ri i.dn{color:#5aa0ff}
 .at{display:inline-block;text-align:center;color:#fff;border-radius:2px;font-weight:800;font-family:"Hiragino Sans",system-ui,sans-serif;text-shadow:0 1px 0 #0008;box-shadow:0 0 0 1px #0008;margin-right:1px}
-.skillname{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;background:linear-gradient(90deg,#0000,#000c 20%,#000c 80%,#0000);text-shadow:0 1px 0 #000;opacity:0;transition:opacity .12s;pointer-events:none}
+.skillname{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;opacity:0;transition:opacity .12s;pointer-events:none}
 .skillname.on{opacity:1}
 .panel{pointer-events:auto}
 .pcard,.pst,.plist,.bbtn{box-sizing:border-box}
@@ -235,19 +235,30 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .lpips i{flex:1;height:100%;background:#2a2a36;border-radius:1px;box-shadow:inset 0 0 0 1px #4a4a5a}
 .lpips i.on{background:#6ad0ff;box-shadow:none}
 .upm2{color:#d8a8ff;font-weight:900}
+
+.sbn{display:flex;align-items:center;background:linear-gradient(#20304a,#101a2a);border:1px solid #6ab0ff;border-radius:3px;box-shadow:0 0 0 1px #000,0 2px 6px #000a;white-space:nowrap}
+.skillname.foe .sbn{background:linear-gradient(#4a1e22,#2a1014);border-color:#ff7a6a}
+.sbn .face{border-radius:2px}
+.sbn-nm{color:#fff;font-weight:800;text-shadow:0 1px 0 #000}
+.sbn-at{display:flex;gap:1px}
+.srow .rk{color:#c8d4e0}.srow .rk b{color:#ffe08a;margin-left:2px;font-family:"Avenir Next",system-ui,sans-serif;font-weight:900}
+.srow .rk.kind{color:#9fd4ff;font-weight:800}
+.srow .ds{text-align:center;border-radius:2px;font-weight:800;color:#fff;font-family:"Hiragino Sans",system-ui,sans-serif}
+.srow .ds.near{background:#a8553a}.srow .ds.far{background:#3a6aa8}
+.t.top{color:#ffd88a}.t.zero{color:#5a5560}
 </style>
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/dom.js?v=34"></script>
-<script src="js/engine.js?v=34"></script>
-<script src="js/scene.js?v=34"></script>
-<script src="js/tiles.js?v=34"></script>
-<script src="js/game.js?v=34"></script>
-<script src="js/maps.js?v=34"></script>
-<script src="js/view.js?v=34"></script>
-<script src="js/ui.js?v=34"></script>
-<script src="js/field.js?v=34"></script>
-<script src="js/main.js?v=34"></script>
+<script src="js/dom.js?v=36"></script>
+<script src="js/engine.js?v=36"></script>
+<script src="js/scene.js?v=36"></script>
+<script src="js/tiles.js?v=36"></script>
+<script src="js/game.js?v=36"></script>
+<script src="js/maps.js?v=36"></script>
+<script src="js/view.js?v=36"></script>
+<script src="js/ui.js?v=36"></script>
+<script src="js/field.js?v=36"></script>
+<script src="js/main.js?v=36"></script>
 </body>
 </html>
