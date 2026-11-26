@@ -11,11 +11,12 @@ ctx.imageSmoothingEnabled = false;
 let K = 2;
 
 // ---------- 位置（ドット） ----------
-// 画面の点は2倍に細かい（canvasは602×1310）。素材の絵は元の大きさのまま置くので、配置の数字（ドット）では半分の大きさになる
-const Q = 0.5;
-const FOE_X = [128, 96, 64], FOE_Y = [216, 264, 312];             // 敵：列0がこちら寄り
-const HERO_X = [198, 227, 256], HERO_Y = [204, 235, 266, 297, 328]; // 仲間：列0が敵寄り。段の間31は絵の高さ30ぎりぎり（横陣で縦1列でも重ならない）
-const BIG = { x: 86, y: 316 };
+// canvasは端末の点の細かさ（1204×2620、配置の1ドット＝4点）で持つ。
+// 人物は素材の1ドット＝2点（Q）、モンスターは全員そろえて1ドット＝3点（QM）。素材バンクの決まり：人物は整数倍、モンスターは全員同じ倍率
+const Q = 0.5, QM = 0.75;
+const FOE_X = [132, 90, 48], FOE_Y = [222, 284, 346];             // 敵：列0がこちら寄り。段の間は「ふつう」の大きさ（高さ50）の1.5倍が入る幅
+const HERO_X = [204, 234, 264], HERO_Y = [218, 251, 284, 317, 350]; // 仲間：列0が敵寄り。段の間33（絵の高さ30より広く、横陣で縦1列でも重ならない）
+const BIG = { x: 88, y: 350 };
 const SCENE_UP = 100; // 背景を上にずらす量（ドット）
 const PANEL = { y: 398 };
 const BAR = { y: 604, h: 22 };
@@ -58,10 +59,10 @@ const icon = (a, size) => `<b class="at" style="background:${EL[a]};width:${d(si
 function heroPos(u) { return { x: HERO_X[u.c], y: HERO_Y[u.r] }; }
 function foeBox(u) {
   const img = IM[u.img];
-  const w = img.naturalWidth * Q, h = img.naturalHeight * Q;
-  if (u.big) return { x: BIG.x, y: BIG.y, w, h, left: Math.round(BIG.x - w / 2), top: BIG.y - h };
+  const w = img.naturalWidth * QM, h = img.naturalHeight * QM;
+  if (u.big) return { x: BIG.x, y: BIG.y, w, h, left: Math.round((BIG.x - w / 2) * 4) / 4, top: BIG.y - h };
   const x = FOE_X[u.c], y = FOE_Y[u.r];
-  return { x, y, w, h, left: Math.round(x - w / 2), top: y - h };
+  return { x, y, w, h, left: Math.round((x - w / 2) * 4) / 4, top: y - h }; // 点の境目にそろえる
 }
 function where(u) {
   if (u.side === 1) { const b = foeBox(u); return { x: b.x, y: b.top + b.h * 0.45 }; }
@@ -184,12 +185,12 @@ function draw(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, cv.width, cv.height);
   // 背景は上にずらし、地平線を一番上の人の足より上に持ってくる（空に浮いて見えないように）。空いた下は地面の帯をもう一度描く
-  if (scene) {
+  if (scene) { // 背景の1点＝canvasの2点
     const up = SCENE_UP * 2, strip = up + 2;
-    ctx.drawImage(scene, 0, -up);
-    ctx.drawImage(scene, 0, scene.height - strip, scene.width, strip, 0, cv.height - strip, scene.width, strip);
+    ctx.drawImage(scene, 0, -up * 2, scene.width * 2, scene.height * 2);
+    ctx.drawImage(scene, 0, scene.height - strip, scene.width, strip, 0, cv.height - strip * 2, scene.width * 2, strip * 2);
   }
-  ctx.setTransform(2, 0, 0, 2, 0, 0); // ここから先はドットの座標で描く
+  ctx.setTransform(4, 0, 0, 4, 0, 0); // ここから先はドットの座標で描く
   if (st) {
     ctx.fillStyle = "#000a"; ctx.fillRect(0, 44, W, 52); // 上の帯の下地
     for (const u of st.foes) { // 敵（右向きにして描く）
@@ -201,7 +202,7 @@ function draw(t) {
       ctx.save();
       if (u.down) ctx.globalAlpha = Math.max(0, (f.fade - t) / 500);
       ctx.fillStyle = "#0006"; ctx.fillRect(b.x - Math.floor(b.w * 0.35), b.y - 1, Math.floor(b.w * 0.7), 1.5);
-      ctx.translate(Math.round(b.left + ox + b.w), Math.round(b.top)); ctx.scale(-1, 1);
+      ctx.translate(Math.round((b.left + ox + b.w) * 4) / 4, Math.round(b.top * 4) / 4); ctx.scale(-1, 1); // 点の境目にそろえて左右反転
       ctx.drawImage(img, 0, 0, b.w, b.h);
       if (f.flash > t) { ctx.globalAlpha = 0.7; ctx.drawImage(white(img), 0, 0, b.w, b.h); }
       ctx.restore();
