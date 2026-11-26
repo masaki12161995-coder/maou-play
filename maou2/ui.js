@@ -8,6 +8,14 @@ const FRAME_COLORS={
   white:{edge:"#afb5bf",bright:"#f1e7cb",wood:"#4b4e57",paper:"#17191e",chosen:"#343845",rim:"#d4d5d5",line:"#646872"},
 };
 
+// 装備品1つの能力（ステータス画面の装備の枠に出す）
+function gearNote(it) {
+  const a=ITEMS[it.code],w=a.slot===0;
+  const ELEM={fire:"火",ice:"氷",thunder:"雷",dark:"闇",light:"光",wind:"風"};
+  return [["攻撃",(a.attack||0)+(w?it.forged*2+it.grade:0)],["防御",(a.defense||0)+(w?0:it.forged+it.grade)],
+    ["体力",(a.health||0)+it.grade*2],["速さ",a.speed||0],["魔法",a.magic||0],["魔防",a.magicDefense||0],["会心",a.critical||0,"%"]]
+    .filter(([,v])=>v).map(([k,v,u=""])=>k+(v>0?"+":"")+v+u).concat((it.inlay||a.element)?[(ELEM[it.inlay||a.element]||"")+"属性"]:[]);
+}
 class GameUI {
   constructor(game) { this.g=game; this.links=[]; this.labels=[]; }
   begin(ctx) { this.c=ctx;ctx.imageSmoothingEnabled=false;this.links=[];this.labels=[]; }
@@ -30,8 +38,8 @@ class GameUI {
   mark(x,y,color=GOLD) {this.rec(x-4,y-1,9,3,color);this.rec(x-1,y-4,3,9,color);this.rec(x,y,1,1,"#fff1c7");}
   button(title,x,y,w,h,run,active=false,art=null) {
     this.frame(x,y,w,h,active); this.add(x,y,w,h,run);
-    if(art){this.rec(x+9,y+8,31,h-16,"#171c2b");this.icon(art,x+14,y+Math.floor(h/2)-10,2);}
-    this.text(title,art?x+48:x+w/2,y+h/2,15,run?PAPER:"#9b9291",art?"left":"center");
+    if(art){const t=y+Math.floor((h-26)/2);this.rec(x+9,t,26,26,"#171c2b");this.icon(art,x+14,t+5,1);}
+    this.text(title,art?x+43:x+w/2,y+h/2,15,run?PAPER:"#9b9291",art?"left":"center",{max:art?w-50:w-12});
   }
   add(x,y,w,h,run) {if(run)this.links.push({x,y,w,h,run});}
   hit(x,y) {
@@ -92,9 +100,10 @@ class GameUI {
     [["仲間","status","party"],["持ち物","bag","bag"],["地図","map","map"],["旅の帳","journal","book"]].forEach(([name,kind,art],i)=>{
       const x=11+i*96,y=752,w=91,h=53,on=groups[kind].includes(g.panel?.id);
       this.frame(x,y,w,h,on);
-      if(kind==="status"){this.rec(x+8,y+12,28,30,"#31394b");this.person(g.s.formation[0]||"H01",x+8,y+11,1,true);}
-      else this.icon(art,x+9,y+15,2);
-      this.text(name,x+33,y+27,name.length>2?13:15,on?GOLD:PAPER,"left",{max:53});
+      this.rec(x+8,y+10,32,32,"#171c2b");
+      if(kind==="status")this.person(g.s.formation[0]||"H01",x+10,y+10,1,true);
+      else this.icon(art,x+8,y+10,2);
+      this.text(name,x+46,y+27,13,on?GOLD:PAPER,"left",{max:42});
       this.add(x,y,w,h,()=>on?g.closePanel():g.open(kind));
     });
     }
@@ -171,24 +180,24 @@ class GameUI {
       this.add(x,203,44,42,()=>g.open("status",{member:n}));
     });
     // 顔・名前・レベル・体力
-    this.frame(38,252,326,86,true);
-    this.rec(49,262,66,66,"#283545");this.rec(52,265,60,60,"#314355");
-    this.person(id,53,262,2,true);
+    this.frame(38,250,326,75,true);
+    this.rec(48,255,64,64,"#283545");this.rec(50,257,60,60,"#314355");
+    this.person(id,52,255,2,true);
     const at=s.formation.indexOf(id);
-    this.text(CAST[id].name,127,276,21,GOLD,"left",{max:150});
-    this.text("Lv "+m.level,352,277,17,PAPER,"right",{sans:true});
-    this.text(at<0?"控え":at<2?"前列":"後列",127,301,12,COOL);
-    this.text(m.level>=99?"最高レベル":"次のレベルまで "+Math.max(0,levelCost(m.level)-m.xp),352,301,12,COOL,"right");
-    this.text("体力",127,322,13,GREEN);
-    this.bar(161,321,116,m.hp/cur.maxHp);
-    this.text(m.hp+" / "+cur.maxHp,352,322,14,PAPER,"right",{sans:true});
+    this.text(CAST[id].name,124,271,20,GOLD,"left",{max:150});
+    this.text("Lv "+m.level,352,272,17,PAPER,"right",{sans:true});
+    this.text(at<0?"控え":at<2?"前列":"後列",124,292,12,COOL);
+    this.text(m.level>=99?"最高レベル":"次のレベルまで "+Math.max(0,levelCost(m.level)-m.xp),352,292,12,COOL,"right");
+    this.text("体力",124,311,13,GREEN);
+    this.bar(158,310,119,m.hp/cur.maxHp);
+    this.text(m.hp+" / "+cur.maxHp,352,311,14,PAPER,"right",{sans:true});
     // 能力（2列。装備で増えた分を緑で）
-    this.frame(38,345,326,96);
+    this.frame(38,331,326,82);
     const cells=[["攻撃","attack"],["防御","defense"],["魔法","magic"],["魔防","magicDefense"],
       ["速さ","speed"],["会心率","critical","%"],["間合い","ranged"],["属性","element"]];
     const ELEM={fire:"火",ice:"氷",thunder:"雷",dark:"闇",light:"光",wind:"風",earth:"土",water:"水"};
     cells.forEach(([label,key,suf=""],n)=>{
-      const x=n%2?211:52,y=364+Math.floor(n/2)*20;
+      const x=n%2?211:52,y=346+Math.floor(n/2)*18;
       this.text(label,x,y,13,COOL);
       if(key==="ranged"){this.text(cur.ranged?"遠い":"近い",x+92,y,14,PAPER,"right");return;}
       if(key==="element"){this.text(cur.element?(ELEM[cur.element]||cur.element):"なし",x+92,y,14,cur.element?GOLD:"#8e93a3","right");return;}
@@ -196,42 +205,44 @@ class GameUI {
       const d=cur[key]-base[key];
       if(d)this.text((d>0?"+":"")+d,x+98,y,11,d>0?GREEN:"#e59a8c","left",{sans:true});
     });
-    // 装備（押すと、その枠の品を選ぶ）
+    // 装備（名前と、その品の能力。押すと、その枠の品を選ぶ）
     for(let slot=0;slot<6;slot++){
-      const x=slot%2?203:38,y=449+Math.floor(slot/2)*45,w=161,h=42;
+      const x=slot%2?203:38,y=419+Math.floor(slot/2)*58,w=161,h=55;
       const it=s.bag.find(e=>e.uid===m.gear[slot]),a=it&&ITEMS[it.code];
       this.frame(x,y,w,h);
-      this.text(SLOTS[slot],x+11,y+21,11,COOL);
-      this.rec(x+36,y+8,26,26,"#171c2b");
+      this.text(SLOTS[slot],x+11,y+13,10,COOL);
+      this.rec(x+8,y+22,26,26,"#171c2b");
       if(a){
-        this.icon(a.art,x+37,y+9,1);
-        this.text(a.name+(it.forged?" +"+it.forged:""),x+69,y+21,13,GRADE_TINT[it.grade],"left",{max:w-76});
-      } else this.text("なし",x+69,y+21,13,"#7d8291");
+        this.icon(a.art,x+13,y+27,1);
+        this.text(a.name+(it.forged?" +"+it.forged:""),x+42,y+14,12,GRADE_TINT[it.grade],"left",{max:w-48});
+        gearNote(it).slice(0,4).reduce((l,e,k)=>(l[k>>1]=(l[k>>1]?l[k>>1]+" ":"")+e,l),[]).forEach((line,k)=>
+          this.text(line,x+42,y+31+k*14,11,COOL,"left",{sans:true}));
+      } else this.text("なし",x+42,y+14,12,"#7d8291");
       this.add(x,y,w,h,()=>g.open("equip",{member:i,rail:slot,page:0,back:here}));
     }
     // 技（通常・アクティブ・パッシブ2つ）
-    this.frame(38,587,326,92);
+    this.frame(38,595,326,84);
     const KIND=[["通常","#3e5f97","#8fb2ea"],["アクティブ","#8a6a2e","#f0cd84"],["パッシブ","#5d4790","#c3a8f0"],["パッシブ","#5d4790","#c3a8f0"]];
     for(let n=0;n<4;n++){
       const cx=79+n*80,key=m.equipped[n],[kname,dark,light]=KIND[n];
       const locked=n===3&&!s.flags.B02;
-      this.text(kname,cx,600,10,COOL,"center");
+      this.text(kname,cx,607,10,COOL,"center");
       if(Number.isInteger(key)&&!locked){
         const sk=CAST[id].skills[key];
-        this.rec(cx-17,609,34,32,light);this.rec(cx-15,611,30,28,dark);
-        this.text(sk.name[0],cx,625,18,"#fff6e0","center",{weight:800});
-        this.text(sk.name,cx,652,11,PAPER,"center",{max:76});
-        this.text("★".repeat(m.stars[key]||1),cx,667,9,GOLD,"center",{sans:true});
+        this.rec(cx-16,614,32,30,light);this.rec(cx-14,616,28,26,dark);
+        this.text(sk.name[0],cx,629,17,"#fff6e0","center",{weight:800});
+        this.text(sk.name,cx,655,11,PAPER,"center",{max:76});
+        this.text("★".repeat(m.stars[key]||1),cx,669,9,GOLD,"center",{sans:true});
       } else {
-        this.rec(cx-17,609,34,32,"#2a2d3a");this.rec(cx-15,611,30,28,"#1d2030");
-        this.text(locked?"鍵":"空",cx,625,13,"#6f7486","center");
-        this.text(locked?"まだ使えない":"なし",cx,652,10,"#7d8291","center");
+        this.rec(cx-16,614,32,30,"#2a2d3a");this.rec(cx-14,616,28,26,"#1d2030");
+        this.text(locked?"鍵":"空",cx,629,13,"#6f7486","center");
+        this.text(locked?"まだ使えない":"なし",cx,655,10,"#7d8291","center");
       }
-      this.add(cx-40,592,80,84,locked?null:()=>g.open("skills",{member:i,category:Math.min(n,2),back:here}));
+      this.add(cx-40,598,80,80,locked?null:()=>g.open("skills",{member:i,category:Math.min(n,2),back:here}));
     }
     // 下：おすすめの装備と、並び替え
-    this.button("おすすめ装備",38,686,159,40,()=>g.recommendMember(id),false,"starterShield");
-    this.button("並び・控え",205,686,159,40,()=>g.open("party",{back:here}),false,"flag");
+    this.button("おすすめ装備",38,685,159,38,()=>g.recommendMember(id),false,"starterShield");
+    this.button("並び・控え",205,685,159,38,()=>g.open("party",{back:here}),false,"flag");
   }
   settings() {
     const {g}=this,{s}=g,o=s.options;
@@ -325,7 +336,7 @@ class GameUI {
   row(y,title,art,sub,click,{on=false,colour=PAPER}={}) {
     this.frame(38,y,325,58,on);
     this.rec(47,y+9,42,39,"#201f2b");
-    if(art)this.icon(art,56,y+17,2);
+    if(art)this.icon(art,52,y+13,2);
     this.text(title,100,y+19,16,colour,"left",{max:248});
     if(sub)this.text(sub,100,y+39,12,COOL,"left",{max:248});
     this.add(38,y,325,58,click);
@@ -338,7 +349,7 @@ class GameUI {
       this.modal(CAST[id].name+"の"+SLOTS[slot],ITEMS[s.bag.find(e=>e.uid===member.gear[slot])?.code]?.art||null);
       const equipped=s.bag.find(item=>item.uid===member.gear[slot]);
       const options=s.bag.filter(item=>ITEMS[item.code].slot===Math.min(slot,4) && !holding(s,item.uid));
-      if (equipped) this.row(206,ITEMS[equipped.code].name+(equipped.forged?" +"+equipped.forged:""),ITEMS[equipped.code].art,"いま装備している　"+GRADES[equipped.grade],null,{on:true,colour:GRADE_TINT[equipped.grade]});
+      if (equipped) this.row(206,ITEMS[equipped.code].name+(equipped.forged?" +"+equipped.forged:""),ITEMS[equipped.code].art,gearNote(equipped).join(" ")||GRADES[equipped.grade],null,{on:true,colour:GRADE_TINT[equipped.grade]});
       else this.row(206,"なし","starterShield","この枠は空いている",null);
       this.rec(45,272,313,2,"#88674a");
       if(!options.length)this.text("替えられる品がない",201,330,14,COOL,"center");
@@ -358,23 +369,23 @@ class GameUI {
       this.modal("道具屋","bag");
       const sell=p.category==="sell";
       this.tabs([["買う",()=>g.open("shop"),!sell],["売る",()=>g.open("shop",{category:"sell"}),sell]]);
-      this.icon("coin",249,250,1);this.text(s.gold+" G",347,256,15,GOLD,"right");
+      this.icon("coin",214,165,1);this.text(s.gold+" G",236,173,15,GOLD,"left",{sans:true,max:90});
       if(sell){
         const sellable=s.bag.filter(i=>!i.locked&&!holding(s,i.uid));
         if(!sellable.length)this.shelf("売れる装備はない","coin");
-        this.pageRows(sellable,p.page,276,item=>[ITEMS[item.code].name,ITEMS[item.code].art,itemPrice(item)+" G",
+        this.pageRows(sellable,p.page,222,item=>[ITEMS[item.code].name,ITEMS[item.code].art,itemPrice(item)+" G",
           ()=>g.sell(item.uid),{colour:GRADE_TINT[item.grade]}],6);
         return;
       }
       const stock=["salve","swordIron","steel","coat","hat","ring","lantern"];
-      this.pageRows(stock,p.page,276,code=>{
+      this.pageRows(stock,p.page,222,code=>{
         const item=ITEMS[code]||(code==="salve"?{name:"薬草",art:"herb",price:12}:null);
         return [item.name,item.art,item.price+" G",()=>g.buy(code)];
       },6);return;
     }
     const category=p.category||"use";
     this.modal("持ち物","bag");
-    this.icon("coin",250,162,1);this.text(s.gold+" G",320,173,15,GOLD,"right",{sans:true});
+    this.icon("coin",214,165,1);this.text(s.gold+" G",236,173,15,GOLD,"left",{sans:true,max:90});
     this.tabs([["どうぐ",()=>g.open("bag",{category:"use"}),category==="use"],["装備品",()=>g.open("bag",{category:"bag"}),category==="bag"],
       ["素材",()=>g.open("bag",{category:"mat"}),category==="mat"],["受け取り",()=>g.open("bag",{category:"chest"}),category==="chest"]]);
     if(category==="mat") {
@@ -411,9 +422,9 @@ class GameUI {
     const {g}=this,{s,panel}=g;
     const item=s.bag.find(o=>o.uid===panel.uid),a=ITEMS[item.code];
     this.modal("装備品","bag");
-    this.frame(47,220,307,149,true);this.icon(a.art,65,250,5);
-    this.text(a.name,137,269,20,GRADE_TINT[item.grade],"left",{max:203});
-    this.text(SLOTS[a.slot]+"　"+GRADES[item.grade]+(item.forged?" ＋"+item.forged:""),137,309,15,COOL);
+    this.frame(47,220,307,149,true);this.rec(62,247,96,96,"#171c2b");this.icon(a.art,70,255,5);
+    this.text(a.name,174,269,20,GRADE_TINT[item.grade],"left",{max:168});
+    this.text(SLOTS[a.slot]+"　"+GRADES[item.grade]+(item.forged?" ＋"+item.forged:""),174,309,15,COOL);
     const notes=[["攻撃",(a.attack||0)+(a.slot===0?item.grade+item.forged*2:0)],
       ["防御",(a.defense||0)+(a.slot!==0?item.grade+item.forged:0)],["体力",(a.health||0)+item.grade*2],
       ["速さ",a.speed||0],["魔法の補正",a.magic||0],["魔法防御の補正",a.magicDefense||0],["会心率",a.critical?"+"+a.critical+"%":0]];
@@ -425,7 +436,7 @@ class GameUI {
     if(item.inlay||a.element)this.text("属性の力",61,624,13,COOL);
     const protectedItem=item.grade>=4||a.unique||holding(s,item.uid);
     const owner=Object.keys(s.members).find(id=>s.members[id].gear.includes(item.uid));
-    if(owner){this.person(owner,57,678,1,true);this.text(CAST[owner].name+"が装備中",82,694,14,COOL);}
+    if(owner){this.rec(55,676,30,32,"#31394b");this.person(owner,56,676,1,true);this.text(CAST[owner].name+"が装備中",96,692,14,COOL);}
     else this.button(item.locked?"保護中":"保護する",102,668,196,44,protectedItem?null:()=>g.toggleLock(item.uid),item.locked,"starterShield");
   }
   toolTarget() {
@@ -435,7 +446,7 @@ class GameUI {
     people.forEach((id,i)=>{
       const y=224+i*107,m=s.members[id],hp=stats(s,id).maxHp;
       this.frame(39,y,325,96);
-      this.person(id,54,y+12,2);
+      this.rec(51,y+15,66,66,"#283545");this.person(id,56,y+16,2,true);
       this.text(CAST[id].name,142,y+24,17,PAPER);
       this.text(m.hp+" / "+hp,343,y+51,16,GREEN,"right");
       this.bar(143,y+69,198,m.hp/hp);
@@ -566,7 +577,7 @@ class GameUI {
     this.text(g.area.title,120,326,15,COOL);
     const s=g.s,met=Object.keys(s.lore||{}).length;
     [["所持金",s.gold+" G","coin"],["仲間",Object.keys(s.members).length+" 人","flag"],["戦った回数",(s.battles||0)+" 回","starterSword"],["出会った魔物",met+" 種","book"]]
-      .forEach(([label,value,art],i)=>{const y=376+i*34;this.rec(47,y,309,30,i%2?"#272833":"#202633");this.icon(art,56,y+3,1);
+      .forEach(([label,value,art],i)=>{const y=376+i*34;this.rec(47,y,309,30,i%2?"#272833":"#202633");this.icon(art,56,y+7,1);
         this.text(label,88,y+15,13,COOL);this.text(value,344,y+15,14,PAPER,"right",{sans:true});});
     Object.entries({body:["玉座庭","sealIcon"],seal:["黒鉄の板","sealIcon"],crown:["冠","coin"],rewindSeen:["肋の渡り板","rope"],rescued:["荷車の綱","rope"],
       C1:["尾根の火","tool_031"]}).filter(([k])=>g.s.flags[k]).slice(0,3).forEach(([k,[title,art]],i)=>this.row(520+i*60,title,art,"",null));
