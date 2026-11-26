@@ -62,6 +62,7 @@ function heartIcon(k, size) { // 心の絵：その魔物の姿を丸い枠に�
   return box;
 }
 function result(r) {
+  SND.se(r.win ? "win" : "lose");
   return new Promise(res => {
     const L = newLayer("veil solid result");
     if (!r.win) {
@@ -411,6 +412,9 @@ function goal(L) {
   T(L, 14, 84, 200, 14, "いまの目的", 9, "label");
   const box = A(L, div("frame rbox", ""), 12, 100, 277, 64);
   const t = T(box, 12, 8, 253, 48, GOALS[s] || "", 12, "name"); t.style.lineHeight = d(20); t.style.whiteSpace = "normal";
+  // 音の入／切（押すと切り替わる）
+  const sb = A(L, div("frame btn chip" + (SND.on ? " sel" : ""), SND.on ? "音　入" : "音　切"), 12, 256, 137, 26); sb.style.fontSize = d(10.5);
+  sb.onclick = () => { SND.toggle(); sb.textContent = SND.on ? "音　入" : "音　切"; sb.classList.toggle("sel", SND.on); };
   T(L, 14, 176, 200, 14, "これまで", 9, "label");
   const kinds = new Set([...Object.keys(G.hearts).filter(k => G.hearts[k] > 0), ...G.party.filter(Boolean).map(m => m.heart).filter(Boolean)]).size;
   [["仲間", `${G.roster.length}人`], ["勝った戦い", `${G.wins}回`], ["集めた心", `${kinds}種`], ["お金", `${G.gold.toLocaleString()} G`]].forEach(([k, v], i) => {

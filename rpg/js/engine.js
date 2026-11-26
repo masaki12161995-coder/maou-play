@@ -59,10 +59,10 @@ const SKILLS = {
   bodyslam:  { nm: "ぷるぷる体当たり", bp: 2, rank: "E", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
   rootlash:  { nm: "根の鞭", bp: 7, rank: "B", tg: "row", at: ["打"], dist: "遠", dir: "直接", kind: "攻撃" },
   gnaw:      { nm: "かじりつき", bp: 2, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
-  // カイ（櫂＝棍棒）
-  oarhit:    { nm: "櫂打ち", bp: 2, rank: "D", tg: "one", at: ["打"], stun: 35, dist: "近", dir: "直接", kind: "攻撃" },
-  waterwheel:{ nm: "水車", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
-  rapidsplit:{ nm: "瀬割り", bp: 9, rank: "B", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // カイ（先のとがった長い櫂＝槍の扱い。突）。技の名前を変えても、記録の中の名前（oarhit など）はそのまま
+  oarhit:    { nm: "櫂突き", bp: 2, rank: "D", tg: "one", at: ["突"], stun: 35, dist: "近", dir: "直接", kind: "攻撃" },
+  waterwheel:{ nm: "水切り", bp: 6, rank: "C", tg: "row", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  rapidsplit:{ nm: "瀬割り", bp: 9, rank: "B", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   // リゼット（小剣）
   vitalstab: { nm: "急所突き", bp: 3, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   medicine:  { nm: "薬箱の手当て", bp: 5, tg: "allies", heal: 30, magic: 1, kind: "回復" },
@@ -129,14 +129,14 @@ const GEAR = {
   longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
   ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
   oldblade:  { slot: "weapon", wt: "sword", nm: "古木の守り刀", rank: "S", pow: 18, st: { str: 3, agi: 2 }, ps: "w_bp", icon: "eq_sword_04" }, // 林の宝箱だけ
-  oar:       { slot: "weapon", wt: "club", nm: "渡しの櫂", rank: "B", pow: 12, st: { vit: 1 }, price: 60, icon: "eq_club_01" },
+  oar:       { slot: "weapon", wt: "spear", nm: "渡しの櫂", rank: "B", pow: 12, st: { vit: 1 }, price: 60, icon: "eq_spear_01" },
   oakclub:   { slot: "weapon", wt: "club", nm: "樫の棍棒", rank: "B", pow: 13, st: { str: 1 }, price: 130, icon: "eq_club_02" },
   thinblade: { slot: "weapon", wt: "rapier", nm: "旅の小剣", rank: "B", pow: 10, st: { dex: 1 }, price: 60, icon: "eq_rapier_01" },
   needle:    { slot: "weapon", wt: "rapier", nm: "細身の剣", rank: "B", pow: 11, st: { dex: 2 }, price: 130, icon: "eq_rapier_02" },
   wraps:     { slot: "weapon", wt: "fist", nm: "革の拳当て", rank: "B", pow: 9, st: { agi: 1 }, price: 60, icon: "eq_fist_01" },
   ironfist:  { slot: "weapon", wt: "fist", nm: "鉄の拳当て", rank: "B", pow: 10, st: { str: 1 }, price: 130, icon: "eq_fist_02" },
   mosssword: { slot: "weapon", wt: "sword", nm: "苔むす古刀", rank: "A", pow: 15, st: { str: 2, vit: 1 }, icon: "eq_sword_03" },
-  sennengai: { slot: "weapon", wt: "club", nm: "千年櫂", rank: "S", pow: 19, st: { str: 3, vit: 3 }, ps: "w_bp", icon: "eq_club_04" }, // 苔むす祠の奥だけ
+  sennengai: { slot: "weapon", wt: "spear", nm: "千年櫂", rank: "S", pow: 19, st: { str: 3, vit: 3 }, ps: "w_bp", icon: "eq_spear_04" }, // 苔むす祠の奥だけ
   // 鎧・盾・飾り
   tunic:     { slot: "armor", kind: "服", nm: "麻の服", rank: "B", st: { vit: 1 }, res: { 斬: 5, 打: 5, 突: 5 }, price: 40, icon: "eq_vest_01" },
   cloak:     { slot: "armor", kind: "外套", nm: "旅の外套", rank: "B", st: { wil: 1 }, res: { 熱: 8, 冷: 8, 雷: 8 }, price: 60, icon: "eq_cloak_01" },
@@ -198,9 +198,9 @@ const HEARTS = {
 // ---------- 仲間（物語の順。0＝主人公） ----------
 // st＝始めの能力値、cap＝本人の上限、up＝上がりやすい能力値、hpCap＝HPの上限、rare＝レア度
 const HEROES = [
-  { id: "kai", nm: "カイ", img: "person_079", wt: "club", rare: "S", hp: 230, hpCap: 1250, lp: 9, st: { str: 24, vit: 24, dex: 14, agi: 15, int: 9, wil: 16, lov: 12, cha: 14 },
+  { id: "kai", nm: "カイ", img: "person_108", wt: "spear", rare: "S", hp: 230, hpCap: 1250, lp: 9, st: { str: 24, vit: 24, dex: 14, agi: 15, int: 9, wil: 16, lov: 12, cha: 14 },
     cap: { str: 122, vit: 128, dex: 90, agi: 94, int: 64, wil: 106, lov: 88, cha: 98 }, up: ["vit", "str"],
-    res: {}, sk: ["oarhit", "waterwheel", "rapidsplit"], ps: ["ironwall", "clubway", "standfast"], gear: { weapon: "oar", armor: "tunic", sub: null, acc: null } },
+    res: {}, sk: ["oarhit", "waterwheel", "rapidsplit"], ps: ["ironwall", "spearway", "standfast"], gear: { weapon: "oar", armor: "tunic", sub: null, acc: null } },
   { id: "lise", nm: "リゼット", img: "person_002", wt: "rapier", rare: "S", hp: 165, hpCap: 1000, lp: 7, st: { str: 12, vit: 13, dex: 25, agi: 22, int: 18, wil: 17, lov: 22, cha: 22 },
     cap: { str: 76, vit: 86, dex: 124, agi: 116, int: 110, wil: 104, lov: 120, cha: 128 }, up: ["dex", "cha"],
     res: {}, sk: ["vitalstab", "medicine", "doublestab"], ps: ["rapierway", "healer", "momentum"], gear: { weapon: "thinblade", armor: "cloak", sub: null, acc: null } },
@@ -236,14 +236,14 @@ const FOES = {
   mizugumo: { mat: "ito", nm: "ミズグモ", img: "m_mizugumo", wt: "fang", pow: 11, hp: 90, st: { str: 31, vit: 11, dex: 16, agi: 22, int: 12, wil: 9, lov: 0, cha: 10 }, res: { 冷: 40, 熱: -40, 打: -20 }, every: { n: 2, sk: "waterthread" }, gold: 9, heart: "mizugumo" },
   donguri:  { mat: "donguri", nm: "ドングリ兵", img: "m_donguri", wt: "spear", pow: 11, hp: 90, st: { str: 30, vit: 14, dex: 14, agi: 12, int: 5, wil: 10, lov: 0, cha: 8 }, res: { 熱: -50, 打: 20, 斬: -20 }, every: { n: 3, sk: "acornshot" }, gold: 8, heart: "donguri" },
   // 親蜘蛛：カイ1人で戦う山場。子を呼ぶ。親を倒せば、子は逃げる
-  oyamizugumo:{ mat: "ito", nm: "オヤミズグモ", img: "m_oyagumo", wt: "fang", pow: 16, hp: 370, boss: 1, st: { str: 40, vit: 13, dex: 16, agi: 14, int: 14, wil: 12, lov: 0, cha: 14 },
+  oyamizugumo:{ mat: "ito", nm: "オヤミズグモ", img: "m_oyagumo", wt: "fang", pow: 16, hp: 315, boss: 1, st: { str: 40, vit: 13, dex: 16, agi: 14, int: 14, wil: 12, lov: 0, cha: 14 },
               res: { 冷: 40, 熱: -40, 打: -20 }, plan: { 2: "callkids", 4: "silkbind", 5: "callkids" }, every: { n: 4, sk: "callkids" }, every2: { n: 3, sk: "silkbind" }, stunRes: 1, gold: 45 },
   komizu:   { nm: "子グモ", img: "m_mizugumo", wt: "fang", pow: 9, hp: 55, st: { str: 26, vit: 9, dex: 14, agi: 20, int: 8, wil: 7, lov: 0, cha: 8 }, res: { 冷: 40, 熱: -40, 打: -20 }, gold: 3 },
   moriookami:{ mat: "kiba", nm: "モリオオカミ", img: "m_ookami", wt: "fang", pow: 11, hp: 110, st: { str: 32, vit: 12, dex: 14, agi: 24, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 熱: -30, 突: -20, 冷: 20 }, every: { n: 3, sk: "wolfbite" }, gold: 11, heart: "ookami" },
   // 西街道
   hanenezumi:{ mat: "hane", nm: "ハネネズミ", img: "m_hanenezumi", wt: "fang", pow: 9, hp: 70, st: { str: 26, vit: 9, dex: 18, agi: 27, int: 8, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 打: 20 }, every: { n: 3, sk: "wingslap" }, gold: 8, heart: "hanenezumi" },
   kakashi:  { mat: "wara", nm: "カカシ番", img: "monster_088", wt: "claw", pow: 11, hp: 130, st: { str: 31, vit: 15, dex: 12, agi: 9, int: 5, wil: 12, lov: 0, cha: 9 }, res: { 熱: -60, 斬: -20, 突: 30, 打: 20 }, every: { n: 3, sk: "sickle" }, gold: 12, heart: "kakashi" },
-  nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1050, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
+  nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1130, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
               res: { 打: 20, 冷: 50, 雷: -40, 熱: -20 }, plan: { 2: "mudsplash", 3: "bodypress", 4: "bigyawn", 6: "swampquake", 7: "bodypress", 8: "mudsplash" }, every: { n: 2, sk: "bodypress" }, rageFrom: 9, rage: "swampquake", stunRes: 1, gold: 120, heart: "nushi" },
   // 黒外套の兵（人間）
   kuro_s:   { nm: "黒外套の兵", img: "monster_019", human: 1, wt: "sword", pow: 11, hp: 340, st: { str: 30, vit: 20, dex: 14, agi: 14, int: 6, wil: 12, lov: 0, cha: 12 }, res: { 斬: 20, 雷: -30 }, every: { n: 3, sk: "gale" }, gold: 24 },

@@ -12,7 +12,7 @@ const S = g => g.flags.s || 0, cut = (g, k) => g.flags.cut === k;
 function hut() {
   const g = grid(7, 7, "w"); fill(g, "p", 1, 1, 5, 5); g[6][3] = "D";
   return {
-    id: "hut", nm: "渡し小屋", g, tier: 0, bg: null, inside: 1,
+    id: "hut", nm: "渡し小屋", g, tier: 0, bg: null, inside: 1, music: "town",
     objs: [
       { t: "bed", x: 1, y: 1, w: 1, h: 2, talk: "hutBed" },
       { t: "oarRack", x: 4, y: 0, text: ["長い櫂。舟を漕ぐにも、身を守るにも使う。"] },
@@ -97,7 +97,7 @@ function village() {
   fill(g, "=", 4, 11, 12, 1); fill(g, "c", 6, 9, 5, 5); fill(g, "=", 8, 4, 1, 16);
   fill(g, "h", 3, 16, 3, 3); fill(g, "h", 11, 16, 3, 3);
   return {
-    id: "village", nm: "トルカ村", g, tier: 0, bg: null,
+    id: "village", nm: "トルカ村", g, tier: 0, bg: null, music: "town",
     objs: [
       { t: "house", x: 3, y: 5, w: 4, h: 3, roof: "red", door: 2, chimney: 1 },
       { t: "house", x: 10, y: 5, w: 4, h: 3, roof: "blue", door: 1 },
@@ -222,7 +222,7 @@ function forest() {
       { id: "w2", x: 14, y: 23, k: "koromochi", g: ["koromochi", "koromochi", "donguri"], when: g => S(g) >= 10 },
       { id: "w4", x: 16, y: 24, k: "mizugumo", g: ["mizugumo", "moriookami", "koromochi"], when: g => S(g) >= 10 },
     ],
-    chests: [{ id: "c_forest1", x: 6, y: 12, item: "oakclub" }, { id: "c_forest2", x: 22, y: 24, item: "needle" }, { id: "c_forest3", x: 15, y: 11, tool: "book1" }],
+    chests: [{ id: "c_forest1", x: 6, y: 12, item: "ironspear" }, { id: "c_forest2", x: 22, y: 24, item: "needle" }, { id: "c_forest3", x: 15, y: 11, tool: "book1" }],
     trigs: [
       { x: 8, y: 28, when: g => S(g) === 4, run: "s5" },
       { x: 8, y: 22, when: g => S(g) === 5, run: "s6" },
@@ -336,7 +336,7 @@ function harune() {
   fill(g, "=", 4, 9, 5, 1); fill(g, "=", 11, 9, 5, 1); fill(g, "=", 4, 19, 5, 1); fill(g, "=", 11, 19, 5, 1);
   g[14][0] = "c"; g[14][W - 1] = "c";
   return {
-    id: "harune", nm: "宿場町ハルネ", g, tier: 0, bg: null,
+    id: "harune", nm: "宿場町ハルネ", g, tier: 0, bg: null, music: "town",
     objs: [
       { t: "gatePost", x: 1, y: 11, w: 1, h: 2 }, { t: "gatePost", x: 1, y: 16, w: 1, h: 2 },
       { t: "wagon", x: 3, y: 14, w: 2, h: 1, army: 1 }, { t: "wagon", x: 6, y: 14, w: 2, h: 1, army: 1 }, { t: "wagon", x: 4, y: 16, w: 2, h: 1 }, { t: "wagon", x: 12, y: 12, w: 2, h: 1 }, { t: "wagon", x: 15, y: 16, w: 2, h: 1, army: 1 },

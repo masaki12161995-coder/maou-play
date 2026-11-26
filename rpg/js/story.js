@@ -33,7 +33,7 @@ async function move(map, x, y, dir, cutName, time) {
 }
 function scene(cutName) { F().cut = cutName; A.sync(); }
 const give = (k, n) => { G().tools[k] = (G().tools[k] || 0) + n; };
-function rest() { GS.restAll(); const p = A.pos(), m = A.map(); G().home = { map: m.id, x: p.x, y: p.y - m.padTop }; }
+function rest() { SND.se("rest"); GS.restAll(); const p = A.pos(), m = A.map(); G().home = { map: m.id, x: p.x, y: p.y - m.padTop }; }
 // ムクの絵：帽子をかぶってからは、麦わら帽つき
 function apply() { BT.HEROES[2].img = F().hat ? "person_058h" : "person_058"; }
 

@@ -385,7 +385,7 @@ async function turn() {
     if (e.t === "act") {
       const a = byId(e.u), sk = BT.SKILLS[e.skill] || {}, idx = evs.indexOf(e);
       cur = { a, sk, at: (sk.at || BT.WTYPE[a.wt].at || [])[0], ranged: sk.dist === "遠" || !!sk.magic || (e.skill === "attack" && a.wt === "bow"), first: true, hits: 0 };
-      showBanner(a, e);
+      showBanner(a, e); SND.se(e.magic || e.kind === "回復" || e.kind === "補助" ? "cast" : "swing");
       if (a.side === 0 || a.person) pose[a.id] = { kind: e.magic || e.kind === "回復" || e.kind === "防御" ? "magic" : "phys", until: now() + 650 / spd() };
       if (a.side === 1 && !(a.person && e.magic)) fx[a.id] = { ...(fx[a.id] || {}), lunge: now() + (a.person ? 650 : 220) / spd() };
       // 縦・横・全体の技は、当たるマスを先に光らせる
@@ -401,22 +401,22 @@ async function turn() {
         await wait(dt);
       }
       if (cur) { cur.first = false; efx.push({ type: "hit", x: p.x, y: p.y, at: cur.at, hits2: (cur.hits++ % 2) === 1, t0: now(), dur: 380 / spd() }); }
-      fx[t.id] = { ...(fx[t.id] || {}), flash: now() + 110 / spd(), shake: now() + (e.weak ? 360 : 220) / spd() };
+      fx[t.id] = { ...(fx[t.id] || {}), flash: now() + 110 / spd(), shake: now() + (e.weak ? 360 : 220) / spd() }; SND.se("hit_" + ((cur && cur.at) || "打"));
       if (e.weak || e.v >= t.max * 0.3) quake = now() + 180 / spd();
       const tag = e.weak ? '<b class="tag weak">WEAK</b>' : e.resist ? '<b class="tag resist">RESIST</b>' : ""; // 弱点は赤、耐性は青（上の帯の▲▼と同じ色）
       num(p.x, p.y, tag + e.v, (t.side === 0 ? "foe" : "") + (e.weak ? " big" : ""), e.weak ? 19 : 16);
       refresh(); await wait(150);
     } else if (e.t === "item") { // 食べ物を食べる
-      const a = byId(e.u); cur = null; showBanner(a, { nm: e.nm }); pose[a.id] = { kind: "magic", until: now() + 650 / spd() }; await wait(380);
-    } else if (e.t === "summon") { const t = byId(e.d); fx[t.id] = {}; note(t, "呼ばれて出てきた"); refresh(); await wait(420); }
+      const a = byId(e.u); cur = null; showBanner(a, { nm: e.nm }); SND.se("eat"); pose[a.id] = { kind: "magic", until: now() + 650 / spd() }; await wait(380);
+    } else if (e.t === "summon") { const t = byId(e.d); fx[t.id] = {}; note(t, "呼ばれて出てきた"); SND.se("summon"); refresh(); await wait(420); }
     else if (e.t === "flee") { const t = byId(e.d); fx[t.id] = { ...(fx[t.id] || {}), fade: now() + 500 / spd() }; note(t, "逃げていった"); refresh(); await wait(120); }
     else if (e.t === "passive") { note(byId(e.u), e.nm + (e.v ? " " + e.v : "")); await wait(120); }
-    else if (e.t === "status") { note(byId(e.d), e.nm); refresh(); await wait(160); }
-    else if (e.t === "heal" || e.t === "revive") { const t = byId(e.d), p = where(t); num(p.x, p.y, (e.t === "revive" ? "復活 " : "") + e.v, "heal", 14); refresh(); await wait(60); }
+    else if (e.t === "status") { SND.se("status"); note(byId(e.d), e.nm); refresh(); await wait(160); }
+    else if (e.t === "heal" || e.t === "revive") { SND.se("heal"); const t = byId(e.d), p = where(t); num(p.x, p.y, (e.t === "revive" ? "復活 " : "") + e.v, "heal", 14); refresh(); await wait(60); }
     else if (e.t === "dot") { const t = byId(e.d), p = where(t); num(p.x, p.y, String(e.v), "poison", 14); refresh(); await wait(200); }
     else if (e.t === "skip") { note(byId(e.u), e.nm + "で動けない"); await wait(360); }
     else if (e.t === "lp") { note(byId(e.d), "LP " + e.lp); refresh(); await wait(140); }
-    else if (e.t === "down") { const t = byId(e.d); fx[t.id] = { ...(fx[t.id] || {}), fade: now() + 500 / spd() }; if (t.side === 0) note(t, "LP " + e.lp); refresh(); await wait(200); }
+    else if (e.t === "down") { const t = byId(e.d); SND.se(t.side === 0 ? "down" : "foedown"); fx[t.id] = { ...(fx[t.id] || {}), fade: now() + 500 / spd() }; if (t.side === 0) note(t, "LP " + e.lp); refresh(); await wait(200); }
   }
   await wait(160);
   els.banner.classList.remove("on");
@@ -452,7 +452,7 @@ function finish(growth) {
       g.ups.forEach((up, k) => timers.push(setTimeout(() => {
         const nm = up.k === "hp" ? "HP" : BT.ST_NM[up.k];
         const e = div("growpop", `${nm}<b>+${up.v}</b>`); e.style.left = d(p.x); e.style.top = d(p.y - 34 - k * 11); e.style.fontSize = d(8.5);
-        hud.appendChild(e);
+        hud.appendChild(e); SND.se("up");
       }, i * 180 + 380 + k * 160)));
     });
     const total = Math.max(...growth.map((g, i) => i * 180 + 380 + g.ups.length * 160)) + 1300;

@@ -97,7 +97,7 @@ function enter(id, x, y, dir) { // x,y は足す前の地図の座標
   fol = []; syncParty();
   const g = G(); g.map = id; g.x = x; g.y = y - M.padTop; g.dir = P.dir; GS.save();
   route = null; grace = performance.now() + 800;
-  hudBuild();
+  hudBuild(); SND.bgm(M.music || null);
 }
 async function start() {
   const g = G(); active = true; enter(g.map, g.x, g.y, g.dir);
@@ -221,6 +221,7 @@ function battleLo() { const g = G(), away = g.away || []; return { form: g.lo.fo
 //  wave.loseOk＝負けても物語が進む（お金もLPも減らない。結果の画面も出さない）
 //  wave.retry＝物語の途中の戦い。負けたら、その場でやり直す（お金は減らない）
 async function runBattle(wave) {
+  SND.se("encounter"); SND.bgm("battle");
   await flash();
   active = false; [...hud.querySelectorAll(".fhud")].forEach(e => e.remove());
   let st;
@@ -250,7 +251,7 @@ async function runBattle(wave) {
     if (st.over === "lose") { g.gold -= Math.floor(g.gold / 10); GS.restAll(); GS.save(); } // 全滅：お金の1割を落として、休んだ所へ戻る
     break;
   }
-  active = true; hudBuild(); grace = performance.now() + 1200; fadeIn();
+  active = true; hudBuild(); grace = performance.now() + 1200; fadeIn(); SND.bgm(M.music || null);
   return st.over;
 }
 // 全滅したら、最後に休んだ所（還り石・寝床）へ戻る
@@ -273,7 +274,7 @@ async function battle(wave) {
 }
 async function joinMember(hi) {
   if (!GS.join(hi)) return;
-  syncParty(); syncNpcs();
+  syncParty(); syncNpcs(); SND.se("get");
   const inFive = GS.fighters().includes(hi);
   await UI.say("", [`${BT.HEROES[hi].nm}が仲間になった！`].concat(inFive ? [] : ["戦う5人がいっぱいなので、控えに入った。（メニューの「陣形」で入れ替えられる）"]));
 }
@@ -302,7 +303,7 @@ async function interact(tx, ty) {
 }
 async function openChest(c) {
   if (c.open) { await UI.say("", ["からっぽだ。"]); return; }
-  c.open = true; G().chests[c.id] = 1;
+  c.open = true; G().chests[c.id] = 1; SND.se("get");
   if (c.gold) { G().gold += c.gold; GS.save(); await UI.say("", ["宝箱を開けた。", `${c.gold} G を手に入れた！`]); return; }
   if (c.tool) { G().tools[c.tool] = (G().tools[c.tool] || 0) + 1; GS.save(); await UI.say("", ["宝箱を開けた。", `${BT.TOOLS[c.tool].nm}を手に入れた！`]); return; }
   const it = GS.item(c.item); G().bag.push(it); GS.save();
