@@ -123,12 +123,61 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .rank .v{text-align:right;font-family:"Avenir Next",system-ui,sans-serif;font-weight:800}
 .pick{width:86%;padding:12px;font-size:16px}
 .pick small{display:block;font-size:11px;color:#c9b08c;font-weight:400;margin-top:2px}
+
+/* 横向きの戦闘画面（ロマサガRS型） */
+.topbar{display:flex;gap:16px;align-items:center;padding-left:12px;color:#c9d4c0;font-family:"Avenir Next",system-ui,sans-serif;font-weight:700;letter-spacing:.02em}
+.topbar b{color:#ffe08a;font-size:1.25em;margin-left:2px}
+.info .nm,.info .hpb,.info .res{position:absolute}
+.info .nm{font-weight:800;color:#fff;white-space:nowrap;text-shadow:0 1px 0 #000}
+.info .nm em{font-style:normal;color:#ff5a4a;margin-right:4px;font-family:"Avenir Next",system-ui,sans-serif;font-weight:900}
+.info .hpb{background:#2a1a20;border:1px solid #000;border-radius:2px;overflow:hidden}
+.info .hpb i{display:block;height:100%;background:linear-gradient(#ff7a4a,#d8402a)}
+.info .res{display:flex;gap:2px}
+.ri{display:flex;flex-direction:column;align-items:center}
+.ri i{font-style:normal;height:1em;line-height:1em;font-weight:900}
+.ri i.up{color:#ff5a4a}.ri i.dn{color:#5aa0ff}
+.at{display:inline-block;text-align:center;color:#fff;border-radius:2px;font-weight:800;font-family:"Hiragino Sans",system-ui,sans-serif;text-shadow:0 1px 0 #0008;box-shadow:0 0 0 1px #0008;margin-right:1px}
+.skillname{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;background:linear-gradient(90deg,#0000,#000c 20%,#000c 80%,#0000);text-shadow:0 1px 0 #000;opacity:0;transition:opacity .12s;pointer-events:none}
+.skillname.on{opacity:1}
+.panel{pointer-events:auto}
+.pcard,.pst,.plist,.bbtn{box-sizing:border-box}
+.pcard{background:linear-gradient(90deg,#123a3a,#1a2a3a);border-color:#4ab0a0}
+.pcard .pn,.pcard .ps,.pcard .pdots{position:absolute;white-space:nowrap}
+.pcard .pn{font-weight:800;color:#fff}
+.pcard .ps{color:#a8d0c8}
+.pdots{display:flex;gap:4px}
+.pdots i{width:7px;height:7px;border-radius:50%;background:#2a4040;border:1px solid #4a7070}
+.pdots i.done{background:#4ab0a0}.pdots i.on{background:#ffe08a;border-color:#ffe08a}.pdots i.ko{opacity:.3}
+.pst{display:flex;align-items:center;justify-content:space-between;padding:0 8px;background:#14262a;border-color:#3a7a70;font-family:"Avenir Next",system-ui,sans-serif;font-weight:800;color:#fff}
+.pst .k{color:#8fd0c4}.pst small{color:#a8c0bc;font-size:.75em;margin-left:1px}
+.plist{background:#0e1a26;border-color:#3a6a80;overflow:hidden}
+.srow{position:absolute;border-radius:3px;cursor:pointer;border-bottom:1px solid #1e3040}
+.srow span{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap}
+.srow .ic{display:flex;gap:1px}
+.srow .sn{font-weight:800;color:#f0f4f8}
+.srow .rg{color:#8ab0c8}
+.srow .bp{color:#ffe08a;font-weight:800;font-family:"Avenir Next",system-ui,sans-serif}
+.srow.sel{background:#1e4a60;box-shadow:inset 0 0 0 1px #6ad0ff}
+.srow.heart .sn{color:#d8b8ff}
+.srow.dim{opacity:.35;cursor:default}
+.srow:not(.dim):active{background:#2a5a70}
+.bottombar{pointer-events:auto}
+.bbtn{display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:#f3e4c8;font-weight:800;text-align:center;line-height:1.05}
+.bbtn b{color:#ffe08a}
+.bbtn.dim{opacity:.35;cursor:default}
+.bbtn.auto{background:#14304a;border-color:#4a90d0;color:#cfe8ff}
+.bbtn.auto.lit{background:#1e5a8a;border-color:#9fd4ff;box-shadow:0 0 8px #4ab0ff88}
+.bbtn .sw{border-radius:50%;background:#2a8a6a;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px #000}
+.bbtn.rep{background:#5a3a14;border-color:#e0a040;color:#ffe0a0}
+.bbtn.ff.lit{border-color:#ffd88a;color:#ffd88a}
+.tile .tn{position:absolute;color:#f3e4c8;font-weight:800;line-height:1.25;white-space:nowrap;font-family:"Hiragino Sans",system-ui,sans-serif}
+.tile .tn i{font-style:normal;color:#ffb08a;font-weight:700}
 </style>
 </head>
 <body>
 <div id="stage"><canvas id="field" width="301" height="655"></canvas><div id="hud"></div></div>
-<script src="js/scene.js?v=9"></script>
-<script src="js/engine.js?v=9"></script>
-<script src="js/view.js?v=9"></script>
+<script src="js/scene.js?v=12"></script>
+<script src="js/engine.js?v=12"></script>
+<script src="js/view.js?v=12"></script>
 </body>
 </html>
