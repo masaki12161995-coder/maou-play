@@ -3,12 +3,24 @@
 const IMG={ // 素材バンクの絵の元の大きさ
   "001":[26,20],"002":[55,29],"003":[40,41],"009":[28,30],"011":[19,20],"026":[37,30],"028":[43,30],"037":[31,30],
   "006":[42,40],"012":[38,45],"013":[45,35],"025":[41,30],"007":[22,35],"008":[56,45],
-  "036":[37,70],"035":[43,70],"053":[29,35],"022":[55,45],"031":[72,70],"056":[60,70],"059":[57,70],"057":[76,45],"058":[32,70]
+  "036":[37,70],"035":[43,70],"053":[29,35],"022":[55,45],"031":[72,70],"056":[60,70],"059":[57,70],"057":[76,45],"058":[32,70],
+  "004":[83,93],"010":[47,70],"016":[35,45],"017":[57,35],"018":[42,70],"019":[53,70],"020":[40,70],"021":[53,70],"040":[59,55],"044":[60,75],"046":[61,55],"050":[22,35],"054":[71,45]
 };
 const QK={
   corner:{nm:"角取り",ds:"角に置くと、数字がすべて＋1"},
   guard:{nm:"踏ん張り",ds:"一度だけ、裏返されない"},
-  chain:{nm:"連鎖",ds:"裏返した札が、さらに隣を裏返す"}
+  chain:{nm:"連鎖",ds:"裏返した札が、さらに隣を裏返す"},
+  center:{nm:"中央取り",ds:"真ん中に置くと、数字がすべて＋2"},
+  cheer:{nm:"励まし",ds:"置いたとき、隣の味方の数字をすべて＋1"},
+  awe:{nm:"威圧",ds:"置いたとき、隣の相手の数字をすべて−1"},
+  wall:{nm:"鉄壁",ds:"いちばん大きい辺は、決して負けない"},
+  tie:{nm:"同点勝ち",ds:"同じ数字でも裏返す"},
+  pack:{nm:"群れ",ds:"盤にある味方1枚ごとに＋1（3まで）"},
+  under:{nm:"逆境",ds:"負けているときに置くと＋2"},
+  late:{nm:"後出し",ds:"残り3マス以下で置くと＋2"},
+  lone:{nm:"一匹狼",ds:"隣に味方がいない所に置くと＋2"},
+  king:{nm:"王威",ds:"同じ数字でも裏返し、裏返した札がさらに隣を裏返す"},
+  gamble:{nm:"博打",ds:"置いたとき、4つの数字がそれぞれ＋1〜＋4"}
 };
 // 数字は［上,右,下,左］。10は「A」と書く
 const CARDS={
@@ -34,21 +46,37 @@ const CARDS={
   c20:{nm:"青白い騎士",im:"056",r:4,n:[8,4,3,8],q:"chain"},
   c21:{nm:"紫の魔術師",im:"059",r:4,n:[4,8,8,3],q:"corner"},
   c22:{nm:"黒紫の獣",im:"057",r:5,n:[9,6,4,8],q:"chain"},
-  c23:{nm:"祈りの像",im:"058",r:5,n:[7,7,6,7],q:"guard"}
+  c23:{nm:"祈りの像",im:"058",r:5,n:[7,7,6,7],q:"guard"},
+  c24:{nm:"雑兵",im:"010",r:2,n:[3,4,3,4],q:"pack"},
+  c25:{nm:"角笛の兵",im:"018",r:2,n:[5,3,4,2],q:"cheer"},
+  c26:{nm:"黒騎士",im:"019",r:3,n:[6,5,6,3],q:"wall"},
+  c27:{nm:"黒衣の弓兵",im:"020",r:3,n:[7,2,3,6],q:"tie"},
+  c28:{nm:"青玉の術士",im:"021",r:3,n:[3,6,3,6],q:"awe"},
+  c29:{nm:"赤トカゲ",im:"017",r:2,n:[6,1,5,3],q:"under"},
+  c30:{nm:"灰の亡霊",im:"016",r:3,n:[4,6,4,5],q:"late"},
+  c31:{nm:"白オオカミ",im:"054",r:4,n:[7,6,4,6],q:"lone"},
+  c32:{nm:"石の像",im:"044",r:4,n:[5,7,5,6],q:"center"},
+  c33:{nm:"斧サソリ",im:"046",r:4,n:[8,3,6,6],q:"awe"},
+  c34:{nm:"赤イカ",im:"040",r:3,n:[5,5,4,4],q:"cheer"},
+  L1:{nm:"王の鎧",im:"004",r:6,n:[9,8,9,8],q:"king",only:"スロットの777でしか手に入らない"},
+  L2:{nm:"賽の壺",im:"050",r:6,n:[6,6,6,6],q:"gamble",only:"チンチロのピンゾロでしか手に入らない"}
 };
 const OPPS=[
   {nm:"荷運びのモルト",who:"074",cap:9,depth:1,sig:"c15",pool:["c02","c03","c06","c08","c10","c12","c15"]},
   {nm:"札読みの老婆",who:"077",cap:12,depth:2,sig:"c19",pool:["c05","c07","c09","c11","c13","c16","c18","c19"]},
-  {nm:"賭場の主ガロ",who:"030",cap:15,depth:3,sig:"c22",pool:["c08","c14","c16","c17","c20","c21","c22","c13"]}
+  {nm:"賭場の主ガロ",who:"030",cap:15,depth:3,sig:"c22",pool:["c08","c14","c16","c17","c20","c21","c22","c13"]},
+  {nm:"流れ者の弓師ミレイ",who:"017",cap:18,depth:3,sig:"c31",pool:["c24","c25","c24","c34","c31","c27","c29","c14","c30"]},
+  {nm:"札の王ヴァルド",who:"071",cap:21,depth:3,sig:"c32",pool:["c20","c21","c22","c23","c32","c33","c26","c28"]}
 ];
+const PRIZES=[["c30",300],["c28",500],["c26",800],["c33",1500]];
 const START=["c01","c02","c03","c04","c05","c06","c07","c08","c09","c11","c13"];
 const KEY="cardproto1";
 
 // ---------- 記録 ----------
 let S;
-function fresh(){ return {col:countOf(START), op:OPPS.map(o=>({pool:o.pool.slice(),won:0,lost:0,first:0,deck:null})), last:{}}; }
+function fresh(){ return {col:countOf(START), op:OPPS.map(o=>({pool:o.pool.slice(),won:0,lost:0,first:0,deck:null})), last:{}, coin:300}; }
 function countOf(a){ const c={}; a.forEach(x=>c[x]=(c[x]||0)+1); return c; }
-function load(){ try{ const t=localStorage.getItem(KEY); S=t?JSON.parse(t):fresh(); }catch(e){ S=fresh(); } }
+function load(){ try{ const t=localStorage.getItem(KEY); S=t?JSON.parse(t):fresh(); }catch(e){ S=fresh(); } if(S.coin===undefined) S.coin=300; while(S.op.length<OPPS.length){ const o=OPPS[S.op.length]; S.op.push({pool:o.pool.slice(),won:0,lost:0,first:0,deck:null}); } }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function owned(){ const a=[]; Object.keys(S.col).sort(byCard).forEach(k=>{ for(let i=0;i<S.col[k];i++) a.push(k); }); return a; }
 function byCard(a,b){ return CARDS[b].r-CARDS[a].r || sum(CARDS[b].n)-sum(CARDS[a].n) || (a<b?-1:1); }
@@ -81,7 +109,7 @@ function who(id,box){ // 人物の正面の立ち姿（2倍、上半身で切る
   d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background-image:url(img/person_${id}.png);background-size:288px 600px;background-position:${-(96)+(box[0]-96)/2}px ${box[1]>=120?0:-4}px`;
   return d;
 }
-function desc(cid){ const c=CARDS[cid]; return `${c.nm}　${"★".repeat(c.r)}`+(c.q?`　${QK[c.q].nm}：${QK[c.q].ds}`:""); }
+function desc(cid){ const c=CARDS[cid]; return `${c.nm}　${"★".repeat(c.r)}`+(c.q?`　${QK[c.q].nm}：${QK[c.q].ds}`:"")+(c.only?`　（${c.only}）`:""); }
 function toast(t){ const e=document.createElement("div"); e.className="toast"; e.textContent=t; document.querySelector(".screen").appendChild(e); setTimeout(()=>e.remove(),1300); }
 const $app=document.getElementById("app");
 function screen(){ $app.innerHTML=""; const s=document.createElement("div"); s.className="screen"; $app.appendChild(s); return s; }
@@ -102,26 +130,26 @@ function bestDeck(pool,cap,must){
 }
 
 // ---------- 町 ----------
+function coinTag(){ return `<span style="color:var(--gold)">◎ ${S.coin.toLocaleString()}</span>`; }
 function town(){
   const s=screen();
-  const bar=el("div","bar"); bar.appendChild(el("div","title","札の卓")); bar.appendChild(el("div","lbl",`手持ち ${owned().length}枚`)); s.appendChild(bar);
+  const bar=el("div","bar"); bar.appendChild(el("div","title","札の卓")); bar.appendChild(el("div","lbl",`手持ち ${owned().length}枚　${coinTag()}`)); s.appendChild(bar);
   OPPS.forEach((o,k)=>{
-    const st=S.op[k], f=el("div","frame opp");
-    const w=el("div","who"); w.appendChild(who(o.who,[72,90])); f.appendChild(w);
+    const st=S.op[k], f=el("div","frame opp"); f.style.padding="4px 8px";
+    const w=el("div","who"); w.style.width="56px"; w.style.height="70px"; w.appendChild(who(o.who,[56,70])); f.appendChild(w);
     const inf=el("div","info");
-    inf.appendChild(el("div","nm",o.nm));
-    inf.appendChild(el("div","sub",`手札の上限 ★${o.cap}`));
-    inf.appendChild(el("div","rec",`勝ち ${st.won}　負け ${st.lost}`));
+    inf.appendChild(el("div","nm",o.nm)); inf.lastChild.style.fontSize="15px";
+    inf.appendChild(el("div","sub",`手札の上限 ★${o.cap}　勝ち ${st.won}・負け ${st.lost}`));
     f.appendChild(inf);
     const sigHere=st.pool.includes(o.sig);
-    const sw=el("div",""); sw.style.cssText="display:flex;flex-direction:column;align-items:center;gap:3px";
-    const sc=cardEl(o.sig,sigHere?"op":"me",58,76); sw.appendChild(sc);
-    sw.appendChild(el("div","lbl",sigHere?"看板の札":"君の手に"));
-    f.appendChild(sw);
+    const sc=cardEl(o.sig,sigHere?"op":"me",46,60); f.appendChild(sc);
     f.onclick=()=>prep(k);
     s.appendChild(f);
   });
-  const col=el("button","btn","手持ちの札を見る"); col.onclick=collection; s.appendChild(col);
+  const r=el("div","row"); r.style.gap="8px";
+  const col=el("button","btn","手持ちの札"); col.style.flex="1"; col.onclick=collection; r.appendChild(col);
+  const cas=el("button","btn gold","遊び場"); cas.style.flex="1"; cas.onclick=casino; r.appendChild(cas);
+  s.appendChild(r);
   const sp=el("div",""); sp.style.flex="1"; s.appendChild(sp);
   const rs=el("div","lbl","記録を消して、はじめから"); rs.style.cssText+="text-align:right;opacity:.6;padding:4px";
   rs.onclick=()=>{ if(rs.dataset.k){ S=fresh(); save(); town(); } else { rs.dataset.k=1; rs.textContent="もう一度押すと消えます"; } };
@@ -130,10 +158,127 @@ function town(){
 function collection(){
   const s=screen();
   const bar=el("div","bar"); const b=el("button","btn back","✕"); b.onclick=town; bar.appendChild(el("div","title","手持ちの札")); bar.appendChild(b); s.appendChild(bar);
-  const info=el("div","info2","札を押すと、くわしく見られます"); info.textContent=""; s.appendChild(info);
+  const info=el("div","info2",""); s.appendChild(info);
   const g=el("div","grid"); const ids=Object.keys(S.col).sort(byCard);
   ids.forEach(id=>{ const c=cardEl(id,"me",56,74,{count:S.col[id]}); c.onclick=()=>{ info.textContent=desc(id); }; g.appendChild(c); });
   s.appendChild(g);
+}
+function gain(cid){ S.col[cid]=(S.col[cid]||0)+1; save(); }
+function reveal(cid,title,back){
+  const v=el("div","veil");
+  v.appendChild(el("div","big",title));
+  const c=cardEl(cid,"me",130,170); c.classList.add("flip"); v.appendChild(c);
+  v.appendChild(el("div","",desc(cid))); v.lastChild.style.cssText="font-size:13px;padding:0 20px;text-align:center";
+  const b=el("button","btn gold","受け取る"); b.onclick=()=>{ v.remove(); if(back) back(); }; v.appendChild(b);
+  document.querySelector(".screen").appendChild(v);
+}
+
+// ---------- 遊び場 ----------
+function casino(){
+  const s=screen();
+  const bar=el("div","bar"); const b=el("button","btn back","✕"); b.onclick=town; bar.appendChild(el("div","title","遊び場")); const right=el("div","",coinTag()); bar.appendChild(right); bar.appendChild(b); s.appendChild(bar);
+  const tile=(title,sub,cid,go)=>{ const f=el("div","frame opp"); const inf=el("div","info"); inf.appendChild(el("div","nm",title)); inf.appendChild(el("div","sub",sub)); f.appendChild(inf); const c=cardEl(cid,S.col[cid]?"me":"nb",64,84); f.appendChild(c); f.onclick=go; return f; };
+  s.appendChild(tile("スロット","7が3つそろうと、ここだけの札","L1",slot));
+  s.appendChild(tile("チンチロ","ピンゾロで勝つと、ここだけの札","L2",chin));
+  s.appendChild(el("div","lbl","景品"));
+  const info=el("div","info2","");
+  const r=el("div","row"); r.style.gap="10px";
+  PRIZES.forEach(([cid,price])=>{ const w=el("div",""); w.style.cssText="display:flex;flex-direction:column;align-items:center;gap:6px";
+    const c=cardEl(cid,"nb",64,84); w.appendChild(c);
+    const p=el("div","",`<span style="color:var(--gold);font-size:13px">◎${price}</span>`); p.style.minHeight="30px"; w.appendChild(p);
+    c.onclick=()=>{ info.textContent=desc(cid); r.querySelectorAll(".card").forEach(x=>x.classList.remove("target")); c.classList.add("target");
+      r.querySelectorAll(".buy").forEach(x=>{ x.outerHTML=`<span style="color:var(--gold);font-size:13px">◎${x.dataset.p}</span>`; });
+      const bt=el("button","btn gold buy",`交換 ◎${price}`); bt.dataset.p=price; bt.style.cssText+="font-size:12px;padding:5px 6px"; p.innerHTML=""; p.appendChild(bt);
+      bt.onclick=()=>{ if(S.coin<price){ toast("コインが足りない"); return; } S.coin-=price; gain(cid); reveal(cid,"交換した！",casino); }; };
+    r.appendChild(w); });
+  s.appendChild(r); s.appendChild(info);
+}
+// スロット
+const SYM=[["7",3],["鎧",3],["炎",5],["鴉",6],["雫",8]];
+const PAY3={"7":1000,"鎧":300,"炎":120,"鴉":60,"雫":30}, PAY2={"7":60,"鎧":30,"炎":20,"鴉":16,"雫":13};
+const SYMIMG={"鎧":["004",1],"炎":["007",2],"鴉":["037",2],"雫":["001",3]};
+function symEl(k){ const d=el("div",""); d.style.cssText="width:100%;height:100%;display:flex;align-items:center;justify-content:center";
+  if(k==="7"){ d.innerHTML='<span style="font-family:Avenir Next,system-ui;font-weight:900;font-size:64px;color:#ffd35a;text-shadow:0 3px 0 #8a4b10,0 0 12px #ffb347">7</span>'; }
+  else { const [im,sc]=SYMIMG[k], [w,h]=IMG[im]; d.innerHTML=`<img src="img/monster_${im}.png" style="width:${w*sc}px;height:${h*sc}px;image-rendering:pixelated">`; }
+  return d; }
+function pickSym(){ let r=Math.random()*25; for(const [k,w] of SYM){ if((r-=w)<0) return k; } return "雫"; }
+let SL=null;
+function slot(){
+  const s=screen(); SL=SL||{busy:false,last:["7","鎧","炎"]};
+  const bar=el("div","bar"); const b=el("button","btn back","✕"); b.onclick=()=>{ if(!SL.busy) casino(); }; bar.appendChild(el("div","title","スロット")); const ct=el("div","",coinTag()); bar.appendChild(ct); bar.appendChild(b); s.appendChild(bar);
+  const mac=el("div","frame"); mac.style.cssText+="padding:14px;display:flex;gap:8px;justify-content:center;background:linear-gradient(#3a2430,#1d1418)";
+  const reels=[0,1,2].map(i=>{ const r=el("div",""); r.style.cssText="width:104px;height:128px;background:linear-gradient(#f6ecd6,#d8c8a6);border:3px solid #5a3d2a;border-radius:6px;overflow:hidden;box-shadow:0 0 0 2px #000 inset"; r.appendChild(symEl(SL.last[i])); mac.appendChild(r); return r; });
+  s.appendChild(mac);
+  const res=el("div","info2",""); res.style.fontSize="18px"; res.style.color="var(--gold)"; s.appendChild(res);
+  // 配当表
+  const pt=el("div","frame"); pt.style.cssText+="padding:8px 12px;display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 10px;align-items:center;font-size:13px";
+  SYM.forEach(([k])=>{ const a=el("div",""); a.style.cssText="width:34px;height:34px"; const se=symEl(k); se.style.transform="scale(.42)"; se.style.transformOrigin="center"; a.appendChild(se);
+    pt.appendChild(a); pt.appendChild(el("div","",`3つ　<b style="color:var(--gold)">◎${PAY3[k]}</b>`)); pt.appendChild(el("div","lbl","2つ")); pt.appendChild(el("div","",`<b>◎${PAY2[k]}</b>`)); });
+  s.appendChild(pt);
+  const sp=el("div",""); sp.style.flex="1"; s.appendChild(sp);
+  const go=el("button","btn gold","回す（◎10）"); go.style.fontSize="20px"; go.style.padding="16px";
+  const spin=()=>{ if(SL.busy) return; if(S.coin<10){ toast("コインが足りない"); return; }
+    SL.busy=true; S.coin-=10; save(); ct.innerHTML=coinTag(); res.textContent="";
+    const out=[pickSym(),pickSym(),pickSym()]; let t=0;
+    const iv=setInterval(()=>{ t++; reels.forEach((r,i)=>{ if(t<8+i*6){ r.innerHTML=""; r.appendChild(symEl(SYM[(t+i*2)%5][0])); } else if(t===8+i*6){ r.innerHTML=""; r.appendChild(symEl(out[i])); r.animate([{transform:"translateY(-10px)"},{transform:"none"}],{duration:160}); } });
+      if(t>=8+12){ clearInterval(iv); SL.last=out; finish(out); } },70);
+  };
+  const finish=(o)=>{ let win=0; if(o[0]===o[1]&&o[1]===o[2]) win=PAY3[o[0]]; else if(o[0]===o[1]) win=PAY2[o[0]];
+    S.coin+=win; save(); ct.innerHTML=coinTag(); SL.busy=false;
+    if(win){ res.textContent=`◎${win} 当たり！`; mac.animate([{filter:"brightness(1.6)"},{filter:"none"}],{duration:500,iterations:win>=300?4:1}); } else res.textContent="";
+    if(o.join("")==="777"){ gain("L1"); reveal("L1","大当たり！",null); } };
+  go.onclick=spin; mac.onclick=spin;
+  s.appendChild(go);
+}
+// チンチロ
+function hand(d){ const a=d.slice().sort((x,y)=>x-y);
+  if(a[0]===a[2]) return a[0]===1?{nm:"ピンゾロ",rk:100,m:5}:{nm:`${a[0]}のゾロ目`,rk:90+a[0],m:3};
+  if(a.join("")==="456") return {nm:"シゴロ",rk:80,m:2};
+  if(a.join("")==="123") return {nm:"ヒフミ",rk:-10,m:2};
+  if(a[0]===a[1]) return {nm:`${a[2]}の目`,rk:a[2],m:1};
+  if(a[1]===a[2]) return {nm:`${a[0]}の目`,rk:a[0],m:1};
+  return null; }
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function dieEl(v,size){ const d=el("div",""); d.style.cssText=`width:${size}px;height:${size}px;background:#fbf6ea;border-radius:${size*0.18}px;box-shadow:0 2px 0 #a99a80,0 0 0 1px #0004 inset;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:${size*0.12}px;gap:1px`;
+  for(let i=0;i<9;i++){ const p=el("div",""); if(PIPS[v].includes(i)) p.style.cssText=`border-radius:50%;background:${v===1?"#d23":"#222"};width:${v===1?"100%":"78%"};height:${v===1?"100%":"78%"};margin:auto`; d.appendChild(p); } return d; }
+let CH={bet:10};
+function chin(){
+  const s=screen(); CH.state=CH.state||"bet";
+  const bar=el("div","bar"); const b=el("button","btn back","✕"); b.onclick=()=>{ if(CH.state==="bet"||CH.state==="done"){ CH.state="bet"; casino(); } }; bar.appendChild(el("div","title","チンチロ")); const ct=el("div","",coinTag()); bar.appendChild(ct); bar.appendChild(b); s.appendChild(bar);
+  const dl=el("div","frame opp"); const w=el("div","who"); w.style.width="56px"; w.style.height="70px"; w.appendChild(who("019",[56,70])); dl.appendChild(w);
+  const di=el("div","info"); di.appendChild(el("div","nm","壺振りのゲン")); const dh=el("div","sub",CH.dh?`親の目：${CH.dh}`:"親"); di.appendChild(dh); dl.appendChild(di); s.appendChild(dl);
+  const bowl=el("div",""); bowl.style.cssText="margin:6px auto;width:300px;height:220px;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#5a3b2a 0%,#3a2418 55%,#1e120c 75%);box-shadow:0 0 0 6px #6b4a33,0 10px 20px #000a,inset 0 12px 30px #000c;display:flex;align-items:center;justify-content:center;gap:14px";
+  const dice=CH.dice||[4,5,6]; dice.forEach(v=>bowl.appendChild(dieEl(v,52))); s.appendChild(bowl);
+  const msg=el("div","info2",CH.msg||""); msg.style.fontSize="17px"; msg.style.color="var(--gold)"; s.appendChild(msg);
+  const mh=el("div","info2",CH.ph?`こちらの目：${CH.ph}`:""); s.appendChild(mh);
+  const sp=el("div",""); sp.style.flex="1"; s.appendChild(sp);
+  const roll=(cb)=>{ let t=0; const iv=setInterval(()=>{ t++; const r=[1,2,3].map(()=>1+Math.floor(Math.random()*6)); bowl.innerHTML=""; r.forEach(v=>bowl.appendChild(dieEl(v,52))); if(t>=10){ clearInterval(iv); cb(r); } },60); };
+  if(CH.state==="bet"){
+    const r=el("div","row"); r.style.gap="8px"; [10,50,100].forEach(v=>{ const bt=el("button","btn"+(CH.bet===v?" gold":""),`◎${v}`); bt.style.flex="1"; bt.onclick=()=>{ CH.bet=v; chin(); }; r.appendChild(bt); }); s.appendChild(r);
+    const go=el("button","btn gold","勝負"); go.style.fontSize="20px"; go.style.padding="14px";
+    go.onclick=()=>{ if(S.coin<CH.bet*2){ toast("コインが足りない（賭けの2倍が要る）"); return; } CH.state="dealer"; CH.try=0; CH.dh=null; CH.ph=null; CH.msg="親が振る…"; chin(); dealerRoll(); };
+    s.appendChild(go);
+  } else if(CH.state==="player"){
+    const go=el("button","btn gold",`振る（あと${3-CH.try}回）`); go.style.fontSize="20px"; go.style.padding="14px";
+    const doRoll=()=>{ if(CH.rolling) return; CH.rolling=true; roll(r=>{ CH.rolling=false; CH.dice=r; CH.try++; const h=hand(r);
+        if(h){ CH.ph=h.nm; CH.phv=h; settle(); } else if(CH.try>=3){ CH.ph="目なし"; CH.phv={nm:"目なし",rk:0,m:1}; settle(); } else { CH.msg="目なし…もう一度"; chin(); } }); };
+    go.onclick=doRoll; bowl.onclick=doRoll; s.appendChild(go);
+  } else if(CH.state==="done"){
+    const go=el("button","btn gold","もう一勝負"); go.style.fontSize="20px"; go.style.padding="14px"; go.onclick=()=>{ CH.state="bet"; CH.msg=""; CH.dh=null; CH.ph=null; chin(); }; s.appendChild(go);
+  }
+  function dealerRoll(){ roll(r=>{ CH.dice=r; CH.try++; const h=hand(r);
+    if(!h && CH.try<3){ chin(); setTimeout(dealerRoll,350); return; }
+    CH.dhv=h||{nm:"目なし",rk:0,m:1}; CH.dh=CH.dhv.nm; CH.try=0;
+    if(CH.dhv.rk>=80){ CH.state="done"; pay(-CH.bet*CH.dhv.m, `親の${CH.dh}。こちらの負け`); return; }
+    if(CH.dhv.rk<0){ CH.state="done"; pay(CH.bet*2, "親のヒフミ。こちらの勝ち"); return; }
+    if(CH.dhv.rk===0){ CH.state="done"; pay(CH.bet, "親の目なし。こちらの勝ち"); return; }
+    CH.state="player"; CH.msg=`親は${CH.dh}。こちらの番`; chin(); }); }
+  function settle(){ const p=CH.phv, d=CH.dhv; CH.state="done";
+    if(p.rk<0) return pay(-CH.bet*2,"ヒフミ…倍払い");
+    if(p.rk>d.rk){ pay(CH.bet*p.m, `${p.nm}！こちらの勝ち`); if(p.nm==="ピンゾロ"){ gain("L2"); setTimeout(()=>reveal("L2","ピンゾロ！",null),300); } return; }
+    if(p.rk===d.rk) return pay(0,"引き分け");
+    pay(-CH.bet*d.m,"こちらの負け"); }
+  function pay(v,text){ S.coin=Math.max(0,S.coin+v); save(); CH.msg=text+(v?`（${v>0?"+":""}${v}）`:""); chin(); }
 }
 
 // ---------- 支度 ----------
@@ -192,20 +337,39 @@ function drawPrep(){
 // ---------- 勝負の決まり ----------
 const NB=[[-1,0,0,2],[0,1,1,3],[1,0,2,0],[0,-1,3,1]]; // [dy,dx,自分の辺,相手の辺]  上・右・下・左
 const CORNER=[0,2,6,8];
-function eff(cid,cell){ const c=CARDS[cid]; let n=c.n.slice(); if(c.q==="corner"&&CORNER.includes(cell)) n=n.map(v=>Math.min(10,v+1)); return n; }
-function play(G,side,hi,cell,ev){ // G:{b:[9], h:[[],[]]}. side 0=自分 1=相手
-  const cid=G.h[side][hi]; G.h[side]=G.h[side].slice(); G.h[side][hi]=null;
-  const pc={cid,o:side,n:eff(cid,cell),g:CARDS[cid].q==="guard"};
-  G.b=G.b.slice(); G.b[cell]=pc; if(ev) ev.push({t:"put",cell,side});
-  const flipped=attack(G,cell,side,ev,1);
-  if(CARDS[cid].q==="chain") flipped.forEach(fc=>attack(G,fc,side,ev,2));
+const cl=v=>Math.max(1,Math.min(10,v));
+function adj(cell){ const y=Math.floor(cell/3),x=cell%3,o=[]; for(const [dy,dx,mi,ti] of NB){ const ny=y+dy,nx=x+dx; if(ny<0||ny>2||nx<0||nx>2) continue; o.push([ny*3+nx,mi,ti]); } return o; }
+function eff(cid,cell,G,side,real){
+  const c=CARDS[cid]; let n=c.n.slice(), add=0;
+  const empty=G.b.filter(x=>!x).length;
+  if(c.q==="corner"&&CORNER.includes(cell)) add=1;
+  if(c.q==="center"&&cell===4) add=2;
+  if(c.q==="pack") add=Math.min(3,cnt(G,side));
+  if(c.q==="under"&&cnt(G,side)<cnt(G,1-side)) add=2;
+  if(c.q==="late"&&empty<=3) add=2;
+  if(c.q==="lone"&&!adj(cell).some(([t])=>G.b[t]&&G.b[t].o===side)) add=2;
+  n=n.map(v=>cl(v+add));
+  if(c.q==="gamble") n=n.map(v=>cl(v+(real?1+Math.floor(Math.random()*4):2)));
+  return n;
 }
-function attack(G,cell,side,ev,lv){
-  const out=[], me=G.b[cell], y=Math.floor(cell/3), x=cell%3;
-  for(const [dy,dx,mi,ti] of NB){
-    const ny=y+dy,nx=x+dx; if(ny<0||ny>2||nx<0||nx>2) continue;
-    const t=ny*3+nx, tc=G.b[t]; if(!tc||tc.o===side) continue;
-    if(me.n[mi]>tc.n[ti]){
+function play(G,side,hi,cell,ev,real){ // G:{b:[9], h:[[],[]]}. side 0=自分 1=相手
+  const cid=G.h[side][hi]; G.h[side]=G.h[side].slice(); G.h[side][hi]=null;
+  const q=CARDS[cid].q, n=eff(cid,cell,G,side,real);
+  const pc={cid,o:side,n,g:q==="guard",w:q==="wall"?n.indexOf(Math.max(...n)):-1};
+  G.b=G.b.slice(); G.b[cell]=pc; if(ev) ev.push({t:"put",cell,side});
+  if(q==="cheer"||q==="awe") for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
+    if(q==="cheer"&&tc.o===side){ G.b[t]={...tc,n:tc.n.map(v=>cl(v+1))}; if(ev) ev.push({t:"buff",cell:t,lv:1}); }
+    if(q==="awe"&&tc.o!==side){ G.b[t]={...tc,n:tc.n.map(v=>cl(v-1))}; if(ev) ev.push({t:"buff",cell:t,lv:1}); } }
+  const tie=q==="tie"||q==="king";
+  const flipped=attack(G,cell,side,ev,1,tie);
+  if(q==="chain"||q==="king") flipped.forEach(fc=>attack(G,fc,side,ev,2,tie));
+}
+function attack(G,cell,side,ev,lv,tie){
+  const out=[], me=G.b[cell];
+  for(const [t,mi,ti] of adj(cell)){
+    const tc=G.b[t]; if(!tc||tc.o===side) continue;
+    if(me.n[mi]>tc.n[ti]||(tie&&me.n[mi]===tc.n[ti])){
+      if(tc.w===ti){ if(ev) ev.push({t:"guard",cell:t,lv,wall:1}); continue; }
       if(tc.g){ G.b[t]={...tc,g:false}; if(ev) ev.push({t:"guard",cell:t,lv}); continue; }
       G.b[t]={...tc,o:side}; out.push(t); if(ev) ev.push({t:"flip",cell:t,side,lv});
     }
@@ -282,18 +446,18 @@ function animate(ev,done){
   const steps=[];
   const put=ev.filter(e=>e.t==="put"), l1=ev.filter(e=>e.lv===1), l2=ev.filter(e=>e.lv===2);
   steps.push(()=>{ const fx={}; put.forEach(e=>fx[e.cell]="pop"); return fx; });
-  if(l1.length) steps.push(()=>{ const fx={}; l1.forEach(e=>{ fx[e.cell]=e.t==="flip"?"flip":"pop"; }); if(l1.some(e=>e.t==="guard")) setTimeout(()=>toast("踏ん張った！"),50); return fx; });
+  if(l1.length) steps.push(()=>{ const fx={}; l1.forEach(e=>{ fx[e.cell]=e.t==="flip"?"flip":"pop"; }); if(l1.some(e=>e.t==="guard")) setTimeout(()=>toast(l1.some(e=>e.wall)?"鉄壁！":"踏ん張った！"),50); return fx; });
   if(l2.length) steps.push(()=>{ const fx={}; l2.forEach(e=>{ fx[e.cell]=e.t==="flip"?"flip":"pop"; }); setTimeout(()=>toast(l2.some(e=>e.t==="flip")?"連鎖！":"踏ん張った！"),50); return fx; });
   // 盤面は最後の形で描き、段ごとに効果だけを付け直す
   let i=0; const next=()=>{ if(i>=steps.length){ done(); return; } const fx=steps[i++](); drawMatch(fx); setTimeout(next,i===1?260:460); }; next();
 }
 function humanPlay(hi,cell){
-  M.busy=true; M.sel=null; const ev=[]; play(M.G,0,hi,cell,ev);
+  M.busy=true; M.sel=null; const ev=[]; play(M.G,0,hi,cell,ev,true);
   animate(ev,()=>{ M.busy=false; endOrNext(1); });
 }
 function aiTurn(){
   M.busy=true; drawMatch();
-  setTimeout(()=>{ const [hi,cell]=aiMove(M.G,OPPS[M.k].depth); const ev=[]; play(M.G,1,hi,cell,ev); animate(ev,()=>{ M.busy=false; endOrNext(0); }); },450);
+  setTimeout(()=>{ const [hi,cell]=aiMove(M.G,OPPS[M.k].depth); const ev=[]; play(M.G,1,hi,cell,ev,true); animate(ev,()=>{ M.busy=false; endOrNext(0); }); },450);
 }
 function endOrNext(nextSide){
   if(M.G.b.every(x=>x)){ setTimeout(result,500); return; }
@@ -301,7 +465,7 @@ function endOrNext(nextSide){
 }
 function result(){
   const st=S.op[M.k], me=cnt(M.G,0), op=cnt(M.G,1), win=me>op;
-  if(win) st.won++; else st.lost++;
+  if(win){ st.won++; S.coin+=40; } else st.lost++;
   let got=null,lost=null;
   if(M.wager){
     if(win){ got=M.wager.take; const j=st.pool.indexOf(got); if(j>=0) st.pool.splice(j,1); S.col[got]=(S.col[got]||0)+1; }
@@ -311,7 +475,7 @@ function result(){
   drawMatch();
   const v=el("div","veil");
   v.appendChild(el("div","big",win?"勝ち":"負け"));
-  v.appendChild(el("div","",`<span style="color:var(--meL);font-size:22px">${me}</span>　対　<span style="color:var(--opL);font-size:22px">${op}</span>`));
+  v.appendChild(el("div","",`<span style="color:var(--meL);font-size:22px">${me}</span>　対　<span style="color:var(--opL);font-size:22px">${op}</span>`+(win?`　<span style="color:var(--gold)">◎+40</span>`:"")));
   if(got||lost){ const c=cardEl(got||lost,got?"me":"op",120,156); c.classList.add("flip"); v.appendChild(c); v.appendChild(el("div","",got?`${CARDS[got].nm}を手に入れた！`:`${CARDS[lost].nm}を取られた…`)); }
   const r=el("div","row"); r.style.gap="10px";
   const a=el("button","btn gold","もう一勝負"); a.onclick=()=>prep(M.k);
