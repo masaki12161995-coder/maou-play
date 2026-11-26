@@ -59,6 +59,32 @@ const SKILLS = {
   bodyslam:  { nm: "ぷるぷる体当たり", bp: 2, rank: "E", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
   rootlash:  { nm: "根の鞭", bp: 7, rank: "B", tg: "row", at: ["打"], dist: "遠", dir: "直接", kind: "攻撃" },
   gnaw:      { nm: "かじりつき", bp: 2, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  // カイ（櫂＝棍棒）
+  oarhit:    { nm: "櫂打ち", bp: 2, rank: "D", tg: "one", at: ["打"], stun: 35, dist: "近", dir: "直接", kind: "攻撃" },
+  waterwheel:{ nm: "水車", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  rapidsplit:{ nm: "瀬割り", bp: 9, rank: "B", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // リゼット（小剣）
+  vitalstab: { nm: "急所突き", bp: 3, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  medicine:  { nm: "薬箱の手当て", bp: 5, tg: "allies", heal: 30, magic: 1, kind: "回復" },
+  doublestab:{ nm: "二連突き", bp: 7, rank: "C", tg: "one", hits: 2, at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  // ムク（体術）
+  headbutt:  { nm: "頭突き", bp: 2, rank: "D", tg: "one", at: ["打"], stun: 40, dist: "近", dir: "直接", kind: "攻撃" },
+  flurry:    { nm: "連打", bp: 5, rank: "E", tg: "rand", hits: 3, at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  uppercut:  { nm: "かち上げ", bp: 8, rank: "B", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // 魔物の技（心を宿すと、その人も使える）
+  mochislam: { nm: "もち体当たり", bp: 2, rank: "E", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
+  waterthread:{ nm: "水の糸", bp: 4, rank: "D", tg: "one", at: ["冷"], magic: 1, stun: 25, dist: "遠", dir: "間接", kind: "攻撃" },
+  acornshot: { nm: "どんぐりつぶて", bp: 3, rank: "D", tg: "one", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
+  mudsplash: { nm: "泥はね", bp: 6, rank: "C", tg: "col", at: ["冷"], dist: "遠", dir: "間接", kind: "攻撃" },
+  bigyawn:   { nm: "大あくび", bp: 8, rank: "E", tg: "all", at: ["陰"], magic: 1, stun: 30, dist: "遠", dir: "間接", kind: "攻撃" },
+  swampquake:{ nm: "沼ゆらし", bp: 0, rank: "C", tg: "all", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
+  bodypress: { nm: "のしかかり", bp: 0, rank: "B", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  bite:      { nm: "かみつき", bp: 0, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  mosscut:   { nm: "苔むす太刀", bp: 0, rank: "B", tg: "row", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  stonefang: { nm: "石の牙", bp: 0, rank: "B", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  glowspore: { nm: "光る胞子", bp: 0, rank: "C", tg: "all", at: ["陽"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  mossbreath:{ nm: "苔の息吹", bp: 0, rank: "A", tg: "all", at: ["冷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  dragontail:{ nm: "竜の尾", bp: 0, rank: "A", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
 };
 
 // ---------- パッシブ ----------
@@ -78,6 +104,9 @@ const PASSIVES = {
   spearway: { nm: "槍の心得", ds: "［いつも］突のダメージ＋10%" },
   charge:   { nm: "突撃", ds: "［戦いの始め］腕力＋10%" },
   thunder:  { nm: "雷の心得", ds: "［いつも］雷のダメージ＋15%" },
+  clubway:  { nm: "棍棒の心得", ds: "［いつも］打のダメージ＋10%" },
+  fistway:  { nm: "体術の心得", ds: "［いつも］打のダメージ＋10%" },
+  rapierway:{ nm: "小剣の心得", ds: "［いつも］突のダメージ＋10%" },
   // 装備のパッシブ
   w_sword:  { nm: "剣士の誉れ", ds: "剣を使う者の腕力＋5%" },
   w_fire:   { nm: "炎の杖", ds: "熱のダメージ＋10%" },
@@ -95,7 +124,17 @@ const GEAR = {
   longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
   ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
   oldblade:  { slot: "weapon", wt: "sword", nm: "古木の守り刀", rank: "S", pow: 18, st: { str: 3, agi: 2 }, ps: "w_bp", icon: "eq_sword_04" }, // 林の宝箱だけ
+  oar:       { slot: "weapon", wt: "club", nm: "渡しの櫂", rank: "B", pow: 12, st: { vit: 1 }, price: 60, icon: "eq_club_01" },
+  oakclub:   { slot: "weapon", wt: "club", nm: "樫の棍棒", rank: "B", pow: 13, st: { str: 1 }, price: 130, icon: "eq_club_02" },
+  thinblade: { slot: "weapon", wt: "rapier", nm: "旅の小剣", rank: "B", pow: 10, st: { dex: 1 }, price: 60, icon: "eq_rapier_01" },
+  needle:    { slot: "weapon", wt: "rapier", nm: "細身の剣", rank: "B", pow: 11, st: { dex: 2 }, price: 130, icon: "eq_rapier_02" },
+  wraps:     { slot: "weapon", wt: "fist", nm: "革の拳当て", rank: "B", pow: 9, st: { agi: 1 }, price: 60, icon: "eq_fist_01" },
+  ironfist:  { slot: "weapon", wt: "fist", nm: "鉄の拳当て", rank: "B", pow: 10, st: { str: 1 }, price: 130, icon: "eq_fist_02" },
+  mosssword: { slot: "weapon", wt: "sword", nm: "苔むす古刀", rank: "A", pow: 15, st: { str: 2, vit: 1 }, icon: "eq_sword_03" },
+  sennengai: { slot: "weapon", wt: "club", nm: "千年櫂", rank: "S", pow: 19, st: { str: 3, vit: 3 }, ps: "w_bp", icon: "eq_club_04" }, // 苔むす祠の奥だけ
   // 鎧・盾・飾り
+  tunic:     { slot: "armor", kind: "服", nm: "麻の服", rank: "B", st: { vit: 1 }, res: { 斬: 5, 打: 5, 突: 5 }, price: 40, icon: "eq_vest_01" },
+  cloak:     { slot: "armor", kind: "外套", nm: "旅の外套", rank: "B", st: { wil: 1 }, res: { 熱: 8, 冷: 8, 雷: 8 }, price: 60, icon: "eq_cloak_01" },
   plate:     { slot: "armor", kind: "重鎧", nm: "鉄の鎧", rank: "B", st: { vit: 3, agi: -3 }, res: { 斬: 20, 打: 15, 突: 20 }, price: 220, icon: "eq_armor_02" },
   leather:   { slot: "armor", kind: "軽鎧", nm: "革の鎧", rank: "B", st: { vit: 1 }, res: { 斬: 10, 打: 10, 突: 10, 熱: 5, 冷: 5, 雷: 5 }, price: 120, icon: "eq_armor_01" },
   chain:     { slot: "armor", kind: "軽鎧", nm: "鎖かたびら", rank: "A", st: { vit: 2 }, res: { 斬: 18, 打: 10, 突: 15, 熱: 5, 冷: 5, 雷: 5 }, price: 380, icon: "eq_vest_03" },
@@ -111,45 +150,32 @@ const BONUS = { str: "力", vit: "体", dex: "器", agi: "速", int: "知", wil:
 // ---------- 魔物の心（本家のスタイル。もとの能力値に％を掛け、技を1つ足す） ----------
 // up＝この心を付けていると上がりやすい能力値（本家のスタイルの↑と同じ考え）
 const HEARTS = {
-  slime:  { nm: "しずくの心", col: "白", mul: { str: 90, vit: 110, dex: 95, agi: 90, int: 100, wil: 110, lov: 105, cha: 100 }, sk: "bodyslam", up: ["vit", "wil"] },
-  rat:    { nm: "荷運びネズミの心", col: "白", mul: { str: 95, vit: 95, dex: 108, agi: 108, int: 95, wil: 95, lov: 100, cha: 100 }, sk: "gnaw", up: ["dex", "agi"] },
-  shroom: { nm: "毒キノコの心", col: "白", mul: { str: 80, vit: 100, dex: 95, agi: 95, int: 110, wil: 105, lov: 100, cha: 105 }, sk: "spore", up: ["int", "cha"]},
-  bat:    { nm: "夜コウモリの心", col: "白", mul: { str: 95, vit: 90, dex: 105, agi: 110, int: 95, wil: 95, lov: 100, cha: 100 }, sk: "gust", up: ["agi", "dex"]},
-  rabbit: { nm: "角ウサギの心", col: "白", mul: { str: 105, vit: 95, dex: 100, agi: 108, int: 90, wil: 95, lov: 100, cha: 100 }, sk: "hornrush", up: ["str", "agi"]},
-  dog:    { nm: "骨の犬の心", col: "白", mul: { str: 108, vit: 100, dex: 95, agi: 100, int: 85, wil: 95, lov: 90, cha: 100 }, sk: "bonebite", up: ["str", "vit"]},
-  treant: { nm: "古木の心", col: "白", mul: { str: 102, vit: 112, dex: 90, agi: 85, int: 100, wil: 110, lov: 105, cha: 95 }, sk: "rootlash", up: ["vit", "wil"] },
-  goblin: { nm: "ゴブリンの心", col: "白", mul: { str: 110, vit: 105, dex: 95, agi: 92, int: 85, wil: 95, lov: 95, cha: 100 }, sk: "pickaxe", up: ["str", "vit"]},
+  koromochi:{ nm: "コロモチの心", col: "白", mul: { str: 92, vit: 110, dex: 95, agi: 90, int: 100, wil: 108, lov: 105, cha: 100 }, sk: "mochislam", up: ["vit", "wil"] },
+  mizugumo: { nm: "ミズグモの心", col: "白", mul: { str: 98, vit: 94, dex: 108, agi: 108, int: 102, wil: 96, lov: 100, cha: 100 }, sk: "waterthread", up: ["dex", "agi"] },
+  donguri:  { nm: "ドングリ兵の心", col: "白", mul: { str: 100, vit: 104, dex: 105, agi: 100, int: 95, wil: 100, lov: 100, cha: 104 }, sk: "acornshot", up: ["dex", "vit"] },
+  nushi:    { nm: "ヌシガエルの心", col: "緑", mul: { str: 106, vit: 114, dex: 92, agi: 86, int: 102, wil: 112, lov: 105, cha: 102 }, sk: "bigyawn", up: ["vit", "wil"] },
+  kokemusha:{ nm: "コケ武者の心", col: "緑", mul: { str: 114, vit: 110, dex: 100, agi: 90, int: 88, wil: 100, lov: 95, cha: 98 }, sk: "mosscut", up: ["str", "vit"] },
+  koma:     { nm: "祠守りの狛の心", col: "緑", mul: { str: 108, vit: 116, dex: 96, agi: 96, int: 90, wil: 110, lov: 100, cha: 95 }, sk: "stonefang", up: ["vit", "str"] },
+  sennen:   { nm: "千年ダケの心", col: "緑", mul: { str: 84, vit: 104, dex: 96, agi: 92, int: 116, wil: 112, lov: 108, cha: 104 }, sk: "glowspore", up: ["int", "wil"] },
+  midorinushi:{ nm: "苔竜ミドリヌシの心", col: "青", mul: { str: 112, vit: 118, dex: 96, agi: 90, int: 112, wil: 114, lov: 104, cha: 106 }, sk: "mossbreath", up: ["vit", "int"] },
 };
 
-// ---------- 仲間（仮の5人） ----------
+// ---------- 仲間（物語の順。0＝主人公） ----------
 // st＝始めの能力値、cap＝本人の上限、up＝上がりやすい能力値、hpCap＝HPの上限、rare＝レア度
 const HEROES = [
-  { id: "h1", nm: "レオン", img: "person_001", wt: "sword", rare: "S", hp: 200, hpCap: 1150, lp: 8, st: { str: 26, vit: 19, dex: 15, agi: 19, int: 9, wil: 12, lov: 10, cha: 14 },
-    cap: { str: 128, vit: 104, dex: 96, agi: 112, int: 62, wil: 80, lov: 70, cha: 88 }, up: ["str", "agi"],
-    res: {}, sk: ["gale", "twin", "cleave"], ps: ["spirit", "momentum", "swordway"], gear: { weapon: "ironsword", armor: "leather", sub: "buckler", acc: "ring" } },
-  { id: "h2", nm: "アデラ", img: "person_006", wt: "sword", rare: "S", hp: 260, hpCap: 1300, lp: 10, st: { str: 20, vit: 27, dex: 12, agi: 13, int: 10, wil: 19, lov: 12, cha: 17 },
-    cap: { str: 110, vit: 132, dex: 84, agi: 86, int: 70, wil: 118, lov: 90, cha: 100 }, up: ["vit", "wil"],
-    res: {}, sk: ["guardcut", "cover", "holycut"], ps: ["ironwall", "standfast", "counter"], gear: { weapon: "knightswd", armor: "plate", sub: "buckler", acc: "charm" } },
-  { id: "h3", nm: "カイン", img: "person_032", wt: "staff", rare: "A", hp: 155, hpCap: 950, lp: 6, st: { str: 9, vit: 12, dex: 14, agi: 15, int: 27, wil: 22, lov: 14, cha: 15 },
-    cap: { str: 60, vit: 82, dex: 90, agi: 96, int: 130, wil: 116, lov: 92, cha: 98 }, up: ["int", "wil"],
-    res: {}, sk: ["fireball", "flamewall", "inferno"], ps: ["focus", "heatway", "afterglow"], gear: { weapon: "oakstaff", armor: "robe", sub: "hood", acc: "ring" } },
-  { id: "h4", nm: "ミレイ", img: "person_017", wt: "bow", rare: "A", hp: 170, hpCap: 1000, lp: 7, st: { str: 12, vit: 15, dex: 26, agi: 22, int: 12, wil: 17, lov: 24, cha: 19 },
-    cap: { str: 76, vit: 90, dex: 126, agi: 118, int: 84, wil: 100, lov: 124, cha: 104 }, up: ["dex", "lov"],
-    res: {}, sk: ["aim", "healrain", "shower"], ps: ["bowway", "healer", "quickdraw"], gear: { weapon: "shortbow", armor: "leather", sub: "hood", acc: "charm" } },
-  { id: "h5", nm: "ガイ", img: "person_095", wt: "spear", rare: "A", hp: 205, hpCap: 1100, lp: 8, st: { str: 25, vit: 20, dex: 17, agi: 17, int: 10, wil: 14, lov: 10, cha: 12 },
-    cap: { str: 124, vit: 110, dex: 100, agi: 100, int: 70, wil: 86, lov: 66, cha: 80 }, up: ["str", "dex"],
-    res: {}, sk: ["thrust", "pierce", "lightning"], ps: ["spearway", "charge", "thunder"], gear: { weapon: "ironspear", armor: "leather", sub: "buckler", acc: "ring" } },
-  // ここから下は、あとから加わる仲間（仮。仲間の出入りと入れ替えを確かめるための2人）
-  { id: "h6", nm: "ロイ", img: "person_114", wt: "sword", rare: "A", hp: 190, hpCap: 1080, lp: 8, st: { str: 24, vit: 17, dex: 17, agi: 21, int: 8, wil: 11, lov: 9, cha: 13 },
-    cap: { str: 120, vit: 98, dex: 104, agi: 120, int: 58, wil: 76, lov: 64, cha: 84 }, up: ["str", "agi"],
-    res: {}, sk: ["gale", "twin", "cleave"], ps: ["momentum", "swordway", "charge"], gear: { weapon: "ironsword", armor: "leather", sub: null, acc: null } },
-  { id: "h7", nm: "セラ", img: "person_033", wt: "spear", rare: "A", hp: 215, hpCap: 1150, lp: 9, st: { str: 22, vit: 22, dex: 16, agi: 15, int: 9, wil: 16, lov: 11, cha: 12 },
-    cap: { str: 114, vit: 122, dex: 96, agi: 92, int: 66, wil: 100, lov: 72, cha: 82 }, up: ["str", "vit"],
-    res: {}, sk: ["thrust", "pierce", "guardcut"], ps: ["spearway", "ironwall", "standfast"], gear: { weapon: "ironspear", armor: "leather", sub: "buckler", acc: null } },
+  { id: "kai", nm: "カイ", img: "person_079", wt: "club", rare: "S", hp: 230, hpCap: 1250, lp: 9, st: { str: 24, vit: 24, dex: 14, agi: 15, int: 9, wil: 16, lov: 12, cha: 14 },
+    cap: { str: 122, vit: 128, dex: 90, agi: 94, int: 64, wil: 106, lov: 88, cha: 98 }, up: ["vit", "str"],
+    res: {}, sk: ["oarhit", "waterwheel", "rapidsplit"], ps: ["ironwall", "clubway", "standfast"], gear: { weapon: "oar", armor: "tunic", sub: null, acc: null } },
+  { id: "lise", nm: "リゼット", img: "person_002", wt: "rapier", rare: "S", hp: 165, hpCap: 1000, lp: 7, st: { str: 12, vit: 13, dex: 25, agi: 22, int: 18, wil: 17, lov: 22, cha: 22 },
+    cap: { str: 76, vit: 86, dex: 124, agi: 116, int: 110, wil: 104, lov: 120, cha: 128 }, up: ["dex", "cha"],
+    res: {}, sk: ["vitalstab", "medicine", "doublestab"], ps: ["rapierway", "healer", "momentum"], gear: { weapon: "thinblade", armor: "cloak", sub: null, acc: null } },
+  { id: "muku", nm: "ムク", img: "person_058", wt: "fist", rare: "A", hp: 185, hpCap: 1080, lp: 8, st: { str: 22, vit: 17, dex: 15, agi: 24, int: 7, wil: 10, lov: 14, cha: 12 },
+    cap: { str: 124, vit: 104, dex: 92, agi: 126, int: 54, wil: 76, lov: 90, cha: 84 }, up: ["str", "agi"],
+    res: {}, sk: ["headbutt", "flurry", "uppercut"], ps: ["fistway", "spirit", "counter"], gear: { weapon: "wraps", armor: "tunic", sub: null, acc: null } },
 ];
-const START = [0, 1, 2, 3, 4]; // はじめから居る仲間（仮）
+const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
-const AREA_CAP = { 1: { st: 30, hp: 260 }, 2: { st: 35, hp: 310 }, 3: { st: 41, hp: 370 }, 4: { st: 47, hp: 440 } };
+const AREA_CAP = { 1: { st: 30, hp: 260 }, 2: { st: 35, hp: 310 }, 3: { st: 41, hp: 370 }, 4: { st: 47, hp: 440 }, 5: { st: 53, hp: 520 }, 6: { st: 60, hp: 610 }, 7: { st: 67, hp: 710 }, 8: { st: 75, hp: 820 }, 9: { st: 83, hp: 940 }, 10: { st: 92, hp: 1080 } };
 
 // ---------- 陣形（5か所。c＝敵に近い順の列0〜2、r＝段0〜4。b＝能力の％、h＝狙われやすさ） ----------
 const FORMATIONS = {
@@ -164,32 +190,26 @@ const FORMATIONS = {
 };
 
 // ---------- 魔物（決まった動き方。plan: ターン→技、every: nターンごと、rageFrom: 長引くと毎ターン） ----------
+// 能力値は「強さ1」のときの値。場所の強さに合わせて掛け算する。human＝人間（心を落とさず、倒れても消えない）
 const FOES = {
-  slime:  { nm: "しずく", img: "monster_001", wt: "fist", pow: 6, hp: 70, st: { str: 14, vit: 12, dex: 8, agi: 10, int: 6, wil: 14, lov: 0, cha: 6 }, res: { 打: 40, 熱: -40, 雷: -30 }, every: { n: 3, sk: "bodyslam" }, gold: 6, heart: "slime" },
-  rat:    { nm: "荷運びネズミ", img: "monster_011", wt: "fang", pow: 7, hp: 80, st: { str: 16, vit: 10, dex: 16, agi: 22, int: 5, wil: 8, lov: 0, cha: 8 }, res: { 斬: -30 }, every: { n: 3, sk: "gnaw" }, gold: 9, heart: "rat" },
-  rabbit: { nm: "角ウサギ", img: "monster_003", wt: "fang", pow: 10, hp: 120, st: { str: 22, vit: 14, dex: 14, agi: 24, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 斬: -45, 打: 20 }, every: { n: 3, sk: "hornrush" } , gold: 10, heart: "rabbit" },
-  bat:    { nm: "夜コウモリ", img: "monster_002", wt: "fang", pow: 9, hp: 110, st: { str: 20, vit: 12, dex: 20, agi: 28, int: 8, wil: 10, lov: 0, cha: 10 }, res: { 突: -50, 打: 30, 雷: -30 }, every: { n: 2, sk: "gust" } , gold: 9, heart: "bat" },
-  dog:    { nm: "骨の犬", img: "monster_006", wt: "fang", pow: 10, hp: 150, st: { str: 26, vit: 18, dex: 12, agi: 18, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 斬: 30, 熱: -40, 陽: -60 }, every: { n: 2, sk: "bonebite" } , gold: 14, heart: "dog" },
-  goblin: { nm: "ゴブリン", img: "monster_012", wt: "club", pow: 12, hp: 190, st: { str: 28, vit: 20, dex: 14, agi: 16, int: 6, wil: 10, lov: 0, cha: 12 }, res: { 突: -30 }, every: { n: 3, sk: "pickaxe" } , gold: 18, heart: "goblin" },
-  shroom: { nm: "毒キノコ", img: "monster_009", wt: "fist", pow: 8, hp: 160, st: { str: 12, vit: 16, dex: 10, agi: 12, int: 24, wil: 14, lov: 0, cha: 22 }, res: { 熱: -60, 冷: 30 }, every: { n: 2, sk: "spore" } , gold: 12, heart: "shroom" },
-  treant: { nm: "苔むす古木", img: "monster_083", wt: "club", pow: 22, hp: 1200, st: { str: 62, vit: 32, dex: 10, agi: 8, int: 20, wil: 26, lov: 0, cha: 20 }, res: { 打: 40, 突: 40, 熱: -50, 斬: -10 }, every: { n: 1, sk: "rootlash" }, stunRes: 1, gold: 90, heart: "treant" },
-  orc:    { nm: "オーク", img: "monster_116", wt: "club", pow: 14, hp: 1150, boss: 1, st: { str: 34, vit: 28, dex: 12, agi: 14, int: 8, wil: 14, lov: 0, cha: 20 },
-            res: { 斬: 30, 打: 50, 熱: -40, 雷: -20 }, plan: { 2: "sweepclub", 3: "stomp", 5: "sweepclub", 6: "fury" }, rageFrom: 7, rage: "fury", stunRes: 1, gold: 400 },
+  // 西境：リム川・ささやきの森
+  kawauso:  { nm: "カワウソ盗", img: "m_kawauso", wt: "fang", pow: 6, hp: 80, st: { str: 14, vit: 10, dex: 16, agi: 18, int: 5, wil: 8, lov: 0, cha: 8 }, res: { 斬: -20 }, gold: 5 },
+  koromochi:{ nm: "コロモチ", img: "m_koromochi", wt: "fist", pow: 6, hp: 75, st: { str: 13, vit: 14, dex: 8, agi: 9, int: 6, wil: 14, lov: 0, cha: 6 }, res: { 打: 40, 熱: -40, 雷: -30 }, every: { n: 3, sk: "mochislam" }, gold: 6, heart: "koromochi" },
+  mizugumo: { nm: "ミズグモ", img: "m_mizugumo", wt: "fang", pow: 7, hp: 95, st: { str: 17, vit: 11, dex: 16, agi: 22, int: 12, wil: 9, lov: 0, cha: 10 }, res: { 冷: 40, 熱: -40, 打: -20 }, every: { n: 2, sk: "waterthread" }, gold: 9, heart: "mizugumo" },
+  donguri:  { nm: "ドングリ兵", img: "m_donguri", wt: "spear", pow: 7, hp: 90, st: { str: 16, vit: 14, dex: 14, agi: 12, int: 5, wil: 10, lov: 0, cha: 8 }, res: { 熱: -50, 打: 20, 斬: -20 }, every: { n: 3, sk: "acornshot" }, gold: 8, heart: "donguri" },
+  nushi:    { nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1050, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
+              res: { 打: 20, 冷: 50, 雷: -40, 熱: -20 }, plan: { 2: "mudsplash", 3: "bodypress", 4: "bigyawn", 6: "swampquake", 7: "bodypress", 8: "mudsplash" }, every: { n: 2, sk: "bodypress" }, rageFrom: 9, rage: "swampquake", stunRes: 1, gold: 120, heart: "nushi" },
+  // 黒外套の兵（人間）
+  kuro_s:   { nm: "黒外套の兵", img: "monster_019", human: 1, wt: "sword", pow: 11, hp: 340, st: { str: 30, vit: 20, dex: 14, agi: 14, int: 6, wil: 12, lov: 0, cha: 12 }, res: { 斬: 20, 雷: -30 }, every: { n: 3, sk: "gale" }, gold: 24 },
+  kuro_a:   { nm: "黒外套の兵", img: "monster_020", human: 1, wt: "bow", pow: 10, hp: 255, st: { str: 12, vit: 12, dex: 32, agi: 20, int: 8, wil: 12, lov: 0, cha: 12 }, res: { 打: -20 }, every: { n: 2, sk: "aim" }, gold: 24 },
+  // 苔むす祠（強さ6の場所。ここの値は強さ1のときのもの）
+  kokemusha:{ nm: "コケ武者", img: "m_kokemusha", wt: "sword", pow: 12, hp: 190, st: { str: 26, vit: 22, dex: 14, agi: 13, int: 6, wil: 14, lov: 0, cha: 12 }, res: { 斬: 30, 突: 20, 熱: -50, 陽: -30 }, every: { n: 2, sk: "mosscut" }, gold: 30, heart: "kokemusha" },
+  koma:     { nm: "祠守りの狛", img: "monster_067", wt: "fang", pow: 11, hp: 210, st: { str: 24, vit: 28, dex: 12, agi: 16, int: 6, wil: 18, lov: 0, cha: 12 }, res: { 斬: 40, 突: 40, 打: -40, 熱: 20 }, every: { n: 2, sk: "stonefang" }, stunRes: 1, gold: 32, heart: "koma" },
+  sennen:   { nm: "千年ダケ", img: "m_sennen", wt: "fist", pow: 7, hp: 160, st: { str: 10, vit: 16, dex: 10, agi: 12, int: 26, wil: 20, lov: 0, cha: 24 }, res: { 熱: -60, 冷: 30, 陽: 40 }, every: { n: 2, sk: "glowspore" }, gold: 28, heart: "sennen" },
+  midorinushi:{ nm: "苔竜ミドリヌシ", img: "m_midorinushi", wt: "claw", pow: 14, hp: 1500, boss: 1, st: { str: 30, vit: 26, dex: 14, agi: 14, int: 26, wil: 22, lov: 0, cha: 24 },
+              res: { 斬: 20, 突: 20, 冷: 40, 熱: -40 }, plan: { 1: "dragontail", 3: "mossbreath", 5: "dragontail", 6: "mossbreath" }, every: { n: 2, sk: "dragontail" }, rageFrom: 9, rage: "mossbreath", stunRes: 1, gold: 900, heart: "midorinushi" },
 };
-// 人間の敵：person＝人物の絵（歩く絵の型）で描く。心は落とさない。仲間と同じ技を使う
-Object.assign(FOES, {
-  h_sword: { nm: "流れの剣士", img: "person_010", person: 1, wt: "sword", pow: 12, hp: 420, st: { str: 30, vit: 20, dex: 18, agi: 24, int: 8, wil: 14, lov: 0, cha: 14 }, res: {}, plan: { 2: "gale", 4: "twin" }, every: { n: 3, sk: "gale" }, stunRes: 1, gold: 60 },
-  h_guard: { nm: "雇われ兵", img: "person_080", person: 1, wt: "spear", pow: 10, hp: 210, st: { str: 24, vit: 20, dex: 14, agi: 15, int: 6, wil: 12, lov: 0, cha: 10 }, res: { 突: 20, 雷: -30 }, every: { n: 3, sk: "thrust" }, gold: 22 },
-  h_archer:{ nm: "雇われ弓手", img: "person_085", person: 1, wt: "bow", pow: 9, hp: 150, st: { str: 12, vit: 13, dex: 24, agi: 22, int: 8, wil: 12, lov: 0, cha: 10 }, res: { 斬: -30 }, every: { n: 2, sk: "aim" }, gold: 22 },
-  h_mage:  { nm: "雇われ術師", img: "person_032", person: 1, wt: "staff", pow: 6, hp: 140, st: { str: 8, vit: 11, dex: 12, agi: 16, int: 26, wil: 20, lov: 0, cha: 12 }, res: { 熱: 30, 冷: -40 }, every: { n: 2, sk: "fireball" }, gold: 26 },
-  h_lord:  { nm: "黒衣の将", img: "person_023", person: 1, wt: "axe", pow: 30, hp: 9000, boss: 1, st: { str: 90, vit: 60, dex: 30, agi: 40, int: 20, wil: 50, lov: 0, cha: 30 }, res: {}, plan: { 1: "cleave", 2: "fury" }, rageFrom: 3, rage: "fury", stunRes: 1, gold: 0 },
-});
-// 戦場：c＝列（0がこちらに近い）、r＝段0〜2。big＝マスを全部使う大きい敵
-const WAVES = [
-  { nm: "夜の街道", foes: [{ k: "rabbit", c: 0, r: 0 }, { k: "rabbit", c: 0, r: 2 }, { k: "bat", c: 1, r: 1 }, { k: "dog", c: 2, r: 0 }, { k: "dog", c: 2, r: 2 }] },
-  { nm: "森の奥", foes: [{ k: "goblin", c: 0, r: 0 }, { k: "goblin", c: 0, r: 1 }, { k: "goblin", c: 0, r: 2 }, { k: "shroom", c: 1, r: 1 }, { k: "shroom", c: 2, r: 0 }, { k: "shroom", c: 2, r: 2 }] },
-  { nm: "岩場の親玉", foes: [{ k: "orc", big: 1 }] },
-];
+const WAVES = [];
 
 // ---------- 小道具 ----------
 function rnd(st) { st.seed = (st.seed * 1103515245 + 12345) & 0x7fffffff; return st.seed / 0x7fffffff; }
@@ -206,7 +226,7 @@ function resMul(d, at) {
   return best || 1;
 }
 
-function defLo() { return { form: "arrow", pos: [1, 0, 4, 2, 3] }; }
+function defLo() { return { form: "arrow", pos: [0, null, null, null, null] }; }
 // 遊んでいる記録（mem）から戦う人を作る。mem無しなら始めの状態（試しの計算用）
 //  mem = { st, hp(最大HP), lp(いまのLP), gear:{slot: {id, b}}, heart: 心のキー|null }
 function resolveHero(hi, mem) {
@@ -317,7 +337,8 @@ function damage(st, a, d, s) {
   let v = ((magic ? 6 : a.pow) * 1.5 + RANK[s.rank || "N"]) * statT / 100;
   const rm = resMul(d, at); v *= rm;
   if (hasP(a, "swordway") && at.includes("斬")) v *= 1.1;
-  if ((hasP(a, "bowway") || hasP(a, "spearway")) && at.includes("突")) v *= 1.1;
+  if ((hasP(a, "bowway") || hasP(a, "spearway") || hasP(a, "rapierway")) && at.includes("突")) v *= 1.1;
+  if ((hasP(a, "clubway") || hasP(a, "fistway")) && at.includes("打")) v *= 1.1;
   if (hasP(a, "heatway") && at.includes("熱")) v *= 1.15;
   if (hasP(a, "w_fire") && at.includes("熱")) v *= 1.1;
   if (hasP(a, "thunder") && at.includes("雷")) v *= 1.15;
@@ -445,7 +466,7 @@ function rewards(st, rng) {
   const out = { gold: 0, hearts: [], items: [] }, tier = st.wave.tier || 1;
   for (const f of st.foes) {
     out.gold += Math.round((f.gold || 0) * (1 + 0.15 * (tier - 1)) * (0.8 + rng() * 0.4));
-    if (f.heart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(f.heart);
+    if (f.heart && !st.wave.noHeart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(f.heart);
   }
   const drops = st.wave.drops || [];
   for (const d of drops) if (rng() < d.p) out.items.push(rollItem(d.id, rng));

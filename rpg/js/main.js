@@ -4,12 +4,14 @@
 addEventListener("resize", DM.fit);
 DM.fit();
 const imgs = new Set([...BT.HEROES.map(h => h.img), ...Object.values(BT.FOES).map(f => f.img), ...Object.values(BT.GEAR).map(g => g.icon)]);
-for (const id of Object.keys(MAPS)) MAPS[id]().npcs.forEach(n => imgs.add(n.img));
+for (const id of Object.keys(MAPS)) MAPS[id]().npcs.forEach(n => imgs.add(n.img || n.mon));
+["person_058h"].forEach(k => imgs.add(k));
 // 絵がそろったらタイトルを出す。「はじめから」なら記録（札の記録も）を消して始める
-const hasSave = (() => { try { return !!localStorage.getItem("rpgPlay1"); } catch (e) { return false; } })();
+const hasSave = GS.valid();
 GS.load();
 Promise.all([...imgs].map(DM.load)).then(() => TT.show(hasSave)).then(k => {
   if (k === "new") { GS.reset(); try { localStorage.removeItem("rpgCards1"); } catch (e) {} }
+  ST.apply();
   FD.start();
 });
 })();

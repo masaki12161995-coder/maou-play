@@ -14,12 +14,12 @@ function newLayer(cls) { clearLayer(); layer = A(hud, div("px uilayer " + (cls |
 
 // ---------- 会話 ----------
 // pages：文字列の配列（1つ40字まで）。顔の絵があれば左に出す
-function say(name, pages, img) {
+function say(name, pages, opt) {
   return new Promise(res => {
     const L = newLayer("talk");
     const box = A(L, div("frame dlg", ""), 8, 520, 285, 102);
     if (name) { const nt = A(L, div("nmtag", name), 14, 503, undefined, 20); nt.style.fontSize = d(10); nt.style.lineHeight = d(18); nt.style.padding = `0 ${d(8)}`; }
-    const tx = A(box, div("dtext", ""), 12, 8, 259, 84); tx.style.fontSize = d(11.5); tx.style.lineHeight = d(19);
+    const tx = A(box, div("dtext" + (opt && opt.narr ? " narr" : ""), ""), 12, 8, 259, 84); tx.style.fontSize = d(11.5); tx.style.lineHeight = d(19);
     const arrow = A(box, div("darr", "▼"), 262, 80, 12, 12); arrow.style.fontSize = d(9);
     let i = 0, shown = 0, timer = null, full = "";
     const show = () => {
@@ -39,10 +39,13 @@ function say(name, pages, img) {
 function choose(name, text, opts) {
   return new Promise(res => {
     const L = newLayer("talk");
-    const box = A(L, div("frame dlg", ""), 8, 520, 285, 102);
-    if (name) { const nt = A(L, div("nmtag", name), 14, 503, undefined, 20); nt.style.fontSize = d(10); nt.style.lineHeight = d(18); nt.style.padding = `0 ${d(8)}`; }
-    const tx = A(box, div("dtext", text), 12, 8, 259, 84); tx.style.fontSize = d(11.5); tx.style.lineHeight = d(19);
-    const rh = 28, top = 494 - opts.length * rh - 8;
+    const rh = 28;
+    let top = 494 - opts.length * rh - 8;
+    if (text) { // 問いかけの文があるときは下に会話の窓、無いとき（主人公の返事を選ぶとき）は選ぶ行だけを下に
+      const box = A(L, div("frame dlg", ""), 8, 520, 285, 102);
+      if (name) { const nt = A(L, div("nmtag", name), 14, 503, undefined, 20); nt.style.fontSize = d(10); nt.style.lineHeight = d(18); nt.style.padding = `0 ${d(8)}`; }
+      const tx = A(box, div("dtext", text), 12, 8, 259, 84); tx.style.fontSize = d(11.5); tx.style.lineHeight = d(19);
+    } else top = 618 - opts.length * rh - 8;
     const cb = A(L, div("frame chbox", ""), 141, top, 152, opts.length * rh + 8);
     opts.forEach((o, k) => {
       const r = A(cb, div("chrow", o), 4, 4 + k * rh, 140, rh - 2); r.style.fontSize = d(11); r.style.lineHeight = d(rh - 2);
@@ -118,7 +121,7 @@ function menu() {
     const close = () => { clearLayer(); GS.save(); res(); };
     const draw = () => {
       const L = newLayer("veil solid menu");
-      [["party", "仲間"], ["bag", "持ち物"], ["form", "陣形"], ["book", "札帳"]].forEach(([k, nm], i) => {
+      [["party", "仲間"], ["bag", "持ち物"], ["form", "陣形"], ["book", "札帳"]].filter(([k]) => k !== "book" || GS.G.flags.cards).forEach(([k, nm], i) => { // 札帳は、札を手に入れてから
         const b = A(L, div("frame btn chip" + (tab === k ? " sel" : ""), nm), 12 + i * 62, 46, 59, 28); b.style.fontSize = d(11);
         b.onclick = () => { if (k === "book") { cards("book").then(draw); return; } tab = k; slotSel = null; fsel = -1; bsel = null; pickItem = null; draw(); };
       });

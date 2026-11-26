@@ -13,17 +13,18 @@ function newMem(hi) {
 function fresh() {
   const party = BT.HEROES.map((h, hi) => BT.START.includes(hi) ? newMem(hi) : null);
   return {
-    v: 2, gold: 300, map: "town", x: 9, y: 21, dir: 3,
+    v: 3, gold: 0, map: "hut", x: 2, y: 2, dir: 0,
     party, roster: [...BT.START],
     lo: BT.defLo(), bag: [], hearts: {}, flags: {}, chests: {}, wins: 0,
+    away: [], home: { map: "hut", x: 3, y: 3 }, // away＝物語の都合で一時はずれている仲間、home＝倒れたときに戻る所
   };
 }
 const S = {
   G: null,
   load() {
     try { const t = localStorage.getItem(KEY); S.G = t ? JSON.parse(t) : fresh(); } catch (e) { S.G = fresh(); }
-    if (S.G && S.G.v === 1) { S.G.v = 2; S.G.roster = S.G.party.map((m, i) => i); } // 古い記録：仲間が5人で決まっていた頃のもの
-    if (!S.G || S.G.v !== 2) S.G = fresh();
+    if (!S.G || S.G.v !== 3) S.G = fresh(); // 物語が入る前の試作の記録は使えない
+    S.G.away = S.G.away || [];
     while (S.G.party.length < BT.HEROES.length) S.G.party.push(null); // 仲間の顔ぶれが増えたぶん
     const mems = () => S.G.party.filter(Boolean);
     // 古い記録の直し：おまけの名前が欠けていたもの（精神のおまけ）を付け直す
@@ -32,7 +33,8 @@ const S = {
     uid = 1 + Math.max(0, ...S.G.bag.map(i => i.u), ...mems().flatMap(m => Object.values(m.gear).filter(Boolean).map(i => i.u)));
     return S.G;
   },
-  save() { try { localStorage.setItem(KEY, JSON.stringify(S.G)); } catch (e) {} },
+  hold: false, // 出来事が流れているあいだは記録しない（途中で閉じても、出来事の前からやり直せる）
+  save() { if (S.hold) return; try { localStorage.setItem(KEY, JSON.stringify(S.G)); } catch (e) {} },
   reset() { S.G = fresh(); S.save(); },
   item,
   // お金は札の画面（別のページ）でも使うので、開く前後に読み書きする
@@ -42,7 +44,8 @@ const S = {
   restAll() { S.G.party.forEach((m, hi) => { if (m) m.lp = BT.HEROES[hi].lp; }); },
   // ---------- 仲間の出入り ----------
   has(hi) { return S.G.roster.includes(hi); },
-  fighters() { return S.G.lo.pos.filter(hi => hi != null); },
+  fighters() { return S.G.lo.pos.filter(hi => hi != null && !S.G.away.includes(hi)); },
+  valid() { try { const t = JSON.parse(localStorage.getItem(KEY)); return !!t && t.v === 3 && !!(t.flags && t.flags.s); } catch (e) { return false; } }, // つづきから遊べる記録があるか
   bench() { return S.G.roster.filter(hi => !S.G.lo.pos.includes(hi)); },
   // 加わる：戦う5人に空きがあればそこへ、無ければ控えへ。前に居た人は育ちをそのまま持って戻る
   join(hi) {

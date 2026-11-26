@@ -200,12 +200,12 @@ function draw(t) {
     ctx.fillStyle = "#000a"; ctx.fillRect(0, 44, W, 52); // 上の帯の下地
     for (const u of st.foes) { // 敵（右向きにして描く）
       const b = foeBox(u), img = IM[u.img], f = fx[u.id] || {};
-      if (u.down && !(f.fade > t)) continue;
+      if (u.down && !(f.fade > t) && !u.human) continue; // 人間は、倒れてもそこに残る
       let ox = 0;
       if (f.shake > t) ox = Math.round(Math.sin(t / 18) * 2);
       if (f.lunge > t) ox += 4;
       ctx.save();
-      if (u.down) ctx.globalAlpha = Math.max(0, (f.fade - t) / 500);
+      if (u.down) ctx.globalAlpha = u.human ? Math.max(0.5, (f.fade - t) / 500) : Math.max(0, (f.fade - t) / 500);
       ctx.fillStyle = "#0006"; ctx.fillRect(b.x - Math.floor(b.w * 0.35), b.y - 1, Math.floor(b.w * 0.7), 1.5);
       if (u.person) { // 人間の敵：ふだんは右向きの立ち姿。動くときは構えのコマ（左向きの絵）を裏返して右向きに
         const ps = pose[u.id], act = ps && ps.until > t, col = act ? (ps.kind === "magic" ? 0 : 1) : 1, row = act ? 4 : 2;
@@ -425,7 +425,8 @@ function result() { if (onEnd) onEnd(st); }
 let spin = {};
 function finish(growth) {
   return new Promise(res => {
-    const done = () => { active = false; hud.innerHTML = ""; spin = {}; res(); };
+    const timers = []; // 途中で飛ばしたら、まだ出ていない「上がった能力」は出さない（出しっぱなしで残るのを防ぐ）
+    const done = () => { timers.forEach(clearTimeout); active = false; hud.innerHTML = ""; spin = {}; res(); };
     if (!growth || !growth.some(g => g.ups.length)) { setTimeout(done, st.over === "win" ? 500 : 200); return; }
     els.panel.style.display = "none"; els.bar.style.display = "none";
     const now = performance.now();
@@ -433,11 +434,11 @@ function finish(growth) {
       const u = st.party.find(p => p.hi === g.hi); if (!u || !g.ups.length) return;
       const t0 = now + i * 180; spin[u.id] = { t0, t1: t0 + 640 };
       const p = heroPos(u);
-      g.ups.forEach((up, k) => setTimeout(() => {
+      g.ups.forEach((up, k) => timers.push(setTimeout(() => {
         const nm = up.k === "hp" ? "HP" : BT.ST_NM[up.k];
         const e = div("growpop", `${nm}<b>+${up.v}</b>`); e.style.left = d(p.x); e.style.top = d(p.y - 34 - k * 11); e.style.fontSize = d(8.5);
         hud.appendChild(e);
-      }, i * 180 + 380 + k * 160));
+      }, i * 180 + 380 + k * 160)));
     });
     const total = Math.max(...growth.map((g, i) => i * 180 + 380 + g.ups.length * 160)) + 1300;
     const veil = px(div("px skipveil", ""), 0, 0, W, H); hud.appendChild(veil);

@@ -189,5 +189,94 @@ function mineGate(c) { // 坑道の入り口（2マス幅×2マス高）
 }
 function rubble(c) { caveFloor(c, 0, 0); blob(c, "#3a3640", 24, 30, 20, 13); blob(c, "#625c68", 22, 26, 17, 10); blob(c, "#7a7380", 18, 22, 8, 5); }
 
-root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble };
+
+// ---- 家の中 ----
+function floor(c, x, y) { // 板の床
+  R(c, "#6b5038", 0, 0, T, T);
+  for (let i = 0; i < 4; i++) { const yy = i * 12; R(c, i % 2 ? "#735840" : "#6b5038", 0, yy, T, 12); R(c, "#4e3a28", 0, yy + 11, T, 1); R(c, "#836648", 0, yy, T, 1); const j = (hash(x, y, i) * 36) | 0; R(c, "#4e3a28", j + 4, yy, 1, 12); }
+  const r = rng(hash(x, y, 21) * 1e9); for (let i = 0; i < 6; i++) R(c, "#5c452f", (r() * 44) | 0, (r() * 46) | 0, 3, 1);
+}
+function wall(c, x, y, nb) { // 板の壁（下が床なら、壁の面を見せる）
+  const face = "pD".includes(nb(0, 1));
+  R(c, "#2a2019", 0, 0, T, T);
+  if (face) { R(c, "#5a4634", 0, 8, T, 40); for (let i = 0; i < 4; i++) R(c, "#4a3929", i * 12 + 11, 8, 1, 40); R(c, "#6b5540", 0, 8, T, 2); R(c, "#33271e", 0, 44, T, 4); R(c, "#1c1511", 0, 0, T, 8); }
+}
+function voidT(c) { R(c, "#0b0d14", 0, 0, T, T); }
+function door(c, x, y) { floor(c, x, y); R(c, "#2a2019", 0, 40, T, 8); R(c, "#c9a264", 10, 36, 28, 4); R(c, "#e8c98a", 12, 36, 24, 1); } // 出口（敷居）
+// ---- 沼・畑・月夜草 ----
+function marsh(c, x, y, nb, frame) {
+  R(c, "#2c4a44", 0, 0, T, T);
+  const r = rng(hash(x, y, 31) * 1e9);
+  for (let i = 0; i < 26; i++) R(c, ["#27423d", "#34564c", "#3c6254"][(r() * 3) | 0], (r() * T) | 0, (r() * T) | 0, 4 + ((r() * 6) | 0), 2);
+  for (let i = 0; i < 3; i++) { const lx = ((r() * 40) | 0) + (frame ? 1 : 0), ly = (r() * 40) | 0; R(c, "#8fb49a", lx, ly, 6, 1); }
+  if (hash(x, y, 33) < 0.3) { const lx = 8 + ((r() * 24) | 0), ly = 8 + ((r() * 24) | 0); blob(c, "#3f6a3c", lx, ly, 6, 4); blob(c, "#5a8a4c", lx - 1, ly - 1, 4, 2); R(c, "#2c4a44", lx, ly, 6, 1); }
+  for (const [dx, dy, ex, ey, ew, eh] of [[0, -1, 0, 0, T, 5], [0, 1, 0, T - 4, T, 4], [-1, 0, 0, 0, 4, T], [1, 0, T - 4, 0, 4, T]]) if (!"m".includes(nb(dx, dy))) { R(c, "#4a4634", ex, ey, ew, eh); R(c, "#35553a", ex, ey, ew, Math.min(eh, 2)); }
+}
+function crops(c, x, y) { // 畑のうね
+  R(c, "#5a452e", 0, 0, T, T);
+  for (let i = 0; i < 4; i++) { const yy = i * 12; R(c, "#6e5638", 0, yy + 2, T, 7); R(c, "#7d6442", 0, yy + 2, T, 2); R(c, "#43321f", 0, yy + 9, T, 3);
+    for (let k = 0; k < 4; k++) { const px = k * 12 + 3 + ((hash(x, y, i * 4 + k) * 4) | 0); R(c, "#3f6a34", px, yy - 1, 6, 5); R(c, "#62944a", px + 1, yy - 2, 4, 3); R(c, "#8fbf62", px + 2, yy - 2, 2, 1); } }
+}
+function herb(c, x, y) { // 月夜草（青白く光る）
+  grass(c, x, y, true);
+  c.globalAlpha = 0.25; blob(c, "#bfe8ff", 24, 26, 16, 12); c.globalAlpha = 1;
+  for (const [hx, hy] of [[16, 30], [24, 24], [32, 31]]) { R(c, "#4a7a6a", hx, hy, 2, 10); R(c, "#bfe8ff", hx - 3, hy - 4, 8, 5); R(c, "#f2fbff", hx - 1, hy - 3, 4, 2); }
+}
+// ---- 置き物 ----
+function boat(c) { // 小舟（横3マス）。船尾に帆布
+  const W = T * 3;
+  blob(c, "#1b2f3d", W / 2, 34, 68, 12);
+  blob(c, "#3e2a1c", W / 2, 26, 66, 15); blob(c, "#6e4c30", W / 2, 24, 62, 12); blob(c, "#8a6440", W / 2, 22, 56, 8); blob(c, "#5a3d27", W / 2, 24, 50, 6);
+  for (const bx of [44, 72, 100]) { R(c, "#8a6440", bx, 17, 4, 14); R(c, "#a37a50", bx, 17, 1, 14); }
+  blob(c, "#b8ad94", 112, 22, 14, 6); blob(c, "#d0c6ac", 110, 20, 10, 4); R(c, "#8e8470", 104, 24, 16, 1); // 帆布
+  R(c, "#3e2a1c", 6, 20, 6, 4); R(c, "#3e2a1c", W - 12, 20, 6, 4);
+}
+function kaeri(c) { // 還り石（穴のあいた立ち石）
+  blob(c, "#2a3a26", 24, 42, 14, 4);
+  blob(c, "#4d4a55", 24, 26, 13, 20); blob(c, "#6a6672", 23, 24, 11, 18); blob(c, "#85808c", 20, 18, 5, 9);
+  blob(c, "#1a1820", 24, 22, 5, 6); blob(c, "#bfe8ff", 24, 22, 2, 3);
+  blob(c, "#4b6d47", 16, 38, 6, 3); blob(c, "#628350", 30, 12, 5, 2); R(c, "#4b6d47", 14, 30, 4, 3);
+}
+function stump(c) { // 大きな切り株（2×2マス）
+  blob(c, "#2a3a26", 48, 78, 42, 10);
+  R(c, "#4d3727", 10, 40, 76, 38); blob(c, "#4d3727", 48, 76, 38, 8);
+  for (let i = 0; i < 9; i++) R(c, i % 2 ? "#3c2a1e" : "#5e4532", 12 + i * 8, 42, 4, 36);
+  blob(c, "#8a6a48", 48, 38, 40, 16); blob(c, "#a3815a", 48, 37, 36, 13); blob(c, "#8a6a48", 48, 37, 24, 8); blob(c, "#a3815a", 48, 37, 14, 4); blob(c, "#6e5238", 48, 37, 4, 1);
+  blob(c, "#4b6d47", 18, 44, 8, 3); blob(c, "#628350", 76, 70, 7, 3);
+}
+function thorns(c) { // 茨（道をふさぐ）
+  const r = rng(77);
+  for (let i = 0; i < 9; i++) { const ax = 4 + r() * 40, ay = 10 + r() * 30; c.strokeStyle = i % 2 ? "#3a2a22" : "#54382a"; c.lineWidth = 3; c.beginPath(); c.moveTo(ax, ay); c.quadraticCurveTo(24 + (r() - 0.5) * 30, 24 + (r() - 0.5) * 30, 44 - r() * 40, 40 - r() * 30); c.stroke(); }
+  for (let i = 0; i < 16; i++) { const tx = 4 + r() * 40, ty = 8 + r() * 34; R(c, "#c8b89a", tx, ty, 2, 2); }
+  for (let i = 0; i < 6; i++) blob(c, "#35502f", 6 + r() * 36, 10 + r() * 30, 4, 3);
+}
+function shrineGate(c) { // 苔むした石の門（2×2マス）
+  R(c, "#4f4a55", 8, 12, 18, 84); R(c, "#4f4a55", 70, 12, 18, 84); R(c, "#625c68", 10, 12, 6, 84); R(c, "#625c68", 72, 12, 6, 84);
+  R(c, "#3a3640", 0, 4, 96, 16); R(c, "#625c68", 0, 4, 96, 4); R(c, "#4f4a55", 6, 24, 84, 8);
+  R(c, "#0f0c12", 26, 32, 44, 64);
+  for (const [mx, my, rx] of [[14, 6, 12], [60, 5, 16], [84, 22, 6], [12, 50, 6], [80, 66, 7], [40, 26, 10]]) { blob(c, "#3b5a3e", mx, my, rx, 4); blob(c, "#4b6d47", mx - 1, my - 1, rx - 3, 2); }
+}
+function bed(c) { // 寝床（1×2マス）
+  R(c, "#3e2a1c", 4, 4, 40, 88); R(c, "#6e4c30", 6, 6, 36, 84);
+  R(c, "#d9cdb0", 8, 8, 32, 22); R(c, "#efe6cc", 10, 10, 28, 14);
+  R(c, "#5c6f84", 8, 32, 32, 56); R(c, "#6f8399", 8, 32, 32, 6); for (let i = 0; i < 4; i++) R(c, "#4d5e72", 8, 46 + i * 11, 32, 2);
+}
+function table(c) { R(c, "#2a1d14", 6, 34, 36, 8); R(c, "#6e4c30", 4, 12, 40, 24); R(c, "#8a6440", 4, 12, 40, 4); R(c, "#3e2a1c", 8, 36, 4, 10); R(c, "#3e2a1c", 36, 36, 4, 10); R(c, "#d9cdb0", 12, 16, 7, 6); R(c, "#d9cdb0", 28, 18, 7, 6); R(c, "#7a8a70", 13, 17, 5, 2); R(c, "#7a8a70", 29, 19, 5, 2); }
+function chair(c, o) { R(c, "#3e2a1c", 12, 6, 24, 20); R(c, "#6e4c30", 14, 8, 20, 16); R(c, "#5a3d27", 10, 24, 28, 12); R(c, "#8a6440", 10, 24, 28, 3); R(c, "#3e2a1c", 12, 36, 4, 8); R(c, "#3e2a1c", 32, 36, 4, 8); if (o && o.dust) { c.globalAlpha = 0.5; R(c, "#cfc8b8", 12, 25, 24, 2); c.globalAlpha = 1; } }
+function shelf(c) { R(c, "#3e2a1c", 4, 4, 40, 40); R(c, "#6e4c30", 6, 6, 36, 16); R(c, "#6e4c30", 6, 26, 36, 16); R(c, "#8a6440", 6, 22, 36, 3); R(c, "#b08a5a", 18, 9, 8, 12); R(c, "#b08a5a", 19, 6, 6, 4); R(c, "#8a6440", 17, 5, 2, 3); R(c, "#7a8a70", 10, 30, 8, 10); R(c, "#a36a4a", 28, 32, 10, 8); } // 棚（木彫りの人形）
+function oarRack(c) { R(c, "#c9a264", 22, 2, 4, 36); R(c, "#e0bd80", 22, 2, 1, 36); blob(c, "#b08a5a", 24, 38, 6, 8); blob(c, "#c9a264", 23, 37, 4, 6); } // 壁に立てかけた櫂
+function pillar(c) { R(c, "#4a3626", 18, 0, 12, T); R(c, "#6e4c30", 20, 0, 4, T); for (const yy of [12, 20, 27, 33, 38]) R(c, "#2a1d14", 19, yy, 7, 1); } // 柱（背丈の傷）
+function hatWall(c) { blob(c, "#b8944a", 24, 26, 18, 6); blob(c, "#e8c878", 24, 24, 16, 5); blob(c, "#cea858", 24, 18, 9, 8); blob(c, "#e8c878", 22, 16, 6, 5); R(c, "#963c30", 16, 22, 17, 2); } // 壁の麦わら帽
+function hearth(c) { R(c, "#3a3640", 4, 14, 40, 28); R(c, "#55504e", 6, 16, 36, 24); R(c, "#1c1511", 10, 20, 28, 16); blob(c, "#d8573a", 24, 30, 8, 4); blob(c, "#ffd04a", 24, 30, 4, 2); R(c, "#2a2532", 18, 6, 12, 10); R(c, "#433b4e", 18, 6, 12, 3); } // 囲炉裏と鉄瓶
+function basket(c) { blob(c, "#6e4c30", 24, 34, 12, 8); blob(c, "#a3815a", 24, 30, 11, 5); blob(c, "#d9cdb0", 24, 28, 8, 3); } // 包み・籠
+function statue(c) { // 苔むした戦士の石像
+  caveFloor(c, 0, 0); blob(c, "#2a2532", 24, 42, 14, 4);
+  R(c, "#625c68", 14, 16, 20, 26); R(c, "#7a7380", 16, 16, 6, 26); blob(c, "#7a7380", 24, 10, 7, 7); blob(c, "#8c8590", 22, 8, 4, 4);
+  R(c, "#4f4a55", 34, 6, 3, 34); R(c, "#4f4a55", 31, 14, 9, 3); R(c, "#4f4a55", 12, 40, 24, 4);
+  blob(c, "#4b6d47", 16, 18, 6, 3); blob(c, "#3b5a3e", 30, 30, 5, 3); blob(c, "#4b6d47", 20, 40, 7, 2);
+}
+function post(c) { R(c, "#3e2c1d", 20, 14, 8, 30); R(c, "#6e5238", 21, 14, 3, 30); blob(c, "#2a3a26", 24, 44, 8, 2); } // 杭
+
+root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue };
 })(window);

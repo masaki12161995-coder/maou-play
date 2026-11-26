@@ -7,7 +7,7 @@ const IM = window.IMG;
 const cv = document.getElementById("field"), ctx = cv.getContext("2d");
 const TD = 24, TP = TL.T;         // 1マス＝24ドット（絵は48点）
 const STEP = 170;                 // 1歩の時間
-const WALK = new Set([".", "=", "c", "b", "s", "_", "r"]);
+const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D"]);
 const LEADER = 0;
 
 let M = null, ground = [], over = null, blocked = null;
@@ -21,26 +21,35 @@ function chAt(x, y) { return (M.g[y] && M.g[y][x] !== undefined) ? M.g[y][x] : "
 function build(id) {
   M = MAPS[id]();
   // 地図が画面より低いときは、上下に木を足して黒い余白をなくす
-  const need = Math.ceil(H / TD) + 1 - M.g.length;
+  M.objs = M.objs.filter(o => !o.when || o.when(G())); M.trigs = M.trigs || [];
+  const need = M.inside ? 0 : Math.ceil(H / TD) + 1 - M.g.length;
   if (need > 0) {
     const top = Math.ceil(need / 2), bot = need - top, w = M.g[0].length, rowT = () => Array(w).fill("T");
     M.g = [...Array(top).fill(0).map(rowT), ...M.g, ...Array(bot).fill(0).map(rowT)];
-    for (const list of [M.objs, M.exits, M.npcs, M.foes, M.chests]) for (const o of list) o.y += top;
+    for (const list of [M.objs, M.exits, M.npcs, M.foes, M.chests, M.trigs]) for (const o of list) o.y += top;
     M.padTop = top;
   } else M.padTop = 0;
   M.h = M.g.length; M.w = M.g[0].length;
+  // 置き物の下が木のマスだと、木の葉が置き物の上にかぶさってしまう。置き物の下は草にしておく
+  for (const o of M.objs) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) if (M.g[o.y + j] && M.g[o.y + j][o.x + i] === "T") M.g[o.y + j][o.x + i] = ".";
   blocked = M.g.map(row => row.map(ch => !WALK.has(ch)));
   for (const o of M.objs) {
     const w = o.w || (o.t === "mine" ? 2 : 1), h = o.h || (o.t === "mine" ? 2 : 1);
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (blocked[o.y + j]) blocked[o.y + j][o.x + i] = true;
   }
   for (const e of M.exits) blocked[e.y][e.x] = false;
-  const hasWater = M.g.some(r => r.includes("~") || r.includes("b") || r.includes("s"));
+  const hasWater = M.g.some(r => r.includes("~") || r.includes("b") || r.includes("s") || r.includes("m"));
   ground = [paint(0)]; if (hasWater) ground.push(paint(1));
   over = paintOver();
   syncNpcs();
   chests = M.chests.map(c => ({ ...c, open: !!G().chests[c.id] }));
-  foes = M.foes.filter(f => !(f.boss && G().flags.boss)).map(f => ({ def: f, x: f.x, y: f.y, fx: f.x, fy: f.y, hx: f.x, hy: f.y, from: null, t0: 0, next: performance.now() + 400 + Math.random() * 900, face: 1, alive: true }));
+  foes = []; syncFoes();
+}
+// うろつく魔物：出る条件（when）に合うものだけ居る。出来事のあとにも呼ぶ
+function syncFoes() {
+  const ok = f => !(f.once && G().flags["k_" + f.once]) && (!f.when || f.when(G()));
+  foes = foes.filter(f => ok(f.def));
+  for (const f of M.foes) if (ok(f) && !foes.some(x => x.def === f)) foes.push({ def: f, x: f.x, y: f.y, fx: f.x, fy: f.y, hx: f.x, hy: f.y, from: null, t0: 0, next: performance.now() + 400 + Math.random() * 900, face: 1, alive: true });
 }
 function paint(frame) {
   const c = document.createElement("canvas"); c.width = M.w * TP; c.height = M.h * TP;
@@ -50,7 +59,8 @@ function paint(frame) {
     x.save(); x.translate(tx * TP, ty * TP);
     ({ ".": () => TL.grass(x, tx, ty), "=": () => TL.dirt(x, tx, ty, nb), c: () => TL.cobble(x, tx, ty, nb), T: () => TL.treeBase(x, tx, ty, nb),
        "~": () => TL.water(x, tx, ty, nb, frame), b: () => TL.bridge(x, tx, ty, nb, frame), s: () => TL.stones(x, tx, ty, nb, frame), R: () => TL.rockWall(x, tx, ty, nb),
-       f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x) }[ch] || (() => TL.grass(x, tx, ty)))();
+       f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x),
+       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
     x.restore();
   }
   for (const o of M.objs) {
@@ -60,6 +70,7 @@ function paint(frame) {
     else if (o.t === "stall") TL.stall(x, o.w);
     else if (o.t === "sign") TL.sign(x);
     else if (o.t === "mine") TL.mineGate(x);
+    else if (TL[o.t]) TL[o.t](x, o);
     x.restore();
   }
   return c;
@@ -75,7 +86,7 @@ function paintOver() { // 木の葉（上の層）
 function syncNpcs() { npcs = M.npcs.filter(n => !n.when || n.when(G())).map(n => ({ ...n, d: n.dir })); }
 // 後ろを付いて歩くのは、戦う5人のうち先頭の人（主人公）以外
 function syncParty() {
-  const ids = GS.fighters().filter(hi => hi !== LEADER);
+  const ids = M && M.noFollow ? [] : GS.fighters().filter(hi => hi !== LEADER);
   fol = ids.map((hi, i) => fol.find(f => f.hi === hi) || { hi, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
 }
 // ---------- 入る・出る ----------
@@ -89,8 +100,14 @@ function enter(id, x, y, dir) { // x,y は足す前の地図の座標
   hudBuild();
 }
 async function start() {
-  const g = G(); active = true; enter(g.map, g.x, g.y, g.dir); fadeIn();
-  if (!g.flags.intro) { busy = true; await new Promise(r => setTimeout(r, 500)); await UI.say("", ["旅の一行は、街道ぞいの小さな町にたどり着いた。", "町の長が、なにやら困っているらしい。"]); g.flags.intro = 1; GS.save(); busy = false; }
+  const g = G(); active = true; enter(g.map, g.x, g.y, g.dir);
+  if (!g.flags.s) { fade = 1; fadeTo = 1; await run("s1"); } else fadeIn(); // はじめから：物語の最初の場面
+}
+// 出来事を1つ流す（流れているあいだは歩けない）
+async function run(name, arg) {
+  if (!TALK[name]) return;
+  const was = busy, held = GS.hold; busy = true; GS.hold = true; route = null; drag = null; talkTarget = null;
+  try { await TALK[name](arg || {}); } finally { busy = was; GS.hold = held; if (!held) GS.save(); if (active) hudBuild(); }
 }
 
 // ---------- 上の飾り ----------
@@ -131,9 +148,17 @@ function arrived() {
   const g = G(); g.x = P.x; g.y = P.y - M.padTop; g.dir = P.dir;
   const ex = M.exits.find(e => e.x === P.x && e.y === P.y);
   if (ex) { route = null; travel(ex); return; }
+  if (checkTrig()) return;
   if (touchFoe()) return;
   if (route && route.length) { const n = route.shift(); if (!stepTo(dirOf(n.x - P.x, n.y - P.y))) { route = null; talkTarget = null; } }
   else { route = null; if (drag && drag.dir !== null) stepTo(drag.dir); }
+}
+// そのマスに入ると起きる出来事
+function checkTrig() {
+  if (busy) return false;
+  const t = M.trigs.find(t => P.x >= t.x && P.x < t.x + (t.w || 1) && P.y >= t.y && P.y < t.y + (t.h || 1) && (!t.when || t.when(G())));
+  if (!t) return false;
+  route = null; drag = null; talkTarget = null; run(t.run, t); return true;
 }
 function touchFoe() {
   if (performance.now() < grace || busy) return false;
@@ -143,7 +168,7 @@ function touchFoe() {
 }
 async function travel(ex) {
   busy = true; drag = null; await fadeOut();
-  enter(ex.to, ex.tx, ex.ty, ex.dir); busy = false; fadeIn();
+  enter(ex.to, ex.tx, ex.ty, ex.dir); busy = false; fadeIn(); checkTrig();
 }
 // 道を探す（幅優先）。目的のマスに立てなければ、その隣まで
 function findPath(tx, ty, adjacent) {
@@ -175,64 +200,67 @@ function foeTick(now) {
 }
 
 // ---------- 戦い ----------
+// 場所の強さごとの落とし物
 const DROPS = {
-  1: [{ id: "ironsword", p: 0.04 }, { id: "leather", p: 0.05 }, { id: "hood", p: 0.04 }, { id: "buckler", p: 0.04 }, { id: "shortbow", p: 0.03 }],
-  2: [{ id: "ironspear", p: 0.05 }, { id: "plate", p: 0.04 }, { id: "chain", p: 0.03 }, { id: "ring", p: 0.04 }, { id: "oakstaff", p: 0.04 }],
-  3: [{ id: "knightswd", p: 0.10 }, { id: "longbow", p: 0.08 }, { id: "sagestaff", p: 0.08 }, { id: "chain", p: 0.10 }, { id: "charm", p: 0.08 }],
+  1: [{ id: "oakclub", p: 0.04 }, { id: "needle", p: 0.04 }, { id: "ironfist", p: 0.04 }, { id: "tunic", p: 0.04 }, { id: "cloak", p: 0.04 }, { id: "hood", p: 0.04 }, { id: "buckler", p: 0.04 }, { id: "charm", p: 0.03 }],
+  6: [{ id: "mosssword", p: 0.06 }, { id: "chain", p: 0.10 }, { id: "plate", p: 0.08 }, { id: "ring", p: 0.10 }, { id: "longbow", p: 0.05 }],
 };
 const CELLS = [[0, 1], [0, 0], [0, 2], [1, 1], [1, 0], [1, 2], [2, 1], [2, 0], [2, 2]];
+const BACK = ["mizugumo", "sennen", "kuro_a"]; // 後ろの列に置く者（飛び道具・術）
 function makeWave(def) {
   const tier = def.tier || M.tier || 1;
-  if (def.boss) return { nm: "坑道の主", foes: [{ k: "orc", big: 1 }], tier, bg: def.bg || M.bg, drops: [{ id: "knightswd", p: 1 }] };
-  // 前の列に打たれ強い者、後ろに飛ぶ者・術の者
-  const order = def.g.slice().sort((a, b) => (["bat", "shroom"].includes(a) ? 1 : 0) - (["bat", "shroom"].includes(b) ? 1 : 0));
+  if (def.boss) return { nm: M.nm, foes: [{ k: def.g[0], big: 1 }], tier, bg: def.bg || M.bg, drops: DROPS[tier] || [] };
+  const order = def.g.slice().sort((a, b) => (BACK.includes(a) ? 1 : 0) - (BACK.includes(b) ? 1 : 0));
   return { nm: M.nm, foes: order.map((k, i) => ({ k, c: CELLS[i][0], r: CELLS[i][1] })), tier, bg: def.bg || M.bg, drops: DROPS[tier] || [] };
 }
+// いま離れている仲間（物語の都合で一時はずれている人）は、戦いにも出ない
+function battleLo() { const g = G(), away = g.away || []; return { form: g.lo.form, pos: g.lo.pos.map(hi => away.includes(hi) ? null : hi) }; }
 // 戦って、成長・ごほうび・結果の画面まで。戻り値は "win" / "lose" / "time"
 //  wave.solo＝その1人で戦う、wave.fixed＝決まった顔ぶれ、wave.until＝決まったターンで終わる
 //  wave.loseOk＝負けても物語が進む（お金もLPも減らない。結果の画面も出さない）
+//  wave.retry＝物語の途中の戦い。負けたら、その場でやり直す（お金は減らない）
 async function runBattle(wave) {
   await flash();
   active = false; [...hud.querySelectorAll(".fhud")].forEach(e => e.remove());
-  const st = await new Promise(res => BV.start(wave, G().party, G().lo, res));
-  const g = G();
-  if (!(wave.loseOk && st.over !== "win")) for (const u of st.party) g.party[u.hi].lp = Math.max(0, u.lp);
-  if (st.over === "win") {
-    const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, taken: u.taken, healed: u.healed, ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng) }));
-    await BV.finish(growth);
-    const rw = BT.rewards(st, rng);
-    g.gold += rw.gold; rw.hearts.forEach(k => { g.hearts[k] = (g.hearts[k] || 0) + 1; }); rw.items.forEach(it => g.bag.push(GS.item(it.id, it.b, it.tag)));
-    g.wins++; GS.save();
-    await UI.result({ win: true, gold: rw.gold, hearts: rw.hearts, items: rw.items, growth, turns: st.turn });
-  } else if (wave.loseOk) {
-    await BV.finish(null);
-  } else if (st.over === "lose") {
-    await BV.finish(null); await UI.result({ win: false });
-    g.gold = Math.floor(g.gold / 2); GS.restAll(); GS.save();
-  } else {
-    await BV.finish(null); await UI.result({ win: false, time: true });
+  let st;
+  for (;;) {
+    st = await new Promise(res => BV.start(wave, G().party, battleLo(), res));
+    const g = G();
+    if (!(wave.loseOk && st.over !== "win")) for (const u of st.party) g.party[u.hi].lp = Math.max(0, u.lp);
+    if (st.over === "win") {
+      const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, taken: u.taken, healed: u.healed, ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng) }));
+      await BV.finish(growth);
+      const rw = BT.rewards(st, rng);
+      g.gold += rw.gold; rw.hearts.forEach(k => { g.hearts[k] = (g.hearts[k] || 0) + 1; }); rw.items.forEach(it => g.bag.push(GS.item(it.id, it.b, it.tag)));
+      g.wins++; GS.save();
+      await UI.result({ win: true, gold: rw.gold, hearts: rw.hearts, items: rw.items, growth, turns: st.turn });
+      break;
+    }
+    if (wave.loseOk) { await BV.finish(null); break; }
+    await BV.finish(null); await UI.result({ win: false, time: st.over === "time" });
+    if (wave.retry) { GS.restAll(); GS.save(); continue; }
+    if (st.over === "lose") { g.gold = Math.floor(g.gold / 2); GS.restAll(); GS.save(); }
+    break;
   }
   active = true; hudBuild(); grace = performance.now() + 1200; fadeIn();
   return st.over;
 }
-function toInn() { enter("town", 6, 13, 3); fadeIn(); } // 全滅したら宿へ
+// 全滅したら、最後に休んだ所（還り石・寝床）へ戻る
+function toHome() { const h = G().home || { map: "hut", x: 3, y: 3 }; enter(h.map, h.x, h.y, 0); fadeIn(); }
 async function fight(f) {
   if (busy) return;
   busy = true; route = null; drag = null;
   P.dir = dirOf(f.x - P.x, f.y - P.y);
-  if (f.def.boss) await UI.say("オーク", ["グオオオ……！", "ここはオレの寝床だ。荷車の食い物は、ぜんぶオレのものだ！"]);
   const r = await runBattle(makeWave(f.def));
-  if (r === "win") {
-    f.alive = false; if (f.def.boss) { G().flags.boss = 1; GS.save(); }
-    busy = false;
-    if (f.def.boss) { await UI.say("", ["坑道の主を倒した！", "これで街道の荷車も通れるはずだ。町の長に知らせよう。"]); }
-  } else { busy = false; if (r === "lose") toInn(); }
+  if (r === "win") { f.alive = false; if (f.def.once) { G().flags["k_" + f.def.once] = 1; GS.save(); } }
+  busy = false;
+  if (r === "lose") toHome();
 }
 // ---------- 出来事の小道具（話しかけたときの出来事から使う） ----------
 // 出来事の中の戦い。全滅（負けてもよい戦いは除く）なら宿へ戻り、false を返すので、出来事はそこでやめる
 async function battle(wave) {
   const r = await runBattle({ tier: M.tier || 1, bg: M.bg || "meadow", ...wave });
-  if (r === "lose" && !wave.loseOk) { toInn(); return null; }
+  if (r === "lose" && !wave.loseOk) { toHome(); return null; }
   return r;
 }
 async function joinMember(hi) {
@@ -248,17 +276,21 @@ async function leaveMember(hi, lines) {
 }
 
 // ---------- 話す・調べる ----------
+function objAt(tx, ty) { return M.objs.find(o => (o.talk || o.text) && tx >= o.x && tx < o.x + (o.w || 1) && ty >= o.y && ty < o.y + (o.h || 1)); }
 async function interact(tx, ty) {
-  const n = npcs.find(n => n.x === tx && n.y === ty);
+  const n = npcs.find(n => n.x === tx && n.y === ty && n.talk);
   const c = chests.find(c => c.x === tx && c.y === ty);
-  const o = M.objs.find(o => o.t === "sign" && o.x === tx && o.y === ty);
+  const o = objAt(tx, ty);
   if (!n && !c && !o) return;
   busy = true; route = null;
   P.dir = dirOf(tx - P.x, ty - P.y);
-  if (n) { n.d = dirOf(P.x - n.x, P.y - n.y); await (TALK[n.talk] || (() => UI.say(n.nm, ["……"])))(n); n.d = n.dir; }
-  else if (c) await openChest(c);
-  else await UI.say("", o.text);
-  busy = false; hudBuild();
+  GS.hold = true;
+  try {
+    if (n) { if (n.img) n.d = dirOf(P.x - n.x, P.y - n.y); if (TALK[n.talk]) await TALK[n.talk](n); n.d = n.dir; }
+    else if (c) await openChest(c);
+    else if (o.talk) { if (TALK[o.talk]) await TALK[o.talk](o); }
+    else await UI.say("", o.text);
+  } finally { GS.hold = false; GS.save(); busy = false; hudBuild(); }
 }
 async function openChest(c) {
   if (c.open) { await UI.say("", ["からっぽだ。"]); return; }
@@ -267,30 +299,7 @@ async function openChest(c) {
   const it = GS.item(c.item); G().bag.push(it); GS.save();
   await UI.say("", ["宝箱を開けた。", `${GS.itemName(it)}を手に入れた！`]);
 }
-const stage1 = () => !!G().flags.boss;
-const TALK = {
-  elder: n => UI.say(n.nm, stage1() ? ["坑道の主を追い払ってくれたそうじゃな！", "これで荷車が通れる。町の皆にかわって礼を言うぞ。", "崖崩れの片付けがすんだら、北へも行けるようになる。それまでゆっくりしていっておくれ。"]
-    : ["わしはこの町の長じゃ。", "街道の先の古い坑道に、大きなオークが住みついてしもうた。", "荷車が襲われて、町に品が届かん。どうか追い払ってはくれんか。"]),
-  inn: async n => {
-    const k = await UI.choose(n.nm, "一晩 20G だよ。泊まっていくかい？", ["泊まる", "やめる"]);
-    if (k !== 0) return;
-    if (G().gold < 20) { await UI.say(n.nm, ["おや、お金が足りないようだね。"]); return; }
-    G().gold -= 20; GS.restAll(); GS.save(); await fadeOut(); await new Promise(r => setTimeout(r, 400)); fadeIn();
-    await UI.say(n.nm, ["よく眠れたかい？ 行ってらっしゃい。"]);
-  },
-  shop: async n => { await UI.say(n.nm, ["いらっしゃい！ 見ていっておくれ。"]); await UI.shop("武器屋", ["ironsword", "knightswd", "oakstaff", "shortbow", "longbow", "ironspear", "leather", "chain", "robe", "buckler", "hood", "ring"]); },
-  casino: async n => {
-    const k = await UI.choose(n.nm, "ここは賭場だよ。何で遊んでいく？", ["スロット・チンチロ", "札で勝負", "やめる"]);
-    if (k === 0) await UI.cards("casino"); else if (k === 1) await UI.cards("duel", 2);
-  },
-  duel0: async n => { const k = await UI.choose(n.nm, stage1() ? "坑道が静かになって荷が軽いぜ。景気づけに一勝負どうだ？" : "よう、札で勝負しようぜ！ 1枚ずつ賭けてな。", ["勝負する", "やめる"]); if (k === 0) await UI.cards("duel", 0); },
-  duel1: async n => { const k = await UI.choose(n.nm, "札は正直じゃよ。ひとつ読んでみるかい？", ["勝負する", "やめる"]); if (k === 0) await UI.cards("duel", 1); },
-  cardshop: async n => { await UI.say(n.nm, ["札はいらんかね？ 町の外で見かける魔物の札だよ。"]); await UI.cards("shop"); },
-  kid: n => UI.say(n.nm, stage1() ? ["ねえねえ、坑道のオークやっつけたの？ すっげー！", "東の林の宝箱は、もう見た？"] : ["東の川を飛び石で渡った先の林には、すっごく強い骨の犬がいるんだって！", "宝箱を守ってるってうわさだよ。"]),
-  lady: n => UI.say(n.nm, ["魔物を倒すと、まれに『心』を落とすの。", "仲間に宿すと、能力の伸び方や使える技が変わるそうよ。"].concat(stage1() ? ["坑道が静かになって、夜もよく眠れるわ。"] : [])),
-  gate: n => UI.say(n.nm, stage1() ? ["あんたらのおかげで見回りが楽になったよ。"] : ["街道に出るなら気をつけな。魔物がうろついてる。", "坑道は街道を北へ行って、西へ曲がった先だ。"]),
-  slide: n => UI.say(n.nm, ["この先は崖崩れで道がふさがってる。片付くまで通せないよ。"].concat(stage1() ? ["坑道の件は聞いたよ。たいしたもんだ。"] : [])),
-};
+const TALK = {}; // 出来事の置き場（名前→出来事）。中身は story.js が入れる
 
 // ---------- 入力 ----------
 let lastTap = { t: 0, x: 0, y: 0 }, tapTimer = null;
@@ -310,7 +319,7 @@ const endDrag = e => {
   const wasTap = !drag.moved; drag = null;
   if (!wasTap || !active || busy) return;
   const now = performance.now(), { tx, ty } = toTile(e.clientX, e.clientY);
-  const thing = npcs.some(n => n.x === tx && n.y === ty) || chests.some(c => c.x === tx && c.y === ty) || M.objs.some(o => o.t === "sign" && o.x === tx && o.y === ty);
+  const thing = npcs.some(n => n.x === tx && n.y === ty && n.talk) || chests.some(c => c.x === tx && c.y === ty) || !!objAt(tx, ty);
   if (thing) { goTalk(tx, ty); lastTap.t = 0; return; }
   const dbl = now - lastTap.t < 320 && Math.abs(lastTap.tx - tx) <= 1 && Math.abs(lastTap.ty - ty) <= 1;
   lastTap = { t: now, tx, ty };
@@ -334,6 +343,14 @@ function person(img, x, y, dir, moving, now, alpha) {
   ctx.fillStyle = "#0006"; ctx.fillRect(px0 - 6, py0 - 1, 12, 2);
   ctx.drawImage(IM[img], col * 48, dir * 60, 48, 60, Math.round((px0 - 12) * 4) / 4, Math.round((py0 - 30) * 4) / 4, 24, 30);
 }
+function beast(name, x, y, face, sc) { // 魔物の絵の人（立っているだけ）
+  const img = IM[name], w = img.naturalWidth * sc, h = img.naturalHeight * sc, cx = x * TD + TD / 2, by = y * TD + TD - 2;
+  ctx.fillStyle = "#0007"; ctx.fillRect(cx - w * 0.3, by - 1, w * 0.6, 2);
+  ctx.save(); ctx.translate(Math.round((cx + (face < 0 ? w / 2 : -w / 2)) * 4) / 4, Math.round((by - h) * 4) / 4); ctx.scale(face < 0 ? -1 : 1, 1);
+  ctx.drawImage(img, 0, 0, w, h); ctx.restore();
+}
+// 時間帯の色（夕暮れ・夜・夜明け）
+const TINT = { dusk: "rgba(190,90,40,0.26)", night: "rgba(14,18,60,0.52)", dawn: "rgba(150,140,190,0.24)" };
 function draw(now) {
   requestAnimationFrame(draw);
   if (!active || !M) return;
@@ -354,7 +371,7 @@ function draw(now) {
   // 人・宝箱・敵を奥から
   const ents = [];
   for (const c of chests) ents.push({ y: c.y, f: () => { ctx.save(); ctx.translate(c.x * TD, c.y * TD); ctx.scale(0.5, 0.5); TL.chest(ctx, c.open); ctx.restore(); } });
-  for (const n of npcs) ents.push({ y: n.y, f: () => person(n.img, n.x, n.y, n.d, false, now) });
+  for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.big ? 0.42 : 0.5) : person(n.img, n.x, n.y, n.d, false, now) });
   for (const f of fol) { const [x, y] = lerp(f, now); ents.push({ y, f: () => person(BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); }
   ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) });
   for (const f of foes) if (f.alive) {
@@ -363,7 +380,7 @@ function draw(now) {
       const img = IM[BT.FOES[f.def.k].img], s = f.def.boss ? 0.42 : 0.5, w = img.naturalWidth * s, h = img.naturalHeight * s;
       const bob = Math.round(Math.sin(now / 260 + f.hx) * 1.5 * 2) / 2, cx = x * TD + TD / 2, by = y * TD + TD - 2;
       ctx.fillStyle = "#0007"; ctx.fillRect(cx - w * 0.3, by - 1, w * 0.6, 2);
-      ctx.save(); ctx.translate(Math.round((cx + (f.face < 0 ? w / 2 : -w / 2)) * 4) / 4, Math.round((by - h + (BT.FOES[f.def.k].img === "monster_002" ? bob - 6 : 0)) * 4) / 4); ctx.scale(f.face < 0 ? -1 : 1, 1);
+      ctx.save(); ctx.translate(Math.round((cx + (f.face < 0 ? w / 2 : -w / 2)) * 4) / 4, Math.round((by - h + 0) * 4) / 4); ctx.scale(f.face < 0 ? -1 : 1, 1);
       ctx.drawImage(img, 0, 0, w, h); ctx.restore();
     } });
   }
@@ -375,6 +392,7 @@ function draw(now) {
     gr.addColorStop(0, "#0000"); gr.addColorStop(1, "#05030ab8");
     ctx.fillStyle = gr; ctx.fillRect(cam.x, cam.y, W, H);
   }
+  const tint = TINT[G().flags.time]; if (tint) { ctx.fillStyle = tint; ctx.fillRect(cam.x, cam.y, W, H); }
   // 暗転
   const fv = fade + (fadeTo - fade) * 0.25; fade = Math.abs(fv - fadeTo) < 0.01 ? fadeTo : fv;
   if (fade > 0) { ctx.fillStyle = `rgba(5,4,10,${fade})`; ctx.fillRect(cam.x, cam.y, W, H); }
@@ -385,6 +403,9 @@ function flash() { return new Promise(r => { const e = px(div("px battleflash", 
 
 requestAnimationFrame(draw);
 root.FD = { start, enter, get active() { return active; },
-  battle, joinMember, leaveMember, syncParty,
-  _test: { fight: id => fight(foes.find(f => f.def.id === id)), talk: id => { const n = npcs.find(n => n.id === id); return interact(n.x, n.y); }, pos: () => ({ ...P, busy, drag, route, active }) } };
+  battle, joinMember, leaveMember, syncParty, TALK, run,
+  api: { fadeOut, fadeIn, enter, sync() { syncNpcs(); syncFoes(); syncParty(); hudBuild(); }, face(dir) { P.dir = dir; }, setFade(v) { fade = v; fadeTo = v; }, pos: () => P, map: () => M },
+  _test: { screen: (tx, ty) => { const r = stage.getBoundingClientRect(); return { x: r.left + (tx * TD + TD / 2 - cam.x) * DM.K, y: r.top + (ty * TD + TD / 2 - cam.y) * DM.K }; },
+    path: (tx, ty) => { const r = findPath(tx, ty, false); return r ? r.length : -1; }, npcs: () => npcs.map(n => n.id), foes: () => foes.map(f => f.def.id),
+    fight: id => fight(foes.find(f => f.def.id === id)), talk: id => { const n = npcs.find(n => n.id === id); return interact(n.x, n.y); }, pos: () => ({ ...P, busy, drag, route, active }) } };
 })(window);
