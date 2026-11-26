@@ -59,6 +59,10 @@ const SKILLS = {
   bodyslam:  { nm: "ぷるぷる体当たり", bp: 2, rank: "E", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
   rootlash:  { nm: "根の鞭", bp: 7, rank: "B", tg: "row", at: ["打"], dist: "遠", dir: "直接", kind: "攻撃" },
   gnaw:      { nm: "かじりつき", bp: 2, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  // ブラム（大剣）
+  kabuto:    { nm: "兜割り", bp: 3, rank: "D", tg: "one", at: ["斬"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
+  onagi:     { nm: "大薙ぎ", bp: 7, rank: "C", tg: "row", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  sutemi:    { nm: "捨て身斬り", bp: 10, rank: "B", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   // カイ（先に鉄をはめた長い棹＝槍の扱い。突）。技の名前を変えても、記録の中の名前（oarhit など）はそのまま
   oarhit:    { nm: "棹突き", bp: 2, rank: "D", tg: "one", at: ["突"], stun: 35, dist: "近", dir: "直接", kind: "攻撃" },
   waterwheel:{ nm: "水切り", bp: 6, rank: "C", tg: "row", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
@@ -110,6 +114,7 @@ const PASSIVES = {
   bowway:   { nm: "弓の心得", ds: "［いつも］突のダメージ＋10%" },
   healer:   { nm: "癒し手", ds: "［いつも］回復の量＋20%" },
   quickdraw:{ nm: "速射", ds: "［戦いの始め］素早さ＋15%" },
+  greatway: { nm: "大剣の心得", ds: "［いつも］斬のダメージ＋10%" },
   spearway: { nm: "槍の心得", ds: "［いつも］突のダメージ＋10%" },
   charge:   { nm: "突撃", ds: "［戦いの始め］腕力＋10%" },
   thunder:  { nm: "雷の心得", ds: "［いつも］雷のダメージ＋15%" },
@@ -133,6 +138,8 @@ const GEAR = {
   longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
   ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
   oldblade:  { slot: "weapon", wt: "sword", nm: "古木の守り刀", rank: "S", pow: 18, st: { str: 3, agi: 2 }, ps: "w_bp", icon: "eq_sword_04" }, // 林の宝箱だけ
+  scoutgreat:{ slot: "weapon", wt: "great", nm: "斥候の大剣", rank: "B", pow: 15, st: { str: 2, agi: -2 }, price: 200, icon: "eq_great_01" },
+  iron_great:{ slot: "weapon", wt: "great", nm: "鉄の大剣", rank: "B", pow: 15, st: { str: 1, agi: -1 }, price: 220, icon: "eq_great_03" },
   oar:       { slot: "weapon", wt: "spear", nm: "渡しの棹", rank: "B", pow: 12, st: { vit: 1 }, price: 60, icon: "eq_spear_01" },
   oakclub:   { slot: "weapon", wt: "club", nm: "樫の棍棒", rank: "B", pow: 13, st: { str: 1 }, price: 130, icon: "eq_club_02" },
   thinblade: { slot: "weapon", wt: "rapier", nm: "旅の小剣", rank: "B", pow: 10, st: { dex: 1 }, price: 60, icon: "eq_rapier_01" },
@@ -215,6 +222,9 @@ const HEROES = [
   { id: "muku", nm: "ムク", img: "person_058", wt: "fist", rare: "A", hp: 185, hpCap: 1080, lp: 8, st: { str: 22, vit: 17, dex: 15, agi: 24, int: 7, wil: 10, lov: 14, cha: 12 },
     cap: { str: 124, vit: 104, dex: 92, agi: 126, int: 54, wil: 76, lov: 90, cha: 84 }, up: ["str", "agi"],
     res: {}, sk: ["headbutt", "flurry", "uppercut"], ps: ["fistway", "spirit", "counter"], gear: { weapon: "wraps", armor: "tunic", sub: null, acc: null } },
+  { id: "bram", nm: "ブラム", img: "person_005", wt: "great", rare: "S", hp: 300, hpCap: 1300, lp: 10, st: { str: 31, vit: 29, dex: 16, agi: 12, int: 8, wil: 22, lov: 14, cha: 14 },
+    cap: { str: 130, vit: 124, dex: 92, agi: 78, int: 60, wil: 112, lov: 84, cha: 90 }, up: ["str", "vit"],
+    res: {}, sk: ["kabuto", "onagi", "sutemi"], ps: ["greatway", "charge", "counter"], gear: { weapon: "scoutgreat", armor: "leather", sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -426,7 +436,7 @@ function damage(st, a, d, s) {
   let v = ((magic ? mpow : a.pow) * 1.5 + RANK[s.rank || "N"]) * statT / 100;
   const rm = resMul(d, at); v *= rm;
   if (a.side === 0) v *= rankMul(a, s);
-  if (hasP(a, "swordway") && at.includes("斬")) v *= 1.1;
+  if ((hasP(a, "swordway") || hasP(a, "greatway")) && at.includes("斬")) v *= 1.1;
   if ((hasP(a, "bowway") || hasP(a, "spearway") || hasP(a, "rapierway")) && at.includes("突")) v *= 1.1;
   if ((hasP(a, "clubway") || hasP(a, "fistway")) && at.includes("打")) v *= 1.1;
   if (hasP(a, "heatway") && at.includes("熱")) v *= 1.15;

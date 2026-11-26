@@ -382,9 +382,16 @@ function kawauso() {
     exits: [{ x: 5, y: 9, to: "harune", tx: 5, ty: 9, dir: 0 }],
     npcs: [
       { id: "bela", x: 5, y: 1, img: "person_070", dir: 0, nm: "ベラ", talk: "bela" },
-      { id: "toto", x: 2, y: 7, img: "person_100", dir: 2, nm: "トト", talk: "toto" },
+      { id: "toto", x: 2, y: 7, img: "person_100", dir: 2, nm: "トト", talk: "toto", when: g => g.flags.cut !== "c1s12" },
       { id: "teo", x: 8, y: 7, img: "person_001", dir: 1, nm: "テオ", talk: "teo" },
-      { id: "liseN", x: 7, y: 5, img: "person_002", dir: 1, nm: "リゼット", when: g => cut(g, "c1s6") },
+      { id: "liseN", x: 7, y: 5, img: "person_002", dir: 1, nm: "リゼット", when: g => cut(g, "c1s6") || cut(g, "c1s11") },
+      { id: "bramN", x: 7, y: 6, img: "person_005", dir: 1, nm: "ブラム", when: g => cut(g, "c1s11") },
+      { id: "nomi1", x: 3, y: 4, img: "person_075", dir: 2, nm: "商人", talk: "nomi1", when: g => S(g) === 27 && !g.flags.cut },
+      { id: "nomi2", x: 4, y: 4, mon: "monster_010", face: -1, nm: "兵士", talk: "nomi2", when: g => S(g) === 27 && !g.flags.cut },
+      { id: "sigK", x: 5, y: 7, img: "person_010", dir: 3, nm: "傷の男", when: g => cut(g, "c1s12") },
+      { id: "kk1", x: 4, y: 8, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s12") },
+      { id: "kk2", x: 6, y: 8, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => cut(g, "c1s12") },
+      { id: "totoK", x: 5, y: 5, img: "person_100", dir: 0, nm: "トト", when: g => cut(g, "c1s12") },
       { id: "mukuN", x: 8, y: 6, img: "person_058h", dir: 0, nm: "ムク", when: g => cut(g, "c1s6") },
     ],
     foes: [], chests: [],
@@ -416,8 +423,9 @@ function ohashi() {
   fill(g, "T", 0, 0, W, 4); fill(g, "T", 0, H - 5, W, 5); fill(g, "T", 0, 4, 2, 7); fill(g, "T", 0, 16, 2, 6);
   fill(g, "c", 0, 12, 11, 3);                           // 町からの道
   fill(g, "V", 11, 4, 7, H - 9);                        // 谷
-  fill(g, "c", 11, 12, 3, 3); fill(g, "E", 14, 12, 1, 3); // 橋（先は抜けている）
-  fill(g, "c", 17, 12, 1, 3);                           // 谷の向こうに残った橋
+  const fixed = window.GS && GS.G && GS.G.flags.s >= 28;  // 第1章の終わり（夜明け）からは、橋がつながっている
+  if (fixed) fill(g, "c", 11, 12, 7, 3);
+  else { fill(g, "c", 11, 12, 3, 3); fill(g, "E", 14, 12, 1, 3); fill(g, "c", 17, 12, 1, 3); } // 橋（真ん中が抜けている）
   for (const [x, y] of [[12, 17], [14, 18], [15, 16], [13, 20], [16, 19], [15, 9], [13, 8]]) g[y][x] = "X"; // 谷底に散らばる石
   fill(g, "=", 5, 6, 1, 6);                             // 北の丘への小道
   for (const [x, y] of [[3, 9], [8, 8], [9, 17], [4, 18], [7, 20]]) g[y][x] = "T";
@@ -430,12 +438,30 @@ function ohashi() {
       { t: "sign", x: 4, y: 11, text: ["北　古い見張り塔"] },
     ],
     exits: [{ x: 0, y: 13, to: "harune", tx: 17, ty: 14, dir: 1 }],
-    npcs: [], foes: [], chests: [],
+    npcs: [
+      // 場面10：塔から下りてきた巨人と、町の人たち
+      { id: "garmS", x: 9, y: 11, mon: "monster_063", face: -1, sc: 0.8, nm: "ガルム", when: g => cut(g, "c1s10") },
+      { id: "moriS", x: 4, y: 12, img: "person_078", dir: 2, nm: "モーリス", when: g => cut(g, "c1s10") },
+      { id: "dakkaS", x: 4, y: 14, mon: "monster_010", face: 1, nm: "ダッカ", when: g => cut(g, "c1s10") },
+      { id: "gidoS", x: 3, y: 13, img: "person_030", dir: 2, nm: "ギド", when: g => cut(g, "c1s10") },
+      { id: "akinS", x: 2, y: 12, img: "person_075", dir: 2, nm: "商人", when: g => cut(g, "c1s10") },
+      { id: "totoS", x: 2, y: 14, img: "person_100", dir: 2, nm: "トト", when: g => cut(g, "c1s10") },
+      // 夜明けからは、橋のたもとに橋番
+      { id: "garmB", x: 10, y: 11, mon: "monster_063", face: 1, sc: 0.8, nm: "ガルム", talk: "garmBridge", when: g => S(g) >= 28 },
+      { id: "sigB", x: 6, y: 13, img: "person_010", dir: 2, nm: "傷の男", when: g => cut(g, "c1s13b") },
+      { id: "kb1", x: 5, y: 12, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
+      { id: "kb2", x: 5, y: 14, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
+      { id: "kb3", x: 4, y: 13, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
+      // 橋が直った後、西のたもとに旅の機械いじり
+      { id: "nat", x: 8, y: 15, img: "person_094", dir: 3, nm: "ナット", talk: "nat", when: g => S(g) >= 28 && !g.flags.cut },
+    ],
+    foes: [], chests: [],
     trigs: [
       { x: 8, y: 12, w: 1, h: 3, when: g => S(g) === 19, run: "c1s5" },
       { x: 5, y: 6, when: g => S(g) === 20, run: "towerLater" },
       { x: 5, y: 6, when: g => S(g) >= 21, run: "towerIn" },
-      { x: 8, y: 12, w: 1, h: 3, when: g => S(g) === 25, run: "c1stop" },
+      { x: 7, y: 12, w: 1, h: 3, when: g => S(g) === 25, run: "c1s10" },
+      { x: 17, y: 12, w: 1, h: 3, when: g => S(g) >= 28, run: "eastEnd" },
     ],
   };
 }

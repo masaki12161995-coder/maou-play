@@ -33,7 +33,8 @@ START.length=0; ["w_kai","w_muku","w_koromochi","w_koromochi","w_kawauso","w_kaw
 // 相手：0＝札売りのトト（看板はヌシガエル）、1＝かわうそ亭の女将ベラ
 OPPS.length=0; OPPS.push(
   {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_donguri","w_mizugumo","w_hane","w_ishikoro","w_kakashi","w_ookami"]},
-  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_oya",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_ishikoro","w_ishikoro","w_tsuta","w_koromochi"]});
+  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_oya",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_ishikoro","w_ishikoro","w_tsuta","w_koromochi"]},
+  {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_ishikoro","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_kakashi","w_ookami","w_hane","w_koromochi","w_donguri"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）
@@ -84,8 +85,9 @@ function cardEl(cid,owner,w,h,o={}){
   return d;
 }
 function backEl(w,h){ const d=el("div","card back"); d.style.width=w+"px"; d.style.height=h+"px"; d.innerHTML='<div class="bk"></div>'; return d; }
-function who(id,box){ // 人物の正面の立ち姿（2倍、上半身で切る）
+function who(id,box){ // 人物の正面の立ち姿（2倍、上半身で切る）。"g"＝橋番のガルム（魔物の絵の顔）
   const d=document.createElement("div"); d.className="sprite";
+  if(id==="g"){ d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background:url(img/monster_063.png) no-repeat;background-size:${box[0]*1.6}px auto;background-position:30% 6%;image-rendering:pixelated`; return d; }
   d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background-image:url(img/person_${id}.png);background-size:288px 600px;background-position:${-(96)+(box[0]-96)/2}px ${box[1]>=120?0:-4}px`;
   return d;
 }
