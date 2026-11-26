@@ -31,7 +31,11 @@ function chips(u) { // 状態の札（同じ大きさ・同じ並び）
 }
 function load(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = "img/" + src + ".png"; IM[src] = i; }); }
 
-let ROWS = BT.HEROES.map(h => h.row);
+// 組み立て（並び・技・心）。端末に覚えておく
+const LO_KEY = "rpgLoadout1";
+function defLo() { return { rows: BT.HEROES.map(h => h.row), sk: BT.HEROES.map(h => h.sk.slice()), hearts: BT.HEROES.map(() => [null, null]) }; }
+let LO = (() => { try { const v = JSON.parse(localStorage.getItem(LO_KEY)); if (v && v.sk && v.sk.length === 4 && v.sk.every((a, i) => a.every(k => BT.HEROES[i].learn.includes(k)))) return v; } catch (e) {} return defLo(); })();
+function saveLo() { try { localStorage.setItem(LO_KEY, JSON.stringify(LO)); } catch (e) {} }
 let st = null, wave = 0, speed = 1, last = 0, busy = false, actor = null, poseUntil = {}, fx = {}, scene = null, ended = false;
 const SCENES = [() => makeScene(), () => dungeonScene("canopy"), () => dungeonScene("gold")];
 const PLACES = [
@@ -266,7 +270,7 @@ function refreshTL(u) { refresh(); const first = els.tl.querySelector(".ic"); }
 
 // ---------- 始めと終わり ----------
 function start(w) {
-  wave = w; st = BT.newBattle(w, (Date.now() & 0xffff) + 1, ROWS); last = 0; busy = false; ended = false; fx = {}; poseUntil = {};
+  wave = w; st = BT.newBattle(w, (Date.now() & 0xffff) + 1, LO); last = 0; busy = false; ended = false; fx = {}; poseUntil = {};
   scene = SCENES[w](); layoutFoes(); buildHud();
   setTimeout(turn, 700);
 }
@@ -281,8 +285,9 @@ function result() {
     const r = div("rank", ""); const f = faceOf(u, 32); r.appendChild(f);
     r.appendChild(div("", u.nm)); r.appendChild(div("bar2", `<i style="width:${u.dealt / max * 100}%"></i>`)); r.appendChild(div("v", u.dealt)); v.appendChild(r);
   });
-  const cnt = {}; st.log.filter(e => e.t === "passive").forEach(e => cnt[e.nm] = (cnt[e.nm] || 0) + 1);
-  st.log.filter(e => e.t === "hit" && e.syn).forEach(e => e.syn.forEach(n => cnt[n] = (cnt[n] || 0) + 1));
+  const ours = id => st.party.some(u => u.id === id); // 仲間のぶんだけ数える
+  const cnt = {}; st.log.filter(e => e.t === "passive" && ours(e.u)).forEach(e => cnt[e.nm] = (cnt[e.nm] || 0) + 1);
+  st.log.filter(e => e.t === "hit" && e.syn && ours(e.a)).forEach(e => e.syn.forEach(n => cnt[n] = (cnt[n] || 0) + 1));
   const ps = Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([n, c]) => `<span style="white-space:nowrap">${n}×${c}</span>`).join("　");
   if (ps) { const p = div("", `<div style="font-size:12px;color:#c9b08c;text-align:center">働いたパッシブ</div><div style="font-size:13px;color:#ffe08a;text-align:center;padding:0 18px;line-height:1.7">${ps}</div>`); v.appendChild(p); }
   const again = div("frame btn pick", "もう一度"); again.onclick = () => start(wave); v.appendChild(again);
@@ -291,21 +296,145 @@ function result() {
 }
 function menu() {
   hud.innerHTML = ""; const v = div("veil", "");
-  // 並び：顔を押すと前列と後列を行き来する（前列は1人以上）
-  const fm = div("", ""); fm.style.cssText = "display:flex;flex-direction:column;gap:6px;width:86%";
-  [0, 1].forEach(r => {
-    const line = div("frame", ""); line.style.cssText = "display:flex;align-items:center;gap:8px;padding:6px 10px;min-height:52px";
-    line.appendChild(div("", `<span style="font-size:13px;color:#c9b08c">${r ? "後列" : "前列"}</span>`));
-    BT.HEROES.forEach((h, i) => { if (ROWS[i] !== r) return; const f = spriteBox(IM[h.img], FACE[0], FACE[1], FACE[2], FACE[3], 40); f.style.cursor = "pointer";
-      f.onclick = () => { const nr = 1 - ROWS[i]; if (nr === 1 && ROWS.filter(x => x === 0).length <= 1) return; ROWS[i] = nr; menu(); }; line.appendChild(f); });
-    fm.appendChild(line);
+  // 仲間の顔：押すとその人の組み立てへ
+  const fm = div("", ""); fm.style.cssText = "display:flex;gap:8px;justify-content:center";
+  BT.HEROES.forEach((h, i) => {
+    const t = div("frame tile", ""); t.style.cssText = "position:relative;width:62px;height:70px;cursor:pointer";
+    const f = spriteBox(IM[h.img], FACE[0], FACE[1], FACE[2], FACE[3], 44); f.style.cssText += ";position:absolute;left:50%;top:4px;transform:translateX(-50%)"; t.appendChild(f);
+    const el = elChip(h.el, 11); el.style.position = "absolute"; el.style.left = d(3); el.style.top = d(3); t.appendChild(el);
+    const r = div("rowtag " + (LO.rows[i] ? "back" : "front"), LO.rows[i] ? "後列" : "前列"); r.style.cssText += ";position:absolute;left:0;right:0;bottom:0;height:18px;line-height:18px;font-size:11px"; t.appendChild(r);
+    t.onclick = () => build(i); fm.appendChild(t);
   });
   v.appendChild(fm);
   v.appendChild(div("big", "どこで戦う？"));
-  const me = BT.newBattle(0, 1, ROWS);
+  const me = BT.newBattle(0, 1, LO);
   v.appendChild(div("sub", `こちらの戦力　<b>${BT.teamPower(me.party)}</b>` + (me.aura ? `　${me.aura.nm}` : "")));
-  PLACES.forEach(([n, s], i) => { const f = BT.newBattle(i, 1, ROWS); const b = div("frame btn pick", `<div style="text-align:center">${n}<small>${s}　戦力 ${BT.teamPower(f.foes)}</small></div>`); b.onclick = () => start(i); v.appendChild(b); });
+  PLACES.forEach(([n, s], i) => { const f = BT.newBattle(i, 1, LO); const b = div("frame btn pick", `<div style="text-align:center">${n}<small>${s}　戦力 ${BT.teamPower(f.foes)}</small></div>`); b.onclick = () => start(i); v.appendChild(b); });
   hud.appendChild(v);
+}
+
+// ---------- 組み立て画面 ----------
+// 上：4人の顔と列（押すと前列・後列が入れ替わる）。線：仲間同士のつながり。
+// 中：選んだ人の枠（通常・アクティブ・パッシブ2・心2）。押した枠の候補が下に出て、候補を押せばすぐ入れ替わる。
+const TAGS = [ // つながり：作る技 → 使う技
+  { nm: "印", col: "#2a5aa8", make: ["pierce"], use: ["triple", "finisher", "bash", "charge", "rain", "signal", "hawk", "snipe", "icearrow", "flash"] },
+  { nm: "火傷", col: "#b8452a", make: ["ember", "inferno", "fireball"], use: ["spread", "burst", "heatwave"] },
+  { nm: "動けない", col: "#c9a43a", make: ["bash", "charge", "icearrow"], use: ["smite", "flow"] },
+  { nm: "守り", col: "#3a8ab8", make: ["bulwark"], use: ["parry", "shieldcall"] },
+  { nm: "アクティブ", col: "#7a6a9a", make: [], use: ["tailwind"] },
+];
+function links() {
+  const out = [];
+  for (const t of TAGS) {
+    const mk = [], us = [];
+    BT.HEROES.forEach((h, i) => { const sk = LO.sk[i]; if (sk.some(k => t.make.includes(k)) || (t.nm === "アクティブ")) mk.push(i); if (sk.some(k => t.use.includes(k))) us.push(i); });
+    const pairs = [], self = [];
+    for (const a of mk) for (const b of us) if (a !== b) pairs.push([a, b]); else self.push(a);
+    if (t.nm === "アクティブ") { if (us.length) out.push({ t, mk: [], us, pairs: [], self: [] }); continue; }
+    if (pairs.length || self.length) out.push({ t, mk: [...new Set(pairs.map(p => p[0]))], us: [...new Set(pairs.map(p => p[1]))], pairs, self });
+  }
+  return out;
+}
+let focus = 0;
+const SLOT_NM = ["通常", "アクティブ", "パッシブ", "パッシブ", "心", "心"];
+function build(i, keepFocus) {
+  if (!keepFocus) focus = 0;
+  hud.innerHTML = "";
+  const v = div("veil solid", ""); hud.appendChild(v);
+  const A = (el, x, y, w, h) => { px(el, x, y, w, h); el.style.position = "absolute"; v.appendChild(el); return el; };
+  const T = (x, y, w, h, html, size, cls) => { const e = A(div("t " + (cls || ""), html), x, y, w, h); e.style.fontSize = d(size); e.style.lineHeight = d(h); return e; };
+  // 4人
+  BT.HEROES.forEach((h, k) => {
+    const x = 17 + k * 68;
+    const t = A(div("frame tile" + (k === i ? " sel" : ""), ""), x, 48, 62, 56);
+    const f = spriteBox(IM[h.img], FACE[0], FACE[1], FACE[2], FACE[3], 40 * K); f.style.position = "absolute"; f.style.left = "50%"; f.style.top = d(4); f.style.transform = "translateX(-50%)"; t.appendChild(f);
+    const el = elChip(h.el, 11); el.style.position = "absolute"; el.style.left = d(3); el.style.top = d(3); t.appendChild(el);
+    t.onclick = () => build(k);
+    const r = A(div("rowtag " + (LO.rows[k] ? "back" : "front"), LO.rows[k] ? "後列" : "前列"), x, 107, 62, 15);
+    r.style.fontSize = d(9); r.style.lineHeight = d(15);
+    r.onclick = () => { const nr = 1 - LO.rows[k]; if (nr === 1 && LO.rows.filter(z => z === 0).length <= 1) return; LO.rows[k] = nr; saveLo(); build(i, true); };
+  });
+  // つながりの線と一覧
+  const L = links();
+  const svgNS = "http://www.w3.org/2000/svg", svg = document.createElementNS(svgNS, "svg");
+  A(svg, 0, 124, W, 12); svg.setAttribute("viewBox", `0 0 ${W} 12`);
+  L.forEach((l, n) => l.pairs.forEach(([a, b]) => {
+    const xa = 48 + a * 68, xb = 48 + b * 68, y = 3 + n * 3;
+    const ln = document.createElementNS(svgNS, "path"); ln.setAttribute("d", `M${xa} 0 V${y} H${xb} V0`);
+    ln.setAttribute("fill", "none"); ln.setAttribute("stroke", l.t.col); ln.setAttribute("stroke-width", "1.6"); ln.setAttribute("class", "glowline"); svg.appendChild(ln);
+  }));
+  const box = A(div("frame", ""), 17, 138, 267, 58);
+  if (!L.length) T(25, 138, 251, 58, "つながりはまだない", 9, "dim");
+  L.slice(0, 4).forEach((l, n) => {
+    const y = 140 + n * 13.5;
+    const c = T(23, y, 44, 13, l.t.nm, 8, "tag"); c.style.background = l.t.col;
+    const nm = k => BT.HEROES[k].nm;
+    const who = l.t.nm === "アクティブ" ? `誰かの技 → ${l.us.map(nm).join("・")}（追い風）`
+      : [l.pairs.length ? `${l.mk.map(nm).join("・")} → ${l.us.map(nm).join("・")}` : "", l.self.length ? `${l.self.map(nm).join("・")}（ひとりで）` : ""].filter(Boolean).join("　");
+    T(72, y, 206, 13, who, 9);
+  });
+  // 選んだ人
+  const h = BT.HEROES[i], u = BT.heroUnit(h, i, LO);
+  T(17, 202, 120, 18, h.nm, 14, "name");
+  T(150, 202, 134, 18, `戦力 <b>${BT.power(u)}</b>`, 10, "right");
+  const stats = [["hp", "体力"], ["atk", "攻撃"], ["mat", "魔力"], ["spd", "速さ"], ["def", "防御"], ["mdf", "魔防"], ["crit", "会心"]];
+  stats.forEach(([k, n], j) => {
+    const x = 17 + (j % 4) * 67, y = 222 + Math.floor(j / 4) * 14;
+    const base = h[k] || 0, now = u[k] || 0;
+    T(x, y, 30, 14, n, 8.5, "dim");
+    T(x + 26, y, 36, 14, now + (now > base ? `<i>+${now - base}</i>` : ""), 9.5, "num2");
+  });
+  // 枠
+  const sk = LO.sk[i], hs = LO.hearts[i];
+  const slotItem = j => j < 4 ? sk[j] : hs[j - 4];
+  for (let j = 0; j < 6; j++) {
+    const y = 254 + j * 28, id = slotItem(j);
+    const row = A(div("slot" + (j === focus ? " on" : ""), ""), 17, y, 267, 26);
+    row.onclick = () => { focus = j; build(i, true); };
+    T(21, y, 46, 26, SLOT_NM[j], 8.5, "label");
+    if (j < 4) {
+      const s = BT.SKILLS[id];
+      T(70, y + 1, 150, 14, s.nm, 11, "sname");
+      T(70, y + 13, 210, 12, s.ds, 8, "sdesc");
+      if (s.cost) T(214, y + 1, 66, 14, `ゲージ${s.cost}`, 8, "right dim");
+    } else if (id) {
+      const hh = BT.HEARTS[id];
+      T(70, y + 1, 150, 14, `${hh.nm}<span class="hc">${hh.col}</span>`, 11, "sname");
+      T(70, y + 13, 210, 12, BT.heartText(id), 8, "sdesc");
+    } else T(70, y, 210, 26, "空き", 10, "dim");
+  }
+  // 候補
+  T(17, 424, 267, 18, `${SLOT_NM[focus]}の候補`, 8.5, "dim");
+  let cands = [];
+  if (focus < 4) {
+    const kind = focus === 0 ? "N" : focus === 1 ? "A" : "P";
+    cands = h.learn.filter(k => BT.SKILLS[k].k === kind).map(k => {
+      const s = BT.SKILLS[k], other = focus >= 2 ? sk[focus === 2 ? 3 : 2] : null;
+      return { nm: s.nm, ds: s.ds, cost: s.cost, now: sk[focus] === k, note: k === other ? "もう1つの枠" : "",
+        go: () => { if (k === other) { sk[focus === 2 ? 3 : 2] = sk[focus]; } sk[focus] = k; } };
+    });
+  } else {
+    const hj = focus - 4;
+    cands = Object.keys(BT.HEARTS).map(id => {
+      const hh = BT.HEARTS[id]; let owner = -1, oj = -1;
+      LO.hearts.forEach((a, k) => a.forEach((x, m) => { if (x === id) { owner = k; oj = m; } }));
+      const note = owner === i ? (oj === hj ? "" : "もう1つの枠") : owner >= 0 ? `${BT.HEROES[owner].nm}が使用中` : "";
+      return { nm: hh.nm, col: hh.col, ds: BT.heartText(id), now: hs[hj] === id, note,
+        go: () => { if (owner >= 0) LO.hearts[owner][oj] = owner === i ? hs[hj] : null; hs[hj] = id; } };
+    });
+    cands.push({ nm: "外す", ds: "この枠を空ける", now: !hs[hj], go: () => { hs[hj] = null; } });
+  }
+  cands.forEach((c, n) => {
+    const y = 442 + n * 26;
+    const row = A(div("cand" + (c.now ? " now" : ""), ""), 17, y, 267, 25);
+    if (!c.now) row.onclick = () => { c.go(); saveLo(); build(i, true); };
+    T(23, y + 1, 150, 13, c.nm + (c.col ? `<span class="hc">${c.col}</span>` : ""), 10.5, "sname");
+    T(23, y + 13, 257, 11, c.ds, 8, "sdesc");
+    const tag = c.now ? (c.nm === "外す" ? "" : "使用中") : c.note ? c.note : c.cost ? `ゲージ${c.cost}` : "";
+    if (tag) T(180, y + 1, 100, 13, tag, 8, "right " + (c.now ? "gold" : "dim"));
+  });
+  const back = A(div("frame btn", "戦う場所へ"), 88, 604, 125, 22); back.style.fontSize = d(10.5);
+  back.onclick = menu;
 }
 
 addEventListener("resize", fit);

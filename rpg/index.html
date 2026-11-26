@@ -57,6 +57,31 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .num.poison{color:#d9a0ff}
 .veil .sub{font-size:13px;color:#e8d5b0;text-align:center;line-height:1.7}
 .veil .sub b{color:#ffd88a;font-size:16px}
+.veil.solid{display:block;background:#0e0f17}
+.tile{overflow:hidden;cursor:pointer}
+.tile.sel{border-color:#ffd88a;box-shadow:0 0 0 1px #000,0 0 8px #ffd88a88}
+.rowtag{text-align:center;font-weight:800;border-radius:3px;cursor:pointer;font-family:"Hiragino Sans",system-ui,sans-serif}
+.rowtag.front{background:#8a4a2a;color:#ffe3c8}
+.rowtag.back{background:#2a4a7a;color:#d8e8ff}
+.t{white-space:nowrap;overflow:hidden;pointer-events:none}
+.t.right{text-align:right}
+.t.dim{color:#a89a86}
+.t.gold{color:#ffd88a;font-weight:800}
+.t.name{font-weight:800;color:#ffe3a8}
+.t.name+.t b,.t.right b{color:#ffd88a;font-size:1.3em}
+.t.num2{font-family:"Avenir Next",system-ui,sans-serif;font-weight:700;color:#f3e4c8}
+.t.num2 i{font-style:normal;color:#7ee08a;font-size:.85em;margin-left:2px}
+.t.tag{color:#fff;text-align:center;border-radius:3px;font-weight:800;font-family:"Hiragino Sans",system-ui,sans-serif}
+.t.label{color:#c9a46c;font-weight:800}
+.t.sname{font-weight:800;color:#f3e4c8}
+.t.sdesc{color:#bfb2a0}
+.hc{display:inline-block;margin-left:5px;padding:0 4px;border-radius:2px;background:#e8e4da;color:#333;font-size:.72em;vertical-align:middle;line-height:1.3}
+.slot{border:1px solid #4a3e36;border-radius:4px;background:#191822;cursor:pointer}
+.slot.on{border-color:#ffd88a;background:#2a2418;box-shadow:0 0 6px #ffd88a55}
+.cand{border-bottom:1px solid #2e2a30;cursor:pointer}
+.cand.now{background:#221f18;cursor:default}
+.cand:not(.now):active{background:#2a2a3a}
+.glowline{filter:drop-shadow(0 0 1.5px currentColor)}
 /* ボタン */
 .btn{display:flex;align-items:center;justify-content:center;font-family:inherit;color:#f3e4c8;font-weight:700;cursor:pointer}
 .btn:active{filter:brightness(1.3)}
@@ -72,8 +97,8 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 </head>
 <body>
 <div id="stage"><canvas id="field" width="301" height="655"></canvas><div id="hud"></div></div>
-<script src="js/scene.js?v=3"></script>
-<script src="js/engine.js?v=3"></script>
-<script src="js/view.js?v=3"></script>
+<script src="js/scene.js?v=5"></script>
+<script src="js/engine.js?v=5"></script>
+<script src="js/view.js?v=5"></script>
 </body>
 </html>

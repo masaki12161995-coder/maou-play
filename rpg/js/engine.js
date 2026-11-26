@@ -21,11 +21,11 @@ const SKILLS = {
   // 剣士
   slash:   { k: "N", nm: "踏み込み", ds: "前の敵1体を斬る", hit: { pow: 1.0 } },
   triple:  { k: "A", nm: "三段斬り", cost: 100, ds: "1体を3回斬る。印のある敵を先に狙う", hit: { pow: 0.75, times: 3, prefer: "mark" } },
-  tailwind:{ k: "P", nm: "追い風", ds: "味方がアクティブを使うたび、自分のゲージ＋20", on: "allyActive" },
+  tailwind:{ k: "P", nm: "追い風", ds: "味方がアクティブを使うたびゲージ＋20", on: "allyActive" },
   finisher:{ k: "P", nm: "とどめの構え", ds: "印のある敵には会心が出やすい（＋40%）", on: "always" },
   // 盾
-  bash:    { k: "N", nm: "盾打ち", ds: "1体を打ち、2回狙われやすくなる。印のある敵は気絶させる", hit: { pow: 0.8, stunIfMark: 1 }, taunt: 2 },
-  bulwark: { k: "A", nm: "守りの陣", cost: 80, ds: "前列の味方に最大体力の30%の守り、後列に15%", guard: [0.30, 0.15] },
+  bash:    { k: "N", nm: "盾打ち", ds: "1体を打ち狙われやすくなる。印のある敵は気絶", hit: { pow: 0.8, stunIfMark: 1 }, taunt: 2 },
+  bulwark: { k: "A", nm: "守りの陣", cost: 80, ds: "前列に体力30%、後列に15%の守りを張る", guard: [0.30, 0.15] },
   parry:   { k: "P", nm: "受け流し", ds: "守りで攻撃を受けきったとき、その敵に反撃する", on: "hitShield" },
   stand:   { k: "P", nm: "不屈", ds: "体力が3割を切ると、受けるダメージが4割減る", on: "low" },
   // 魔術師
@@ -36,8 +36,29 @@ const SKILLS = {
   // 弓
   pierce:  { k: "N", nm: "射抜く", ds: "1体を射って印を付ける", hit: { pow: 1.0, mark: 2 }, rng: 1 },
   rain:    { k: "A", nm: "雨の矢", cost: 100, ds: "敵全体を射る。印のある敵には2倍", hit: { pow: 0.75, all: 1, markx: 2 }, rng: 1 },
-  signal:  { k: "P", nm: "狩りの合図", ds: "印のある敵が倒れたとき、味方全員のゲージ＋15", on: "markKill" },
+  signal:  { k: "P", nm: "狩りの合図", ds: "印のある敵が倒れると味方全員ゲージ＋15", on: "markKill" },
   first:   { k: "P", nm: "先手", ds: "戦いの始めにゲージ＋50", on: "start" },
+  // ---- 付け替えの候補 ----
+  sweep:   { k: "N", nm: "なぎ払い", ds: "前列の敵全員を軽く斬る", hit: { pow: 0.6, front: 1 } },
+  lunge:   { k: "A", nm: "疾風突き", cost: 60, ds: "1体を強く突く。後列にも届く", hit: { pow: 1.5 }, reach: 1 },
+  flash:   { k: "A", nm: "一閃", cost: 150, ds: "敵全体を斬る。印のある敵には必ず会心", hit: { pow: 1.0, all: 1, critIfMark: 1 } },
+  readhit: { k: "P", nm: "見切り", ds: "攻撃を受けるたび、ゲージがさらに＋10", on: "hit" },
+  momentum:{ k: "P", nm: "勢い", ds: "敵を倒すたび攻撃＋10%（3回まで）", on: "kill" },
+  smite:   { k: "N", nm: "大地の一撃", ds: "1体を打つ。動けない敵には2倍", hit: { pow: 1.0, vsCtl: 2 } },
+  provoke: { k: "A", nm: "挑発の構え", cost: 80, ds: "3回狙われやすくなり、自分に体力30%の守り", taunt: 3, selfGuard: 0.3 },
+  charge:  { k: "A", nm: "大盾突撃", cost: 120, ds: "前列の敵全員を打つ。印のある敵は気絶", hit: { pow: 1.1, front: 1, stunIfMark: 1 } },
+  shieldcall:{ k: "P", nm: "守りの心得", ds: "守りが割れたとき味方全員ゲージ＋15", on: "shieldBreak" },
+  ironwall:{ k: "P", nm: "鉄壁", ds: "前列にいるとき、防御と魔防＋30%", on: "start" },
+  spark:   { k: "N", nm: "火花", ds: "1体に火の魔法。火傷にはしないが強い", hit: { pow: 1.15, mag: 1 }, rng: 1 },
+  fireball:{ k: "A", nm: "火球", cost: 80, ds: "1体に大きな火の魔法。火傷にする", hit: { pow: 1.9, mag: 1, burn: 2 }, rng: 1 },
+  burst:   { k: "A", nm: "爆ぜる炎", cost: 100, ds: "火傷の敵全員の火を爆ぜさせて大きく削る", hit: { pow: 1.6, mag: 1, burst: 1 }, rng: 1 },
+  heatwave:{ k: "P", nm: "熱気", ds: "火傷の敵が倒れたとき、味方全員のゲージ＋10", on: "burnKill" },
+  focus:   { k: "P", nm: "集中", ds: "戦いの始めにゲージ＋50", on: "start" },
+  rapid:   { k: "N", nm: "速射", ds: "1体を2回射る", hit: { pow: 0.55, times: 2 }, rng: 1 },
+  snipe:   { k: "A", nm: "狙撃", cost: 80, ds: "1体を強く射る。印のある敵には必ず会心", hit: { pow: 2.0, prefer: "mark", critIfMark: 1 }, rng: 1 },
+  icearrow:{ k: "A", nm: "氷の矢", cost: 120, ds: "1体を射る。印のある敵は凍結", hit: { pow: 1.3, prefer: "mark", freezeIfMark: 1 }, rng: 1 },
+  hawk:    { k: "P", nm: "鷹の目", ds: "印のある敵へのダメージ＋20%（味方全員）", on: "always" },
+  flow:    { k: "P", nm: "流水", ds: "味方が敵を動けなくしたとき、ゲージ＋25", on: "ctl" },
   // 魔物（通常攻撃とアクティブ）
   bite:    { k: "N", nm: "かみつく", hit: { pow: 1.0 } },
   claw:    { k: "N", nm: "ひっかく", hit: { pow: 0.9 } },
@@ -48,20 +69,36 @@ const SKILLS = {
   quake:   { k: "A", nm: "地ならし", cost: 150, ds: "前列の全員をたたきつぶす", hit: { pow: 1.7, front: 1 } },
   // 魔物のパッシブ（＝その魔物の心と同じ効果）
   swift:   { k: "P", nm: "すばしこさ", ds: "戦いの始めにゲージ＋40", on: "start", v: 40 },
-  pack:    { k: "P", nm: "群れの怒り", ds: "味方が倒れたとき、自分のゲージ＋40", on: "allyDown", v: 40 },
+  pack:    { k: "P", nm: "群れの怒り", ds: "味方が倒れるとゲージ＋40", on: "allyDown", v: 40 },
   keen:    { k: "P", nm: "鋭い角", ds: "会心が出やすい（＋20%）", on: "always" },
   snatch:  { k: "P", nm: "ひったくり", ds: "攻撃した相手のゲージ−15", on: "always" },
   rot:     { k: "P", nm: "腐れ", ds: "毒の相手へのダメージ＋30%", on: "always" },
-  rage:    { k: "P", nm: "親玉の怒り", ds: "取り巻きが倒れたとき、自分のゲージ＋50", on: "allyDown", v: 50 },
+  rage:    { k: "P", nm: "親玉の怒り", ds: "取り巻きが倒れるとゲージ＋50", on: "allyDown", v: 50 },
 };
 
 // ---------- 仲間（仮の4人） ----------
 const HEROES = [
-  { id: "h1", nm: "レオン", img: "person_001", el: "wind",  row: 0, hp: 118, atk: 27, def: 12, mat: 8,  mdf: 9,  spd: 13, crit: 8,  sk: ["slash", "triple", "tailwind", "finisher"] },
-  { id: "h2", nm: "アデラ", img: "person_006", el: "earth", row: 0, hp: 150, atk: 19, def: 18, mat: 8,  mdf: 13, spd: 9,  crit: 5,  sk: ["bash", "bulwark", "parry", "stand"] },
-  { id: "h3", nm: "カイン", img: "person_032", el: "fire",  row: 1, hp: 84,  atk: 9,  def: 8,  mat: 28, mdf: 15, spd: 11, crit: 6,  sk: ["ember", "inferno", "spread", "embers"] },
-  { id: "h4", nm: "ミレイ", img: "person_017", el: "water", row: 1, hp: 92,  atk: 23, def: 9,  mat: 10, mdf: 10, spd: 15, crit: 10, sk: ["pierce", "rain", "signal", "first"] },
+  { id: "h1", nm: "レオン", img: "person_001", el: "wind",  row: 0, hp: 118, atk: 27, def: 12, mat: 8,  mdf: 9,  spd: 13, crit: 8,  sk: ["slash", "triple", "tailwind", "finisher"],
+    learn: ["slash", "sweep", "triple", "lunge", "flash", "tailwind", "finisher", "readhit", "momentum"] },
+  { id: "h2", nm: "アデラ", img: "person_006", el: "earth", row: 0, hp: 150, atk: 19, def: 18, mat: 8,  mdf: 13, spd: 9,  crit: 5,  sk: ["bash", "bulwark", "parry", "stand"],
+    learn: ["bash", "smite", "bulwark", "provoke", "charge", "parry", "stand", "shieldcall", "ironwall"] },
+  { id: "h3", nm: "カイン", img: "person_032", el: "fire",  row: 1, hp: 84,  atk: 9,  def: 8,  mat: 28, mdf: 15, spd: 11, crit: 6,  sk: ["ember", "inferno", "spread", "embers"],
+    learn: ["ember", "spark", "inferno", "fireball", "burst", "spread", "embers", "heatwave", "focus"] },
+  { id: "h4", nm: "ミレイ", img: "person_017", el: "water", row: 1, hp: 92,  atk: 23, def: 9,  mat: 10, mdf: 10, spd: 15, crit: 10, sk: ["pierce", "rain", "signal", "first"],
+    learn: ["pierce", "rapid", "rain", "snipe", "icearrow", "signal", "first", "hawk", "flow"] },
 ];
+
+// ---------- 魔物の心（試作では白を1つずつ） ----------
+// 中身＝その魔物らしい能力値＋その魔物と同じ効果
+const HEARTS = {
+  bat:    { nm: "夜コウモリの心", col: "白", st: { spd: 2 },  ps: "swift" },
+  dog:    { nm: "骨の犬の心",     col: "白", st: { hp: 14 },  ps: "pack" },
+  rabbit: { nm: "角ウサギの心",   col: "白", st: { crit: 3 }, ps: "keen" },
+  goblin: { nm: "ゴブリンの心",   col: "白", st: { atk: 3 },  ps: "snatch" },
+  shroom: { nm: "毒キノコの心",   col: "白", st: { mat: 3 },  ps: "rot" },
+};
+const ST_NM = { hp: "体力", atk: "攻撃", mat: "魔力", def: "防御", mdf: "魔防", spd: "速さ", crit: "会心" };
+function heartText(id) { const h = HEARTS[id]; return Object.entries(h.st).map(([k, v]) => ST_NM[k] + "＋" + v).join("　") + "　" + SKILLS[h.ps].ds; }
 
 // ---------- 魔物 ----------
 const FOES = {
@@ -81,7 +118,7 @@ const WAVES = [
 
 // ---------- 小道具 ----------
 function rnd(st) { st.seed = (st.seed * 1103515245 + 12345) & 0x7fffffff; return st.seed / 0x7fffffff; }
-function has(u, id) { return u.sk.includes(id); }
+function has(u, id) { return u.sk.includes(id) || (u.hps || []).includes(id); }
 function alive(list) { return list.filter(u => !u.dead); }
 function all(st) { return [...st.party, ...st.foes]; }
 function mates(st, u) { return u.side === 0 ? st.party : st.foes; }
@@ -109,17 +146,28 @@ function makeUnit(src, side, slot) {
   u.sk = src.sk.slice();
   return u;
 }
-function newBattle(wave, seed, rows) {
+// lo = { rows:[…], sk:[[n,a,p,p]…], hearts:[[id,id]…] }（なければ最初の形）
+function heroUnit(h, i, lo) {
+  const src = { ...h, row: lo && lo.rows ? lo.rows[i] : h.row, sk: lo && lo.sk ? lo.sk[i] : h.sk };
+  const hs = (lo && lo.hearts ? lo.hearts[i] : []).filter(Boolean);
+  for (const id of hs) for (const [k, v] of Object.entries(HEARTS[id].st)) src[k] = (src[k] || 0) + v;
+  const u = makeUnit(src, 0, i); u.hps = hs.map(id => HEARTS[id].ps); u.hearts = hs;
+  return u;
+}
+function newBattle(wave, seed, lo) {
+  if (Array.isArray(lo)) lo = { rows: lo };
   const st = { seed: seed || 1, round: 0, queue: [], log: [], over: null };
-  st.party = HEROES.map((h, i) => makeUnit({ ...h, row: rows ? rows[i] : h.row }, 0, i));
+  st.party = HEROES.map((h, i) => heroUnit(h, i, lo));
   st.foes = WAVES[wave].map((f, i) => makeUnit({ ...FOES[f.k], id: "f" + i, row: f.row }, 1, i));
   for (const side of [st.party, st.foes]) {
     const a = aura(side);
     if (a) for (const u of side) { u.max = u.hp = Math.round(u.max * (1 + a.hp)); u.atk = Math.round(u.atk * (1 + a.atk)); u.mat = Math.round(u.mat * (1 + a.atk)); }
     if (side === st.party) st.aura = a;
   }
-  for (const u of all(st)) for (const id of u.sk) {
-    const s = id && SKILLS[id]; if (s && s.on === "start") gaugeAdd(st, u, s.v || 50, s.nm);
+  for (const u of all(st)) for (const id of [...u.sk, ...(u.hps || [])]) {
+    const s = id && SKILLS[id]; if (!s || s.on !== "start") continue;
+    if (id === "ironwall") { if (u.row === 0) { u.def = Math.round(u.def * 1.3); u.mdf = Math.round(u.mdf * 1.3); st.log.push({ t: "passive", u: u.id, nm: s.nm }); } }
+    else gaugeAdd(st, u, s.v || 50, s.nm);
   }
   nextRound(st);
   return st;
@@ -152,7 +200,8 @@ function targets(st, u, s, h) {
   if (h.all) return foes;
   if (h.front) return front.length ? front : back;
   // 近接は前列が残る間、後列に届かない
-  const reach = !s.rng && front.length ? front : foes;
+  const reach = !s.rng && !s.reach && front.length ? front : foes;
+  if (h.burst) { const b = foes.filter(f => f.burn > 0); return b.length ? b : foes; }
   if (u.side === 1) {
     const t = reach.filter(f => f.taunt > 0); if (t.length) return [t[0]];
     // 近接でなければ7割がた前列
@@ -178,24 +227,31 @@ function damage(st, a, d, s, h, boost) {
   if (h.markx && d.mark > 0) v *= h.markx;
   if (d.burn > 0 && alive(mates(st, a)).some(p => has(p, "spread"))) { v *= 1.35; syn.push("燃え広がり"); }
   if (d.poison > 0 && has(a, "rot")) { v *= 1.3; syn.push("腐れ"); }
+  if (d.mark > 0 && alive(mates(st, a)).some(p => has(p, "hawk"))) { v *= 1.2; syn.push("鷹の目"); }
+  if (h.vsCtl && d.ctl > 0) { v *= h.vsCtl; syn.push("動けない敵に2倍"); }
+  if (h.burst && d.burn > 0) { v *= 1.5; d.burn = 0; syn.push("爆ぜる"); }
   if (boost > 0) v *= 1 + boost;                              // あふれたゲージ
   let cr = (a.crit || 0) / 100;
   if (d.mark > 0 && has(a, "finisher")) cr += 0.4;
   if (has(a, "keen")) cr += 0.2;
-  const crit = rnd(st) < cr; if (crit) v *= 1.5;
+  const crit = (h.critIfMark && d.mark > 0) || rnd(st) < cr; if (crit) v *= 1.5;
   if (has(d, "stand") && d.hp < d.max * 0.3) v *= 0.6;
   v *= 0.92 + rnd(st) * 0.16;
   v = Math.max(1, Math.round(v));
   let absorbed = 0;
-  if (d.shield > 0) { absorbed = Math.min(d.shield, v); d.shield -= absorbed; v -= absorbed; }
+  if (d.shield > 0) {
+    absorbed = Math.min(d.shield, v); d.shield -= absorbed; v -= absorbed;
+    if (d.shield === 0 && has(d, "shieldcall") && once(st, d, "shieldcall")) { st.log.push({ t: "passive", u: d.id, nm: "守りの心得" }); for (const p of alive(mates(st, d))) gaugeAdd(st, p, 15); }
+  }
   d.hp = Math.max(0, d.hp - v); a.dealt += v; d.taken += v;
   st.log.push({ t: "hit", a: a.id, d: d.id, v, crit, absorbed, adv: BEATS[a.el] === d.el, syn: syn.length ? syn : null });
-  gaugeAdd(st, d, G_HIT);
+  gaugeAdd(st, d, G_HIT + (has(d, "readhit") ? 10 : 0));
   if (d.hp > 0) {
     if (h.burn) { d.burn = Math.max(d.burn, h.burn); d.burnBy = a; st.log.push({ t: "status", d: d.id, nm: "火傷" }); }
     if (h.poison) { d.poison = Math.max(d.poison, h.poison); d.poisonBy = a; st.log.push({ t: "status", d: d.id, nm: "毒" }); }
     if (h.mark) { d.mark = Math.max(d.mark, h.mark); st.log.push({ t: "status", d: d.id, nm: "印" }); }
-    if (h.stunIfMark && d.mark > 0) control(st, d, "気絶");
+    if (h.stunIfMark && d.mark > 0) control(st, d, "気絶", a);
+    if (h.freezeIfMark && d.mark > 0) control(st, d, "凍結", a);
     if (has(a, "snatch")) gaugeAdd(st, d, -15);
   }
   if (absorbed > 0 && v === 0 && has(d, "parry") && !a.dead && d.hp > 0) {
@@ -209,15 +265,19 @@ function damage(st, a, d, s, h, boost) {
   return v;
 }
 // 動けない系：かかったあと、次のラウンドの終わりまでは効かない（気絶・凍結・石化で共有）
-function control(st, d, nm) {
+function control(st, d, nm, by) {
   if (d.dead || d.ctl > 0 || st.round <= d.ccFree) { st.log.push({ t: "resist", d: d.id, nm }); return false; }
-  d.ctl = 1; d.ctlNm = nm; st.log.push({ t: "status", d: d.id, nm }); return true;
+  d.ctl = 1; d.ctlNm = nm; st.log.push({ t: "status", d: d.id, nm });
+  if (by) for (const p of alive(mates(st, by))) if (has(p, "flow") && once(st, p, "flow")) gaugeAdd(st, p, 25, "流水");
+  return true;
 }
 function kill(st, d, a) {
   if (d.dead) return;
   d.dead = true; d.downAt = st.round; st.log.push({ t: "down", d: d.id, r: st.round });
   const killers = alive(opps(st, d)), friends = alive(mates(st, d));
   for (const p of killers) if (has(p, "embers") && once(st, p, "embers")) gaugeAdd(st, p, 30, "残り火");
+  if (a && !a.dead && has(a, "momentum") && (a.mom || 0) < 3 && once(st, a, "momentum")) { a.mom = (a.mom || 0) + 1; a.atk = Math.round(a.atk * 1.1); st.log.push({ t: "passive", u: a.id, nm: "勢い", v: "攻撃+10%" }); }
+  if (d.burn > 0) { const hw = killers.find(p => has(p, "heatwave")); if (hw && once(st, hw, "heatwave")) { st.log.push({ t: "passive", u: hw.id, nm: "熱気" }); for (const p of killers) gaugeAdd(st, p, 10); } }
   if (d.mark > 0) { const sg = killers.find(p => has(p, "signal")); if (sg && once(st, sg, "signal")) { st.log.push({ t: "passive", u: sg.id, nm: "狩りの合図" }); for (const p of killers) gaugeAdd(st, p, 15); } }
   for (const p of friends) for (const id of p.sk) { const s = id && SKILLS[id]; if (s && s.on === "allyDown" && once(st, p, id)) gaugeAdd(st, p, s.v, s.nm); }
 }
@@ -226,6 +286,7 @@ function useSkill(st, u, id, boost) {
   st.log.push({ t: "act", u: u.id, skill: id, nm: s.nm, k: s.k, boost: Math.round((boost || 0) * 100) });
   if (s.guard) for (const p of alive(mates(st, u))) { const g = Math.round(p.max * (p.row === 0 ? s.guard[0] : s.guard[1]) * (1 + (boost || 0))); p.shield = Math.max(p.shield, g); st.log.push({ t: "shield", d: p.id, v: g }); }
   if (s.taunt) u.taunt = s.taunt;
+  if (s.selfGuard) { const g = Math.round(u.max * s.selfGuard * (1 + (boost || 0))); u.shield = Math.max(u.shield, g); st.log.push({ t: "shield", d: u.id, v: g }); }
   if (s.hit) {
     const h = s.hit;
     for (const t of targets(st, u, s, h)) {
@@ -279,6 +340,6 @@ function step(st) {
 function checkEnd(st) {
   if (!alive(st.foes).length) st.over = "win"; else if (!alive(st.party).length) st.over = "lose";
 }
-const api = { SKILLS, HEROES, FOES, WAVES, ELEM, BEATS, ROUNDS, newBattle, step, order, alive, costOf, activeOf, power, teamPower, aura, makeUnit };
+const api = { SKILLS, HEROES, HEARTS, ST_NM, heartText, heroUnit, FOES, WAVES, ELEM, BEATS, ROUNDS, newBattle, step, order, alive, costOf, activeOf, power, teamPower, aura, makeUnit };
 if (typeof module !== "undefined") module.exports = api; else root.BT = api;
 })(this);
