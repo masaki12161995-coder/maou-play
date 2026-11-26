@@ -16,8 +16,9 @@ let K = 2;
 const Q = 0.5, QM = 0.75;
 // 敵は3列×3段、仲間は3列×5段（決まりが別）。真ん中の段の高さ（中心線）だけそろえる
 const FOE_X = [132, 90, 48], FOE_Y = [222, 284, 346];             // 敵：列0がこちら寄り。段の間62は「ふつう」の魔物（高さ50）を1.5倍にしても入る
-const HERO_X = [204, 234, 264], HERO_Y = [218, 251, 284, 317, 350]; // 仲間：列0が敵寄り。段の間33（絵の高さ30より広く、横陣で縦1列でも重ならない）
+const HERO_X = [204, 234, 264], HERO_Y = [214, 249, 284, 319, 354]; // 仲間：列0が敵寄り。段の間35＝絵の高さ30＋足元の体力ゲージ4.5が、下の段の頭と重ならない幅
 const MID_Y = 284; // 中心線：敵の段1と仲間の段2
+let DEV_ERR = [];
 const DEV = /[?&]dev=1/.test(location.search); // 開発用：マスの線を出す（ふだんの画面には出さない）
 const BIG = { x: 90 }; // 大きい敵はマス全体を使うので、体の真ん中を中心線に合わせる
 const SCENE_UP = 100; // 背景を上にずらす量（ドット）
@@ -229,6 +230,33 @@ function draw(t) {
   }
   requestAnimationFrame(draw);
 }
+// 開発用の点検：仲間3×5のどのマスの組み合わせ（どんな陣形）でも、絵と体力ゲージが重ならないか、陣形の決まりが正しいかを確かめる
+function devCheck() {
+  const err = [];
+  const box = (c, r, step) => { // 絵（1ドット＝Q）の幅いっぱい・頭の上〜体力ゲージの下。物理攻撃のときは6ドット前（左）に出る
+    const x = HERO_X[c] - (step ? 6 : 0), y = HERO_Y[r];
+    return { l: x - SHEET.fw * Q / 2, r: x + SHEET.fw * Q / 2, t: y - SHEET.fh * Q, b: y + 4.5 };
+  };
+  const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+  const cells = []; for (let c = 0; c < 3; c++) for (let r = 0; r < 5; r++) cells.push([c, r]);
+  for (const [c1, r1] of cells) for (const [c2, r2] of cells) { // 15マスのどの2マスでも（＝どの陣形でも）
+    if (c1 === c2 && r1 === r2) continue;
+    for (const s1 of [0, 1]) if (hit(box(c1, r1, s1), box(c2, r2, 0))) err.push(`仲${c1}-${r1}${s1 ? "(前に出た時)" : ""}と仲${c2}-${r2}が重なる`);
+  }
+  for (const [k, F] of Object.entries(BT.FORMATIONS)) {
+    if (F.slots.length !== 5) err.push(`${F.nm}：5人分ない`);
+    const seen = new Set();
+    for (const sl of F.slots) {
+      if (!(sl.c >= 0 && sl.c < 3 && sl.r >= 0 && sl.r < 5)) err.push(`${F.nm}：マスの外 ${sl.c}-${sl.r}`);
+      if (seen.has(sl.c + "-" + sl.r)) err.push(`${F.nm}：同じマスに2人 ${sl.c}-${sl.r}`); seen.add(sl.c + "-" + sl.r);
+    }
+  }
+  const top = Math.min(...HERO_Y) - SHEET.fh * Q, bottom = Math.max(...HERO_Y) + 4.5;
+  if (top < 100) err.push("仲間の上の段が上の帯にかかる"); if (bottom > PANEL.y) err.push("仲間の下の段が下の枠にかかる");
+  if (HERO_Y[2] !== MID_Y || FOE_Y[1] !== MID_Y) err.push("中心線がずれている");
+  console[err.length ? "error" : "log"]("マス点検", err.length ? err : "OK");
+  return err;
+}
 // 開発用のマス目：敵3×3と仲間3×5。足元が各マスの下辺の少し上に来る。黄色の点線が中心線
 function devGrid() {
   ctx.save(); ctx.lineWidth = 0.25; ctx.font = "5px sans-serif";
@@ -238,10 +266,12 @@ function devGrid() {
   };
   for (let c = 0; c < 3; c++) {
     for (let r = 0; r < 3; r++) cell(FOE_X[c], FOE_Y[r], 42, 62, "#ff7a6a", `敵${c}-${r}`);
-    for (let r = 0; r < 5; r++) cell(HERO_X[c], HERO_Y[r], 30, 33, "#6ad0ff", `仲${c}-${r}`);
+    for (let r = 0; r < 5; r++) cell(HERO_X[c], HERO_Y[r], 30, 35, "#6ad0ff", `仲${c}-${r}`);
   }
   ctx.strokeStyle = "#ffe08a"; ctx.setLineDash([1, 1]);
   ctx.beginPath(); ctx.moveTo(20, MID_Y); ctx.lineTo(282, MID_Y); ctx.stroke(); // 中心線
+  ctx.font = "6px sans-serif"; ctx.fillStyle = DEV_ERR.length ? "#ff5a4a" : "#7ee08a";
+  ctx.fillText(DEV_ERR.length ? "マス点検NG " + DEV_ERR[0] : "マス点検OK（3×5のどの形でも重ならない）", 6, 106);
   ctx.restore();
 }
 const WCELL = new Map();
@@ -286,7 +316,8 @@ async function turn() {
     } else if (e.t === "hit") {
       const t = byId(e.d), p = where(t);
       fx[t.id] = { ...(fx[t.id] || {}), flash: now() + 110 / spd(), shake: now() + 220 / spd() };
-      num(p.x, p.y, String(e.v), (t.side === 0 ? "foe" : "") + (e.weak ? " weak" : e.resist ? " resist" : ""), e.weak ? 19 : 16);
+      const tag = e.weak ? '<b class="tag weak">WEAK</b>' : e.resist ? '<b class="tag resist">RESIST</b>' : ""; // 弱点は赤、耐性は青（上の帯の▲▼と同じ色）
+      num(p.x, p.y, tag + e.v, (t.side === 0 ? "foe" : "") + (e.weak ? " big" : ""), e.weak ? 19 : 16);
       refresh(); await wait(140);
     } else if (e.t === "passive") { note(byId(e.u), e.nm + (e.v ? " " + e.v : "")); await wait(120); }
     else if (e.t === "status") { note(byId(e.d), e.nm); refresh(); await wait(160); }
@@ -359,6 +390,7 @@ function menu() {
 }
 
 addEventListener("resize", fit);
+if (DEV) DEV_ERR = devCheck();
 Promise.all([...new Set([...BT.HEROES.map(h => h.img), ...Object.values(BT.FOES).map(f => f.img)])].map(load)).then(() => {
   fit(); scene = SCENES[0](); requestAnimationFrame(draw); menu();
 });
