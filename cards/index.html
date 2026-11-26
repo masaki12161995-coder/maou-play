@@ -106,6 +106,10 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tray{background:linear-gradient(#211a1f,#171216);box-shadow:0 0 0 1px #5a4030 inset;border-radius:8px;padding:6px 8px;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .tray .info2{min-height:18px;margin-bottom:4px;color:var(--sub)}
 .tray .grid{grid-template-columns:repeat(6,1fr);gap:8px 4px}
+.card.back{background:repeating-linear-gradient(45deg,#4a1e26 0 6px,#3a161d 6px 12px);border:2px solid #c9a35a;border-radius:6px}
+.card.back .bk{position:absolute;inset:6px;border:1px solid #c9a35a88;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.card.back .bk::after{content:"";width:40%;aspect-ratio:1;transform:rotate(45deg);border:2px solid #e8c27a;background:#2a1016}
+.card.back .bk b{position:absolute;color:#ffe08a;font-size:20px;z-index:2}
 </style>
 </head>
 <body>
