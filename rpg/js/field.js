@@ -203,6 +203,7 @@ function foeTick(now) {
 // 場所の強さごとの落とし物
 const DROPS = {
   1: [{ id: "oakclub", p: 0.04 }, { id: "needle", p: 0.04 }, { id: "ironfist", p: 0.04 }, { id: "tunic", p: 0.04 }, { id: "cloak", p: 0.04 }, { id: "hood", p: 0.04 }, { id: "buckler", p: 0.04 }, { id: "charm", p: 0.03 }],
+  2: [{ id: "oakclub", p: 0.05 }, { id: "needle", p: 0.05 }, { id: "ironfist", p: 0.05 }, { id: "leather", p: 0.04 }, { id: "buckler", p: 0.05 }, { id: "hood", p: 0.05 }, { id: "charm", p: 0.04 }, { id: "ring", p: 0.02 }],
   6: [{ id: "mosssword", p: 0.06 }, { id: "chain", p: 0.10 }, { id: "plate", p: 0.08 }, { id: "ring", p: 0.10 }, { id: "longbow", p: 0.05 }],
 };
 const CELLS = [[0, 1], [0, 0], [0, 2], [1, 1], [1, 0], [1, 2], [2, 1], [2, 0], [2, 2]];

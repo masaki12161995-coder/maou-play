@@ -299,6 +299,34 @@ function weir(c, o) { // 簗（川に組んだ竹。横3マス）。web＝蜘蛛
     c.globalAlpha = 1;
   }
 }
+function wagon(c, o) { // 荷車（横2マス）。army＝幌に王国の紋のある軍の荷車
+  const W = T * 2;
+  blob(c, "#2a3a26", W / 2, 44, 40, 3);
+  R(c, "#4d3727", 8, 26, W - 16, 10); R(c, "#6b4d34", 8, 26, W - 16, 3); R(c, "#3c2a1e", 4, 30, 6, 3); R(c, "#3c2a1e", W - 10, 30, 10, 3);
+  for (const wx of [24, W - 24]) { blob(c, "#2a1d14", wx, 38, 9, 9); blob(c, "#6e5238", wx, 38, 7, 7); blob(c, "#2a1d14", wx, 38, 2, 2); R(c, "#2a1d14", wx - 7, 37, 14, 2); R(c, "#2a1d14", wx - 1, 31, 2, 14); }
+  if (o && o.army) {
+    blob(c, "#b8ad94", W / 2, 18, 36, 14); blob(c, "#d0c6ac", W / 2, 16, 33, 11); R(c, "#b8ad94", 12, 18, W - 24, 9);
+    for (const rx of [28, 48, 68]) R(c, "#9a9078", rx, 6, 1, 20);
+    R(c, "#2f5873", 42, 9, 12, 12); R(c, "#d7b45a", 46, 11, 4, 8); R(c, "#d7b45a", 44, 13, 8, 3); // 王国の紋
+  } else {
+    for (const [bx, col] of [[14, "#8a6a48"], [34, "#a3815a"], [54, "#7f6849"], [70, "#8a6a48"]]) { R(c, "#3c2a1e", bx - 1, 11, 14, 16); R(c, col, bx, 12, 12, 14); R(c, "#3c2a1e", bx, 18, 12, 1); }
+  }
+}
+function gatePost(c) { // 町の門の柱（縦2マス）
+  R(c, "#3a3640", 12, 4, 24, 88); R(c, "#6d6670", 14, 4, 8, 88); R(c, "#4f4a55", 8, 0, 32, 8); R(c, "#85808c", 8, 0, 32, 2);
+  for (const yy of [24, 46, 68]) R(c, "#3a3640", 12, yy, 24, 2);
+  blob(c, "#2a3a26", 24, 92, 16, 3);
+}
+function offering(c) { // 石の前の、野の花と団子
+  grass(c, 0, 0, true);
+  R(c, "#d7d0b6", 12, 30, 12, 3); blob(c, "#f4f2e8", 15, 27, 3, 3); blob(c, "#f4f2e8", 21, 27, 3, 3); blob(c, "#f4f2e8", 18, 23, 3, 3);
+  for (const [fx, col] of [[30, "#cdb56a"], [35, "#b98290"], [33, "#d7d0b6"]]) { R(c, "#2c4228", fx, 26, 1, 8); R(c, col, fx - 1, 23, 3, 3); }
+}
+function cedar(c) { // 一本杉（縦3マス。いちばん下が幹）
+  blob(c, "#2a3a26", 24, 140, 18, 4);
+  R(c, "#4d3727", 19, 96, 10, 44); R(c, "#6b4d34", 20, 96, 3, 42);
+  for (let i = 0; i < 6; i++) { const w = 8 + i * 5, y = 8 + i * 18; blob(c, "#263f2f", 24, y + 10, w + 2, 12); blob(c, "#2f4a35", 23, y + 8, w, 10); blob(c, "#3b5a3e", 20, y + 4, Math.max(3, w - 6), 5); }
+}
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar };
 })(window);

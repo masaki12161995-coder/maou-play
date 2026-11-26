@@ -86,6 +86,8 @@ const SKILLS = {
   mossbreath:{ nm: "苔の息吹", bp: 0, rank: "A", tg: "all", at: ["冷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
   silkbind:  { nm: "糸しばり", bp: 0, rank: "D", tg: "one", at: ["冷"], dist: "遠", dir: "間接", kind: "攻撃" },
   callkids:  { nm: "子を呼ぶ", bp: 0, tg: "summon", kind: "補助" },
+  wingslap:  { nm: "羽耳はたき", bp: 3, rank: "D", tg: "row", at: ["斬"], dist: "遠", dir: "間接", kind: "攻撃" },
+  sickle:    { nm: "錆び鎌", bp: 4, rank: "C", tg: "one", at: ["斬"], poison: 35, dist: "近", dir: "直接", kind: "攻撃" },
   wolfbite:  { nm: "かみ裂き", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   dragontail:{ nm: "竜の尾", bp: 0, rank: "A", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
 };
@@ -157,6 +159,8 @@ const MATS = {
   oreha:   { nm: "錆びた折れ刃", icon: "mat_012", fam: "金属", rare: "緑" },
   ishi:    { nm: "祠の石くれ", icon: "mat_078", fam: "石・結晶", rare: "紫" },
   kinoko:  { nm: "光るきのこ", icon: "mat_100", fam: "植物", rare: "白" },
+  hane:    { nm: "灰色の羽耳", icon: "mat_015", fam: "羽", rare: "白" },
+  wara:    { nm: "かかしの布きれ", icon: "mat_013", fam: "布・紙", rare: "白" },
   kiba:    { nm: "狼の牙", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
   ryurin:  { nm: "苔竜の鱗", icon: "mat_077", fam: "皮・鱗・甲羅", rare: "紫" },
 };
@@ -181,6 +185,8 @@ const HEARTS = {
   koromochi:{ nm: "コロモチの心", col: "白", mul: { str: 92, vit: 110, dex: 95, agi: 90, int: 100, wil: 108, lov: 105, cha: 100 }, sk: "mochislam", up: ["vit", "wil"] },
   mizugumo: { nm: "ミズグモの心", col: "白", mul: { str: 98, vit: 94, dex: 108, agi: 108, int: 102, wil: 96, lov: 100, cha: 100 }, sk: "waterthread", up: ["dex", "agi"] },
   donguri:  { nm: "ドングリ兵の心", col: "白", mul: { str: 100, vit: 104, dex: 105, agi: 100, int: 95, wil: 100, lov: 100, cha: 104 }, sk: "acornshot", up: ["dex", "vit"] },
+  hanenezumi:{ nm: "ハネネズミの心", col: "白", mul: { str: 94, vit: 92, dex: 106, agi: 114, int: 100, wil: 96, lov: 100, cha: 102 }, sk: "wingslap", up: ["agi", "dex"] },
+  kakashi:  { nm: "カカシ番の心", col: "白", mul: { str: 108, vit: 106, dex: 98, agi: 88, int: 96, wil: 104, lov: 100, cha: 96 }, sk: "sickle", up: ["str", "vit"] },
   ookami:   { nm: "モリオオカミの心", col: "白", mul: { str: 106, vit: 96, dex: 100, agi: 110, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "wolfbite", up: ["agi", "str"] },
   nushi:    { nm: "ヌシガエルの心", col: "緑", mul: { str: 106, vit: 114, dex: 92, agi: 86, int: 102, wil: 112, lov: 105, cha: 102 }, sk: "bigyawn", up: ["vit", "wil"] },
   kokemusha:{ nm: "コケ武者の心", col: "緑", mul: { str: 114, vit: 110, dex: 100, agi: 90, int: 88, wil: 100, lov: 95, cha: 98 }, sk: "mosscut", up: ["str", "vit"] },
@@ -234,6 +240,9 @@ const FOES = {
               res: { 冷: 40, 熱: -40, 打: -20 }, plan: { 2: "callkids", 4: "silkbind", 5: "callkids" }, every: { n: 4, sk: "callkids" }, every2: { n: 3, sk: "silkbind" }, stunRes: 1, gold: 45 },
   komizu:   { nm: "子グモ", img: "m_mizugumo", wt: "fang", pow: 9, hp: 55, st: { str: 26, vit: 9, dex: 14, agi: 20, int: 8, wil: 7, lov: 0, cha: 8 }, res: { 冷: 40, 熱: -40, 打: -20 }, gold: 3 },
   moriookami:{ mat: "kiba", nm: "モリオオカミ", img: "m_ookami", wt: "fang", pow: 11, hp: 110, st: { str: 32, vit: 12, dex: 14, agi: 24, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 熱: -30, 突: -20, 冷: 20 }, every: { n: 3, sk: "wolfbite" }, gold: 11, heart: "ookami" },
+  // 西街道
+  hanenezumi:{ mat: "hane", nm: "ハネネズミ", img: "m_hanenezumi", wt: "fang", pow: 9, hp: 70, st: { str: 26, vit: 9, dex: 18, agi: 27, int: 8, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 打: 20 }, every: { n: 3, sk: "wingslap" }, gold: 8, heart: "hanenezumi" },
+  kakashi:  { mat: "wara", nm: "カカシ番", img: "monster_088", wt: "claw", pow: 11, hp: 130, st: { str: 31, vit: 15, dex: 12, agi: 9, int: 5, wil: 12, lov: 0, cha: 9 }, res: { 熱: -60, 斬: -20, 突: 30, 打: 20 }, every: { n: 3, sk: "sickle" }, gold: 12, heart: "kakashi" },
   nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1050, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
               res: { 打: 20, 冷: 50, 雷: -40, 熱: -20 }, plan: { 2: "mudsplash", 3: "bodypress", 4: "bigyawn", 6: "swampquake", 7: "bodypress", 8: "mudsplash" }, every: { n: 2, sk: "bodypress" }, rageFrom: 9, rage: "swampquake", stunRes: 1, gold: 120, heart: "nushi" },
   // 黒外套の兵（人間）

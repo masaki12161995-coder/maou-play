@@ -285,11 +285,88 @@ function road0() {
   return {
     id: "road0", nm: "西街道の入口", g, tier: 1, bg: "meadow",
     objs: [{ t: "boat", x: 0, y: 9, w: 3, h: 1, talk: "boat" }, { t: "sign", x: 6, y: 9, text: ["東　宿場町ハルネ"] }, { t: "kaeri", x: 9, y: 8, talk: "kaeri" }],
-    exits: [],
+    exits: [{ x: 12, y: 10, to: "road1", tx: 1, ty: 13, dir: 2 }],
     npcs: [],
-    foes: [], chests: [], trigs: [{ x: 12, y: 10, run: "roadEnd" }],
+    foes: [], chests: [], trigs: [],
   };
 }
 
-root.MAPS = { hut, ferry, village, river, sandbar, forest, hermit, shrine, road0 };
+// ---------- 西街道（W4。強さ2）：西から東へ。畑と林の間を行く土の道 ----------
+function road1() {
+  const W = 46, H = 27, g = grid(W, H, ".");
+  fill(g, "T", 0, 0, W, 5); fill(g, "T", 0, H - 5, W, 5);
+  fill(g, "=", 0, 13, W, 1);
+  for (const [x, y, w, h] of [[4, 7, 5, 4], [12, 16, 6, 4], [22, 15, 5, 5], [30, 7, 6, 4], [37, 16, 6, 4]]) fill(g, "h", x, y, w, h); // 畑
+  for (const [x, y] of [[2, 9], [10, 6], [19, 18], [27, 6], [28, 19], [35, 20], [41, 8], [9, 19], [44, 18], [20, 6]]) g[y][x] = "T";
+  fill(g, "f", 4, 11, 5, 1); fill(g, "f", 30, 11, 6, 1); fill(g, "f", 12, 15, 6, 1); fill(g, "f", 37, 15, 6, 1);
+  return {
+    id: "road1", nm: "西街道", g, tier: 2, bg: "meadow",
+    objs: [
+      { t: "cedar", x: 15, y: 8, w: 1, h: 3 },
+      { t: "kaeri", x: 24, y: 11, talk: "roadStone" }, { t: "offering", x: 25, y: 11 },
+      { t: "sign", x: 3, y: 12, text: ["西街道　西　リム川の渡し"] }, { t: "sign", x: 42, y: 12, text: ["西街道　東　宿場町ハルネ"] },
+    ],
+    exits: [{ x: 0, y: 13, to: "road0", tx: 11, ty: 10, dir: 1 }, { x: 45, y: 13, to: "harune", tx: 1, ty: 14, dir: 2 }],
+    npcs: [
+      { id: "linka", x: 16, y: 11, img: "person_004", dir: 0, nm: "リンカ", talk: "linka" },
+      { id: "oba", x: 24, y: 12, img: "person_101", dir: 3, nm: "旅の老婆", when: g => S(g) <= 15 },
+    ],
+    foes: [
+      { id: "r1", x: 7, y: 15, k: "koromochi", g: ["koromochi", "koromochi", "hanenezumi"] },
+      { id: "r2", x: 11, y: 9, k: "hanenezumi", g: ["hanenezumi", "hanenezumi"] },
+      { id: "r3", x: 19, y: 16, k: "kakashi", g: ["kakashi", "koromochi"] },
+      { id: "r4", x: 31, y: 16, k: "moriookami", g: ["moriookami", "moriookami", "hanenezumi"] },
+      { id: "r5", x: 33, y: 9, k: "kakashi", g: ["kakashi", "kakashi"] },
+      { id: "r6", x: 39, y: 10, k: "hanenezumi", g: ["kakashi", "hanenezumi", "hanenezumi"] },
+    ],
+    chests: [{ id: "c_road1", x: 9, y: 6, item: "ironfist" }, { id: "c_road2", x: 43, y: 20, gold: 80 }],
+    trigs: [
+      { x: 1, y: 13, when: g => S(g) === 14, run: "c1s1" },
+      { x: 22, y: 5, w: 1, h: 17, when: g => S(g) === 15, run: "c1s1b" },
+    ],
+  };
+}
+
+// ---------- 宿場町ハルネ（W5）：西の門から入る。宿・問屋場・貸本屋、東は大橋への道 ----------
+function harune() {
+  const W = 20, H = 30, g = grid(W, H, ".");
+  fill(g, "T", 0, 0, W, 3); fill(g, "T", 0, H - 3, W, 3); fill(g, "T", 0, 0, 1, H); fill(g, "T", W - 1, 0, 1, H);
+  fill(g, "c", 0, 13, W, 3);                    // 大通り（西の門〜東の大橋への道）
+  fill(g, "c", 9, 5, 2, 20);                    // 南北の通り
+  fill(g, "=", 4, 9, 5, 1); fill(g, "=", 11, 9, 5, 1); fill(g, "=", 4, 19, 5, 1); fill(g, "=", 11, 19, 5, 1);
+  g[14][0] = "c"; g[14][W - 1] = "c";
+  return {
+    id: "harune", nm: "宿場町ハルネ", g, tier: 0, bg: null,
+    objs: [
+      { t: "gatePost", x: 1, y: 11, w: 1, h: 2 }, { t: "gatePost", x: 1, y: 16, w: 1, h: 2 },
+      { t: "wagon", x: 3, y: 14, w: 2, h: 1, army: 1 }, { t: "wagon", x: 6, y: 14, w: 2, h: 1, army: 1 }, { t: "wagon", x: 4, y: 16, w: 2, h: 1 }, { t: "wagon", x: 12, y: 12, w: 2, h: 1 }, { t: "wagon", x: 15, y: 16, w: 2, h: 1, army: 1 },
+      { t: "house", x: 3, y: 5, w: 5, h: 3, roof: "brown", door: 2, chimney: 1 },   // かわうそ亭
+      { t: "sign", x: 8, y: 8, text: ["宿　かわうそ亭"] },
+      { t: "house", x: 12, y: 5, w: 5, h: 3, roof: "blue", door: 2 },               // 問屋場
+      { t: "sign", x: 11, y: 8, text: ["ハルネ問屋場"] },
+      { t: "house", x: 4, y: 20, w: 4, h: 3, roof: "green", door: 1 },              // 貸本屋
+      { t: "sign", x: 8, y: 23, text: ["貸本"] },
+      { t: "house", x: 12, y: 20, w: 4, h: 3, roof: "red", door: 1, chimney: 1 },
+      { t: "well", x: 9, y: 11 },
+      { t: "kaeri", x: 17, y: 11, talk: "kaeri" },
+      { t: "sign", x: 17, y: 12, text: ["東　ガルム大橋"] },
+    ],
+    exits: [{ x: 0, y: 14, to: "road1", tx: 44, ty: 13, dir: 1 }],
+    npcs: [
+      { id: "gate", x: 2, y: 13, img: "person_014", dir: 1, nm: "門番", talk: "gateman" },
+      { id: "akindo", x: 5, y: 13, img: "person_075", dir: 2, nm: "商人", talk: "akindo" },
+      { id: "hei", x: 8, y: 13, mon: "monster_010", face: 1, nm: "兵士", talk: "heishi" },
+      { id: "poruka", x: 6, y: 23, img: "person_029", dir: 0, nm: "ポルカ", talk: "poruka" },
+    ],
+    foes: [], chests: [],
+    trigs: [
+      { x: 1, y: 13, w: 1, h: 3, when: g => S(g) === 16, run: "c1s2" },
+      { x: 5, y: 8, w: 2, h: 1, run: "c1stop" },                        // かわうそ亭の戸口
+      { x: 14, y: 8, w: 2, h: 1, run: "innFirst" },                     // 問屋場の戸口
+      { x: 18, y: 13, w: 1, h: 3, run: "innFirst" },                    // 大橋への道
+    ],
+  };
+}
+
+root.MAPS = { hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune };
 })(typeof window !== "undefined" ? window : globalThis);
