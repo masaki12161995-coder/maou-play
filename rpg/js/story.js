@@ -149,9 +149,6 @@ T.s3 = async () => {
 ヤン爺：桟橋で休め。その顔じゃ客が逃げるぞ。`);
   await sys("カイは傷を負っている。", "戦いは、HPが減ったまま始まる。");
 };
-T.yan = () => talk(S() === 3 ? `ヤン爺：桟橋で休め。その顔じゃ客が逃げるぞ。` : `
-ヤン爺：近ごろ川上から、焦げた木っぱがよく来るんだ。
-ヤン爺：北で山火事でもあったのかねえ。`);
 
 // ---------- 場面4　見慣れない客 ／ 場面5　森の岸 ----------
 T.s4 = async () => {
@@ -357,11 +354,6 @@ T.mukuC = () => talk(`
 ムク：カイ兄が人間を連れてきた…。
 ムク：婆ちゃんに怒られるよ。ぜったい。`);
 T.thorns = () => UI.say("", ["茨でふさがっていて、通れない。"]);
-// 集める仲間（序章のあいだは、会えるだけ。仲間にできるのは第1章から）
-T.seri = () => talk(`〔猟師小屋の前で、娘が弓の弦を張り直している。こちらを見て、小さくうなずいた。〕`);
-T.karin = () => talk(`〔礼拝堂の前で、鐘つきの見習いが、鈴のついた杖を磨いている。〕`);
-T.toraji = () => talk(`〔槍を抱えた猫の姿の見張りが、船着きの石の上で昼寝をしている。〕`);
-T.komari = () => talk(`〔狸の姿の子が、こちらをじっと見ている。目が合うと、にっと笑った。〕`);
 
 // ---------- 場面8　森の婆の庵 ----------
 T.s8 = async () => {
@@ -776,7 +768,6 @@ T.c1s1b = async () => {
 リゼット：人も、魔物も。`);
 };
 T.roadStone = () => T.kaeri();
-T.linka = () => talk(`〔一本杉の下に、拳法着の娘が立っている。通る旅人を目で追っては、腕を組み直している。〕`);
 
 // ---------- 場面2　足止めの町 ----------
 T.c1s2 = async () => {
@@ -806,7 +797,6 @@ T.gateman = () => talk(S() >= 17 ? `
 門番：宿は「かわうそ亭」だが、空きがあるかどうか。` : `門番：旅の人か。悪いが、先へは行けんよ。`);
 T.akindo = () => talk(`商人：魚が腐るんだよ、こっちは！`);
 T.heishi = () => talk(`兵士：兵糧が届かにゃ、前線が飢えるんだ！`);
-T.poruka = () => talk(`〔貸本屋の前で、女の子が分厚い本を読みふけっている。〕`);
 // 町の戸口と、東の道（物語の順に開く）
 const innFirst = () => talk(`リゼット：まずは宿。それから橋を見ましょう。`);
 T.innDoor = async () => {
@@ -911,7 +901,6 @@ T.bela = async () => {
   const c = await UI.choose("ベラ", "土間の大部屋なら、雑魚寝で入れるよ。", ["札勝負をする", "やめる"]);
   if (c === 0) await UI.cards("duel", 1);
 };
-T.teo = () => talk(`〔土間の隅で、若い剣士が腹を押さえて座っている。〕`);
 T.innBed = async () => {
   if (S() < 18) return;
   if (S() === 20) return T.c1s6();
@@ -1262,7 +1251,6 @@ T.c1s10 = async () => {
   await sys("宿場頭から、賞金を受け取れるようになった。（問屋場で話す）");
 };
 T.eastEnd = async () => { await UI.say("", ["この先は、第2章で。"]); A.enter("ohashi", 16, A.pos().y - A.map().padTop, 1); };
-T.nat = () => talk(`〔橋のたもとで、旅の機械いじりが、料金箱の留め金をのぞきこんでいる。〕`);
 T.garmBridge = async () => {
   const c = await UI.choose("ガルム", "…決まりは、決まり。…覚えた。", ["札勝負をする", "やめる"]);
   if (c === 0) await UI.cards("duel", 2);
@@ -1426,6 +1414,110 @@ T.c1s12 = async () => {
   await endCard("第1章　完");
   A.sync();
   await sys("ハルネと大橋へは、いつでも戻れる。", "橋番のガルムにも、札勝負を挑める。", "西街道の入口の舟で、トルカ村と森へも渡れる。");
+};
+
+// ==================== 集める仲間（西境地方の8人） ====================
+// 加わり方はすべて「仮」。ここ（JOIN）を書き換えれば変えられる。序章のあいだ（S<14）は会えるだけ
+// how：talk＝話すだけ／pay＝お金／visits＝何度も訪ねる／items＝物を渡す／duel＝戦って勝つ／fetch＝物を届ける／hide＝かくれんぼ
+const JOIN = {
+  teo:    { hi: 4, how: "pay", gold: 30, ask: "〔宿代がたまって、追い出されかけているらしい。〕", btn: "宿代を立て替える（30 G）", lines: `
+テオ：恩に着る！この借りは剣で返すよ。
+テオ：おれはテオ。いつか勇者さまみたいになるんだ。
+テオ：…まずは腹ごしらえからでいいかな。` },
+  rinka:  { hi: 5, how: "duel", ask: "〔一本杉の下で、拳法着の娘が腕試しの相手を待っている。〕", btn: "腕試しを受ける", lines: `
+リンカ：参った！あたしの負けだ！
+リンカ：負けた相手には付いていく。それが流儀なんだ。
+リンカ：次は負けないけどね、大将！` },
+  toraji: { hi: 6, how: "items", item: "uo", n: 3, ask: "〔猫の姿の見張りが、川の方ばかり見ている。魚が欲しいらしい。〕", btn: "川魚を3匹渡す", lines: `
+トラジ：三匹も。あんた、話の分かるやつだな。
+トラジ：見張りは退屈でね。川の外も見張ってみたい。
+トラジ：槍は任せろ。魚の骨より上手に突く。` },
+  seri:   { hi: 7, how: "visits", n: 3, ask: "〔猟師の娘が、黙ってうなずいた。〕", lines: `
+セリ：…三度も来たのは、あなたが初めて。
+セリ：父さんの足は治った。もう私がいなくても平気。
+セリ：行く。外の空を、射ってみたい。` },
+  poruka: { hi: 8, how: "fetch", item: "hon", ask: "〔貸本屋の娘が、帳面をにらんでいる。半年も返ってこない本があるらしい。借りたのは、街道を行き来する旅人だという。〕", btn: "本を渡す", lines: `
+ポルカ：その本！半年も返ってこなかったのよ。
+ポルカ：お礼に、あたしの知恵を貸してあげる。
+ポルカ：本の角は痛いんだから。覚悟なさい、魔物さん。` },
+  komari: { hi: 9, how: "hide", spots: [["forest", 7, 20], ["forest", 21, 12], ["forest", 22, 25]], ask: "〔狸の姿の子が、にっと笑って駆けていった。かくれんぼのつもりらしい。〕", lines: `
+コマリ：みつかったー！三回ともみつかった！
+コマリ：おまえ、目がいいな。コマリの親分にしてやる。
+コマリ：光るもの見つけたら、コマリにちょうだいね。` },
+  nat:    { hi: 10, how: "items", mat: "tetsu", n: 5, ask: "〔旅の機械いじりが、料金箱の留め金をのぞきこんでいる。鉄くずが足りないらしい。〕", btn: "鉄くずを5つ渡す", lines: `
+ナット：鉄くず五つ！これで歯車が作れる！
+ナット：あたしはナット。直せない物はないよ。たぶん。
+ナット：あんたらの旅、がたが来たら締めてあげる。` },
+  karin:  { hi: 11, how: "talk", lines: `
+カリン：旅ですか！行きます行きます！
+カリン：鐘つきのカリンです。鈴を鳴らすと元気が出ますよ。
+カリン：あっ、神父さまに言ってくるの忘れました！` },
+};
+const PRE = { // 序章のあいだの一言（会えるだけ）
+  seri: "〔猟師小屋の前で、娘が弓の弦を張り直している。こちらを見て、小さくうなずいた。〕",
+  karin: "〔礼拝堂の前で、鐘つきの見習いが、鈴のついた杖を磨いている。〕",
+  toraji: "〔槍を抱えた猫の姿の見張りが、船着きの石の上で昼寝をしている。〕",
+  komari: "〔狸の姿の子が、こちらをじっと見ている。目が合うと、にっと笑った。〕",
+};
+const joined = hi => (G().roster || []).includes(hi);
+async function recruit(id) {
+  const J = JOIN[id];
+  await talk(J.lines);
+  await FD.joinMember(J.hi);
+}
+async function meet(id) {
+  const J = JOIN[id], f = F(); f.mt = f.mt || {};
+  if (S() < 14) return talk(PRE[id] || J.ask);
+  if (joined(J.hi)) return;
+  const st = f.mt[id] = f.mt[id] || {};
+  if (J.how === "talk") return recruit(id);
+  if (J.how === "visits") { st.n = (st.n || 0) + 1; if (st.n >= J.n) return recruit(id); return talk(J.ask); }
+  if (J.how === "hide") {
+    if (!st.go) { st.go = 1; st.k = 0; await talk(J.ask); A.sync(); }
+    return;
+  }
+  await talk(J.ask);
+  if (J.how === "fetch") { st.asked = 1; A.sync(); if (!(G().tools[J.item] > 0)) return; }
+  if (J.how === "items") {
+    const have = J.mat ? (G().mats[J.mat] || 0) : (G().tools[J.item] || 0);
+    if (have < J.n) { DM.toast(`${J.mat ? BT.MATS[J.mat].nm : BT.TOOLS[J.item].nm}：${have}／${J.n}`, 300); return; }
+  }
+  if (J.how === "pay" && G().gold < J.gold) { DM.toast("お金が足りない", 300); return; }
+  if (await UI.choose("", "", [J.btn, "やめる"]) !== 0) return;
+  if (J.how === "pay") G().gold -= J.gold;
+  if (J.how === "items") { if (J.mat) G().mats[J.mat] -= J.n; else G().tools[J.item] -= J.n; }
+  if (J.how === "fetch") G().tools[J.item] = 0;
+  if (J.how === "duel") {
+    const r = await FD.battle({ nm: "一本杉の下", bg: "meadow", foes: [{ k: "rinka", c: 0, r: 1 }], tier: 2, loseOk: 1, noHeart: 1, drops: [] });
+    if (r !== "win") { GS.restAll(); return talk(`〔娘は拳をおさめ、息を整えている。また挑めそうだ。〕`); }
+  }
+  return recruit(id);
+}
+for (const id of Object.keys(JOIN)) T[id] = () => meet(id);
+T.linka = () => meet("rinka");
+T.teo = () => meet("teo");
+// かくれんぼ：見つけるたびに、次の所へ隠れる
+T.komariHide = async () => {
+  const J = JOIN.komari, st = F().mt.komari;
+  st.k++;
+  if (st.k >= J.spots.length) { A.sync(); return recruit("komari"); }
+  SND.se("ok"); await talk(`〔「みつかった！」狸の姿の子は、また森の奥へ駆けていった。（${st.k}／${J.spots.length}）〕`); A.sync();
+};
+// 貸本を借りたまま街道を行き来している旅人
+T.bookMan = async () => {
+  if (G().tools.hon > 0) return talk(`〔旅人は、街道の先を見ている。〕`);
+  await talk(`〔旅人に貸本屋の話をすると、頭をかいて、くたびれた本を1冊差し出した。返しそびれていたらしい。〕`);
+  G().tools.hon = 1; SND.se("get"); await sys("「貸本」を受け取った。"); A.sync();
+};
+// ヤン爺から川魚を分けてもらう（第1章から）
+T.yan = async () => {
+  if (S() < 14) return talk(S() === 3 ? `ヤン爺：桟橋で休め。その顔じゃ客が逃げるぞ。` : `
+ヤン爺：近ごろ川上から、焦げた木っぱがよく来るんだ。
+ヤン爺：北で山火事でもあったのかねえ。`);
+  const c = await UI.choose("ヤン爺", "近ごろ川上から、焦げた木っぱがよく来るんだ。", ["川魚を分けてもらう（10 G）", "やめる"]);
+  if (c !== 0) return;
+  if (G().gold < 10) { DM.toast("お金が足りない", 300); return; }
+  G().gold -= 10; G().tools.uo = (G().tools.uo || 0) + 1; SND.se("get"); DM.toast(`川魚を手に入れた（${G().tools.uo}匹）`, 300);
 };
 
 // ---------- 舟 ----------

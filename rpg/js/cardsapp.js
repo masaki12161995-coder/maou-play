@@ -19,6 +19,15 @@ const WORLD={
   w_tsuta:{nm:"ツタ鎧",r:2,n:[5,3,6,2],src:"img/monster_005.png",sz:[37,72],k:"魔物"},
   w_garm:{nm:"石橋のガルム",r:4,n:[7,5,7,6],src:"img/monster_063.png",sz:[72,70],k:"魔物"},
   w_nushi:{nm:"ヌシガエル",r:4,n:[5,6,8,6],src:"img/m_nushi.png",sz:[129,98],k:"魔物"},
+  w_bram:{nm:"脱走騎士",r:3,n:[6,6,5,4],src:"img/c_bram.png",sz:[42,59],k:"人物"},
+  w_teo:{nm:"見習い剣士",r:2,n:[5,4,3,4],src:"img/c_teo.png",sz:[32,59],k:"人物"},
+  w_rinka:{nm:"拳法娘",r:2,n:[6,3,3,4],src:"img/c_rinka.png",sz:[35,59],k:"人物"},
+  w_toraji:{nm:"船着きの見張り",r:2,n:[3,5,5,3],src:"img/c_toraji.png",sz:[34,58],k:"人物"},
+  w_seri:{nm:"猟師の娘",r:2,n:[4,6,2,4],src:"img/c_seri.png",sz:[33,58],k:"人物"},
+  w_poruka:{nm:"貸本屋の娘",r:2,n:[2,4,6,4],src:"img/c_poruka.png",sz:[34,58],k:"人物"},
+  w_komari:{nm:"森のいたずらっ子",r:2,n:[5,2,4,5],src:"img/c_komari.png",sz:[37,49],k:"人物"},
+  w_nat:{nm:"旅の機械いじり",r:2,n:[3,3,5,5],src:"img/c_nat.png",sz:[41,58],k:"人物"},
+  w_karin:{nm:"鐘つき見習い",r:2,n:[4,4,4,4],src:"img/c_karin.png",sz:[39,59],k:"人物"},
   w_kai:{nm:"渡し守",r:3,n:[6,5,4,6],src:"img/c_kai.png",sz:[35,59],k:"人物"},
   w_muku:{nm:"麦わら帽の子",r:3,n:[5,6,6,4],src:"img/c_muku.png",sz:[41,60],k:"人物"},
 };
@@ -32,9 +41,9 @@ const artSrc=c=>c.src||`../cards/img/c/${c.im}.png`;
 START.length=0; ["w_kai","w_muku","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_mizugumo","w_mizugumo","w_donguri","w_donguri"].forEach(c=>START.push(c));
 // 相手：0＝札売りのトト（看板はヌシガエル）、1＝かわうそ亭の女将ベラ
 OPPS.length=0; OPPS.push(
-  {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_donguri","w_mizugumo","w_hane","w_ishikoro","w_kakashi","w_ookami"]},
-  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_oya",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_ishikoro","w_ishikoro","w_tsuta","w_koromochi"]},
-  {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_ishikoro","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_kakashi","w_ookami","w_hane","w_koromochi","w_donguri"]});
+  {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_mizugumo","w_hane","w_ishikoro","w_kakashi","w_ookami","w_teo","w_poruka","w_rinka"]},
+  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_oya",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_ishikoro","w_tsuta","w_koromochi","w_seri","w_karin"]},
+  {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_bram","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_ookami","w_hane","w_donguri","w_nat","w_toraji","w_komari"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）

@@ -59,6 +59,24 @@ const SKILLS = {
   bodyslam:  { nm: "ぷるぷる体当たり", bp: 2, rank: "E", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
   rootlash:  { nm: "根の鞭", bp: 7, rank: "B", tg: "row", at: ["打"], dist: "遠", dir: "直接", kind: "攻撃" },
   gnaw:      { nm: "かじりつき", bp: 2, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  // 集める仲間（西境地方）
+  r_shotei:  { nm: "掌底", bp: 2, rank: "D", tg: "one", at: ["打"], stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
+  r_senpu:   { nm: "旋風脚", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  r_hyaku:   { nm: "百烈拳", bp: 9, rank: "D", tg: "one", hits: 3, at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  t_neko:    { nm: "猫の一突き", bp: 8, rank: "B", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  s_kage:    { nm: "影縫い", bp: 4, rank: "D", tg: "one", at: ["突"], stun: 40, dist: "遠", dir: "間接", kind: "攻撃" },
+  p_kado:    { nm: "本の角", bp: 2, rank: "E", tg: "one", at: ["打"], stun: 50, dist: "近", dir: "直接", kind: "攻撃" },
+  p_yomi:    { nm: "読み聞かせ", bp: 5, tg: "allies", heal: 18, magic: 1, kind: "回復" },
+  p_atsu:    { nm: "分厚い一撃", bp: 6, rank: "C", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  k_doku:    { nm: "毒の小刀", bp: 3, rank: "E", tg: "one", at: ["突"], poison: 70, dist: "近", dir: "直接", kind: "攻撃" },
+  k_kemuri:  { nm: "化け煙", bp: 5, rank: "E", tg: "all", at: ["陰"], magic: 1, stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  k_kusune:  { nm: "くすね斬り", bp: 6, rank: "C", tg: "one", hits: 2, at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  n_spanner: { nm: "スパナ打ち", bp: 2, rank: "D", tg: "one", at: ["打"], stun: 40, dist: "近", dir: "直接", kind: "攻撃" },
+  n_shime:   { nm: "締め直し", bp: 5, tg: "allies", heal: 20, kind: "回復" },
+  n_haguru:  { nm: "歯車投げ", bp: 5, rank: "C", tg: "col", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
+  c_suzu:    { nm: "鈴の音", bp: 3, rank: "D", tg: "one", at: ["陽"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  c_genki:   { nm: "元気の鈴", bp: 5, tg: "allies", heal: 30, magic: 1, kind: "回復" },
+  c_kane:    { nm: "鐘の響き", bp: 9, rank: "C", tg: "all", at: ["陽"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
   // ブラム（大剣）
   kabuto:    { nm: "兜割り", bp: 3, rank: "D", tg: "one", at: ["斬"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
   onagi:     { nm: "大薙ぎ", bp: 7, rank: "C", tg: "row", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
@@ -114,6 +132,7 @@ const PASSIVES = {
   bowway:   { nm: "弓の心得", ds: "［いつも］突のダメージ＋10%" },
   healer:   { nm: "癒し手", ds: "［いつも］回復の量＋20%" },
   quickdraw:{ nm: "速射", ds: "［戦いの始め］素早さ＋15%" },
+  sunway:   { nm: "陽の心得", ds: "［いつも］陽のダメージ＋15%" },
   greatway: { nm: "大剣の心得", ds: "［いつも］斬のダメージ＋10%" },
   spearway: { nm: "槍の心得", ds: "［いつも］突のダメージ＋10%" },
   charge:   { nm: "突撃", ds: "［戦いの始め］腕力＋10%" },
@@ -138,6 +157,9 @@ const GEAR = {
   longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
   ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
   oldblade:  { slot: "weapon", wt: "sword", nm: "古木の守り刀", rank: "S", pow: 18, st: { str: 3, agi: 2 }, ps: "w_bp", icon: "eq_sword_04" }, // 林の宝箱だけ
+  heavybook: { slot: "weapon", wt: "club", nm: "分厚い本", rank: "B", pow: 11, st: { int: 2 }, price: 150, icon: "mat_046" },
+  spanner:   { slot: "weapon", wt: "club", nm: "大きなスパナ", rank: "B", pow: 12, st: { dex: 1 }, price: 150, icon: "eq_club_03" },
+  bellstaff: { slot: "weapon", wt: "staff", nm: "鈴の杖", rank: "B", pow: 5, mp: { 陽: 12 }, st: { lov: 2 }, price: 160, icon: "eq_staff_02" },
   scoutgreat:{ slot: "weapon", wt: "great", nm: "斥候の大剣", rank: "B", pow: 15, st: { str: 2, agi: -2 }, price: 200, icon: "eq_great_01" },
   iron_great:{ slot: "weapon", wt: "great", nm: "鉄の大剣", rank: "B", pow: 15, st: { str: 1, agi: -1 }, price: 220, icon: "eq_great_03" },
   oar:       { slot: "weapon", wt: "spear", nm: "渡しの棹", rank: "B", pow: 12, st: { vit: 1 }, price: 60, icon: "eq_spear_01" },
@@ -170,6 +192,7 @@ const MATS = {
   oreha:   { nm: "錆びた折れ刃", icon: "mat_012", fam: "金属", rare: "緑" },
   ishi:    { nm: "祠の石くれ", icon: "mat_078", fam: "石・結晶", rare: "紫" },
   kinoko:  { nm: "光るきのこ", icon: "mat_100", fam: "植物", rare: "白" },
+  tetsu:   { nm: "鉄くず", icon: "mat_010", fam: "金属", rare: "白" },
   hane:    { nm: "灰色の羽耳", icon: "mat_015", fam: "羽", rare: "白" },
   wara:    { nm: "かかしの布きれ", icon: "mat_013", fam: "布・紙", rare: "白" },
   koishi:  { nm: "丸い小石", icon: "mat_005", fam: "石・結晶", rare: "白" },
@@ -184,6 +207,8 @@ const TOOLS = {
   book3: { nm: "秘伝書・参", icon: "tool_013", ds: "技の覚醒（3回目）に使う" },
   // 食べ物：戦いの中で、技と同じように選んで食べる（food＝戻るHPの割合）。その人の1回の行動を使う
   onigiri: { nm: "握り飯", icon: "tool_onigiri", ds: "戦いの中で食べると、HPが3割戻る", food: 0.3 },
+  uo: { nm: "川魚", icon: "tool_uo", ds: "リム川でとれた魚。ヤン爺が分けてくれる" },
+  hon: { nm: "貸本", icon: "mat_046", ds: "半年も返ってこなかった、ハルネの貸本屋の本", key: 1 },
   bento: { nm: "村長の弁当", icon: "tool_bento", ds: "戦いの中で食べると、HPが半分戻る", food: 0.5 },
   // 物語の品（使えない）
   tsuno: { nm: "焦げた角飾り", icon: "mat_062", ds: "川の簗に引っかかっていた", key: 1 },
@@ -225,6 +250,31 @@ const HEROES = [
   { id: "bram", nm: "ブラム", img: "person_005", wt: "great", rare: "S", hp: 300, hpCap: 1300, lp: 10, st: { str: 31, vit: 29, dex: 16, agi: 12, int: 8, wil: 22, lov: 14, cha: 14 },
     cap: { str: 130, vit: 124, dex: 92, agi: 78, int: 60, wil: 112, lov: 84, cha: 90 }, up: ["str", "vit"],
     res: {}, sk: ["kabuto", "onagi", "sutemi"], ps: ["greatway", "charge", "counter"], gear: { weapon: "scoutgreat", armor: "leather", sub: null, acc: null } },
+  // ---- 集める仲間（西境地方の8人。col＝集める仲間。加わり方は story.js の JOIN） ----
+  { id: "teo", nm: "テオ", img: "person_001", wt: "sword", rare: "A", col: 1, hp: 215, hpCap: 1000, lp: 8, st: { str: 25, vit: 20, dex: 17, agi: 19, int: 8, wil: 14, lov: 14, cha: 18 },
+    cap: { str: 120, vit: 104, dex: 96, agi: 104, int: 56, wil: 88, lov: 86, cha: 100 }, up: ["str", "agi"],
+    res: {}, sk: ["gale", "twin", "holycut"], ps: ["swordway", "charge", "momentum"], gear: { weapon: "ironsword", armor: "tunic", sub: null, acc: null } },
+  { id: "rinka", nm: "リンカ", img: "person_004", wt: "fist", rare: "A", col: 1, hp: 205, hpCap: 1000, lp: 8, st: { str: 26, vit: 18, dex: 16, agi: 25, int: 8, wil: 15, lov: 13, cha: 14 },
+    cap: { str: 122, vit: 98, dex: 92, agi: 124, int: 54, wil: 92, lov: 82, cha: 86 }, up: ["str", "agi"],
+    res: {}, sk: ["r_shotei", "r_senpu", "r_hyaku"], ps: ["fistway", "counter", "spirit"], gear: { weapon: "wraps", armor: "tunic", sub: null, acc: null } },
+  { id: "toraji", nm: "トラジ", img: "person_009", wt: "spear", rare: "A", col: 1, hp: 220, hpCap: 1000, lp: 8, st: { str: 25, vit: 21, dex: 20, agi: 20, int: 9, wil: 13, lov: 12, cha: 13 },
+    cap: { str: 120, vit: 106, dex: 104, agi: 104, int: 58, wil: 84, lov: 80, cha: 84 }, up: ["str", "dex"],
+    res: {}, sk: ["thrust", "pierce", "t_neko"], ps: ["spearway", "momentum", "charge"], gear: { weapon: "ironspear", armor: "leather", sub: null, acc: null } },
+  { id: "seri", nm: "セリ", img: "person_017", wt: "bow", rare: "A", col: 1, hp: 190, hpCap: 1000, lp: 7, st: { str: 16, vit: 16, dex: 27, agi: 23, int: 12, wil: 15, lov: 18, cha: 14 },
+    cap: { str: 86, vit: 90, dex: 126, agi: 116, int: 74, wil: 92, lov: 100, cha: 86 }, up: ["dex", "agi"],
+    res: {}, sk: ["aim", "s_kage", "shower"], ps: ["bowway", "momentum", "spirit"], gear: { weapon: "shortbow", armor: "cloak", sub: null, acc: null } },
+  { id: "poruka", nm: "ポルカ", img: "person_029", wt: "club", rare: "A", col: 1, hp: 185, hpCap: 1000, lp: 7, st: { str: 18, vit: 17, dex: 15, agi: 16, int: 24, wil: 22, lov: 20, cha: 18 },
+    cap: { str: 92, vit: 92, dex: 88, agi: 92, int: 118, wil: 112, lov: 108, cha: 100 }, up: ["int", "wil"],
+    res: {}, sk: ["p_kado", "p_yomi", "p_atsu"], ps: ["clubway", "focus", "healer"], gear: { weapon: "heavybook", armor: "cloak", sub: null, acc: null } },
+  { id: "komari", nm: "コマリ", img: "person_046", wt: "rapier", rare: "A", col: 1, hp: 180, hpCap: 1000, lp: 7, st: { str: 15, vit: 15, dex: 24, agi: 27, int: 14, wil: 14, lov: 16, cha: 20 },
+    cap: { str: 82, vit: 86, dex: 118, agi: 126, int: 84, wil: 86, lov: 96, cha: 110 }, up: ["agi", "dex"],
+    res: {}, sk: ["k_doku", "k_kemuri", "k_kusune"], ps: ["rapierway", "momentum", "spirit"], gear: { weapon: "thinblade", armor: "tunic", sub: null, acc: null } },
+  { id: "nat", nm: "ナット", img: "person_094", wt: "club", rare: "A", col: 1, hp: 205, hpCap: 1000, lp: 8, st: { str: 22, vit: 21, dex: 22, agi: 16, int: 16, wil: 17, lov: 19, cha: 15 },
+    cap: { str: 108, vit: 108, dex: 110, agi: 92, int: 86, wil: 96, lov: 102, cha: 88 }, up: ["dex", "vit"],
+    res: {}, sk: ["n_spanner", "n_shime", "n_haguru"], ps: ["clubway", "healer", "spirit"], gear: { weapon: "spanner", armor: "leather", sub: null, acc: null } },
+  { id: "karin", nm: "カリン", img: "person_105", wt: "staff", rare: "A", col: 1, hp: 175, hpCap: 1000, lp: 7, st: { str: 11, vit: 15, dex: 14, agi: 17, int: 22, wil: 21, lov: 27, cha: 20 },
+    cap: { str: 70, vit: 88, dex: 86, agi: 98, int: 112, wil: 114, lov: 126, cha: 106 }, up: ["lov", "int"],
+    res: {}, sk: ["c_suzu", "c_genki", "c_kane"], ps: ["healer", "focus", "sunway"], gear: { weapon: "bellstaff", armor: "cloak", sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -260,7 +310,10 @@ const FOES = {
   moriookami:{ mat: "kiba", nm: "モリオオカミ", img: "m_ookami", wt: "fang", pow: 11, hp: 110, st: { str: 32, vit: 12, dex: 14, agi: 24, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 熱: -30, 突: -20, 冷: 20 }, every: { n: 3, sk: "wolfbite" }, gold: 11, heart: "ookami" },
   // 西街道
   hanenezumi:{ mat: "hane", nm: "ハネネズミ", img: "m_hanenezumi", wt: "fang", pow: 9, hp: 70, st: { str: 26, vit: 9, dex: 18, agi: 27, int: 8, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 打: 20 }, every: { n: 3, sk: "wingslap" }, gold: 8, heart: "hanenezumi" },
-  kakashi:  { mat: "wara", nm: "カカシ番", img: "monster_088", wt: "claw", pow: 11, hp: 130, st: { str: 31, vit: 15, dex: 12, agi: 9, int: 5, wil: 12, lov: 0, cha: 9 }, res: { 熱: -60, 斬: -20, 突: 30, 打: 20 }, every: { n: 3, sk: "sickle" }, gold: 12, heart: "kakashi" },
+  kakashi:  { mat: "tetsu", nm: "カカシ番", img: "monster_088", wt: "claw", pow: 11, hp: 130, st: { str: 31, vit: 15, dex: 12, agi: 9, int: 5, wil: 12, lov: 0, cha: 9 }, res: { 熱: -60, 斬: -20, 突: 30, 打: 20 }, every: { n: 3, sk: "sickle" }, gold: 12, heart: "kakashi" },
+  // 一本杉の拳法娘（腕試し）
+  rinka:    { nm: "リンカ", img: "person_004", person: 1, human: 1, wt: "fist", pow: 11, hp: 680, boss: 1, st: { str: 33, vit: 20, dex: 18, agi: 30, int: 8, wil: 16, lov: 0, cha: 16 },
+              res: {}, plan: { 2: "r_senpu", 4: "r_hyaku", 6: "r_senpu" }, every: { n: 2, sk: "r_shotei" }, rageFrom: 8, rage: "r_hyaku", gold: 0 },
   // 古い見張り塔
   ishikoro: { mat: "koishi", nm: "イシコロ小僧", img: "m_ishikoro", wt: "club", pow: 10, hp: 85, st: { str: 29, vit: 18, dex: 16, agi: 13, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 打: 20, 突: 30, 斬: 20, 冷: -30, 雷: -20 }, every: { n: 2, sk: "pebble" }, gold: 11, heart: "ishikoro" },
   tsutayoroi:{ mat: "tsuta", nm: "ツタ鎧", img: "monster_005", wt: "sword", pow: 12, hp: 150, st: { str: 31, vit: 20, dex: 13, agi: 10, int: 8, wil: 14, lov: 0, cha: 10 }, res: { 熱: -50, 斬: -20, 突: 20, 打: 20, 冷: 20 }, every: { n: 3, sk: "vinewhip" }, gold: 15, heart: "tsutayoroi" },
@@ -440,6 +493,7 @@ function damage(st, a, d, s) {
   if ((hasP(a, "bowway") || hasP(a, "spearway") || hasP(a, "rapierway")) && at.includes("突")) v *= 1.1;
   if ((hasP(a, "clubway") || hasP(a, "fistway")) && at.includes("打")) v *= 1.1;
   if (hasP(a, "heatway") && at.includes("熱")) v *= 1.15;
+  if (hasP(a, "sunway") && at.includes("陽")) v *= 1.15;
   if (hasP(a, "w_fire") && at.includes("熱")) v *= 1.1;
   if (hasP(a, "thunder") && at.includes("雷")) v *= 1.15;
   if (hasP(d, "ironwall")) v *= 0.85;
