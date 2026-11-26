@@ -194,26 +194,22 @@ const CH1_LINKS=[
 ];
 function drawChapterAtlas(ui,g){
   ui.frame(38,247,326,410);
-  ui.rec(44,253,314,398,"#46454a");
-  for(let r=0;r<18;r++)for(let c=0;c<14;c++){
-    const floor=r*13+c*9, wet=r>9&&c===2+Math.floor(r/4)||r===15&&c<=4;
-    const colors=wet?["#42595f","#536469"]:["#5b5851","#635d52","#666157","#514f48"];
-    ui.rec(47+c*22,258+r*21,22,21,colors[floor%colors.length]);
-    if(!wet&&floor%4===0){
-      ui.rec(52+c*22,262+r*21,8,2,"#78705d");
-      ui.rec(58+c*22,266+r*21,3,3,"#363e3d");
-    }
+  ui.rec(44,253,314,398,"#cdb48a");
+  for(let r=0;r<57;r++)for(let k=0;k<45;k++){ // 古い紙のしみとかすれ
+    const n=(Math.imul(r+7,7919)^Math.imul(k+3,104729))>>>0;
+    if(n%9===0)ui.rec(44+k*7,253+r*7,7,7,n%2?"#c4a97d":"#d6c098");
   }
+  ui.rec(44,253,314,4,"#a88d64");ui.rec(44,647,314,4,"#a88d64");ui.rec(44,253,4,398,"#a88d64");ui.rec(354,253,4,398,"#a88d64");
   for(const [a,b] of CH1_LINKS){
-    if(!g.s.seen[a]&&!g.s.seen[b])continue;
+    if(!(g.s.seen[a]||g.area.id===a)||!(g.s.seen[b]||g.area.id===b))continue;
     const [u,v]=CH1_ATLAS[a],[x,y]=CH1_ATLAS[b], n=Math.ceil(Math.hypot(x-u,y-v)/7);
-    for(let k=0;k<=n;k++)ui.rec(u+(x-u)*k/n,v+(y-v)*k/n,3,3,"#a49368");
+    for(let k=0;k<=n;k++)if(k%2===0)ui.rec(u+(x-u)*k/n,v+(y-v)*k/n,3,3,"#7a5a3a");
   }
   for(const [id,[x,y,name,art]] of Object.entries(CH1_ATLAS)){
     if(!g.s.seen[id]&&g.area.id!==id)continue;
     ui.frame(x-14,y-16,28,28,id===g.area.id);
     ui.icon(art,x-6,y-10,1);
-    ui.text(name,x,y+24,12,"#f5ddad","center",{outline:1,max:107});
+    ui.text(name,x,y+24,12,"#3b2a1c","center",{outline:3,outlineColor:"#e8d6b0",max:107});
     const info=AREAS[id];
     ui.add(x-22,y-21,44,42,()=>info.safe?g.travel(id,info.start):g.notice(info.title,"map"));
   }

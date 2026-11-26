@@ -229,6 +229,7 @@ class Game {
     if(this.area.scroll)ch1OnEntry(this);
   }
   open(id,details={}) {
+    if(id==="menu")id="status";
     if(!this.s&&!["titleSave","newConfirm"].includes(id))return;
     this.release();this.field?.setPaused(true);
     this.panel={back:this.panel?.id===id?this.panel.back:null,...details,id};
@@ -538,6 +539,12 @@ class Game {
     if(!best)this.notice("この枠に合う品がない","starterShield");
     else if(best.uid===part.gear[slot])this.notice("今の品が合っている",ITEMS[best.code].art);
     else this.tryEquip(id,best.uid,slot);
+  }
+  recommendMember(id) {
+    let changed=0;
+    for(let slot=0;slot<SLOTS.length;slot++)if(this.recommend(id,slot,true))changed++;
+    if(changed)this.autosave();
+    this.notice(changed?"装備を整えた":"今の装備が合っている","starterShield");
   }
   recommendAll() {
     let changed=0;
