@@ -1,0 +1,24 @@
+{
+  "id": "./index.html",
+  "name": "魔王は昨日死んだ",
+  "short_name": "魔王は昨日",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111520",
+  "theme_color": "#111520",
+  "icons": [
+    {
+      "src": "assets/appicon_192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/appicon_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -2,25 +2,49 @@
 "use strict";
 const WIDTH = 201;
 const HEIGHT = 437;
-const HUD_WIDTH = 302;
 const toHud = dot => Math.round(dot * 3 / 2);
 const SPEEDS = [1, 2, 4];
-const COMMAND = { x: 86, y: 578, width: 130, height: 34 };
-const FOE_FEET = 216;
-const CARD_TOP = 499;
-const CARD_WIDTH = 62;
-const CARD_LEFT = [16, 83, 157, 224];
+const BACKDROP_FEET = 216;
 
-function layoutEnemies(sprites) {
-  const totalWidth = sprites.reduce((width, sprite) => width + sprite.width, 0);
+function layoutEnemies(sprites,stageWidth) {
+  const totalWidth = sprites.reduce((width, sprite) => width + sprite.naturalWidth, 0);
   // As in the original game, space the row using the actual widths. Keep full size at the edges.
-  const gap = Math.max(3, Math.floor((WIDTH - totalWidth) / (sprites.length + 1)));
-  let left = Math.floor((WIDTH - totalWidth - gap * (sprites.length - 1)) / 2);
+  const gap = Math.max(3, Math.floor((stageWidth - totalWidth) / (sprites.length + 1)));
+  let left = Math.floor((stageWidth - totalWidth - gap * (sprites.length - 1)) / 2);
   return sprites.map(sprite => {
-    const place = { left, x: left + Math.floor(sprite.width / 2), width: sprite.width, height: sprite.height };
-    left += sprite.width + gap;
+    const {naturalWidth:width,naturalHeight:height}=sprite;
+    const place={left,x:left+Math.floor(width/2),width,height};
+    left+=width+gap;
     return place;
   });
+}
+
+function layoutBattle(view,stage,hud){
+  const u=view.dpi/HUD_PIXEL;
+  const left=Math.ceil(view.left*u),right=Math.floor(view.right*u);
+  const top=Math.ceil(view.top*u),bottom=Math.floor(view.bottom*u);
+  const center=Math.floor((left+right)/2);
+  const margin=Math.max(6,Math.min(16,Math.floor((right-left)*.052)));
+  const pairGap=9,gap=5,cardWidth=Math.floor((right-left-2*margin-pairGap-2*gap)/4);
+  const start=Math.floor(center-(cardWidth*4+pairGap+gap*2)/2);
+  const cards=Array.from({length:4},(_,i)=>start+i*(cardWidth+gap)+(i>1?pairGap-gap:0));
+  const command={x:center-65,y:bottom-39,width:130,height:34};
+  const retreat={x:right-68,y:command.y,width:60,height:34};
+  const cardTop=command.y-79;
+  const orderTop=top+5;
+  const logTop=cardTop-Math.max(63,Math.min(119,Math.round((cardTop-orderTop)*.285)));
+  return {center,left,right,orderTop,logTop,cardTop,cardWidth,cards,command,retreat,
+    feet:Math.floor((logTop-42)*HUD_PIXEL/ARENA_PIXEL),stageWidth:stage.canvas.width,hudWidth:hud.canvas.width};
+}
+
+function fitBackdrop(ctx,scene,x,y){
+  const w=scene.width,h=scene.height,width=ctx.canvas.width,height=ctx.canvas.height,strip=16;
+  rect(ctx,"#2b2a36",0,0,width,height);
+  for(let p=y-strip;p>-strip;p-=strip)ctx.drawImage(scene,0,0,w,strip,x,p,w,strip);
+  for(let p=y+h;p<height;p+=strip)ctx.drawImage(scene,0,h-strip,w,strip,x,p,w,strip);
+  for(let p=x-strip;p>-strip;p-=strip)ctx.drawImage(scene,0,0,strip,h,p,y,strip,h);
+  for(let p=x+w;p<width;p+=strip)ctx.drawImage(scene,w-strip,0,strip,h,p,y,strip,h);
+  ctx.drawImage(scene,x,y);
 }
 
 function rect(ctx, color, x, y, w, h) {
@@ -580,13 +604,13 @@ const NOTICE_STYLE = {
 };
 
 class Battle {
-  constructor(bank, simulation, skin="road", speed=1) {
+  constructor(bank, simulation, skin="road", speed=1,canRun=false) {
     this.bank = bank;
     this.skin = skin;
     this.scene = skin==="road" || skin==="town" ? makeScene() : dungeonScene(skin);
     this.speed = Math.max(0,SPEEDS.indexOf(speed));
+    this.canRun=canRun;
     this.demo = simulation;
-    this.enemyPlacement = layoutEnemies(bank.enemies);
     this.end = simulation.end;
     this.finishAt = this.end-310;
     this.reset();
@@ -599,7 +623,10 @@ class Battle {
   }
 
   tap(x, y) {
-    const { x: left, y: top, width, height } = COMMAND;
+    if(!this.view)return false;
+    const escape=this.view.retreat;
+    if(this.canRun&&this.clock<this.finishAt&&x>=escape.x&&x<escape.x+escape.width&&y>=escape.y&&y<escape.y+escape.height)return 'retreat';
+    const { x: left, y: top, width, height } = this.view.command;
     if (x < left || x >= left + width || y < top || y >= top + height) return false;
     if (this.clock >= this.end) return 'result';
     this.speed = (this.speed + 1) % SPEEDS.length;
@@ -610,7 +637,13 @@ class Battle {
     this.labels.push({ text, x, y, size, color, align, ...style });
   }
 
-  draw(stage, hud, time = 0) {
+  draw(stage, hud, time = 0, layout) {
+    if(this.layout!==layout){
+      this.layout=layout;
+      this.view=layoutBattle(layout,stage,hud);
+      if(this.canRun)this.view.command.x=Math.max(this.view.left+5,Math.min(this.view.command.x,this.view.retreat.x-136));
+      this.enemyPlacement=layoutEnemies(this.bank.enemies,this.view.stageWidth);
+    }
     if (this.previousTime === null || time < this.previousTime) this.clock = Math.min(this.end, time);
     else this.clock = Math.min(this.end, this.clock + (time - this.previousTime) * SPEEDS[this.speed]);
     this.previousTime = time;
@@ -623,8 +656,11 @@ class Battle {
     this.labels = [];
 
     stage.imageSmoothingEnabled = false;
-    stage.drawImage(this.scene, 0, 0);
-    if (this.skin==="road" || this.skin==="town") lantern(stage, Math.floor(phase / 135));
+    const groundX=Math.floor((this.view.stageWidth-WIDTH)/2),groundY=this.view.feet-BACKDROP_FEET;
+    fitBackdrop(stage,this.scene,groundX,groundY);
+    if (this.skin==="road" || this.skin==="town"){
+      stage.save();stage.translate(groundX,groundY);lantern(stage,Math.floor(phase/135));stage.restore();
+    }
     this.drawFoes(stage, frame.foes, phase, event, progress);
     if (event && impact >= -65 && impact <= 285) this.drawEffect(stage, event, impact);
 
@@ -634,7 +670,7 @@ class Battle {
     frame.foes.forEach((foe, index) => {
       if (foe.hp > 0 || phase - foe.defeatedAt < 180) {
         const x = toHud(this.enemyPlacement[index].x);
-        bar(hud, Math.max(4, Math.min(HUD_WIDTH - 43, x - 19)), toHud(FOE_FEET + 10), 39, foe.hp / foe.maxHp, LIFE);
+        bar(hud, Math.max(this.view.left+4,Math.min(this.view.right-43,x-19)),toHud(this.view.feet+10),39,foe.hp/foe.maxHp,LIFE);
       }
     });
     this.drawLog(hud, phase);
@@ -648,31 +684,32 @@ class Battle {
     if (current < 0 || phase >= this.finishAt) return;
     const upcoming = events.slice(current, current + 4);
     const width = 34 + 30 * upcoming.length;
-    const left = Math.floor((HUD_WIDTH - width) / 2);
-    plaque(ctx, left, 56, width, 30);
-    line(ctx, '#c19866', left+10, 64, left+19, 64);
-    line(ctx, '#c19866', left+11, 76, left+18, 76);
-    line(ctx, '#d6a76c', left+10, 65, left+18, 75);
-    line(ctx, '#a47e61', left+18, 65, left+11, 75);
-    rect(ctx, '#e3b881', left+13, 69, 3, 3);
+    const left = Math.floor(this.view.center-width/2),y=this.view.orderTop;
+    plaque(ctx,left,y,width,30);
+    line(ctx,'#c19866',left+10,y+8,left+19,y+8);
+    line(ctx,'#c19866',left+11,y+20,left+18,y+20);
+    line(ctx,'#d6a76c',left+10,y+9,left+18,y+19);
+    line(ctx,'#a47e61',left+18,y+9,left+11,y+19);
+    rect(ctx,'#e3b881',left+13,y+13,3,3);
     upcoming.forEach((action, position) => {
       const x = left+26+position*30;
       const enemy = action.side === 'foes';
-      rect(ctx, position === 0 ? '#c59158' : '#594636', x, 59, 26, 24);
-      rect(ctx, enemy ? '#4b3343' : '#283649', x+1, 60, 24, 22);
+      rect(ctx,position===0?'#c59158':'#594636',x,y+3,26,24);
+      rect(ctx,enemy?'#4b3343':'#283649',x+1,y+4,24,22);
       if (enemy) {
         const foe = this.bank.enemies[action.actor];
         const sx = foe ? Math.floor((foe.naturalWidth-24)/2) : 0;
         const sy = foe && foe.naturalHeight>70 ? 12 : 3;
-        if (foe) ctx.drawImage(foe, sx, sy, 24, 22, x+1, 60, 24, 22);
+        if (foe) ctx.drawImage(foe,sx,sy,24,22,x+1,y+4,24,22);
       } else {
-        frontPortrait(ctx, this.bank.people[action.actor], x+1, 60, 24, 22, 8);
+        frontPortrait(ctx,this.bank.people[action.actor],x+1,y+4,24,22,8);
       }
-      if (position === 0) rect(ctx, '#f6d28c', x+3, 80, 20, 1);
+      if (position === 0) rect(ctx,'#f6d28c',x+3,y+24,20,1);
     });
   }
 
   drawFoes(ctx, foes, phase, event, progress) {
+    const feet=this.view.feet;
     foes.forEach((foe, index) => {
       const sprite = this.bank.enemies[index];
       const place = this.enemyPlacement[index];
@@ -684,30 +721,31 @@ class Battle {
       const struck = event && (event.kind === 'skill' || event.kind === 'cut') &&
         event.target === index && phase >= event.impact && phase < event.impact+135;
       const recoil = struck ? 2 : 0;
-      const y = FOE_FEET + hovering + lunge - recoil;
-      const shadowRadius = Math.round(sprite.width * 0.34);
+      const y = feet + hovering + lunge - recoil;
+      const shadowRadius = Math.round(place.width * 0.34);
       ctx.save();
       ctx.globalAlpha = fade;
       if (foe.charge) {
-        oval(ctx, '#6d463a', place.x, FOE_FEET + 1, 24, 5);
-        line(ctx, '#e29b56',place.x-24,FOE_FEET+6,place.x+24,FOE_FEET+6,2);
+        oval(ctx,'#6d463a',place.x,feet+1,24,5);
+        line(ctx,'#e29b56',place.x-24,feet+6,place.x+24,feet+6,2);
       }
-      oval(ctx, '#202630', place.x, FOE_FEET + 1, shadowRadius, 4);
-      oval(ctx, '#2d303c', place.x, FOE_FEET + 1, Math.max(1, shadowRadius - 4), 2);
+      oval(ctx,'#202630',place.x,feet+1,shadowRadius,4);
+      oval(ctx,'#2d303c',place.x,feet+1,Math.max(1,shadowRadius-4),2);
       ctx.globalAlpha = fade * (struck ? 0.72 : 1);
-      ctx.drawImage(sprite, place.left + recoil, y - sprite.height);
+      ctx.drawImage(sprite,place.left+recoil,y-place.height);
       ctx.restore();
     });
   }
 
   drawEffect(ctx, event, impact) {
+    const feet=this.view.feet;
     const target = this.enemyPlacement[event.target];
     if (event.kind === 'skill' || event.kind === 'cut') {
-      slash(ctx, target.x + 4 + Math.round(impact / 100), FOE_FEET - Math.floor(target.height / 2), event.kind === 'skill');
+      slash(ctx,target.x+4+Math.round(impact/100),feet-Math.floor(target.height/2),event.kind==='skill');
     }
     if (event.kind === 'fire') this.enemyPlacement.forEach(({ x, height },i) => {
       if (event.targets && !event.targets.includes(i)) return;
-      const y = FOE_FEET - Math.floor(height / 2) - Math.round(impact / 28);
+      const y = feet - Math.floor(height / 2) - Math.round(impact / 28);
       polygon(ctx, '#984a42', [[x-17,y+12],[x-22,y+3],[x-18,y-8],[x-13,y-3],[x-11,y-14],
         [x-4,y-7],[x+6,y-17],[x+5,y-5],[x+17,y-11],[x+19,y+3],[x+17,y+10],[x+6,y+15],[x-8,y+15]]);
       polygon(ctx, '#f4a45a', [[x-16,y+11],[x-17,y+2],[x-12,y-4],[x-7,y+2],[x-2,y-9],[x+2,y-4],
@@ -719,6 +757,7 @@ class Battle {
   }
 
   drawNotice(phase) {
+    const {cards,cardWidth,cardTop,feet,orderTop,left,right}=this.view;
     const duration = 960;
     const recent = this.demo.notices.filter(item => item.at <= phase && phase < item.at + duration);
     const latestForTarget = new Map();
@@ -732,44 +771,48 @@ class Battle {
       const { size, color } = NOTICE_STYLE[item.kind];
       const onCard = item.side === 'party';
       const target = this.enemyPlacement[item.index];
-      const x = onCard ? CARD_LEFT[item.index] + CARD_WIDTH/2 : Math.min(HUD_WIDTH - 29, Math.max(29, toHud(target.x)));
-      const base = onCard ? 468 : Math.max(146, toHud(FOE_FEET - target.height - 7));
+      const x = onCard ? cards[item.index]+cardWidth/2 : Math.min(right-29,Math.max(left+29,toHud(target.x)));
+      const base = onCard ? cardTop-24 : Math.max(orderTop+71,toHud(feet-target.height-7));
       this.label(item.text, x, base-rise-item.lift, size, color, 'center',
         { alpha, outline: 2.2, outlineColor: '#151522', weight: 900, sans: true });
     }
   }
 
   drawLog(ctx, phase) {
+    const {center,cards,cardWidth,logTop:y}=this.view;
     const action = this.demo.events.findLast(event => event.at <= phase);
     const finished = phase >= this.finishAt;
     const effect = action && phase >= action.impact && action.result;
-    plaque(ctx, 16, 370, 270, 41, finished);
+    plaque(ctx,cards[0],y,cards[3]+cardWidth-cards[0],41,finished);
     if (finished) {
-      this.label(this.demo.victorious ? '勝利' : this.demo.stalemate ? '引き上げる' : '敗北', 151, 390, 16);
+      this.label(this.demo.victorious?'勝利':this.demo.stalemate?'引き上げる':'敗北',center,y+20,16);
       return;
     }
     if (effect) {
-      this.label(action.headline, 151, 382, 13, '#ffedc5');
-      this.label(effect, 151, 400, 12, '#d4d5ce');
+      this.label(action.headline,center,y+12,13,'#ffedc5');
+      this.label(effect,center,y+30,12,'#d4d5ce');
       return;
     }
-    this.label(action ? action.headline : '魔物が現れた！', 151, 390, 14);
+    this.label(action?action.headline:'魔物が現れた！',center,y+20,14);
   }
 
   drawHud(ctx, party, phase, event, showingSkill) {
-    [['前列', 16, '#d6ad75'], ['後列', 157, '#a9bed2']].forEach(([label, left, color]) => {
-      rect(ctx, '#242633', left, 482, 129, 15);
-      rect(ctx, '#564a42', left, 482, 129, 1);
-      rect(ctx, '#4a484a', left + 8, 489, 30, 1);
-      rect(ctx, '#4a484a', left + 91, 489, 30, 1);
-      this.label(label, left + 64, 489, 10, color);
+    const {cards,cardTop,cardWidth,command,hudWidth}=this.view;
+    const laneTop=cardTop-17;
+    [['前列',cards[0],'#d6ad75'],['後列',cards[2],'#a9bed2']].forEach(([label,left,color])=>{
+      const w=cards[1]-cards[0]+cardWidth;
+      rect(ctx,'#242633',left,laneTop,w,15);
+      rect(ctx,'#564a42',left,laneTop,w,1);
+      rect(ctx,'#4a484a',left+8,laneTop+7,26,1);
+      rect(ctx,'#4a484a',left+w-34,laneTop+7,26,1);
+      this.label(label,left+w/2,laneTop+7,10,color);
     });
     const warning=this.demo.frames.findLast(f=>f.at<=phase)?.foes.find(f=>f.charge)?.nextLane;
     party.forEach((member, slot) => {
       const actor=slot;
       if (!member) {
-        plaque(ctx,CARD_LEFT[slot],CARD_TOP,CARD_WIDTH,75);
-        rect(ctx,"#1b2330",CARD_LEFT[slot]+8,CARD_TOP+12,46,50);
+        plaque(ctx,cards[slot],cardTop,cardWidth,75);
+        rect(ctx,"#1b2330",cards[slot]+8,cardTop+12,cardWidth-16,50);
         return;
       }
       const acting = event?.actor === actor && event.side === 'party';
@@ -779,33 +822,38 @@ class Battle {
       const elapsed = targeting ? phase - event.impact : -1;
       const takingHit = event?.kind === 'enemy' && elapsed >= 0 && elapsed < 180;
       const shift = takingHit ? [3, -3, 2, -2, 1, -1][Math.floor(elapsed / 30)] : 0;
-      const x = CARD_LEFT[slot] + shift;
+      const x = cards[slot] + shift;
       const recovering = (event?.kind === 'heal' || event?.kind === 'revive') && elapsed >= 0 && elapsed < 210;
       const warned=warning===(slot<2?"front":"rear");
-      plaque(ctx, x, CARD_TOP, CARD_WIDTH, 75, usingSkill||warned);
-      if(warned)line(ctx,'#fa9f68',x+4,CARD_TOP-2,x+CARD_WIDTH-4,CARD_TOP-2,1);
+      plaque(ctx,x,cardTop,cardWidth,75,usingSkill||warned);
+      if(warned)line(ctx,'#fa9f68',x+4,cardTop-2,x+cardWidth-4,cardTop-2,1);
       const inside = knockedOut ? '#161d29' : recovering ? '#2a433e' : takingHit ? '#3c2a35' : '#21313d';
-      rect(ctx, inside, x+4, CARD_TOP + 3, 54, 60);
+      rect(ctx,inside,x+4,cardTop+3,cardWidth-8,60);
       drawActorFrame(ctx, this.bank.people[actor], usingSkill ? 0 : 48, usingSkill ? 240 : 0,
-        x+7, CARD_TOP + 3, knockedOut);
-      bar(ctx, x+5, CARD_TOP + 63, 52, member.hp/member.maxHp, PARTY_LIFE);
-      bar(ctx, x+5, CARD_TOP + 68, 52, member.gauge/100, member.gauge >= 100 ? FULL : GAUGE);
+        x+Math.floor((cardWidth-48)/2),cardTop+3,knockedOut);
+      bar(ctx,x+5,cardTop+63,cardWidth-10,member.hp/member.maxHp,PARTY_LIFE);
+      bar(ctx,x+5,cardTop+68,cardWidth-10,member.gauge/100,member.gauge>=100?FULL:GAUGE);
     });
-    rect(ctx, '#101821', 0, 574, HUD_WIDTH, 42);
-    rect(ctx, '#594735', 0, 574, HUD_WIDTH, 1);
-    rect(ctx, '#312e33', 0, 614, HUD_WIDTH, 1);
-    rect(ctx, '#242933', 0, 575, HUD_WIDTH, 1);
-    const { x, y, width, height } = COMMAND;
+    const {x,y,width,height}=command;
+    rect(ctx,'#101821',0,y-4,hudWidth,42);
+    rect(ctx,'#594735',0,y-4,hudWidth,1);
+    rect(ctx,'#312e33',0,y+36,hudWidth,1);
+    rect(ctx,'#242933',0,y-3,hudWidth,1);
     const finished = phase >= this.end;
     plaque(ctx, x, y, width, height, finished);
     if (finished) {
-      line(ctx, '#efc384', 104, 594, 119, 594, 2);
-      line(ctx, '#efc384', 104, 594, 111, 588);
-      line(ctx, '#efc384', 104, 595, 111, 601);
-      this.label('戦果', 159, 595, 15);
+      line(ctx,'#efc384',x+18,y+16,x+33,y+16,2);
+      line(ctx,'#efc384',x+18,y+16,x+25,y+10);
+      line(ctx,'#efc384',x+18,y+17,x+25,y+23);
+      this.label('戦果',x+73,y+17,15);
     } else {
-      this.label('速度', 127, 595, 15);
-      this.label(`${SPEEDS[this.speed]}×`, 182, 595, 15);
+      this.label('速度',x+41,y+17,15);
+      this.label(`${SPEEDS[this.speed]}×`,x+96,y+17,15);
+      if(this.canRun&&phase<this.finishAt){
+        const r=this.view.retreat;
+        plaque(ctx,r.x,r.y,r.width,r.height);
+        this.label('退く',r.x+r.width/2,r.y+17,13,'#c9ccd6');
+      }
     }
   }
 }

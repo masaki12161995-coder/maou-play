@@ -1014,8 +1014,64 @@ function paintArea(ctx,grid,skin,lamps,fixtures,site) {
   for (const item of fixtures) fixture(ctx,item,{},0);
 }
 
+function drawPassage(ctx,x,y,{style,direction},time){
+  const edge="#ab9173",dark="#2e2936",stone="#625b61",warm="#a36c4b";
+  if(style==="path"||style==="stairs"){
+    const steps=style==="stairs";
+    const angle={S:0,E:-Math.PI/2,N:Math.PI,W:Math.PI/2}[direction];
+    ctx.save();ctx.translate(x,y-9);ctx.rotate(angle);
+    if(steps){
+      rect(ctx,dark,-23,-25,46,44);
+      for(let j=0;j<4;j++){
+        const p=-23+j*10;
+        rect(ctx,stone,-18,p,36,9);
+        rect(ctx,edge,-17,p,34,2);
+        rect(ctx,"#514749",-13+(j%2)*13,p+4,13,1);
+      }
+    } else {
+      rect(ctx,"#6d5b4a",-23,-25,46,48);
+      rect(ctx,"#847059",-16,-25,32,48);
+      for(const [a,b,w] of [[-13,1,8],[1,-18,6],[6,-6,9],[-9,14,7],[-16,-15,5]])
+        rect(ctx,"#a28b69",a,b,w,1);
+    }
+    for(const side of [-1,1]){
+      rect(ctx,"#342e37",side*20-4,-23,8,36);
+      rect(ctx,"#786b63",side*20-3,-22,6,33);
+      rect(ctx,"#c1a282",side*20-2,-23,3,5);
+    }
+    rect(ctx,"#bb9a72",-5,11,10,2);
+    rect(ctx,"#dfbf91",-2,13,4,2);
+    ctx.restore();
+    return;
+  }
+  const doors=style==="door",tint=doors?"#865b49":"#756973";
+  oval(ctx,"#211f2ba0",x,y-3,26,7);
+  rect(ctx,dark,x-24,y-51,49,52);
+  rect(ctx,doors?"#34282e":"#383545",x-17,y-45,34,43);
+  for(const d of [-21,15]){
+    rect(ctx,tint,x+d,y-48,7,48);
+    rect(ctx,edge,x+d,y-48,2,47);
+    if(!doors)for(let i=0;i<4;i++)rect(ctx,dark,x+d,y-41+i*10,6,1);
+  }
+  rect(ctx,tint,x-24,y-54,48,7);
+  rect(ctx,edge,x-19,y-54,38,2);
+  if(doors){
+    rect(ctx,"#5b403e",x+8,y-44,7,42);
+    rect(ctx,warm,x+8,y-41,2,37);
+    rect(ctx,"#d5a86d",x+8,y-20,4,3);
+  } else {
+    rect(ctx,"#8f775b",x-15,y-46,30,3);
+    for(let i=0;i<5;i++)rect(ctx,"#51434b",x-13+i*6,y-44,3,5);
+  }
+  rect(ctx,"#73655f",x-24,y-4,48,6);
+  rect(ctx,edge,x-18,y-4,36,2);
+  const glow=Math.floor(time/155)%6===0?"#edc98e":"#d4a671";
+  rect(ctx,glow,x-2,y-49,5,3);
+}
+
 function fixture(ctx,object,bank,time) {
   const [x,y]=coordinate(object.col,object.row);
+  if(object.passage){drawPassage(ctx,x,y,object.passage,time);return;}
   if(object.chapterProp) {
     chapterProp(ctx,object,bank,time);
     return;
@@ -1638,6 +1694,7 @@ class Field {
   constructor(mode, bank, scene = {}) {
     this.scroll=Boolean(scene.scroll);
     this.camera={x:0,y:0};
+    this.view={width:WIDTH,height:HEIGHT};
     this.shot=null;
     this.backdrop=scene.backdrop;
     this.theme=scene.theme;
@@ -1703,20 +1760,22 @@ class Field {
 
   gridCell(col,row) { return this.grid[row]?.[col] ?? null; }
 
-  addTrail(count) {
+  addTrail(count, exits=[]) {
     if (this.trail.length >= count) return;
     const occupied=this.trail.map(cell=>cell.join(","));
-    const choose=(cell,n,path)=> {
+    const choose=(cell,n,path,avoidExits)=> {
       if (!n) return path;
       for (const [dx,dy] of [[0,1],[-1,0],[1,0],[0,-1]]) {
         const point=[cell[0]+dx,cell[1]+dy];
         if (occupied.includes(point.join(",")) || path.some(a=>equal(a,point)) || !this.walkable(...point)) continue;
-        const rest=choose(point,n-1,[...path,point]);
+        if (avoidExits && exits.some(exit=>exit.col===point[0] && exit.row===point[1])) continue;
+        const rest=choose(point,n-1,[...path,point],avoidExits);
         if (rest) return rest;
       }
       return null;
     };
-    const tail=choose(this.trail.at(-1),count-this.trail.length,[]);
+    const tail=choose(this.trail.at(-1),count-this.trail.length,[],true) ??
+      choose(this.trail.at(-1),count-this.trail.length,[],false);
     if (tail) {this.trail.push(...tail);this.facings.push(...tail.map(()=>3));}
   }
 
@@ -1730,34 +1789,56 @@ class Field {
       !this.objects.some(object=>!object.walk && object.col===col && object.row===row);
   }
 
-  canStep(trail,next) {
+  canStep(trail,next,walkable=this.walkable.bind(this)) {
     // The fourth character moves into the third character's former cell at the same time.
-    return this.walkable(...next) && !trail.slice(0,-1).some(cell=>equal(cell,next));
+    return walkable(...next) && !trail.slice(0,-1).some(cell=>equal(cell,next));
   }
 
   findPath(start,end) {
     if (!this.walkable(...end) || equal(start,end)) return [];
     const currentTrail = this.moving?.to ?? this.trail;
+    const {columns,rows}=this.gridBounds, cellCount=columns*rows;
     const distance = ([x,y])=>Math.abs(x-end[0])+Math.abs(y-end[1]);
-    const queue = [{ trail:currentTrail, path:[], cost:distance(start) }];
-    const seen = new Set([currentTrail.flat().join(",")]);
-    while (queue.length) {
-      const {trail,path}=queue.shift();
+    const keyFor=trail=>trail.reduce((key,[x,y])=>key*cellCount+y*columns+x,0);
+    const tiles=new Uint8Array(cellCount);
+    const walk=(x,y)=>{
+      if(x<0||y<0||x>=columns||y>=rows)return false;
+      const i=y*columns+x;
+      if(!tiles[i])tiles[i]=this.walkable(x,y)?1:2;
+      return tiles[i]===1;
+    };
+    // Each unit move changes the Manhattan score by one, so each bucket can be read in order.
+    const buckets=[];
+    let score=distance(start),open=0;
+    const queue=(node,total)=>{
+      const bucket=buckets[total]??={entries:[],head:0};
+      bucket.entries.push(node);
+      open++;
+    };
+    const initial={trail:currentTrail,parent:null,length:0,key:keyFor(currentTrail)};
+    queue(initial,score);
+    const best=new Map([[initial.key,0]]);
+    while(open){
+      const bucket=buckets[score];
+      if(!bucket||bucket.head===bucket.entries.length){score++;continue;}
+      const node=bucket.entries[bucket.head++];
+      open--;
+      if(best.get(node.key)!==node.length)continue;
+      const {trail}=node;
       const [x,y]=trail[0];
-      if (equal(trail[0],end)) return path;
+      if(equal(trail[0],end)){
+        const path=[];
+        for(let place=node;place.parent;place=place.parent)path.push(place.trail[0]);
+        return path.reverse();
+      }
       for (const [dx,dy] of DIRECTIONS) {
         const next=[x+dx,y+dy];
-        if (!this.canStep(trail,next)) continue;
+        if(!this.canStep(trail,next,walk))continue;
         const shifted=[next,...trail.slice(0,-1)];
-        const key=shifted.flat().join(",");
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const nextPath=[...path,next];
-        const cost=nextPath.length+distance(next);
-        const node={trail:shifted,path:nextPath,cost};
-        const later=queue.findIndex(entry=>entry.cost>cost);
-        if (later<0) queue.push(node);
-        else queue.splice(later,0,node);
+        const key=keyFor(shifted),length=node.length+1;
+        if((best.get(key)??Infinity)<=length)continue;
+        best.set(key,length);
+        queue({trail:shifted,parent:node,key,length},length+distance(next));
       }
     }
     return [];
@@ -1809,10 +1890,17 @@ class Field {
       instant:target.instant,onEnd:target.onEnd,onSelect:target.onSelect};
   }
 
+  talkAhead() {
+    if(this.paused||this.moving||this.approach)return null;
+    const [x,y]=this.trail[0],[dx,dy]=DIRECTIONS[this.facings[0]??0];
+    const target=[...this.npcs,...this.objects].find(o=>o.col===x+dx&&o.row===y+dy);
+    return target?this.beginConversation(target,"keyboard"):null;
+  }
+
   tap(x,y,time=this.time) {
     if(this.paused||this.approach||this.interaction)return null;
+    x+=this.camera.x;y+=this.camera.y;
     if(this.scroll){
-      x+=this.camera.x;y+=this.camera.y;
       if(x<LEFT||x>=LEFT+this.gridBounds.columns*SIZE||y<TOP||y>=TOP+this.gridBounds.rows*SIZE)return null;
     } else if(x<LEFT||x>=LEFT+COLS*SIZE||y<120||y>=TOP+(LAST_PLAYABLE_ROW+1)*SIZE)return null;
     const destination=tileAt(x,y);
@@ -1986,12 +2074,12 @@ class Field {
   draw(ctx,time=0) {
     this.update(time);
     ctx.imageSmoothingEnabled=false;
-    if(this.scroll) {
-      this.centerCamera(time);
-      rect(ctx,"#1b232b",0,0,WIDTH,HEIGHT);
-      ctx.save();
-      ctx.translate(-this.camera.x,-this.camera.y);
-    }
+    this.view.width=ctx.canvas.width;this.view.height=ctx.canvas.height;
+    this.view.ui=ctx.uiLayout;
+    this.centerCamera(time);
+    this.fillEdges(ctx);
+    ctx.save();
+    ctx.translate(-this.camera.x,-this.camera.y);
     ctx.drawImage(this.scene,0,0);
     this.sceneryMotion(ctx,time);
     for(const item of this.barriers){
@@ -2008,7 +2096,7 @@ class Field {
       }
     }
     this.drawIndicator(ctx,time);
-    if(this.scroll)ctx.restore();
+    ctx.restore();
   }
 
   advance(time) { this.update(time); }
@@ -2023,13 +2111,32 @@ class Field {
       focusX=lerp(focusX,fx,weight);focusY=lerp(focusY,fy,weight);
     }
     const frame=(p,length,span)=>Math.round(length<=span?(length-span)/2:Math.min(length-span,Math.max(0,p-span/2)));
-    this.camera.x=frame(focusX,this.scene.width,WIDTH);
-    this.camera.y=frame(focusY,this.scene.height,HEIGHT);
+    this.camera.x=frame(focusX,this.scene.width,this.view.width);
+    this.camera.y=frame(focusY,this.scene.height,this.view.height);
+    const ui=this.view.ui;
+    if(ui&&!this.shot&&this.bank.people?.length){
+      const low=ui.dotY(168),high=ui.dotY(697),projected=focusY-this.camera.y;
+      if(projected>high)this.camera.y=Math.round(focusY-high);
+      else if(projected<low)this.camera.y=Math.round(focusY-low);
+    }
+  }
+
+  fillEdges(ctx) {
+    const {x,y}=this.camera, {width,height}=this.view, scene=this.scene;
+    const left=-x,top=-y,right=left+scene.width,bottom=top+scene.height;
+    const strip=Math.min(24,scene.width,scene.height);
+    if(left>0||right<width||top>0||bottom<height){
+      rect(ctx,"#26313a",0,0,width,height);
+      for(let px=left-strip;px>-strip;px-=strip)ctx.drawImage(scene,0,0,strip,scene.height,px,top,strip,scene.height);
+      for(let px=right;px<width;px+=strip)ctx.drawImage(scene,scene.width-strip,0,strip,scene.height,px,top,strip,scene.height);
+      for(let py=top-strip;py>-strip;py-=strip)ctx.drawImage(scene,0,0,scene.width,strip,left,py,scene.width,strip);
+      for(let py=bottom;py<height;py+=strip)ctx.drawImage(scene,0,scene.height-strip,scene.width,strip,left,py,scene.width,strip);
+    }
   }
 
   visible(x,y) {
     const {x:a,y:b}=this.camera;
-    return x>=a-186&&x<a+WIDTH+186&&y>=b-170&&y<b+HEIGHT+210;
+    return x>=a-186&&x<a+this.view.width+186&&y>=b-170&&y<b+this.view.height+210;
   }
 
   sceneryMotion(ctx,time) {

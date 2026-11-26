@@ -14,6 +14,19 @@ const CH1_FOES={
 Object.assign(ENEMIES,CH1_FOES);
 Object.assign(AREAS,CHAPTER1_MAPS);
 
+const CH1_ENCOUNTERS={
+  road:{solo:[["bat"],["marten"],["bat"]],groups:[["bat","marten"],["c1_horn"],["bat","bat"]],
+    xp:10,loot:["hat","coat","bow"],quiet:[[27,15,2]]},
+  climb:{groups:[["c1_horn","bat"],["c1_knuckle","bat"],["c1_horn","c1_knuckle"]],xp:14,loot:["hat","shield","bow"]},
+  gate:{groups:[["c1_rim","c1_horn"],["c1_knuckle","c1_rust"],["c1_rim","c1_knuckle"]],
+    xp:18,loot:["hat","coat","swordIron","shield"],quiet:[[20,25,2],[19,9,2]]},
+  hall:{groups:[["c1_rim","c1_rust"],["c1_paw","c1_rim"],["c1_rust","c1_knuckle"]],
+    xp:21,loot:["swordIron","steel","lantern","ring"],quiet:[[21,7,6],[21,19,2],[21,11,3]]},
+  service:{groups:[["c1_rust","c1_knuckle"],["c1_paw","c1_rim"],["c1_rust","c1_rim"]],xp:18,loot:["coat","steel","lantern"]},
+  wardhouse:{groups:[["c1_rust","c1_rim"],["c1_paw","c1_knuckle"]],
+    xp:18,loot:["shield","lantern","ring"],quiet:[[12,32,3],[17,20,2],[26,11,3]]},
+};
+
 function ch1Opponent(code,ward){
   const base=ENEMIES[code];
   if(code!=="c1_warden")return base;
@@ -75,13 +88,15 @@ function ch1Tidings(g){
     g.refresh();g.autosave();
   }));
 }
-function ch1North(g){
-  ch1Speak(g,"chapterLeave",()=>g.travel("nord",AREAS.nord.start));
+function ch1North(g,travel){
+  if(g.s.chapter===1)ch1Speak(g,"chapterLeave",travel);
+  else travel();
 }
 
 function chapterOneScene(id,g){
   const base=CHAPTER1_MAPS[id],f=g.s.flags;
-  const scene={...base,npcs:[],objects:[],exits:[],blocks:[],barriers:[],lamps:base.backdrop.lamps};
+  const encounters=CH1_ENCOUNTERS[id];
+  const scene={...base,safe:base.safe&&!encounters,encounters,npcs:[],objects:[],exits:[],blocks:[],barriers:[],lamps:base.backdrop.lamps};
   const middle=()=>Boolean(f.joinH03);
   const late=()=>Boolean(f.B01);
   const word=(a,b,c)=>late()&&c?c:middle()&&b?b:a;
@@ -98,13 +113,7 @@ function chapterOneScene(id,g){
     const {value,...extra}=opt;
     scene.npcs.push(faceAt(x,y,art,name,dialogues(value||(()=>word(early,mid,after))),{sceneId:code,...extra}));
   };
-  const go=(x,y,to,spawn=CHAPTER1_MAPS[to]?.start||AREAS[to].start,label=AREAS[to].title,opt={})=>{
-    scene.exits.push(ledge(x,y,to,spawn,label));
-    return put("exit-"+to,x,y,"exit",label,null,{
-      walk:true,instant:true,chapterProp:true,bounds:[-23,-28,24,12],pages:()=>[],
-      onEnd:()=>g.travel(to,spawn),...opt
-    });
-  };
+  const go=(key,label,before)=>attachChapterExit(scene,id,g,key,label,before);
   const aside=(i,x,y,kind,label,value,opt={})=>put(i,x,y,kind,label,value,{
     discovery:true,walk:opt.walk??false,bounds:opt.bounds||[-18,-35,18,10],...opt
   });
@@ -176,18 +185,19 @@ function chapterOneScene(id,g){
         ch1Shot(g,"townPass",1650,()=>ch1Speak(g,"c1LiftReturn",()=>complete("ch1LiftPass",true,null)));
       }
     });
-    if(f.joinH04)go(15,6,"climb",[10,35],"角影坂");
+    if(f.joinH04)go("townClimb","角影坂");
     else put("townGate",15,6,"gate","鉄の戸",()=>f.joinH03?"captainMid":"captainEarly",{});
-    go(3,21,"longhouses",[34,15],"石工の長屋");
-    go(23,21,"inn",[12,25],"旗待ちの宿");
-    go(9,34,"road",[27,9],"松影の街道");
-    if(f.B01)go(26,24,"nord",AREAS.nord.start,"ノルドへの尾根",{onEnd:()=>ch1North(g)});
+    go("townHomes","石工の長屋");
+    go("lowerHomes","石工の長屋の下段");
+    go("townInn","旗待ちの宿");
+    go("townRoad","松影の街道");
+    if(f.B01)go("townNord","ノルドへの尾根",travel=>ch1North(g,travel));
     aside("wellLine",11,20,"seal","井戸の線","wellMark",{icon:"vial"});
     aside("wedges",19,16,"bundles","支え木の束","stoppers",{icon:"rope"});
     aside("chalk",5,22,"floorLight","白の粉印","chalkTiles",{look:1,walk:true});
     aside("yardBell",24,27,"signpost","舌のない鈴","porchBell",{});
     openBox("c1TownBox",22,29,"hat");
-    if(f.ch1WayBack)go(8,19,"hall",[37,33],"裏の下り段",{onEnd:()=>g.travel("hall",[37,33])});
+    if(f.B01&&f.ch1WayBack)go("hallTown","裏の下り段");
     if(g.s.chapter>=2)put("postern",12,16,"board","閉門板","gateCrate",{onEnd:()=>g.grantQuest("postern","book")});
   } else if(id==="longhouses"){
     if(!f.ch1FlagPattern||f.sewnFlag)person("A",27,14,"maaraEarly","maaraMid","maaraLate",{activity:"sort"});
@@ -207,12 +217,10 @@ function chapterOneScene(id,g){
       value:()=>f.ch1NameDone?"nameAfter":f.ch1NamePiece?"nameComplete":word("lauEarly","lauMid","lauLate"),
       onEnd:()=>{if(f.ch1NamePiece&&!f.ch1NameDone)complete("ch1NameDone",true,"book");}
     });
-    go(36,15,"town",[4,21],"鉄門広場");
-    go(35,24,"town",[7,24],"鉄門広場の下段");
-    go(8,10,"workshop",[12,24],"角鉄の工房");
-    put("exit-cistern",22,23,"exit","預かり倉", "cisternDoor",{
-      walk:true,quest:"signal",bounds:[-23,-27,24,12],onEnd:()=>g.travel("cistern",[9,32])
-    });
+    go("townHomes","鉄門広場");
+    go("lowerHomes","鉄門広場の下段");
+    go("homesForge","角鉄の工房");
+    go("homesStore","預かり倉",travel=>ch1Speak(g,"cisternDoor",travel));
     aside("flagPattern",26,16,"clothRail","古い縫い型","flagPattern",{quest:"flag",walk:false,onEnd:look("ch1FlagPattern")});
     aside("linens",17,15,"wash","干してある布","linen",{});
     aside("wellChest",11,23,"bunks","帰りの敷板","bedMark",{});
@@ -250,7 +258,7 @@ function chapterOneScene(id,g){
       value:()=>f.ch1CupDone?"cupAfter":f.ch1Cup?"cupReturn":word("toveEarly","toveMid","toveLate"),
       onEnd:()=>{if(f.ch1Cup&&!f.ch1CupDone)complete("ch1CupDone",true,"book");else ch1Mark(g,"ch1CupRequest");}
     });
-    go(12,24,"town",[21,21],"鉄門広場");
+    go("townInn","鉄門広場");
     put("c1Cards",15,22,"table","札の卓","cardStory",{icon:"book",instant:true,onEnd:()=>g.open("cards"),bounds:[-38,-28,39,10]});
     aside("cardLedger",13,23,"paper","卓の短い覚え書き","cardStory",{quest:"cards"});
     aside("innWindow",7,9,"clothRail","北窓の布","sailcloth",{});
@@ -275,7 +283,7 @@ function chapterOneScene(id,g){
   } else if(id==="workshop"){
     person("J",14,12,"forgeHandEarly","forgeHandMid","forgeHandLate",{activity:"smith",onEnd:()=>g.open("forge")});
     if(middle()&&!late())person("S",11,10,"stoneEarly","stoneMid","stoneLate",{activity:"smith"});
-    go(12,24,"longhouses",[9,12],"石工の長屋");
+    go("homesForge","石工の長屋");
     aside("forgeMold",18,8,"forgeAnvil","角鉄の二つの型","ironShed",{quest:"iron",onEnd:look("ch1IronForm")});
     aside("forgeOre",6,12,"stones","炉の枝鉄","spareOre",{onEnd:support("material")});
     aside("forgeHammer",9,13,"rack","掛けた槌の跡","hammerSign",{});
@@ -297,8 +305,8 @@ function chapterOneScene(id,g){
       activity:"bundle",approach:!f.ch1RoadCall&&(([x,y])=>x===27&&y===15),
       onEnd:()=>{if(!f.ch1RoadCall){ch1Mark(g,"ch1RoadCall");g.refresh();}}
     });
-    go(28,7,"town",[10,33],"鉄門広場");
-    if(g.s.chapter>=2)go(31,29,"pine",AREAS.pine.start,"松煙小屋");
+    go("townRoad","鉄門広場");
+    if(g.s.chapter>=2)go("roadPine","松煙小屋");
     aside("rootSteps",9,20,"fallenLog","食い込んだ松の根","roadRoots",{});
     aside("lowLedge",12,33,"posts","下の縁を見渡す","ledgeView",{walk:true});
     aside("sapCup",8,15,"sap","松脂の受け皿","resin",{quest:"flag",onEnd:look("ch1Resin")});
@@ -324,9 +332,9 @@ function chapterOneScene(id,g){
     openBox("c1RoadBox",14,12,"material");
     openBox("c1RoadPouch",9,36,"bow");
   } else if(id==="climb"){
-    go(10,36,"town",[15,8],"鉄門広場");
-    go(8,17,"overlook",[8,29],"外壁の見晴らし棚");
-    if(f.ch1RoadRise&&f.ch1SecondView)go(21,6,"gate",[19,29],"飛び石の巨角門");
+    go("townClimb","鉄門広場");
+    go("climbOverlook","外壁の見晴らし棚");
+    if(f.ch1RoadRise&&f.ch1SecondView)go("climbGate","飛び石の巨角門");
     else put("climbGate",21,6,"gate","角の上の戸","c1UpperDoor",{});
     aside("highView",18,9,"hornStone","旗が映る角の石","c1SecondView",{
       quest:"approach",look:1,glint:!f.ch1SecondView,walk:false,
@@ -344,8 +352,8 @@ function chapterOneScene(id,g){
     openBox("c1RiseBox",24,23,"material");
     openBox("c1RiseSatchel",9,10,"coat");
   } else if(id==="gate"){
-    go(20,30,"climb",[21,8],"角影坂");
-    if(f.ch1GateEye||f.ch1GateChain)go(20,6,"court",[17,33],"玉座庭");
+    go("climbGate","角影坂");
+    if(f.ch1GateEye||f.ch1GateChain)go("gateCourt","玉座庭");
     else put("gateHint",20,6,"gate","奥の止まり戸","gateHint",{});
     aside("gateEye",19,9,"floorLight","綱の光を通す穴",()=>f.ch1GateEye?"c1GateReturn":"c1GateEye",{
       quest:"gate",glint:!f.ch1GateEye,look:f.ch1GateEye?1:0,onEnd:()=>{
@@ -372,10 +380,10 @@ function chapterOneScene(id,g){
     aside("crateWall",10,25,"cargo","仕分けの籠","gateCrate",{});
     aside("gateGutter",30,20,"urn","溝のすす","gutter",{});
     aside("fresco",11,11,"wallRelief","角の古い絵","gateFresco",{glint:true});
-    if(f.ch1GateChain)go(12,10,"court",[8,31],"玉座庭の席側");
+    if(f.ch1GateChain)go("courtSide","玉座庭の席側");
     if(f.B01)aside("gateReturn",23,12,"floorLight","手渡す灯","c1QuietEnd",{look:1,walk:true});
     if(f.body){
-      go(32,15,"wardhouse",[9,36],"外壁の詰所");
+      go("gateWard","外壁の詰所");
       fight("gateHorns",9,26,"c1GateHorns",["c1_horn","c1_knuckle"],"patrolBrush",16);
       fight("gateWing",27,23,"c1GateWing",["c1_rim","c1_rim","c1_knuckle"],"patrolBat",22);
       if(f.c1GateHorns&&f.c1GateWing){
@@ -386,7 +394,8 @@ function chapterOneScene(id,g){
     openBox("c1GateIron",30,24,"hat");
     openBox("c1GateTools",12,17,"material");
   } else if(id==="court"){
-    go(17,35,"gate",[20,8],"飛び石の巨角門");
+    go("gateCourt","飛び石の巨角門");
+    if(f.ch1GateChain)go("courtSide","飛び石の巨角門の脇口");
     if(!f.body)person("L",25,15,"courtWindow","courtWindow","courtWindow",{facing:1});
     put("royalStill",18,13,"body","玉座の下",()=>f.body?"courtEmpty":"courtBody",{
       icon:null,image:"H16",bounds:[-48,-82,50,12],
@@ -414,29 +423,31 @@ function chapterOneScene(id,g){
     });
     aside("footsteps",27,10,"floorLight","濡れ跡の端","courtEmpty",{walk:true,look:f.body?1:0});
     if(f.ch1Lamp){
-      go(30,9,"hall",[21,36],"黒天井の回廊");
+      go("courtHall","黒天井の回廊");
       aside("courtRest",28,23,"floorLight","残しておく灯","c1CourtReturn",{look:1,walk:true});
     }
-    if(f.ch1Lamp&&f.ch1SeatWindow)go(30,31,"hall",[19,35],"下の保守段");
+    if(f.ch1Lamp&&f.ch1SeatWindow)go("hallMaintenance","下の保守段");
     openBox("c1CourtBox",11,31,"shield");
   } else if(id==="hall"){
-    go(21,38,"court",[29,9],"玉座庭");
+    go("courtHall","玉座庭");
+    if(f.ch1SeatWindow&&f.ch1Lamp)go("hallMaintenance","玉座庭の保守段");
+    if(f.ch1WardPath&&f.ch1Lamp){
+      if(f.ch1WardPlan==="high")go("wardHigh","外壁の詰所の上口");
+      else go("wardLow","外壁の詰所の下口");
+    }
     fire("hallCamp",18,34,"梁の下の休み火",true);
     fire("bossCamp",25,12,"格子前の灯",true);
     aside("hallBrace",15,29,"rail","片方だけの錘","hallWeights",{});
     aside("hallBridge",29,16,"posts","縁の焼けた板","hallBridge",{walk:true});
     aside("hallDrain",8,21,"urn","煤の溝","hallDrain",{});
     aside("hallJoint",21,30,"stoneYard","歩いて擦れた留め金","c1HallJoint",{walk:true});
-    go(37,34,"service",[26,29],"灯の物置");
-    if(f.ch1StoreReturn||f.ch1LampDone)go(35,15,"service",[24,14],"灯の物置の上口");
+    go("hallService","灯の物置");
+    if(f.ch1StoreReturn||f.ch1LampDone)go("upperService","灯の物置の上口");
     if(f.B01){
-      go(23,6,"nord",AREAS.nord.start,"濡れ跡の続き",{onEnd:()=>ch1North(g)});
-      go(37,36,"town",[7,20],"広場へ戻る階段",{
-        onEnd:()=>{
-          ch1Speak(g,"returnStair",()=>{
-            g.s.flags.ch1WayBack=true;g.travel("town",[7,20]);
-          });
-        }
+      go("hallNord","ノルドへの尾根",travel=>ch1North(g,travel));
+      go("hallTown","広場へ戻る階段",travel=>{
+        if(f.ch1WayBack)travel();
+        else ch1Speak(g,"returnStair",()=>{f.ch1WayBack=true;travel();});
       });
     }
     if(f.ch1BarOpen&&!f.B01){
@@ -476,8 +487,8 @@ function chapterOneScene(id,g){
     openBox("c1HallLamp",34,25,"lantern");
     openBox("c1HallNook",17,10,"swordIron");
   } else if(id==="service"){
-    go(27,31,"hall",[36,34],"黒天井の回廊");
-    if(f.ch1StoreReturn)go(27,10,"hall",[34,15],"上の横口");
+    go("hallService","黒天井の回廊");
+    if(f.ch1StoreReturn||f.ch1LampDone)go("upperService","上の横口");
     aside("storeOil",9,12,"urn","薄い油の瓶口","storeOil",{});
     aside("storePlanks",18,20,"posts","抜けた丸い板","storePlanks",{walk:true});
     aside("storeBench",8,26,"bench","煤をはらった椅子","storeBench",{});
@@ -499,7 +510,8 @@ function chapterOneScene(id,g){
     openBox("c1StoreBox",8,29,"material");
     openBox("c1StoreShelf",17,11,"ring");
   } else if(id==="cistern"){
-    go(9,34,"longhouses",[21,22],"石工の長屋");
+    go("homesStore","石工の長屋");
+    if(f.ch1SignalDone)go("overlookStore","見晴らし棚への戸");
     person("O",11,26,"cisternGuardEarly","cisternGuardMid","cisternGuardLate",{
       value:()=>f.ch1SignalDone&&!f.ch1SignalGift?"signalThanks":word("cisternGuardEarly","cisternGuardMid","cisternGuardLate"),
       onEnd:()=>{if(f.ch1SignalDone&&!f.ch1SignalGift)complete("ch1SignalGift",true,"steel");}
@@ -527,7 +539,7 @@ function chapterOneScene(id,g){
     openBox("c1CisternBoxA",10,31,"material");
     openBox("c1CisternBoxB",31,28,"ring");
   } else if(id==="overlook"){
-    go(8,33,"climb",[9,18],"角影坂");
+    go("climbOverlook","角影坂");
     person("Q",22,16,"roofEarly","roofMid","roofLate",{activity:"smith"});
     person("Z",32,22,"carrierEarly","carrierMid","carrierLate",{activity:"crate"});
     aside("signalWind",20,8,"clothRail","二色に見える旗の影","overlookWind",{quest:"signal",onEnd:look("ch1SignalWind")});
@@ -544,11 +556,11 @@ function chapterOneScene(id,g){
     });
     signal("signalHigh",25,9,false);
     signal("signalLow",27,11,true);
-    if(f.ch1SignalDone)go(14,32,"cistern",[9,29],"札を入れる下の戸");
+    if(f.ch1SignalDone)go("overlookStore","札を入れる下の戸");
     openBox("c1OverlookBoxA",11,19,"lantern");
     openBox("c1OverlookBoxB",31,24,"material");
   } else if(id==="wardhouse"){
-    go(9,39,"gate",[30,15],"飛び石の巨角門");
+    go("gateWard","飛び石の巨角門");
     const wardWord=(a,b,c)=>f.ch1WardPath?c:f.ch1WardPlan?b:a;
     person("AA",f.ch1WardPath?15:12,f.ch1WardPath?30:32,"wardMasterEarly","wardMasterSet","wardMasterLate",{
       value:()=>f.ch1WardPath&&!f.ch1WardGift?"wardThanks":wardWord("wardMasterEarly","wardMasterSet","wardMasterLate"),
@@ -598,10 +610,10 @@ function chapterOneScene(id,g){
       }
     });
     if(f.ch1WardPath){
-      const send=()=>ch1Speak(g,"wardBack",()=>g.travel("hall",[31,33]));
+      const send=travel=>ch1Speak(g,"wardBack",travel);
       if(f.ch1Lamp){
-        if(high)go(19,7,"hall",[31,33],"上の回廊口",{onEnd:send});
-        else go(32,33,"hall",[31,33],"下の回廊口",{onEnd:send});
+        if(high)go("wardHigh","上の回廊口",send);
+        else go("wardLow","下の回廊口",send);
       }
       openBox("c1WardBoxC",30,29,"lantern");
     }
@@ -622,11 +634,6 @@ function ch1Migrate(save){
   if(save.flags.B01){save.flags.ch1BarOpen=true;save.flags.ch1Debrief=true;}
   if(save.chapter>=2||save.flags.flagSeen)save.flags.ch1Arrival=true;
   save.ch1Layout=1;
-}
-function ch1EntryPoint(from,to,spawn) {
-  if(from==="nord"&&to==="town")return [25,24];
-  if(from==="pine"&&to==="road")return [31,28];
-  return spawn;
 }
 function ch1OnEntry(g){
   if(g.s.chapter!==1)return;

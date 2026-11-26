@@ -66,7 +66,7 @@ function drawCh1Scene(g,context,c,q){
     for(let k=0;k<=length;k+=3)rect(tint,x+(tx-x)*k/length,y+(ty-y)*k/length,3,2);
   };
   context.save();
-  context.beginPath();context.rect(0,111,603,1113);context.clip();
+  context.beginPath();context.rect(0,0,context.canvas.width,context.canvas.height);context.clip();
   if(scene==="arrival"){
     const [x,y]=at(15,19), [bx,by]=at(12,20);
     for(let i=0;i<16;i++){
@@ -108,7 +108,7 @@ function drawCh1Scene(g,context,c,q){
       rect("#211b2d89",px-11,py,38,10);
       rect("#c3a9823e",px+10,py-22,12,3);
     }
-    rect("#17152840",0,111,603,1113);
+    rect("#17152840",0,0,context.canvas.width,context.canvas.height);
     const pulse=Math.floor(q*9)%3;
     if(pulse<2)line(x-47,y-76,x+18,y-33,"#c6aa7b50");
   } else if(scene==="escape"){

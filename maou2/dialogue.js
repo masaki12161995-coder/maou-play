@@ -1,6 +1,5 @@
 (() => {
 "use strict";
-const NATIVE_DOTS = 1.5;
 const TYPE_STEP = 42;
 const HOLD_DELAY = 450;
 const HOLD_STEP = 90;
@@ -23,14 +22,14 @@ const PALETTE = {
 };
 
 function rectangle(ctx, color, x, y, w, h) {
-  const left = Math.round(x * NATIVE_DOTS);
-  const top = Math.round(y * NATIVE_DOTS);
+  const left = uiDotX(ctx,x);
+  const top = uiDotY(ctx,y);
   ctx.fillStyle = color;
   ctx.fillRect(
     left,
     top,
-    Math.round((x + w) * NATIVE_DOTS) - left,
-    Math.round((y + h) * NATIVE_DOTS) - top,
+    uiDotX(ctx,x+w) - left,
+    uiDotY(ctx,y+h) - top,
   );
 }
 
@@ -301,8 +300,8 @@ class Dialogue {
     rectangle(ctx, "#161621", x + 2, y + 2, 30, 31);
     rectangle(ctx, "#493842", x + 3, y + 3, 28, 29);
     rectangle(ctx, "#71554b", x + 3, y + 3, 28, 1);
-    const left = Math.round((x + 4) * NATIVE_DOTS);
-    const top = Math.round((y + 4) * NATIVE_DOTS);
+    const left = uiDotX(ctx,x+4);
+    const top = uiDotY(ctx,y+4);
     if (item) {
       ctx.drawImage(item, left + 3, top + 4, 32, 32);
     } else {
@@ -344,7 +343,7 @@ class Dialogue {
       warmFrame(ctx, x, y, width, height, true);
       const marker = this.bank.icons?.map;
       if (marker?.complete && marker.naturalWidth) {
-        ctx.drawImage(marker, Math.round((x + 13) * NATIVE_DOTS), Math.round((y + 16) * NATIVE_DOTS));
+        ctx.drawImage(marker, uiDotX(ctx,x+13), uiDotY(ctx,y+16));
       }
       const lines = wrap(entry.choices[index].label, Math.floor((width - 54) / 15));
       const center = y + height / 2 - (lines.length - 1) * 7;

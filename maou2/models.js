@@ -12,7 +12,7 @@ const MATERIALS = {
 };
 const ITEMS = {
   sword: { name:"街道の剣", art:"starterSword", slot:0, attack:4, price:32 },
-  staff: { name:"木の杖", art:"starterStaff", slot:0, attack:3, ranged:true, price:30 },
+  staff: { name:"木の杖", art:"starterStaff", slot:0, attack:3, magic:3, ranged:true, price:30 },
   hook: { name:"鉤の櫂", art:"starterAxe", slot:0, attack:4, speed:1, price:28 },
   shield: { name:"番人の盾", art:"starterShield", slot:3, defense:4, price:36 },
   swordIron: { name:"緋留めの短剣", art:"E01", slot:0, attack:7, price:72 },
@@ -20,8 +20,8 @@ const ITEMS = {
   hat: { name:"旅の頭巾", art:"eq_hood_01", slot:1, defense:1, speed:1, price:23 },
   coat: { name:"毛織の外套", art:"starterVest", slot:2, defense:3, health:11, price:45 },
   steel: { name:"山形の大盾", art:"starterShield", slot:3, defense:6, health:6, price:82 },
-  lantern: { name:"小さな灯飾り", art:"eq_amulet_01", slot:4, health:9, defense:1, element:"light", price:48 },
-  ring: { name:"風の腕輪", art:"eq_ring_01", slot:4, speed:3, price:43 },
+  lantern: { name:"小さな灯飾り", art:"eq_amulet_01", slot:4, health:9, defense:1, magicDefense:2, element:"light", price:48 },
+  ring: { name:"風の腕輪", art:"eq_ring_01", slot:4, speed:3, critical:2, price:43 },
   prism: { name:"星波の耳飾り", art:"E40", slot:4, attack:18, speed:5, defense:7, health:24, element:"light", price:310, unique:true },
 };
 const RECIPES = [
@@ -41,13 +41,21 @@ function seeded(seed) {
   };
 }
 
+function defaults(){return {theme:"warm",sort:"grade",autoHeal:false,sell:[]};}
+function restorePreferences(save){save.options={...defaults(),...save.options};}
+function addMaterial(save,key,quantity){
+  save.records??={item:{},material:{}};
+  save.records.material[key]=(save.records.material[key]||save.materials[key]||0)+quantity;
+  save.materials[key]=(save.materials[key]||0)+quantity;
+}
+
 function makeAdventure(seed = Date.now()) {
   const s = {
     version:1, seed, chapter:1, position:{area:"town",trail:[[5,22]]},
     checkpoint:{area:"town",trail:[[5,22]]}, flags:{}, claims:{}, lore:{}, seen:{}, lastFight:null,
     members:{}, formation:[null,null,null,null], gold:34, serial:1, battles:0, pending:null,
     bag:[], chest:[], materials:{iron:1,ash:0,hide:0,glow:0}, tools:{salve:2,book:0},
-    speed:1, stamp:0,
+    speed:1, options:defaults(), stamp:0,
   };
   welcome(s,"H01");
   return s;
@@ -58,6 +66,8 @@ function grant(s, code, grade=0) {
   const instance = {uid:itemId(s), code, grade, forged:0, inlay:null, locked:fresh || grade>3 || Boolean(ITEMS[code].unique)};
   (s.bag.length >= POCKET ? s.chest : s.bag).push(instance);
   s.claims["item:"+code]=true;
+  s.records??={item:{},material:{}};
+  s.records.item[code]=Math.max(grade,s.records.item[code]??0);
   return instance;
 }
 function welcome(s, id, level=1) {
@@ -74,7 +84,7 @@ function welcome(s, id, level=1) {
   member.hp=stats(s,id).maxHp;
   return true;
 }
-function stats(s,id) {
+function stats(s,id,gear=s.members[id].gear) {
   const person = s.members[id];
   const profile = {
     H01:[59,12,4,11,false], H02:[49,8,3,10,true], H03:[66,11,5,9,false],
@@ -85,8 +95,8 @@ function stats(s,id) {
   attack += person.level * 2;
   defense += person.level;
   speed += Math.floor(person.level / 3);
-  let element = null;
-  for (const uid of person.gear) {
+  let element=null,magicalBoost=0,resistBoost=0,critical=10;
+  for (const uid of gear) {
     const item = s.bag.find(entry=>entry.uid===uid);
     if (!item) continue;
     const prop = ITEMS[item.code];
@@ -94,19 +104,24 @@ function stats(s,id) {
     attack += (prop.attack || 0) + (prop.slot===0 ? item.forged*2+item.grade : 0);
     defense += (prop.defense || 0) + (prop.slot!==0 ? item.forged+item.grade : 0);
     speed += prop.speed || 0;
+    magicalBoost+=prop.magic||0;
+    resistBoost+=prop.magicDefense||0;
+    critical+=prop.critical||0;
     ranged ||= Boolean(prop.ranged);
     element ||= item.inlay || prop.element;
   }
-  return {maxHp,attack,defense,speed,ranged,element};
+  return {maxHp,attack,defense,magic:attack+magicalBoost,magicDefense:defense+resistBoost,
+    speed,critical,criticalPower:150,ranged,element};
 }
 function healAll(s) {
   for (const id of Object.keys(s.members)) s.members[id].hp=stats(s,id).maxHp;
 }
+const levelCost=level=>34+13*level;
 function applyXP(s, amount) {
   for (const [id, member] of Object.entries(s.members)) {
     member.xp += s.formation.includes(id) ? amount : Math.floor(amount*.6);
-    while (member.level<99 && member.xp >= 34 + 13 * member.level) {
-      member.xp -= 34 + 13 * member.level;
+    while (member.level<99 && member.xp >= levelCost(member.level)) {
+      member.xp -= levelCost(member.level);
       member.level++;
       member.hp=Math.min(stats(s,id).maxHp,(member.hp || 0)+9);
     }
@@ -123,6 +138,14 @@ function loot(seed, table=[]) {
   return null;
 }
 function holding(s,uid) { return Object.values(s.members).some(member=>member.gear.includes(uid)); }
+function itemPrice(item){return Math.max(1,Math.floor(ITEMS[item.code].price*(.41+item.grade*.12))+item.forged*4);}
+function discardItem(s,item){
+  const shelf=s.bag.includes(item)?s.bag:s.chest;
+  const match=shelf.indexOf(item);
+  if(match<0||item.locked||holding(s,item.uid))return false;
+  shelf.splice(match,1);
+  return true;
+}
 function equip(s,id,uid,slot) {
   const item=s.bag.find(entry=>entry.uid===uid);
   const member=s.members[id];
@@ -140,7 +163,7 @@ function salvage(s, ids) {
   const eligible=s.bag.filter(item=>ids.includes(item.uid) && !item.locked && !holding(s,item.uid) && !ITEMS[item.code].unique && item.grade<4);
   if (!eligible.length) return false;
   const removed=new Set(eligible.map(i=>i.uid));
-  s.materials.iron+=eligible.reduce((n,i)=>n+1+i.forged,0);
+  addMaterial(s,"iron",eligible.reduce((n,i)=>n+1+i.forged,0));
   s.bag=s.bag.filter(item=>!removed.has(item.uid));
   return true;
 }
@@ -149,10 +172,12 @@ class SaveBook {
   constructor(storage) {
     this.storage=storage;
     this.error=false;
-    this.data={slots:[null,null,null], cards:{}};
+    this.data={slots:[null,null,null,null], cards:{}};
     try {
       const read=JSON.parse(storage.getItem(GAME_SAVE));
-      if (read?.slots?.length===3) this.data={...read,cards:read.cards||{}};
+      if(Array.isArray(read?.slots)&&read.slots.length>=3){
+        this.data={...read,slots:Array.from({length:4},(_,i)=>read.slots[i]||null),cards:read.cards||{}};
+      }
     } catch { this.error=true; }
   }
   get(index) { return this.data.slots[index] ? structuredClone(this.data.slots[index]) : null; }

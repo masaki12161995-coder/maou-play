@@ -59,6 +59,8 @@ const LEARNING = [1,16,34,1,11,27,1,7,13,21,32,44];
 function learning(level,index) { return LEARNING[index] <= level; }
 const partyName = id => CAST[id]?.name || "";
 const laneSide = slot => slot % 2;
+const skillRule=(id,index)=>(SKILL_FLAGS[id]||SKILL_FLAGS.H01)[index];
+const movePower=(rule,stars)=>(rule.power||0)*(1+(stars-1)*.115);
 
 function resolveFight(save,enemies,seed) {
   const random=seeded(mixSeed(seed+":battle"));
@@ -99,11 +101,13 @@ function resolveFight(save,enemies,seed) {
   snapshot(0);
 
   function hurt(event,attacker,target,amount,side,opts={}) {
-    let damage=Math.max(1,Math.round(attacker.attack*amount-target.defense*(target.broken ? .28 : .57)));
+    const power=opts.magical?(attacker.magic??attacker.attack):attacker.attack;
+    const defense=opts.magical?(target.magicDefense??target.defense):target.defense;
+    let damage=Math.max(1,Math.round(power*amount-defense*(target.broken ? .28 : .57)));
     if (opts.element && opts.element===target.weak) damage=Math.round(damage*1.34);
     if (opts.follow && (target.mark || target===lastTarget)) damage=Math.round(damage*1.43);
-    const crit=random()<.10;
-    if (crit) damage=Math.round(damage*1.5);
+    const crit=random()<(attacker.critical??10)/100;
+    if (crit) damage=Math.round(damage*(attacker.criticalPower??150)/100);
     const protectedAmount=Math.min(target.guard,Math.max(0,damage-1));
     target.guard-=protectedAmount;
     if (protectedAmount) notify(event,side,target.slot,"守り","protect",21);
@@ -371,7 +375,7 @@ function resolveFight(save,enemies,seed) {
       if(actor.id==="H05"&&passive(actor,8)&&foe.evadedBolt)foe.mark=1;
       const evades=foe.focus==="rear"&&actor.id==="H05"&&!foe.mark&&random()<.07;
       if(evades){foe.evadedBolt=true;notify(event,"foes",foe.slot,"回避","state");event.result=foe.name+"はかわした";continue;}
-      const n=hurt(event,actor,foe,rule.power*(1+(star-1)*.115),"foes",{...rule,element});
+      const n=hurt(event,actor,foe,movePower(rule,star),"foes",{...rule,element,magical:Boolean(rule.element)});
       if(weight&&passive(weight,10)&&chain&&foe.hp)hurt(event,weight,foe,.35,"foes",{});
       const stream=perks("H08");
       if(stream&&stream!==actor&&passive(stream,9)&&chain&&element==="water"&&foe.hp)hurt(event,stream,foe,.43,"foes",{element:"water"});

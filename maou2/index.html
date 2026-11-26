@@ -4,22 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#111520">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="魔王は昨日">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/appicon_180.png">
   <title>魔王は昨日死んだ</title>
   <style>
     :root { color-scheme:dark; background:#111520; }
     * { box-sizing:border-box; }
-    html, body { width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none; }
-    body { position:fixed;inset:0;display:grid;place-items:center; }
-    main { width:min(402px,100vw,calc(100svh * 402 / 874));aspect-ratio:402/874;position:relative; }
-    canvas { width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none; }
-    #loading { position:absolute;inset:0;display:grid;place-content:center;margin:0;color:#edcda1;font-family:serif;font-size:1rem; }
+    html, body { width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none;touch-action:none; }
+    body { position:fixed;inset:0; }
+    #app { position:fixed;top:0;left:0;width:100%;height:100%;height:100dvh;overflow:hidden; }
+    #safe-area { position:absolute;inset:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);pointer-events:none;visibility:hidden; }
+    canvas { width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none; }
+    #loading { position:absolute;inset:0;display:grid;place-content:center;margin:0;color:#edcda1;font-family:serif;font-size:1rem;pointer-events:none; }
     #loading[hidden] { display:none; }
   </style>
+  <script defer src="viewport.js"></script>
   <script defer src="data.js"></script>
   <script defer src="models.js"></script>
   <script defer src="fight.js"></script>
   <script defer src="world.js"></script>
   <script defer src="chapter1-layouts.js"></script>
+  <script defer src="chapter1-exits.js"></script>
   <script defer src="chapter1-text.js"></script>
   <script defer src="chapter1-world.js"></script>
   <script defer src="chapter1-scenes.js"></script>
@@ -31,7 +40,8 @@
   <script defer src="game.js"></script>
 </head>
 <body>
-  <main>
+  <main id="app">
+    <div id="safe-area" aria-hidden="true"></div>
     <canvas id="screen" aria-label="魔王は昨日死んだ" tabindex="0"></canvas>
     <p id="loading">読み込み中</p>
   </main>

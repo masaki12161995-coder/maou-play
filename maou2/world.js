@@ -154,7 +154,8 @@ function sceneFor(id,g) {
       say(8,14,"person_100","宿の人",["軒の下なら風が弱い。湯を置いておいた。"],{onEnd:()=>g.rest()});
       say(3,17,"person_030","鉄工",["折れた荷札なら直せるぞ。"],{activity:"smith",onEnd:()=>g.open("forge")});
       exit(4,5,"ridge",[5,22],"竜骨の街道");exit(8,5,"watch",[5,22],"番小屋の道");
-      exit(6,22,"town",[8,9],"ベルグ門前町");
+      attachChapterExit(layout,id,g,"townNord","ベルグ門前町");
+      attachChapterExit(layout,id,g,"hallNord","黒天井の回廊");
       place(6,12,"paper","骨越え荷札",["細い板は人だけ。太い板は荷車も通す。"],{onEnd:()=>g.grantQuest("boneSign","book")});
       if(f.B02) exit(8,19,"cald",[5,22],"黄金草原");
     } else if(id==="ridge" || id==="watch") {
@@ -184,7 +185,7 @@ function sceneFor(id,g) {
       chest(8,14,"highBox","bow");
       place(7,9,"fire","尾根の火",["風をよけて息をついた。"],{onEnd:()=>g.rest()});
     } else if(id==="pine") {
-      exit(6,22,"road",[8,14],"松影の街道");
+      attachChapterExit(layout,id,g,"roadPine","松影の街道");
       exit(5,5,"roots",[5,22],"黒根の塚穴");
       say(7,11,"H11","ヴィルネ",["灯の下に影がない。","囲いを反対に向けると、根の間が見える。"]);
       place(4,8,"fire","影のない灯",["石囲いを回すと、根の向こうが明るくなった。"],{onEnd:()=>g.join("H11",3,"joinH11")});

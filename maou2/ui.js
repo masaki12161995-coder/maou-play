@@ -1,23 +1,31 @@
 "use strict";
 
-const U = x=>Math.round(x*1.5);
 const GOLD="#efcea0", PAPER="#f3e4c8", COOL="#bdcde4", GREEN="#a6cc95";
 const GRADE_TINT=["#eddfc4","#b6df99","#acd4f8","#d9b6f8","#ffdb8c","#f8bfe7"];
+const FRAME_COLORS={
+  warm:{edge:"#865f4a",bright:"#d9a96c",wood:"#513d3c",paper:"#262933",chosen:"#383344",rim:"#bb8c62",line:"#695048"},
+  night:{edge:"#687da4",bright:"#adc6ee",wood:"#273954",paper:"#172438",chosen:"#2a3d5b",rim:"#92accf",line:"#41597b"},
+  white:{edge:"#afb5bf",bright:"#f1e7cb",wood:"#4b4e57",paper:"#17191e",chosen:"#343845",rim:"#d4d5d5",line:"#646872"},
+};
 
 class GameUI {
   constructor(game) { this.g=game; this.links=[]; this.labels=[]; }
   begin(ctx) { this.c=ctx;ctx.imageSmoothingEnabled=false;this.links=[];this.labels=[]; }
-  rec(x,y,w,h,color) { const c=this.c;c.fillStyle=color;c.fillRect(U(x),U(y),U(x+w)-U(x),U(y+h)-U(y)); }
+  rec(x,y,w,h,color) {
+    const c=this.c,left=uiDotX(c,x),top=uiDotY(c,y);
+    c.fillStyle=color;c.fillRect(left,top,uiDotX(c,x+w)-left,uiDotY(c,y+h)-top);
+  }
   text(text,x,y,size=15,color=PAPER,align="left",extra={}) {this.labels.push({text:String(text),x,y,size,color,align,...extra});}
   frame(x,y,w,h,on=false) {
     const c=this;
-    c.rec(x+3,y+4,w-4,h,"#101421b0");c.rec(x,y+5,w,h-9,on?"#d9a96c":"#865f4a");
-    c.rec(x+4,y,w-8,h,on?"#d9a96c":"#865f4a");
-    c.rec(x+3,y+3,w-6,h-6,"#513d3c");
-    c.rec(x+5,y+5,w-10,h-10,on?"#383344":"#262933");
-    c.rec(x+8,y+2,w-16,1,on?"#ffeeaf":"#bb8c62");
-    c.rec(x+8,y+h-4,w-16,1,"#695048");
-    for(const dx of [5,w-7])for(const dy of [5,h-7])c.rec(x+dx,y+dy,2,2,on?"#ffdf9a":"#b48362");
+    const p=FRAME_COLORS[this.g.s?.options?.theme]||FRAME_COLORS.warm;
+    c.rec(x+3,y+4,w-4,h,"#101421b0");c.rec(x,y+5,w,h-9,on?p.bright:p.edge);
+    c.rec(x+4,y,w-8,h,on?p.bright:p.edge);
+    c.rec(x+3,y+3,w-6,h-6,p.wood);
+    c.rec(x+5,y+5,w-10,h-10,on?p.chosen:p.paper);
+    c.rec(x+8,y+2,w-16,1,on?p.bright:p.rim);
+    c.rec(x+8,y+h-4,w-16,1,p.line);
+    for(const dx of [5,w-7])for(const dy of [5,h-7])c.rec(x+dx,y+dy,2,2,on?p.bright:p.rim);
   }
   mark(x,y,color=GOLD) {this.rec(x-4,y-1,9,3,color);this.rec(x-1,y-4,3,9,color);this.rec(x,y,1,1,"#fff1c7");}
   button(title,x,y,w,h,run,active=false,art=null) {
@@ -34,24 +42,40 @@ class GameUI {
   icon(art,x,y,scale=2) {
     const image=this.g.bank.images[art]; if(!image) return;
     const w=image.naturalWidth, h=image.naturalHeight;
-    if(w>32||h>32) this.c.drawImage(image,Math.floor((w-24)/2),Math.max(0,Math.floor((h-24)/2)),24,24,U(x),U(y),24*scale,24*scale);
-    else this.c.drawImage(image,U(x),U(y),w*scale,h*scale);
+    const cx=uiDotX(this.c,x),cy=uiDotY(this.c,y);
+    if(w>32||h>32) this.c.drawImage(image,Math.floor((w-24)/2),Math.max(0,Math.floor((h-24)/2)),24,24,cx,cy,24*scale,24*scale);
+    else this.c.drawImage(image,cx,cy,w*scale,h*scale);
   }
   person(id,x,y,scale=1,face=false) {
     const image=this.g.bank.images[id];if(!image)return;
     const [sx,sy,sw,sh]=face?[58,4,28,32]:[48,0,48,60];
-    this.c.drawImage(image,sx,sy,sw,sh,U(x),U(y),sw*scale,sh*scale);
+    this.c.drawImage(image,sx,sy,sw,sh,uiDotX(this.c,x),uiDotY(this.c,y),sw*scale,sh*scale);
   }
   bar(x,y,w,ratio,palette=["#1c252b","#70a378","#a9ce93"]) {
     this.rec(x,y,w,5,palette[0]);
     const width=Math.max(0,Math.min(w,Math.round(w*ratio)));
     this.rec(x,y,width,4,palette[1]);this.rec(x,y,width,1,palette[2]);
   }
+  exitNote() {
+    const {field,layout}=this.g,[col,row]=field.trail[0];
+    const distance=o=>Math.abs(o.col-col)+Math.abs(o.row-row);
+    const door=field.objects.filter(o=>o.passage&&distance(o)<=2).sort((a,b)=>distance(a)-distance(b))[0];
+    if(!door)return;
+    const [x,feet]=FIELD_COORD(door.col,door.row);
+    const low=door.passage.style==="stairs"||door.passage.style==="path";
+    const dot=FIELD_PIXEL/layout.dpi;
+    const [u,v]=layout.point((x-field.camera.x)*dot,(feet-field.camera.y-(low?35:63))*dot);
+    const w=Math.min(168,door.label.length*12+26);
+    const center=Math.max(9+w/2,Math.min(393-w/2,u));
+    const y=Math.max(130,Math.min(720,v));
+    this.frame(center-w/2,y-11,w,23);
+    this.text(door.label,center,y,12,GOLD,"center",{max:w-10});
+  }
   hud() {
     const {g}=this;
     const current=g.area.title;
     this.frame(16,77,167,44);
-    this.mark(27,94);this.text(current,38,96,current.length>9?14:17);
+    this.mark(27,94);this.text(current,38,96,current.length>9?14:17,PAPER,"left",{max:140});
     this.add(16,77,167,44,()=>g.open("journal"));
     for(let i=0;i<4;i++) {
       const x=194+i*48, id=g.s.formation[i];
@@ -61,25 +85,32 @@ class GameUI {
         const p=g.s.members[id];
         this.bar(x+7,115,28,p.hp/stats(g.s,id).maxHp);
       }
-      this.add(x,76,42,49,()=>g.open("party",{slot:i}));
+      this.add(x,76,42,49,()=>id?g.open("status",{who:id}):g.open("party",{slot:i}));
     }
-    [["地図","map","map"],["持ち物","bag","bag"],["編成","party","party"]].forEach(([name,kind,art],i)=>{
-      this.button(name,16+i*126,752,118,53,()=>g.panel?.id===kind ? g.closePanel() : g.open(kind),g.panel?.id===kind,art);
+    [["地図","map","map"],["持ち物","bag","bag"],["編成","party","party"],["メニュー","menu","book"]].forEach(([name,kind,art],i)=>{
+      const x=11+i*96,y=752,w=91,h=53;
+      this.frame(x,y,w,h,g.panel?.id===kind);
+      this.icon(art,x+9,y+15,2);
+      this.text(name,x+33,y+27,name.length>3?13:14,PAPER,"left",{max:53});
+      this.add(x,y,w,h,()=>g.panel?.id===kind?g.closePanel():g.open(kind));
     });
     }
   toast() {
     const {g}=this;
     if(g.toast && performance.now()<g.toast.until) {
-      this.frame(45,695,312,36,true);
-      if(g.toast.art) this.icon(g.toast.art,56,704,1);
-      this.text(g.toast.text,201,712,14,GOLD,"center");
+      const compact=Boolean(g.panel),y=compact?123:695,h=compact?22:36;
+      this.frame(45,y,312,h,true);
+      if(g.toast.art)this.icon(g.toast.art,56,y+(compact?5:9),1);
+      this.text(g.toast.text,201,y+h/2,compact?12:14,GOLD,"center",{max:261});
     }
   }
-  modal(title,art,tabKind="") {
+  modal(title,art) {
     this.rec(0,126,402,614,"#111522bf");this.frame(18,141,366,591);
     this.rec(29,194,344,524,"#1d2430");
-    if(art)this.icon(art,38,159,2);
-    this.text(title,72,173,22,GOLD);
+    const back=Boolean(this.g.panel?.back);
+    if(back)this.button("‹",33,151,35,38,()=>this.g.backPanel());
+    if(art)this.icon(art,back?77:38,159,2);
+    this.text(title,back?109:72,173,22,GOLD,"left",{max:218});
     this.button("×",332,151,40,38,()=>this.g.closePanel());
     this.rec(31,194,339,2,"#a17857");
   }
@@ -87,8 +118,121 @@ class GameUI {
     const gap=5, w=Math.floor((328-(entries.length-1)*gap)/entries.length);
     entries.forEach(([text,click,active],i)=>this.button(text,37+i*(w+gap),y,w,34,click,active));
   }
+  menu() {
+    const {g}=this,{s}=g;
+    const open=(id,details={})=>g.open(id,{...details,back:{id:"menu"}});
+    this.modal("メニュー","book");
+    this.frame(38,208,326,121);
+    s.formation.forEach((id,i)=>{
+      const x=45+i*79;
+      this.frame(x,214,74,109);
+      if(!id){this.mark(x+37,269,"#625664");return;}
+      const m=s.members[id],hp=stats(s,id).maxHp;
+      const avatarScale=g.layout.y(301)-g.layout.y(218)>=80?2:1;
+      this.person(id,x+(avatarScale===2?5:21),218,avatarScale);
+      this.bar(x+8,316,58,m.hp/hp);
+      this.text(CAST[id].name,x+37,306,12,PAPER,"center",{max:59});
+      this.add(x,214,74,109,()=>open("status",{who:id}));
+    });
+    this.button("一括そうび",38,341,159,44,()=>g.recommendAll(),false,"starterShield");
+    this.button("自動回復 "+(s.options.autoHeal?"入":"切"),204,341,159,44,
+      ()=>g.option("autoHeal",!s.options.autoHeal),s.options.autoHeal,"herb");
+    const entries=[
+      ["ステータス","status","party"],["そうび","equip","starterSword"],
+      ["スキル","skills","tool_031"],["どうぐ","bag","herb",{category:"use"}],
+      ["素材","bag","ore",{category:"mat"}],["装備品","bag","bag"],
+      ["図鑑","dex","book"],["設定","settings","stone"],
+      ["編成","party","flag"],["記録","save","map"],
+    ];
+    entries.forEach(([name,id,art,detail],i)=>{
+      const x=38+(i%2)*166,y=398+Math.floor(i/2)*54;
+      this.button(name,x,y,159,48,()=>open(id,detail),false,art);
+    });
+    this.icon("coin",53,681,2);
+    this.text(s.gold+" G",82,693,15,GOLD);
+    this.text("第"+s.chapter+"章",348,693,15,COOL,"right");
+  }
+  status() {
+    const {g}=this,{s}=g,{id,i}=this.selectedMember(),m=s.members[id];
+    const current=stats(s,id),base=stats(s,id,[]);
+    this.modal("ステータス","party");
+    this.personTabs("status");
+    this.frame(38,252,326,145,true);
+    this.rec(50,262,108,121,"#283545");
+    this.rec(55,268,98,111,"#314355");
+    this.person(id,55,257,g.layout.y(397)-g.layout.y(257)>=120?3:2);
+    this.text(CAST[id].name,178,275,24,GOLD,"left",{max:174});
+    this.text("Lv. "+m.level,178,303,17,PAPER,"left",{sans:true});
+    this.text(m.level>=99?"最高レベル":"次のレベルまで "+Math.max(0,levelCost(m.level)-m.xp),178,329,12,COOL);
+    this.text("体力",178,354,14,GREEN);
+    this.text(m.hp+" / "+current.maxHp,343,354,17,PAPER,"right",{sans:true});
+    this.bar(178,369,165,m.hp/current.maxHp);
+    this.text("能力",51,410,12,COOL);
+    this.text("現在",240,410,12,COOL,"right");
+    this.text("装備の増減",344,410,12,COOL,"right");
+    const attributes=[
+      ["最大体力","maxHp"],["攻撃","attack"],["防御","defense"],["魔法","magic"],
+      ["魔法防御","magicDefense"],["速さ","speed"],["会心率","critical","%"],["会心の威力","criticalPower","%"],
+    ];
+    attributes.forEach(([label,key,suffix=""],n)=>{
+      const y=432+n*21, delta=current[key]-base[key];
+      this.rec(45,y-9,309,20,n%2?"#272833":"#202633");
+      this.text(label,51,y,13,PAPER);
+      this.text(current[key]+suffix,240,y,14,PAPER,"right",{sans:true});
+      this.text(delta?(delta>0?"+":"")+delta+suffix:"－",344,y,13,delta>0?GREEN:COOL,"right",{sans:true});
+    });
+    const moves=[m.equipped[0]??0,m.equipped[1]??3];
+    const back={id:"status",details:{...g.panel}};
+    this.frame(40,590,322,76);
+    moves.forEach((key,n)=>{
+      const rule=skillRule(id,key),art=n?"tool_031":"starterSword",y=606+n*22;
+      const stars=m.stars[key]||1;
+      this.icon(art,49,y-8,1);
+      this.text(CAST[id].skills[key].name,67,y,13,PAPER,"left",{max:127});
+      let effect;
+      if(rule.power){
+        const value=rule.element?current.magic:current.attack;
+        const strength=Math.round(value*movePower(rule,stars)),delta=strength-value;
+        effect="威力 "+strength+(delta?"（技で"+(delta>0?"+":"")+delta+"）":"");
+      }else if(rule.heal||rule.revive)effect=(rule.revive?"復活 ":"回復 ")+Math.round((rule.heal||rule.revive)*100)+"% ＋"+stars*2;
+      else effect=rule.guard?"守り ＋"+(n?9+stars*2:3+stars):"支援";
+      this.text(effect,346,y,12,GOLD,"right",{max:156});
+      this.add(42,y-10,317,21,()=>g.open("skills",{member:i,category:n,back}));
+    });
+    this.icon("book",49,641,1);
+    this.text("パッシブ",67,649,12,COOL);
+    const passives=m.equipped.slice(2).filter(key=>Number.isInteger(key));
+    this.text(passives.map(key=>CAST[id].skills[key].name).join("　")||"－",346,649,12,PAPER,"right",{max:212});
+    this.add(42,638,317,23,()=>g.open("skills",{member:i,category:2,back}));
+    this.button("そうび",40,671,157,45,()=>g.open("equip",{member:i,back}),false,"starterSword");
+    this.button("スキル",205,671,157,45,()=>g.open("skills",{member:i,back}),false,"book");
+  }
+  settings() {
+    const {g}=this,{s}=g,o=s.options;
+    this.modal("設定","stone");
+    const shelf=(title,art,y)=>{
+      this.frame(38,y,326,86);
+      this.icon(art,52,y+11,1);
+      this.text(title,71,y+18,14,GOLD);
+    };
+    shelf("戦闘のはやさ","flag",209);
+    [1,2,4].forEach((n,i)=>this.button(n+"倍",49+i*102,241,99,40,()=>g.option("speed",n),s.speed===n));
+    shelf("画面の色","lantern",304);
+    [["warm","暖かな色"],["night","夜空"],["white","白わく"]].forEach(([key,label],i)=>{
+      this.button(label,49+i*102,336,99,40,()=>g.option("theme",key),o.theme===key);
+    });
+    shelf("拾った装備を自動で売る","coin",399);
+    [0,1,2].forEach((grade,i)=>this.button(GRADES[grade],49+i*102,431,99,40,
+      ()=>g.option("sell",o.sell.includes(grade)?o.sell.filter(g=>g!==grade):[...o.sell,grade]),o.sell.includes(grade)));
+    shelf("戦闘後に薬草で回復","herb",494);
+    this.button("オン",49,526,149,40,()=>g.option("autoHeal",true),o.autoHeal);
+    this.button("オフ",205,526,149,40,()=>g.option("autoHeal",false),!o.autoHeal);
+    this.frame(38,589,326,56);
+    this.icon("lantern",53,608,1);this.text("音",72,617,14,GOLD);this.text("オフ",345,617,14,COOL,"right");
+    this.button("表題へ",90,668,223,45,()=>g.toTitle(),false,"map");
+  }
   party() {
-    const p=this.g.panel, s=this.g.s;
+    const {g}=this,p=g.panel,s=g.s;
     this.modal("編成","party");
     this.tabs([["編成",()=>this.g.open("party"),true],["装備",()=>this.g.open("equip"),false],["技",()=>this.g.open("skills"),false]]);
     for (let i=0;i<4;i++) {
@@ -119,28 +263,40 @@ class GameUI {
     this.rec(39,632,325,66,"#231e2a");this.rec(45,632,313,2,"#88674a");
     if (bench.length) {
       this.text("控え",50,662,13,GOLD);
-      bench.slice(0,5).forEach((id,index)=>{
+      const size=bench.length>5?4:5,page=Math.min(p.benchPage||0,Math.ceil(bench.length/size)-1);
+      bench.slice(page*size,(page+1)*size).forEach((id,index)=>{
         const x=94+index*49;
         this.frame(x,644,43,41,p.bench===id);this.person(id,x+12,650,1,true);
         this.add(x,644,43,41,()=>this.g.selectBench(id));
       });
+      if(bench.length>5){
+        if(page>0)this.button("‹",290,644,32,41,()=>g.open("party",{...p,benchPage:page-1}));
+        if(page+1<Math.ceil(bench.length/size))this.button("›",326,644,32,41,()=>g.open("party",{...p,benchPage:page+1}));
+      }
     } else {
       this.mark(201,661,"#605254");this.rec(128,661,56,1,"#645650");this.rec(218,661,56,1,"#645650");
     }
   }
   selectedMember() {
-    const people=this.g.s.formation.filter(Boolean);
-    const i=this.g.panel.member||0;
-    return {id:people[i % people.length], people, i};
+    const {s,panel}=this.g;
+    const people=[...s.formation.filter(Boolean),...Object.keys(s.members).filter(id=>!s.formation.includes(id))];
+    const i=Math.max(0,Math.min(people.length-1,panel.member??people.indexOf(panel.who)));
+    return {id:people[i],people,i};
   }
   personTabs(klass) {
-    const {people,i}=this.selectedMember();
-    people.forEach((id,n)=>{
+    const {people,i}=this.selectedMember(),p=this.g.panel;
+    const visible=people.length>4?3:4,start=Math.floor(i/visible)*visible;
+    const select=member=>this.g.open(klass,{...p,member,who:null,page:0,selected:null});
+    people.slice(start,start+visible).forEach((id,n)=>{
       const x=39+n*81;
-      this.frame(x,205,76,39,i===n);this.person(id,x+6,213,1,true);
+      this.frame(x,205,76,39,i===start+n);this.person(id,x+6,213,1,true);
       this.text(CAST[id].name,x+27,224,12);
-      this.add(x,205,76,39,()=>this.g.open(klass,{member:n}));
+      this.add(x,205,76,39,()=>select(start+n));
     });
+    if(visible===3){
+      this.button("‹",282,205,36,39,start>0?()=>select(start-3):null);
+      this.button("›",321,205,36,39,start+3<people.length?()=>select(start+3):null);
+    }
   }
   row(y,title,art,sub,click,{on=false,colour=PAPER}={}) {
     this.frame(38,y,325,58,on);
@@ -167,40 +323,105 @@ class GameUI {
       else this.row(347,SLOTS[slot]+"の枠","starterShield","空いている",null);
       this.pageRows(options,p.page,415,item=>{
         const a=ITEMS[item.code];
-        const notes=[a.attack&&"攻め "+(a.attack+item.forged*2+item.grade),a.defense&&"守り "+(a.defense+item.forged+item.grade),a.health&&"体力 "+a.health].filter(Boolean).join("　");
-        return [a.name,a.art,notes,()=>g.tryEquip(id,item.uid,slot)];
+        const proposed=member.gear.slice();proposed[slot]=item.uid;
+        const before=stats(s,id),after=stats(s,id,proposed);
+        const names={attack:"攻撃",defense:"防御",maxHp:"体力",speed:"速さ",magic:"魔法",magicDefense:"魔法防御",critical:"会心"};
+        const notes=Object.keys(names).filter(k=>after[k]!==before[k]).slice(0,3).map(k=>{
+          const diff=after[k]-before[k];return names[k]+" "+(diff>0?"+":"")+diff+(k==="critical"?"%":"");
+        }).join("　");
+        return [a.name,a.art,notes||GRADES[item.grade],()=>g.tryEquip(id,item.uid,slot),{colour:GRADE_TINT[item.grade]}];
       });
       if (options.length && !equipped?.locked) this.text("着替え",56,343,10,COOL);
       this.button("おすすめ",157,688,148,31,()=>g.recommend(id,slot),false,"starterShield");
       return;
     }
-    this.modal(mode==="shop"?"道具屋":"持ち物","bag");
     if(mode==="shop") {
-      this.text(s.gold+" G",326,173,16,GOLD,"right");
+      this.modal("道具屋","bag");
+      const sell=p.category==="sell";
+      this.tabs([["買う",()=>g.open("shop"),!sell],["売る",()=>g.open("shop",{category:"sell"}),sell]]);
+      this.icon("coin",249,250,1);this.text(s.gold+" G",347,256,15,GOLD,"right");
+      if(sell){
+        const sellable=s.bag.filter(i=>!i.locked&&!holding(s,i.uid));
+        if(!sellable.length)this.shelf("売れる装備はない","coin");
+        this.pageRows(sellable,p.page,276,item=>[ITEMS[item.code].name,ITEMS[item.code].art,itemPrice(item)+" G",
+          ()=>g.sell(item.uid),{colour:GRADE_TINT[item.grade]}],6);
+        return;
+      }
       const stock=["salve","swordIron","steel","coat","hat","ring","lantern"];
-      this.pageRows(stock,p.page,227,code=>{
+      this.pageRows(stock,p.page,276,code=>{
         const item=ITEMS[code]||(code==="salve"?{name:"薬草",art:"herb",price:12}:null);
         return [item.name,item.art,item.price+" G",()=>g.buy(code)];
       },6);return;
     }
     const category=p.category||"bag";
-    this.tabs([["装備",()=>g.open("bag",{category:"bag"}),category==="bag"],["材料",()=>g.open("bag",{category:"mat"}),category==="mat"],
+    this.modal({bag:"装備品",mat:"素材",use:"どうぐ",chest:"受け取り箱"}[category],"bag");
+    this.tabs([["装備品",()=>g.open("bag",{category:"bag"}),category==="bag"],["素材",()=>g.open("bag",{category:"mat"}),category==="mat"],
       ["どうぐ",()=>g.open("bag",{category:"use"}),category==="use"],["受け取り",()=>g.open("bag",{category:"chest"}),category==="chest"]]);
     if(category==="mat") {
-      Object.entries(MATERIALS).forEach(([key,m],i)=>this.row(258+i*65,m.name,m.art,String(s.materials[key]||0),null));
+      Object.entries(MATERIALS).forEach(([key,m],i)=>{
+        this.row(258+i*65,m.name,m.art,["武器と盾を作る・鍛える","盾や飾りを作る","武器や外套を作る","飾りを作る・組み合わせる"][i],null);
+        this.text(s.materials[key]||0,340,275+i*65,14,GOLD,"right",{sans:true});
+      });
       return;
     }
     if(category==="use") {
-      this.row(258,"薬草","herb",s.tools.salve+"個",()=>g.useSalve());
+      this.row(258,"薬草","herb",s.tools.salve+"個　体力を回復",s.tools.salve?()=>g.open("toolTarget",{back:{id:"bag",details:{...p}}}):null);
       this.row(323,"技の本","book",s.tools.book+"冊",()=>g.open("skills"));
       return;
     }
-    const list=category==="chest"?s.chest:s.bag;
+    const list=(category==="chest"?s.chest:s.bag).slice();
+    const order=s.options.sort;
+    const value=i=>ITEMS[i.code].price+i.forged*11+i.grade*24;
+    list.sort((a,b)=>{
+      if(order==="slot")return ITEMS[a.code].slot-ITEMS[b.code].slot||b.grade-a.grade;
+      if(order==="new")return Number(b.uid.slice(1))-Number(a.uid.slice(1));
+      if(order==="power")return value(b)-value(a);
+      return b.grade-a.grade||b.forged-a.forged;
+    });
+    this.tabs([["レア度","grade"],["部位","slot"],["新しい順","new"],["強さ","power"]].map(([label,key])=>
+      [label,()=>{g.option("sort",key);g.open("bag",{...p,page:0});},key===order]),247);
     if(!list.length)this.shelf("空の箱","chest");
-    this.pageRows(list,p.page,252,item=>[ITEMS[item.code].name,ITEMS[item.code].art,
+    this.pageRows(list,p.page,287,item=>[ITEMS[item.code].name,ITEMS[item.code].art,
       GRADES[item.grade]+(item.forged?"　+"+item.forged:"")+(holding(s,item.uid)?"　装備中":item.locked?"　保護":""),
-      category==="chest"?()=>g.receive(item.uid):()=>g.toggleLock(item.uid)],6);
+      category==="chest"?()=>g.receive(item.uid):()=>g.open("itemPage",{uid:item.uid,back:{id:"bag",details:{...p}}}),
+      {colour:GRADE_TINT[item.grade]}],6);
     this.text(s.bag.length+" / "+POCKET,203,698,13,GOLD,"center");
+  }
+  itemPage() {
+    const {g}=this,{s,panel}=g;
+    const item=s.bag.find(o=>o.uid===panel.uid),a=ITEMS[item.code];
+    this.modal("装備品","bag");
+    this.frame(47,220,307,149,true);this.icon(a.art,65,250,5);
+    this.text(a.name,137,269,20,GRADE_TINT[item.grade],"left",{max:203});
+    this.text(SLOTS[a.slot]+"　"+GRADES[item.grade]+(item.forged?" ＋"+item.forged:""),137,309,15,COOL);
+    const notes=[["攻撃",(a.attack||0)+(a.slot===0?item.grade+item.forged*2:0)],
+      ["防御",(a.defense||0)+(a.slot!==0?item.grade+item.forged:0)],["体力",(a.health||0)+item.grade*2],
+      ["速さ",a.speed||0],["魔法の補正",a.magic||0],["魔法防御の補正",a.magicDefense||0],["会心率",a.critical?"+"+a.critical+"%":0]];
+    notes.filter(([,v])=>v).forEach(([label,value],i)=>{
+      const y=396+i*29;
+      this.rec(49,y-10,298,23,i%2?"#2b2834":"#212934");
+      this.text(label,59,y,14,PAPER);this.text(value,334,y,14,GOLD,"right");
+    });
+    if(item.inlay||a.element)this.text("属性の力",61,624,13,COOL);
+    const protectedItem=item.grade>=4||a.unique||holding(s,item.uid);
+    const owner=Object.keys(s.members).find(id=>s.members[id].gear.includes(item.uid));
+    if(owner){this.person(owner,57,678,1,true);this.text(CAST[owner].name+"が装備中",82,694,14,COOL);}
+    else this.button(item.locked?"保護中":"保護する",102,668,196,44,protectedItem?null:()=>g.toggleLock(item.uid),item.locked,"starterShield");
+  }
+  toolTarget() {
+    const {g}=this,{s}=g;
+    this.modal("薬草","herb");
+    const people=s.formation.filter(Boolean);
+    people.forEach((id,i)=>{
+      const y=224+i*107,m=s.members[id],hp=stats(s,id).maxHp;
+      this.frame(39,y,325,96);
+      this.person(id,54,y+12,2);
+      this.text(CAST[id].name,142,y+24,17,PAPER);
+      this.text(m.hp+" / "+hp,343,y+51,16,GREEN,"right");
+      this.bar(143,y+69,198,m.hp/hp);
+      if(m.hp>0&&m.hp<hp&&s.tools.salve)this.add(39,y,325,96,()=>g.useSalve(id));
+    });
+    this.text("薬草　"+s.tools.salve+"個",344,682,15,COOL,"right");
   }
   pageRows(values,page,first,describe,count=4) {
     page=Math.max(0,Math.min(page||0,Math.ceil(values.length/count)-1));
@@ -311,45 +532,78 @@ class GameUI {
     this.text(g.area.title,201,672,17,GOLD,"center");
   }
   journal() {
-    const {g}=this,p=g.panel;
+    const {g}=this;
     this.modal("帳面","book");
-    this.tabs([["旅の記録",()=>g.open("journal"),!p.category],["図鑑",()=>g.open("journal",{category:"guide"}),p.category==="guide"],
+    this.tabs([["旅の記録",()=>g.open("journal"),true],["図鑑",()=>g.open("dex",{back:{id:"journal"}}),false],
       ["記録",()=>g.open("save"),false]]);
-    if(p.category==="guide") {
-      const found=Object.keys(g.s.lore).filter(id=>ENEMIES[id]);
+    this.frame(47,264,309,99);this.icon("map",69,285,3);
+    this.text("第"+g.s.chapter+"章",120,292,20,GOLD);
+    this.text(g.area.title,120,326,15,COOL);
+    Object.entries({body:["玉座庭","sealIcon"],seal:["黒鉄の板","sealIcon"],crown:["冠","coin"],rewindSeen:["肋の渡り板","rope"],rescued:["荷車の綱","rope"],
+      C1:["尾根の火","tool_031"]}).filter(([k])=>g.s.flags[k]).slice(0,5).forEach(([k,[title,art]],i)=>this.row(379+i*60,title,art,"",null));
+  }
+  dex() {
+    const {g}=this,{panel:p,s}=g;
+    const group=p.category||"enemies";
+    this.modal("図鑑","book");
+    this.tabs([["魔物","enemies"],["装備","items"],["素材","materials"]].map(([label,k])=>
+      [label,()=>g.open("dex",{...p,category:k,page:0}),group===k]));
+    if(group==="enemies"){
+      const found=Object.keys(s.lore).filter(id=>ENEMIES[id]);
       if(!found.length)this.shelf("白紙の頁","book");
-      this.pageRows(found,p.page,255,id=>{
-        const e=ENEMIES[id];return [e.name,e.art,g.s.lore[id].wins+"回",()=>g.open("enemyPage",{code:id})];
-      },6);
-    } else {
-      this.frame(47,264,309,99);this.icon("map",69,285,3);
-      this.text("第"+g.s.chapter+"章",120,292,20,GOLD);
-      this.text(g.area.title,120,326,15,COOL);
-      Object.entries({body:["玉座庭","sealIcon"],seal:["黒鉄の板","sealIcon"],crown:["冠","coin"],rewindSeen:["肋の渡り板","rope"],rescued:["荷車の綱","rope"],
-        C1:["尾根の火","tool_031"]}).filter(([k])=>g.s.flags[k]).slice(0,5).forEach(([k,[title,art]],i)=>this.row(379+i*60,title,art,"",null));
+      this.pageRows(found,p.page,255,id=>[ENEMIES[id].name,ENEMIES[id].art,
+        "出会った回数　"+(s.lore[id].seen??s.lore[id].wins),
+        ()=>g.open("enemyPage",{code:id,back:{id:"dex",details:{...p}}})],6);
+      return;
     }
+    if(group==="items"){
+      const collected=Object.keys(ITEMS).filter(code=>s.claims["item:"+code]);
+      if(!collected.length)this.shelf("白紙の頁","book");
+      this.pageRows(collected,p.page,255,code=>{
+        const item=ITEMS[code];
+        const grade=Math.max(s.records?.item?.[code]??0,...[...s.bag,...s.chest].filter(x=>x.code===code).map(i=>i.grade));
+        return [item.name,item.art,SLOTS[item.slot]+"　見つけた色 "+GRADES[grade],null,{colour:GRADE_TINT[grade]}];
+      },6);
+      return;
+    }
+    const ids=Object.keys(MATERIALS).filter(code=>s.records?.material?.[code]||s.materials[code]);
+    if(!ids.length)this.shelf("白紙の頁","book");
+    this.pageRows(ids,p.page,255,code=>{
+      const m=MATERIALS[code],count=s.records?.material?.[code]||s.materials[code];
+      return [m.name,m.art,"見つけた数　"+count,null];
+    });
   }
   save() {
     this.modal("記録","book");
     const {g}=this;
-    for(let i=0;i<3;i++){
-      const s=g.book.get(i), y=226+i*147;
-      this.frame(47,y,309,133);
-      this.icon("map",63,y+21,3);
-      this.text(i===0?"自動記録":"旅の記録 "+i,118,y+28,18,GOLD);
-      this.text(s?"第"+s.chapter+"章　"+(AREAS[s.position.area]?.title||""):"空の記録",118,y+54,13,COOL);
-      if(i&&g.s)this.button("記す",60,y+79,137,38,()=>g.saveSlot(i),false,"book");
-      if(s)this.button("読む",209,y+79,133,38,()=>g.load(i),false,"map");
+    for(let i=0;i<4;i++){
+      const s=g.book.get(i),y=210+i*113;
+      this.frame(47,y,309,104);
+      this.icon("map",62,y+18,2);
+      this.text(i===0?"自動記録":"旅の記録 "+i,98,y+22,16,GOLD);
+      if(s?.stamp){
+        const d=new Date(s.stamp);
+        const mm=String(d.getMinutes()).padStart(2,"0");
+        this.text((d.getMonth()+1)+"/"+d.getDate()+" "+d.getHours()+":"+mm,340,y+22,12,COOL,"right",{sans:true});
+      }
+      this.text(s?"第"+s.chapter+"章　"+(AREAS[s.position.area]?.title||""):"空の記録",98,y+44,13,COOL,"left",{max:235});
+      if(i&&g.s)this.button("記す",60,y+56,137,37,()=>g.saveSlot(i),false,"book");
+      if(s)this.button("読む",209,y+56,133,37,()=>g.load(i),false,"map");
     }
     if(g.s)this.button("表題へ",103,688,197,32,()=>g.toTitle());
   }
   result() {
     const {g}=this, entry=g.result, s=g.s;
+    this.links=[];
     this.modal(entry.victorious?"勝利":entry.stalemate?"引き上げた":"敗北",entry.victorious?"coin":"starterShield");
     this.frame(47,221,309,131,entry.victorious);
     if(entry.victorious) {
-      this.icon("coin",72,248,4);this.text(entry.gold+" G",135,272,20,GOLD);
-      this.text("経験 "+entry.xp,136,314,16,COOL);
+      this.icon("coin",72,244,4);this.text(entry.gold+" G",135,263,20,GOLD);
+      this.text("経験 "+entry.xp,136,294,16,COOL);
+      const material=MATERIALS[entry.mat];
+      this.icon(material.art,68,317,1);
+      this.text(material.name+" ×"+entry.quantity,88,326,12,PAPER);
+      if(entry.book){this.icon("book",240,317,1);this.text("技の本 ×1",258,326,12,PAPER);}
       if(entry.item){
         const grade=entry.item.grade,a=ITEMS[entry.item.code];
         this.row(366,a.name,a.art,GRADES[grade]+(entry.chest?"　受け取り箱":""),null,{on:true,colour:GRADE_TINT[grade]});
@@ -358,27 +612,50 @@ class GameUI {
           this.rec(46+(k*17)%49,413-t,2,2,GRADE_TINT[grade]);
         }
       }
-      else this.row(366,MATERIALS[entry.mat].name,MATERIALS[entry.mat].art,"× "+entry.quantity,null);
+      else if(entry.sold)this.row(366,"自動で売った",entry.soldArt,"＋ "+entry.sold+" G",null);
     } else {
       this.icon("starterShield",80,253,4);this.text("手当てを受けた",139,277,17,COOL);
     }
+    const party=s.formation.filter(Boolean),partyTop=entry.item||entry.sold?432:367;
+    const partyLeft=201-(party.length*78-4)/2;
+    party.forEach((id,i)=>{
+      const x=partyLeft+i*78,m=s.members[id],raised=entry.raised?.includes(id);
+      this.frame(x,partyTop,74,81,raised);
+      this.rec(x+8,partyTop+6,58,44,"#343c49");
+      this.person(id,x+21,partyTop+6,1);
+      this.text(CAST[id].name,x+37,partyTop+61,12,PAPER,"center",{max:64});
+      this.bar(x+8,partyTop+73,58,m.hp/stats(s,id).maxHp);
+      if(raised){this.mark(x+60,partyTop+12);}
+    });
     const reasons={cover:"かばった",stop:"大技を止めた",feed:"力を渡して大技",revive:"立て直した"};
     const recent=entry.reasons.filter((r,i,a)=>a.findIndex(t=>t.kind===r.kind&&t.actor===r.actor)===i).slice(0,3);
+    const firstReason=partyTop+92;
     recent.forEach((r,i)=>{
-      const y=437+i*66;this.frame(38,y,325,57);this.person(r.actor,52,y+12,1,true);
+      const y=firstReason+i*41;this.frame(38,y,325,38);this.person(r.actor,52,y+7,1,true);
       if(r.friend){
-        this.person(r.friend,84,y+12,1,true);
-        if(r.kind==="feed")this.rec(72+Math.floor(g.time/60)%16,y+29,3,1,"#b0dcf1");
-        if(r.kind==="cover")this.icon("starterShield",70,y+40,1);
-      }else this.icon("starterSword",83,y+15,2);
-      this.text(reasons[r.kind],136,y+21,15,GOLD);this.text(partyName(r.actor),136,y+40,12,COOL);
+        this.person(r.friend,84,y+7,1,true);
+        if(r.kind==="feed")this.rec(72+Math.floor(g.time/60)%16,y+23,3,1,"#b0dcf1");
+        if(r.kind==="cover")this.icon("starterShield",70,y+25,1);
+      }else this.icon("starterSword",82,y+7,2);
+      this.text(reasons[r.kind],124,y+20,14,GOLD);this.text(partyName(r.actor),350,y+20,12,COOL,"right",{max:97});
     });
+    const notes=Math.min(652,Math.max(partyTop+105,firstReason+recent.length*41+11));
+    if(entry.raised?.length){
+      this.mark(66,notes);this.text("レベルが上がった",81,notes,13,GOLD);
+    }
+    if(entry.healed){this.icon("herb",218,notes-6,1);this.text("薬草で "+entry.healed+"人が回復",235,notes,12,GREEN);}
     this.button("戻る",97,666,208,47,()=>g.leaveResult(),true,"map");
   }
   drawPanel() {
     const {id}=this.g.panel;
     const g=this.g;
     if(id==="party")this.party();
+    if(id==="menu")this.menu();
+    if(id==="status")this.status();
+    if(id==="settings")this.settings();
+    if(id==="dex")this.dex();
+    if(id==="itemPage")this.itemPage();
+    if(id==="toolTarget")this.toolTarget();
     if(["bag","equip","shop"].includes(id))this.inventory(id);
     if(id==="map")this.map();
     if(id==="journal")this.journal();
@@ -395,9 +672,11 @@ class GameUI {
       const e=ENEMIES[g.panel.code], image=g.bank.images[e.art];
       this.modal(e.name,"book");
       this.frame(46,235,310,267);
-      if(image)this.c.drawImage(image,U(201)-Math.floor(image.naturalWidth/2),U(354)-Math.floor(image.naturalHeight/2));
-      this.text("出会った回数　"+g.s.lore[g.panel.code].wins,201,477,14,GOLD,"center");
-      this.button("図鑑",109,655,184,43,()=>g.open("journal",{category:"guide"}),true,"book");
+      if(image)this.c.drawImage(image,uiDotX(this.c,201)-Math.floor(image.naturalWidth/2),uiDotY(this.c,354)-Math.floor(image.naturalHeight/2));
+      const entry=g.s.lore[g.panel.code];
+      this.text("出会った回数　"+(entry.seen??entry.wins),201,477,14,GOLD,"center");
+      this.text("倒した回数　"+entry.wins,201,529,14,COOL,"center");
+      this.button("図鑑",109,655,184,43,()=>g.panel.back?g.backPanel():g.open("dex"),true,"book");
     }
   }
   title() {
@@ -412,7 +691,7 @@ class GameUI {
     this.button("はじめから",95,547,212,54,()=>g.newGame(),!g.book.get(0),"starterSword");
     const slots=g.book.get(0);
     if(slots)this.button("つづきから",95,611,212,54,()=>g.load(0),true,"book");
-    if(g.book.get(1)||g.book.get(2))this.button("記録を開く",95,675,212,48,()=>g.open("titleSave"),false,"map");
+    if(g.book.get(1)||g.book.get(2)||g.book.get(3))this.button("記録を開く",95,675,212,48,()=>g.open("titleSave"),false,"map");
     if(g.panel?.id==="titleSave"){this.links=[];this.save();}
     if(g.panel?.id==="newConfirm"){
       this.links=[];this.modal("新しい旅","book");
@@ -421,5 +700,6 @@ class GameUI {
       this.button("戻る",207,652,148,49,()=>g.closePanel());
     }
     if(g.book.error)this.text("記録を開けません",201,764,14,COOL,"center");
+    else if(g.loadingArt||g.artError)this.text(g.loadingArt?"絵を読み込み中":"絵を読み込めませんでした",201,764,14,COOL,"center");
   }
 }
