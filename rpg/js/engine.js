@@ -59,8 +59,8 @@ const SKILLS = {
   bodyslam:  { nm: "ぷるぷる体当たり", bp: 2, rank: "E", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
   rootlash:  { nm: "根の鞭", bp: 7, rank: "B", tg: "row", at: ["打"], dist: "遠", dir: "直接", kind: "攻撃" },
   gnaw:      { nm: "かじりつき", bp: 2, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
-  // カイ（先のとがった長い櫂＝槍の扱い。突）。技の名前を変えても、記録の中の名前（oarhit など）はそのまま
-  oarhit:    { nm: "櫂突き", bp: 2, rank: "D", tg: "one", at: ["突"], stun: 35, dist: "近", dir: "直接", kind: "攻撃" },
+  // カイ（先に鉄をはめた長い棹＝槍の扱い。突）。技の名前を変えても、記録の中の名前（oarhit など）はそのまま
+  oarhit:    { nm: "棹突き", bp: 2, rank: "D", tg: "one", at: ["突"], stun: 35, dist: "近", dir: "直接", kind: "攻撃" },
   waterwheel:{ nm: "水切り", bp: 6, rank: "C", tg: "row", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   rapidsplit:{ nm: "瀬割り", bp: 9, rank: "B", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   // リゼット（小剣）
@@ -133,14 +133,14 @@ const GEAR = {
   longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
   ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
   oldblade:  { slot: "weapon", wt: "sword", nm: "古木の守り刀", rank: "S", pow: 18, st: { str: 3, agi: 2 }, ps: "w_bp", icon: "eq_sword_04" }, // 林の宝箱だけ
-  oar:       { slot: "weapon", wt: "spear", nm: "渡しの櫂", rank: "B", pow: 12, st: { vit: 1 }, price: 60, icon: "eq_spear_01" },
+  oar:       { slot: "weapon", wt: "spear", nm: "渡しの棹", rank: "B", pow: 12, st: { vit: 1 }, price: 60, icon: "eq_spear_01" },
   oakclub:   { slot: "weapon", wt: "club", nm: "樫の棍棒", rank: "B", pow: 13, st: { str: 1 }, price: 130, icon: "eq_club_02" },
   thinblade: { slot: "weapon", wt: "rapier", nm: "旅の小剣", rank: "B", pow: 10, st: { dex: 1 }, price: 60, icon: "eq_rapier_01" },
   needle:    { slot: "weapon", wt: "rapier", nm: "細身の剣", rank: "B", pow: 11, st: { dex: 2 }, price: 130, icon: "eq_rapier_02" },
   wraps:     { slot: "weapon", wt: "fist", nm: "革の拳当て", rank: "B", pow: 9, st: { agi: 1 }, price: 60, icon: "eq_fist_01" },
   ironfist:  { slot: "weapon", wt: "fist", nm: "鉄の拳当て", rank: "B", pow: 10, st: { str: 1 }, price: 130, icon: "eq_fist_02" },
   mosssword: { slot: "weapon", wt: "sword", nm: "苔むす古刀", rank: "A", pow: 15, st: { str: 2, vit: 1 }, icon: "eq_sword_03" },
-  sennengai: { slot: "weapon", wt: "spear", nm: "千年櫂", rank: "S", pow: 19, st: { str: 3, vit: 3 }, ps: "w_bp", icon: "eq_spear_04" }, // 苔むす祠の奥だけ
+  sennengai: { slot: "weapon", wt: "club", nm: "千年櫂", rank: "S", pow: 19, st: { str: 3, vit: 3 }, ps: "w_bp", icon: "eq_club_04" }, // 苔むす祠の奥だけ
   // 鎧・盾・飾り
   tunic:     { slot: "armor", kind: "服", nm: "麻の服", rank: "B", st: { vit: 1 }, res: { 斬: 5, 打: 5, 突: 5 }, price: 40, icon: "eq_vest_01" },
   cloak:     { slot: "armor", kind: "外套", nm: "旅の外套", rank: "B", st: { wil: 1 }, res: { 熱: 8, 冷: 8, 雷: 8 }, price: 60, icon: "eq_cloak_01" },
