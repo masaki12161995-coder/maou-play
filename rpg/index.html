@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>戦闘の試作</title>
+<style>
+html,body{margin:0;height:100%;background:#0b0d14;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body{display:flex;align-items:center;justify-content:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;color:#f3e4c8}
+#stage{position:relative;overflow:hidden}
+#field{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+#hud{position:absolute;inset:0}
+.px{position:absolute}
+.frame{background:#1b1a26;border:2px solid #8a6a4a;box-shadow:0 0 0 1px #000,inset 0 0 0 1px #3a3040;border-radius:4px}
+.face{background-repeat:no-repeat;image-rendering:pixelated}
+/* 行動の順番 */
+#tl{display:flex;align-items:center;gap:3px;padding:3px 6px}
+#tl .hg{color:#d9b37a;font-size:14px;width:14px;text-align:center}
+#tl .ic{position:relative;overflow:hidden;border:1px solid #5a4a3e;border-radius:3px;background:#2a2f40}
+#tl .ic.foe{background:#3a2a30}
+#tl .ic.now{border-color:#ffd88a;box-shadow:0 0 0 1px #ffd88a}
+/* 技の名前 */
+#banner{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;color:#ffe3a8;text-shadow:0 2px 0 #000;opacity:0;transition:opacity .15s}
+#banner.on{opacity:1}
+#banner.act{color:#fff;background:linear-gradient(#5a3a20,#2a1b14);border-color:#e8b45a}
+#banner .k{font-size:11px;color:#c9a46c;border:1px solid #6a5040;border-radius:3px;padding:1px 4px}
+/* 下の仲間の札 */
+.card{overflow:hidden}
+.card.on{border-color:#ffd88a;box-shadow:0 0 0 1px #000,0 0 10px #ffd88a88}
+.card .bar{position:absolute;left:5%;right:5%;height:5%;background:#1c252b;border-radius:1px;overflow:hidden}
+.card .bar i{position:absolute;left:0;top:0;bottom:0;background:#6ab261}
+.card .bar.g i{background:#4f91c2}
+.card .bar.g.full i{background:#ffcf6a;animation:full .5s infinite alternate}
+@keyframes full{to{background:#fff3c4}}
+.card.ko .face{filter:grayscale(1) brightness(.45)}
+.card .sh{position:absolute;right:3px;top:3px;font-size:10px;color:#9fd4ff;font-weight:800;font-family:system-ui,sans-serif;text-shadow:0 1px 0 #000}
+/* 数字と知らせ */
+.num{position:absolute;font-family:"Avenir Next",system-ui,sans-serif;font-weight:900;color:#fff;text-shadow:0 2px 0 #000,2px 0 0 #000,-2px 0 0 #000,0 -2px 0 #000;pointer-events:none;transform:translate(-50%,-50%);animation:pop .9s ease-out forwards;white-space:nowrap}
+.num.crit{color:#ffd23a}
+.num.heal{color:#9ff0a0}
+.num.guard{color:#9fd4ff}
+.num.foe{color:#ff9a8a}
+@keyframes pop{0%{transform:translate(-50%,-30%) scale(.6);opacity:0}15%{transform:translate(-50%,-60%) scale(1.15);opacity:1}70%{transform:translate(-50%,-80%) scale(1);opacity:1}100%{transform:translate(-50%,-110%);opacity:0}}
+.note{position:absolute;transform:translate(-50%,0);font-size:11px;font-weight:800;color:#ffe08a;background:#000a;border:1px solid #c9963a;border-radius:3px;padding:1px 5px;white-space:nowrap;pointer-events:none;animation:note 1.1s ease-out forwards}
+@keyframes note{0%{opacity:0;transform:translate(-50%,4px)}15%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-8px)}}
+.st{position:absolute;display:flex;gap:2px;transform:translateX(-50%)}
+.st b{font-size:9px;font-family:system-ui,sans-serif;font-weight:800;padding:0 3px;border-radius:2px;line-height:13px}
+.st .burn{background:#b8452a;color:#ffe0c0}
+.st .mark{background:#2a5aa8;color:#d8ecff}
+/* ボタン */
+.btn{display:flex;align-items:center;justify-content:center;font-family:inherit;color:#f3e4c8;font-weight:700;cursor:pointer}
+.btn:active{filter:brightness(1.3)}
+.veil{position:absolute;inset:0;background:#0b0d14d8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.veil .big{font-size:34px;font-weight:800;color:#ffd88a;text-shadow:0 3px 0 #000}
+.rank{display:grid;grid-template-columns:36px 64px 1fr 44px;align-items:center;gap:6px;width:86%;font-size:13px}
+.rank .bar2{height:8px;background:#2a2430;border-radius:2px;overflow:hidden}
+.rank .bar2 i{display:block;height:100%;background:linear-gradient(90deg,#c9963a,#ffd88a)}
+.rank .v{text-align:right;font-family:"Avenir Next",system-ui,sans-serif;font-weight:800}
+.pick{width:86%;padding:12px;font-size:16px}
+.pick small{display:block;font-size:11px;color:#c9b08c;font-weight:400;margin-top:2px}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="field" width="201" height="437"></canvas><div id="hud"></div></div>
+<script src="js/scene.js?v=1"></script>
+<script src="js/engine.js?v=1"></script>
+<script src="js/view.js?v=1"></script>
+</body>
+</html>
