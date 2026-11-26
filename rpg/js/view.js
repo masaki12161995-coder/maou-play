@@ -11,9 +11,11 @@ ctx.imageSmoothingEnabled = false;
 let K = 2;
 
 // ---------- 位置（ドット） ----------
-const FOE_X = [118, 76, 34], FOE_Y = [182, 270, 358];          // 敵：列0がこちら寄り
-const HERO_X = [190, 232, 274], HERO_Y = [152, 205, 258, 311, 364]; // 仲間：列0が敵寄り
-const BIG = { x: 78, y: 362, s: 2 };
+// 画面の点は2倍に細かい（canvasは602×1310）。素材の絵は元の大きさのまま置くので、配置の数字（ドット）では半分の大きさになる
+const Q = 0.5;
+const FOE_X = [128, 94, 60], FOE_Y = [212, 262, 312];             // 敵：列0がこちら寄り
+const HERO_X = [194, 226, 258], HERO_Y = [196, 229, 262, 295, 328]; // 仲間：列0が敵寄り。段の間は絵の高さ（30）より広い
+const BIG = { x: 86, y: 316 };
 const PANEL = { y: 398 };
 const BAR = { y: 604, h: 22 };
 const SHEET = { fw: 48, fh: 60 };
@@ -55,13 +57,14 @@ const icon = (a, size) => `<b class="at" style="background:${EL[a]};width:${d(si
 function heroPos(u) { return { x: HERO_X[u.c], y: HERO_Y[u.r] }; }
 function foeBox(u) {
   const img = IM[u.img];
-  if (u.big) { const w = img.naturalWidth * BIG.s, h = img.naturalHeight * BIG.s; return { x: BIG.x, y: BIG.y, w, h, left: BIG.x - w / 2, top: BIG.y - h }; }
-  const x = FOE_X[u.c], y = FOE_Y[u.r], w = img.naturalWidth, h = img.naturalHeight;
+  const w = img.naturalWidth * Q, h = img.naturalHeight * Q;
+  if (u.big) return { x: BIG.x, y: BIG.y, w, h, left: Math.round(BIG.x - w / 2), top: BIG.y - h };
+  const x = FOE_X[u.c], y = FOE_Y[u.r];
   return { x, y, w, h, left: Math.round(x - w / 2), top: y - h };
 }
 function where(u) {
   if (u.side === 1) { const b = foeBox(u); return { x: b.x, y: b.top + b.h * 0.45 }; }
-  const p = heroPos(u); return { x: p.x, y: p.y - 34 };
+  const p = heroPos(u); return { x: p.x, y: p.y - 20 };
 }
 function byId(id) { return [...st.party, ...st.foes].find(u => u.id === id); }
 
@@ -75,7 +78,7 @@ function buildHud() {
   els.foeHit = {};
   st.foes.forEach(u => {
     const b = foeBox(u);
-    const hit = px(div("px foehit", ""), b.left - 3, b.top - 4, b.w + 6, b.h + 12);
+    const hit = px(div("px foehit", ""), b.left - 6, b.top - 8, b.w + 12, b.h + 16); // 小さくなったぶん、押せる範囲は広めに
     hit.onclick = () => { if (u.down || ended) return; st.focus = u.id; refresh(); };
     hud.appendChild(hit); els.foeHit[u.id] = hit;
   });
@@ -172,13 +175,15 @@ function white(img) {
   WHITE.set(img, c); return c;
 }
 function hpBar(x, y, w, ratio) {
-  ctx.fillStyle = "#120c10"; ctx.fillRect(x - 1, y - 1, w + 2, 5);
-  ctx.fillStyle = "#3a2531"; ctx.fillRect(x, y, w, 3);
-  ctx.fillStyle = ratio < 0.25 ? "#e0604a" : "#5fc26a"; ctx.fillRect(x, y, Math.ceil(w * ratio), 3);
+  ctx.fillStyle = "#120c10"; ctx.fillRect(x - 0.5, y - 0.5, w + 1, 3);
+  ctx.fillStyle = "#3a2531"; ctx.fillRect(x, y, w, 2);
+  ctx.fillStyle = ratio < 0.25 ? "#e0604a" : "#5fc26a"; ctx.fillRect(x, y, Math.ceil(w * ratio * 2) / 2, 2);
 }
 function draw(t) {
-  ctx.clearRect(0, 0, W, H);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, cv.width, cv.height);
   if (scene) ctx.drawImage(scene, 0, 0);
+  ctx.setTransform(2, 0, 0, 2, 0, 0); // ここから先はドットの座標で描く
   if (st) {
     ctx.fillStyle = "#000a"; ctx.fillRect(0, 44, W, 52); // 上の帯の下地
     for (const u of st.foes) { // 敵（右向きにして描く）
@@ -186,28 +191,29 @@ function draw(t) {
       if (u.down && !(f.fade > t)) continue;
       let ox = 0;
       if (f.shake > t) ox = Math.round(Math.sin(t / 18) * 2);
-      if (f.lunge > t) ox += 6;
+      if (f.lunge > t) ox += 4;
       ctx.save();
       if (u.down) ctx.globalAlpha = Math.max(0, (f.fade - t) / 500);
-      ctx.fillStyle = "#0006"; ctx.fillRect(b.x - Math.floor(b.w * 0.35), b.y - 2, Math.floor(b.w * 0.7), 3);
+      ctx.fillStyle = "#0006"; ctx.fillRect(b.x - Math.floor(b.w * 0.35), b.y - 1, Math.floor(b.w * 0.7), 1.5);
       ctx.translate(Math.round(b.left + ox + b.w), Math.round(b.top)); ctx.scale(-1, 1);
       ctx.drawImage(img, 0, 0, b.w, b.h);
       if (f.flash > t) { ctx.globalAlpha = 0.7; ctx.drawImage(white(img), 0, 0, b.w, b.h); }
       ctx.restore();
-      if (!u.down) { const bw = Math.min(40, Math.max(24, Math.floor(b.w * 0.6))); hpBar(b.x - Math.floor(bw / 2), b.y + 3, bw, u.hp / u.max); }
+      if (!u.down) { const bw = Math.min(30, Math.max(16, Math.floor(b.w * 0.7))); hpBar(b.x - Math.floor(bw / 2), b.y + 2, bw, u.hp / u.max); }
     }
     for (const u of [...st.party].sort((a, b) => heroPos(a).y - heroPos(b).y)) { // 仲間（左向き）。奥から描く
       const p = heroPos(u), img = IM[u.img], f = fx[u.id] || {}, ps = pose[u.id];
       let col = 1, row = 1, ox = 0;
       if (u.down) { col = 2; row = 4; }
-      else if (ps && ps.until > t) { row = 4; col = ps.kind === "magic" ? 0 : 1; if (ps.kind === "phys") ox = -10; }
+      else if (ps && ps.until > t) { row = 4; col = ps.kind === "magic" ? 0 : 1; if (ps.kind === "phys") ox = -6; }
       if (f.shake > t) ox += Math.round(Math.sin(t / 18) * 2);
-      ctx.fillStyle = "#0007"; ctx.fillRect(p.x - 12, p.y - 2, 24, 3);
+      const fw = SHEET.fw * Q, fh = SHEET.fh * Q;
+      ctx.fillStyle = "#0007"; ctx.fillRect(p.x - 6, p.y - 1, 12, 1.5);
       ctx.save(); if (u.down) ctx.globalAlpha = 0.8;
-      ctx.drawImage(img, col * SHEET.fw, row * SHEET.fh, SHEET.fw, SHEET.fh, p.x - 24 + ox, p.y - 60, SHEET.fw, SHEET.fh);
-      if (f.flash > t) { ctx.globalAlpha = 0.6; ctx.drawImage(whiteCell(img, col, row), p.x - 24 + ox, p.y - 60); }
+      ctx.drawImage(img, col * SHEET.fw, row * SHEET.fh, SHEET.fw, SHEET.fh, p.x - fw / 2 + ox, p.y - fh, fw, fh);
+      if (f.flash > t) { ctx.globalAlpha = 0.6; ctx.drawImage(whiteCell(img, col, row), p.x - fw / 2 + ox, p.y - fh, fw, fh); }
       ctx.restore();
-      hpBar(p.x - 15, p.y + 3, 30, u.hp / u.max);
+      hpBar(p.x - 8, p.y + 2, 16, u.hp / u.max);
     }
   }
   requestAnimationFrame(draw);

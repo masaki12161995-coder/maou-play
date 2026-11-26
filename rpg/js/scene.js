@@ -1,5 +1,5 @@
 // 戦闘の背景。下書きは 201×437 の座標で描き、SF倍の細かさの画素に置き直す（人物の絵と同じ点の細かさにする）
-const SW=201, SH=437, SF=1.5;
+const SW=201, SH=437, SF=3; // 絵を元の大きさで置くため、画面の点を2倍に細かくした
 const sc = v => Math.round(v * SF);
 function rect(ctx, color, x, y, w, h) {
   ctx.fillStyle = color;
