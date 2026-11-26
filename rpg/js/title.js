@@ -42,12 +42,12 @@ function paint() {
   for (let px2 = 0; px2 < W; px2++) { const gh = 26 + Math.sin(px2 * 0.045) * 9 + Math.sin(px2 * 0.21) * 3; x.fillRect(px2, H - Math.round(gh), 1, Math.round(gh)); if (q() > 0.45) x.fillRect(px2, H - Math.round(gh) - 1 - Math.floor(q() * 6), 1, 7); }
   return c;
 }
-// 小舟と、櫂を持つ人（影絵）
+// 小舟と、棹をさす人（影絵）
 function boat(x, bx, by) {
   x.fillStyle = "#0c0a18";
   x.fillRect(bx - 17, by, 34, 3); x.fillRect(bx - 14, by + 3, 28, 2); x.fillRect(bx - 20, by - 1, 4, 2); x.fillRect(bx + 16, by - 1, 4, 2);
   x.fillRect(bx + 4, by - 13, 5, 13); x.fillRect(bx + 4, by - 18, 5, 5); x.fillRect(bx + 3, by - 17, 7, 3); // 人
-  x.save(); x.translate(bx + 8, by - 10); x.rotate(-0.5); x.fillRect(-1, -12, 1.5, 30); x.fillRect(-2, 14, 3.5, 6); x.restore(); // 櫂
+  x.save(); x.translate(bx + 8, by - 12); x.rotate(-0.38); x.fillRect(-0.7, -14, 1.4, 40); x.restore(); // 棹（水の中へ斜めに）
 }
 const LIGHTS = (() => { const r = rng(99); return Array.from({ length: 26 }, () => ({ x: r() * W, y: r(), sp: 0.012 + r() * 0.02, ph: r() * 6.28, big: r() > 0.7, warm: r() > 0.4 })); })();
 function draw(now) {

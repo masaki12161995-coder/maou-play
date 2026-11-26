@@ -15,7 +15,7 @@ function hut() {
     id: "hut", nm: "渡し小屋", g, tier: 0, bg: null, inside: 1, music: "town",
     objs: [
       { t: "bed", x: 1, y: 1, w: 1, h: 2, talk: "hutBed" },
-      { t: "oarRack", x: 4, y: 0, text: ["長い櫂。舟を漕ぐにも、身を守るにも使う。"] },
+      { t: "oarRack", x: 4, y: 0, text: ["先に鉄をはめた長い棹。舟を押すにも、身を守るにも使う。"] },
       { t: "pillar", x: 2, y: 0, text: ["背丈の傷。毎年、村長が刻んでくれた。"] },
       { t: "shelf", x: 5, y: 1, text: ["不格好な木彫りの人形。角が片方欠けている。"] },
     ],
