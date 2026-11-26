@@ -252,6 +252,14 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .facebtn.small{border:1px solid #4a3e36;border-radius:3px;background:#191822}
 .facebtn.off{opacity:.3;cursor:default}
 .facebtn.small.sel{border-color:#ffd88a}
+.titlelayer{position:absolute;overflow:hidden}
+.ttl{position:absolute;text-align:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;font-weight:800;color:#ffeec8;letter-spacing:.14em;text-indent:.14em;white-space:nowrap;text-shadow:0 2px 0 #1a0f2a,0 0 14px #ffb86a88,0 0 2px #000}
+.ttl1{color:#f3dcb4}
+.ttl2{background:linear-gradient(#fff6dc,#ffd88a 55%,#e0a050);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 2px 0 #1a0f2a) drop-shadow(0 0 10px #ffb86a66)}
+.ttlline{position:absolute;background:linear-gradient(90deg,transparent,#ffd88a,transparent)}
+.ttlbtn{position:absolute;box-sizing:border-box;text-align:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;font-weight:800;color:#e8dcc8;letter-spacing:.12em;text-indent:.12em;background:#12101ecc;border:1px solid #6a5a7a;border-radius:4px;cursor:pointer;white-space:nowrap}
+.ttlbtn.main{color:#ffe9b8;border:2px solid #c9a264;background:#1e1830e0;box-shadow:0 0 0 1px #000,0 0 12px #ffb86a44}
+.ttlbtn:active{filter:brightness(1.35)}
 .pgbtn{display:flex;align-items:center;justify-content:center;padding:0}
 .pgbtn.off{opacity:.25;cursor:default}
 .tile.empty{border-style:dashed;opacity:.75}
@@ -274,15 +282,16 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/dom.js?v=43"></script>
-<script src="js/engine.js?v=43"></script>
-<script src="js/scene.js?v=43"></script>
-<script src="js/tiles.js?v=43"></script>
-<script src="js/game.js?v=43"></script>
-<script src="js/maps.js?v=43"></script>
-<script src="js/view.js?v=43"></script>
-<script src="js/ui.js?v=43"></script>
-<script src="js/field.js?v=43"></script>
-<script src="js/main.js?v=43"></script>
+<script src="js/dom.js?v=44"></script>
+<script src="js/engine.js?v=44"></script>
+<script src="js/scene.js?v=44"></script>
+<script src="js/tiles.js?v=44"></script>
+<script src="js/game.js?v=44"></script>
+<script src="js/maps.js?v=44"></script>
+<script src="js/view.js?v=44"></script>
+<script src="js/ui.js?v=44"></script>
+<script src="js/field.js?v=44"></script>
+<script src="js/title.js?v=44"></script>
+<script src="js/main.js?v=44"></script>
 </body>
 </html>

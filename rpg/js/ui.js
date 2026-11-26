@@ -353,8 +353,6 @@ function formation(L, redraw) {
     faceStrip(L, 12, 392, 280, bench, { sel: bsel, pg: pgBench, pick: hi => { if (fsel >= 0) { put(fsel, hi); return; } bsel = bsel === hi ? null : hi; redraw(); } }, redraw);
     if (bsel != null) { const h = BT.HEROES[bsel]; T(L, 12, 438, 277, 16, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>　${BT.WTYPE[h.wt].nm}`, 10, "name"); }
   }
-  const r = A(L, div("frame btn chip dimchip", "はじめから"), 189, 596, 100, 24); r.style.fontSize = d(9.5);
-  r.onclick = async () => { const k = await choose("", "記録を消して、はじめから遊びますか？", ["はじめから", "やめる"]); if (k === 0) { GS.reset(); try { localStorage.removeItem("rpgCards1"); } catch (e) {} location.reload(); } else redraw(); };
 }
 
 // ---------- 店 ----------

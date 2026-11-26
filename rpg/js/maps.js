@@ -37,10 +37,6 @@ function town() {
       { id: "lady", x: 7, y: 7, img: "person_070", dir: 0, nm: "町の人", talk: "lady" },
       { id: "gate", x: 8, y: 21, img: "person_080", dir: 0, nm: "門番", talk: "gate" },
       { id: "cards", x: 13, y: 21, img: "person_101", dir: 0, nm: "札売り", talk: "cardshop" },
-      // 仕組みの試し（仮）
-      { id: "dojo", x: 15, y: 20, img: "person_088", dir: 1, nm: "稽古場の主", talk: "dojo" },
-      { id: "roy", x: 5, y: 20, img: "person_114", dir: 2, nm: "ロイ", talk: "roy", when: g => !g.roster.includes(5) },
-      { id: "sera", x: 15, y: 7, img: "person_033", dir: 1, nm: "セラ", talk: "sera", when: g => !g.roster.includes(6) },
     ],
     foes: [], chests: [],
   };

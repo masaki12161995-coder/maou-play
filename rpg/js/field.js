@@ -269,38 +269,6 @@ async function openChest(c) {
 }
 const stage1 = () => !!G().flags.boss;
 const TALK = {
-  // ---- 仕組みの試し（仮）：一人の決闘・人間の一団・負けても進む戦い・仲間の出入り ----
-  dojo: async n => {
-    const k = await UI.choose(n.nm, "ここは稽古場だ。腕を試していくか？", ["一騎打ち（レオン1人）", "雇われ兵の一団と戦う", "黒衣の将に挑む", "やめる"]);
-    if (k === 0) {
-      await UI.say(n.nm, ["一対一だ。仲間は手を出すなよ。"]);
-      const r = await battle({ nm: "一騎打ち", foes: [{ k: "h_sword", c: 0, r: 1 }], solo: LEADER, drops: [] });
-      if (r === "win") await UI.say(n.nm, ["見事だ。その剣、本物だな。"]); else if (r) await UI.say(n.nm, ["まだまだだな。出直してこい。"]);
-    } else if (k === 1) {
-      const r = await battle({ nm: "稽古場", foes: [{ k: "h_guard", c: 0, r: 0 }, { k: "h_guard", c: 0, r: 2 }, { k: "h_sword", c: 1, r: 1 }, { k: "h_archer", c: 2, r: 0 }, { k: "h_mage", c: 2, r: 2 }], drops: [] });
-      if (r === "win") await UI.say(n.nm, ["5人まとめて片づけるとはな。"]);
-    } else if (k === 2) {
-      await UI.say("黒衣の将", ["……来い。"]);
-      await battle({ nm: "稽古場", foes: [{ k: "h_lord", c: 1, r: 1 }], until: 3, loseOk: 1, drops: [] });
-      await UI.say("黒衣の将", ["その程度か。……だが、目は死んでいない。", "いずれ、また会おう。"]);
-      await UI.say(n.nm, ["……あの人には、まだ誰も勝てん。気にするな。"]);
-    }
-  },
-  roy: async n => {
-    const k = await UI.choose(n.nm, "あんたら、坑道へ行くんだろ？ おれも連れてってくれよ。剣なら少しは使える。", ["連れて行く", "やめる"]);
-    if (k === 0) await joinMember(5);
-  },
-  sera: async n => {
-    if (!G().flags.seraDuel) {
-      const k = await UI.choose(n.nm, "わたしは、自分より弱い人には付いて行かない。一対一で確かめさせて。", ["受けて立つ", "やめる"]);
-      if (k !== 0) return;
-      const r = await battle({ nm: "腕試し", foes: [{ k: "h_guard", c: 0, r: 1 }], solo: LEADER, drops: [] });
-      if (r !== "win") { if (r) await UI.say(n.nm, ["出直してきて。"]); return; }
-      G().flags.seraDuel = 1; GS.save();
-    }
-    await UI.say(n.nm, ["……参った。約束どおり、付いて行く。"]);
-    await joinMember(6);
-  },
   elder: n => UI.say(n.nm, stage1() ? ["坑道の主を追い払ってくれたそうじゃな！", "これで荷車が通れる。町の皆にかわって礼を言うぞ。", "崖崩れの片付けがすんだら、北へも行けるようになる。それまでゆっくりしていっておくれ。"]
     : ["わしはこの町の長じゃ。", "街道の先の古い坑道に、大きなオークが住みついてしもうた。", "荷車が襲われて、町に品が届かん。どうか追い払ってはくれんか。"]),
   inn: async n => {
