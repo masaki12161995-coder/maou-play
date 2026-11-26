@@ -89,18 +89,25 @@ function result(r) {
       else { const g = BT.GEAR[dp.it.id]; A(t, DM.iconImg(g.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(dp.it)}</span>`, 9.5, "name"); }
     });
     y += Math.ceil(drops.length / 2) * 32 + 8;
-    // 戦いの記録（本家と同じ：与えたダメージ・受けたダメージ・回復）。列ごとに一番の人を金色に
-    const cols = [["dealt", "与ダメージ"], ["taken", "被ダメージ"], ["healed", "回復"]], best = {};
-    cols.forEach(([k]) => { best[k] = Math.max(...r.growth.map(g => g[k] || 0)); });
-    const tb = A(L, div("frame rbox", ""), 12, y, 277, 22 + r.growth.length * 22);
-    cols.forEach(([k, nm], i) => T(tb, 96 + i * 60, 2, 56, 16, nm, 8, "label right"));
-    r.growth.forEach((g, j) => {
-      const yy = 20 + j * 22;
-      const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 18 * DM.K); A(tb, fc, 6, yy + 1, undefined, undefined);
-      T(tb, 28, yy, 64, 20, g.nm, 9.5, "name");
-      cols.forEach(([k], i) => { const v = g[k] || 0; T(tb, 96 + i * 60, yy, 56, 20, v.toLocaleString(), 10.5, "num2 right" + (v && v === best[k] ? " top" : v ? "" : " zero")); });
-    });
-    y += 22 + r.growth.length * 22 + 2;
+    // 戦いの記録：まず与えたダメージの多い順に、ゲージつきで並べる。上の札を押すと「被ダメージ」「回復」の順位に切り替わる
+    const cols = [["dealt", "与ダメージ", "#e8a23a"], ["taken", "被ダメージ", "#d8573a"], ["healed", "回復", "#5fc26a"]], n = r.growth.length;
+    const tabEls = cols.map(([k, nm], i) => { const b = A(L, div("frame btn chip", nm), 12 + i * 93, y, 91, 22); b.style.fontSize = d(9.5); b.onclick = e => { e.stopPropagation(); rank(k); }; return b; });
+    const tb = A(L, div("frame rbox", ""), 12, y + 24, 277, 6 + n * 22); tb.onclick = e => e.stopPropagation();
+    const rank = key => {
+      tb.innerHTML = ""; cols.forEach(([k], i) => tabEls[i].classList.toggle("sel", k === key));
+      const col = cols.find(c => c[0] === key)[2], list = r.growth.slice().sort((p, q) => (q[key] || 0) - (p[key] || 0)), max = Math.max(1, ...list.map(g => g[key] || 0));
+      list.forEach((g, j) => {
+        const yy = 3 + j * 22, v = g[key] || 0;
+        T(tb, 4, yy, 12, 20, `${j + 1}`, 8.5, "num2 center " + (j === 0 && v ? "top" : "zero"));
+        const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 18 * DM.K); A(tb, fc, 18, yy + 1, undefined, undefined);
+        T(tb, 40, yy, 54, 20, g.nm, 9.5, "name");
+        const bar = A(tb, div("rbar", `<i style="background:${col}"></i>`), 96, yy + 7, 118, 6);
+        requestAnimationFrame(() => { bar.firstChild.style.width = (v / max * 100) + "%"; });
+        T(tb, 216, yy, 54, 20, v.toLocaleString(), 10.5, "num2 right" + (j === 0 && v ? " top" : v ? "" : " zero"));
+      });
+    };
+    rank("dealt");
+    y += 24 + 6 + n * 22 + 2;
     y += 6;
     T(L, 14, y, 200, 14, "成長", 9, "label"); y += 16;
     // 成長：1段目に上がった能力、2段目に技ランクが上がった技。入りきらないときは、技ランクを「↑いくつ」にまとめて1段に
