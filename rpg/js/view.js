@@ -14,7 +14,8 @@ ctx.imageSmoothingEnabled = false;
 const Q = 0.5, QM = 0.75;
 // 敵は3列×3段、仲間は3列×5段（決まりが別）。真ん中の段の高さ（中心線）だけそろえる
 const FOE_X = [132, 90, 48], FOE_Y = [222, 284, 346];             // 敵：列0がこちら寄り。段の間62は「ふつう」の魔物（高さ50）を1.5倍にしても入る
-const HERO_X = [204, 234, 264], HERO_Y = [214, 249, 284, 319, 354]; // 仲間：列0が敵寄り。段の間35＝絵の高さ30＋足元の体力ゲージ4.5が、下の段の頭と重ならない幅
+const HERO_X = [204, 234, 264], HERO_Y = [204, 244, 284, 324, 364]; // 仲間：列0が敵寄り。段の間40＝絵の高さ30＋足元の体力ゲージとHPの数字（9.5）が、下の段の頭と重ならない幅
+const HP_BELOW = 9.5; // 足元から、体力ゲージとHPの数字の下まで
 const MID_Y = 284; // 中心線：敵の段1と仲間の段2
 let DEV_ERR = [];
 const DEV = /[?&]dev=1/.test(location.search); // 開発用：マスの線を出す（ふだんの画面には出さない）
@@ -165,6 +166,12 @@ function white(img) {
   const x = c.getContext("2d"); x.drawImage(img, 0, 0); x.globalCompositeOperation = "source-in"; x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
   WHITE.set(img, c); return c;
 }
+// HPの数字（今/最大）。ゲージのすぐ下に小さく
+function hpText(x, y, u) {
+  ctx.save(); ctx.font = "bold 4.6px 'Avenir Next', system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  const t = `${u.hp}/${u.max}`; ctx.lineWidth = 1.2; ctx.strokeStyle = "#000c"; ctx.strokeText(t, x, y);
+  ctx.fillStyle = u.hp <= 0 ? "#8a8090" : u.hp < u.max * 0.25 ? "#ff8a6a" : "#f0f4e8"; ctx.fillText(t, x, y); ctx.restore();
+}
 function hpBar(x, y, w, ratio) {
   ctx.fillStyle = "#120c10"; ctx.fillRect(x - 0.5, y - 0.5, w + 1, 3);
   ctx.fillStyle = "#3a2531"; ctx.fillRect(x, y, w, 2);
@@ -180,8 +187,10 @@ function draw(t) {
     ctx.drawImage(scene, 0, -up * 2, scene.width * 2, scene.height * 2);
     ctx.drawImage(scene, 0, scene.height - strip, scene.width, strip, 0, cv.height - strip * 2, scene.width * 2, strip * 2);
   }
-  ctx.setTransform(4, 0, 0, 4, 0, 0); // ここから先はドットの座標で描く
+  const qx = quake > t ? Math.round(Math.sin(t / 14) * 1.5 * 4) : 0; // 大きく当たったときの揺れ
+  ctx.setTransform(4, 0, 0, 4, qx, 0); // ここから先はドットの座標で描く
   if (DEV && st) devGrid();
+  if (st) drawEfx(t); // 範囲の光は人の後ろに
   if (st) {
     ctx.fillStyle = "#000a"; ctx.fillRect(0, 44, W, 52); // 上の帯の下地
     for (const u of st.foes) { // 敵（右向きにして描く）
@@ -214,16 +223,57 @@ function draw(t) {
       if (f.flash > t) { ctx.globalAlpha = 0.6; ctx.drawImage(whiteCell(img, col, row), p.x - fw / 2 + ox, p.y - fh, fw, fh); }
       ctx.restore();
       hpBar(p.x - 8, p.y + 2, 16, u.hp / u.max);
+      hpText(p.x, p.y + 5, u);
     }
   }
+  if (st) drawEfxTop(t);
   requestAnimationFrame(draw);
 }
+// ---------- 攻撃の見せ方（範囲の光・飛ぶもの・当たったときの絵） ----------
+let efx = [];
+const ACOL = { 斬: "#e8eef8", 打: "#ffd58a", 突: "#bfe4ff", 熱: "#ff8a3a", 冷: "#8ad8ff", 雷: "#ffe85a", 陽: "#fff0a0", 陰: "#b080ff" };
+function cellBox(u) { // その人・その敵が立つマスの四角（ドット）
+  if (u.side === 1) { if (u.big) return { x: 22, y: 168, w: 136, h: 186 }; const x = FOE_X[u.c], y = FOE_Y[u.r]; return { x: x - 21, y: y - 58, w: 42, h: 62 }; }
+  const x = HERO_X[u.c], y = HERO_Y[u.r]; return { x: x - 15, y: y - 34, w: 30, h: 44 };
+}
+function drawEfx(t) { efxPass(t, e => e.type === "area"); }
+function drawEfxTop(t) { efxPass(t, e => e.type !== "area"); efx = efx.filter(e => t < e.t0 + e.dur); }
+function efxPass(t, pick) {
+  for (const e of efx.filter(pick)) {
+    const k = Math.max(0, Math.min(1, (t - e.t0) / e.dur)); if (t < e.t0) continue;
+    ctx.save();
+    if (e.type === "area") { ctx.globalAlpha = 0.35 * (k < 0.2 ? k / 0.2 : 1 - (k - 0.2) / 0.8 * 0.6); ctx.fillStyle = e.col; ctx.fillRect(e.b.x, e.b.y, e.b.w, e.b.h); ctx.globalAlpha *= 1.6; ctx.strokeStyle = e.col; ctx.lineWidth = 0.6; ctx.strokeRect(e.b.x + 0.3, e.b.y + 0.3, e.b.w - 0.6, e.b.h - 0.6); }
+    else if (e.type === "shot") { // 矢や術の玉が飛ぶ
+      const x = e.x + (e.x2 - e.x) * k, y = e.y + (e.y2 - e.y) * k - Math.sin(k * Math.PI) * (e.arc || 0);
+      ctx.fillStyle = e.col; ctx.globalAlpha = 1; ctx.globalCompositeOperation = "lighter";
+      const ang = Math.atan2(e.y2 - e.y + (e.arc ? -Math.cos(k * Math.PI) * e.arc * 2 : 0), e.x2 - e.x);
+      if (e.arrow) { ctx.translate(x, y); ctx.rotate(ang); ctx.globalAlpha = 0.35; ctx.fillRect(-22, -0.8, 18, 1.6); ctx.globalAlpha = 1; ctx.fillStyle = "#d8c8a0"; ctx.fillRect(-10, -0.6, 14, 1.2); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(2, -2); ctx.lineTo(2, 2); ctx.fill(); }
+      else { ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.arc(x, y, 8, 0, 7); ctx.fill(); ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); ctx.globalAlpha = 1; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x, y, 2.2, 0, 7); ctx.fill(); }
+    } else if (e.type === "hit") hitArt(e, k);
+    ctx.restore();
+  }
+}
+function hitArt(e, k) {
+  const { x, y } = e, a = 1 - k * k, c = ACOL[e.at] || "#fff";
+  ctx.globalCompositeOperation = "lighter"; ctx.translate(x, y); ctx.scale(1.6, 1.6); ctx.translate(-x, -y); // 当たった絵は大きく明るく
+  ctx.globalAlpha = a; ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineCap = "round";
+  if (e.at === "斬") { ctx.lineWidth = 2.2 * a + 0.6; const L = 8 + 10 * Math.min(1, k * 3); ctx.beginPath(); ctx.moveTo(x - L, y - L); ctx.lineTo(x + L, y + L); ctx.stroke(); if (e.hits2) { ctx.beginPath(); ctx.moveTo(x + L, y - L); ctx.lineTo(x - L, y + L); ctx.stroke(); } }
+  else if (e.at === "打") { ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x, y, 3 + k * 10, 0, 7); ctx.stroke(); for (let i = 0; i < 6; i++) { const an = i * 1.047 + 0.3, r1 = 4 + k * 8, r2 = r1 + 4; ctx.beginPath(); ctx.moveTo(x + Math.cos(an) * r1, y + Math.sin(an) * r1); ctx.lineTo(x + Math.cos(an) * r2, y + Math.sin(an) * r2); ctx.stroke(); } }
+  else if (e.at === "突") { ctx.lineWidth = 2; const L = 16 * Math.min(1, k * 3); ctx.beginPath(); ctx.moveTo(x + 12 - L * 1.6, y); ctx.lineTo(x + 12, y); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, 1.5 + k * 5, 0, 7); ctx.stroke(); }
+  else if (e.at === "熱") { for (let i = 0; i < 9; i++) { const px = x + Math.sin(i * 2.3) * 8, py = y + 6 - k * (10 + (i % 3) * 5) - i % 4; ctx.globalAlpha = a * 0.9; ctx.fillStyle = i % 2 ? "#ffd04a" : "#ff6a2a"; ctx.beginPath(); ctx.arc(px, py, 2.4 * a + 0.6, 0, 7); ctx.fill(); } }
+  else if (e.at === "冷") { for (let i = 0; i < 6; i++) { const an = i * 1.047, r = 14 * (1 - k) + 2; ctx.save(); ctx.translate(x + Math.cos(an) * r, y + Math.sin(an) * r); ctx.rotate(an); ctx.fillRect(-2.5, -0.8, 5, 1.6); ctx.restore(); } }
+  else if (e.at === "雷") { ctx.lineWidth = 1.8; ctx.beginPath(); let px = x - 2, py = y - 40; ctx.moveTo(px, py); for (let i = 0; i < 5; i++) { px = x + (i % 2 ? 4 : -4); py += 8; ctx.lineTo(px, py); } ctx.stroke(); ctx.globalAlpha = a * 0.4; ctx.beginPath(); ctx.arc(x, y, 8, 0, 7); ctx.fill(); }
+  else if (e.at === "陽") { ctx.globalAlpha = a * 0.55; ctx.fillRect(x - 5, y - 40, 10, 48); ctx.globalAlpha = a; ctx.fillRect(x - 1.5, y - 40, 3, 48); }
+  else if (e.at === "陰") { ctx.lineWidth = 1.6; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(x, y, 3 + i * 4 + k * 6, k * 6 + i, k * 6 + i + 3.5); ctx.stroke(); } }
+  else { ctx.beginPath(); ctx.arc(x, y, 4 + k * 8, 0, 7); ctx.stroke(); }
+}
+
 // 開発用の点検：仲間3×5のどのマスの組み合わせ（どんな陣形）でも、絵と体力ゲージが重ならないか、陣形の決まりが正しいかを確かめる
 function devCheck() {
   const err = [];
   const box = (c, r, step) => { // 絵（1ドット＝Q）の幅いっぱい・頭の上〜体力ゲージの下。物理攻撃のときは6ドット前（左）に出る
     const x = HERO_X[c] - (step ? 6 : 0), y = HERO_Y[r];
-    return { l: x - SHEET.fw * Q / 2, r: x + SHEET.fw * Q / 2, t: y - SHEET.fh * Q, b: y + 4.5 };
+    return { l: x - SHEET.fw * Q / 2, r: x + SHEET.fw * Q / 2, t: y - SHEET.fh * Q, b: y + HP_BELOW };
   };
   const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
   const cells = []; for (let c = 0; c < 3; c++) for (let r = 0; r < 5; r++) cells.push([c, r]);
@@ -239,7 +289,7 @@ function devCheck() {
       if (seen.has(sl.c + "-" + sl.r)) err.push(`${F.nm}：同じマスに2人 ${sl.c}-${sl.r}`); seen.add(sl.c + "-" + sl.r);
     }
   }
-  const top = Math.min(...HERO_Y) - SHEET.fh * Q, bottom = Math.max(...HERO_Y) + 4.5;
+  const top = Math.min(...HERO_Y) - SHEET.fh * Q, bottom = Math.max(...HERO_Y) + HP_BELOW;
   if (top < 100) err.push("仲間の上の段が上の帯にかかる"); if (bottom > PANEL.y) err.push("仲間の下の段が下の枠にかかる");
   if (HERO_Y[2] !== MID_Y || FOE_Y[1] !== MID_Y) err.push("中心線がずれている");
   console[err.length ? "error" : "log"]("マス点検", err.length ? err : "OK");
@@ -287,12 +337,11 @@ function note(u, text) {
 
 // 技の名前：だれが使ったか分かるように、顔（敵は姿）と属性を添えて上の帯の下に出す
 function showBanner(a, e) {
-  els.banner.innerHTML = ""; els.banner.classList.toggle("on", !!e.sk); els.banner.classList.toggle("foe", a.side === 1);
-  if (!e.sk) return;
+  els.banner.innerHTML = ""; els.banner.classList.add("on"); els.banner.classList.toggle("foe", a.side === 1);
   const box = div("sbn", ""); box.style.height = d(22); box.style.padding = `0 ${d(10)} 0 ${d(3)}`; box.style.gap = d(5);
   if (a.side === 0) { const fc = spriteBox(IM[a.img], FACE[0], FACE[1], FACE[2], FACE[3], 18 * DM.K); fc.style.flex = "none"; box.appendChild(fc); }
   else { const im = IM[a.img], sc = Math.min(18 / im.naturalWidth, 18 / im.naturalHeight), i = document.createElement("img"); i.src = im.src; i.style.cssText = `width:${d(im.naturalWidth * sc)};height:${d(im.naturalHeight * sc)};image-rendering:pixelated;transform:scaleX(-1);flex:none`; box.appendChild(i); }
-  const s = BT.SKILLS[e.skill] || {}, at = s.at || [];
+  const s = BT.SKILLS[e.skill] || {}, at = s.at || (e.skill === "attack" && BT.WTYPE[a.wt] ? BT.WTYPE[a.wt].at : []);
   box.appendChild(div("sbn-nm", e.nm));
   if (at.length) box.appendChild(div("sbn-at", at.map(x => icon(x, 11)).join("")));
   els.banner.appendChild(box);
@@ -300,6 +349,7 @@ function showBanner(a, e) {
 
 // ---------- 進める ----------
 const wait = ms => new Promise(r => setTimeout(r, ms / spd()));
+let cur = null, quake = 0;
 async function turn() {
   if (busy || ended) return;
   busy = true;
@@ -309,17 +359,29 @@ async function turn() {
   refresh();
   for (const e of evs) {
     if (e.t === "act") {
-      const a = byId(e.u);
+      const a = byId(e.u), sk = BT.SKILLS[e.skill] || {}, idx = evs.indexOf(e);
+      cur = { a, sk, at: (sk.at || BT.WTYPE[a.wt].at || [])[0], ranged: sk.dist === "遠" || !!sk.magic || (e.skill === "attack" && a.wt === "bow"), first: true, hits: 0 };
       showBanner(a, e);
       if (a.side === 0) pose[a.id] = { kind: e.magic || e.kind === "回復" || e.kind === "防御" ? "magic" : "phys", until: now() + 650 / spd() };
       else fx[a.id] = { ...(fx[a.id] || {}), lunge: now() + 220 / spd() };
-      await wait(e.sk ? 360 : 220);
+      // 縦・横・全体の技は、当たるマスを先に光らせる
+      if (["col", "row", "all"].includes(sk.tg)) {
+        const tg = []; for (let j = idx + 1; j < evs.length && evs[j].t !== "act"; j++) if (evs[j].t === "hit" && !tg.includes(evs[j].d)) tg.push(evs[j].d);
+        tg.map(byId).forEach(u => efx.push({ type: "area", b: cellBox(u), col: a.side === 0 ? "#ffd88a" : "#ff5a4a", t0: now(), dur: 900 / spd() }));
+      }
+      await wait(e.sk ? 380 : 240);
     } else if (e.t === "hit") {
       const t = byId(e.d), p = where(t);
-      fx[t.id] = { ...(fx[t.id] || {}), flash: now() + 110 / spd(), shake: now() + 220 / spd() };
+      if (cur && cur.ranged && (cur.first || cur.sk.tg === "rand")) { // 遠くからの攻撃は、飛んでいく（ばらばらに当たる技は1本ずつ）
+        const s0 = where(cur.a), dt = cur.first ? 220 : 140; efx.push({ type: "shot", x: s0.x, y: s0.y, x2: p.x, y2: p.y, col: ACOL[cur.at] || "#fff", arrow: !cur.sk.magic, arc: cur.sk.magic ? 0 : 8, t0: now(), dur: dt / spd() });
+        await wait(dt);
+      }
+      if (cur) { cur.first = false; efx.push({ type: "hit", x: p.x, y: p.y, at: cur.at, hits2: (cur.hits++ % 2) === 1, t0: now(), dur: 380 / spd() }); }
+      fx[t.id] = { ...(fx[t.id] || {}), flash: now() + 110 / spd(), shake: now() + (e.weak ? 360 : 220) / spd() };
+      if (e.weak || e.v >= t.max * 0.3) quake = now() + 180 / spd();
       const tag = e.weak ? '<b class="tag weak">WEAK</b>' : e.resist ? '<b class="tag resist">RESIST</b>' : ""; // 弱点は赤、耐性は青（上の帯の▲▼と同じ色）
       num(p.x, p.y, tag + e.v, (t.side === 0 ? "foe" : "") + (e.weak ? " big" : ""), e.weak ? 19 : 16);
-      refresh(); await wait(140);
+      refresh(); await wait(150);
     } else if (e.t === "passive") { note(byId(e.u), e.nm + (e.v ? " " + e.v : "")); await wait(120); }
     else if (e.t === "status") { note(byId(e.d), e.nm); refresh(); await wait(160); }
     else if (e.t === "heal" || e.t === "revive") { const t = byId(e.d), p = where(t); num(p.x, p.y, (e.t === "revive" ? "復活 " : "") + e.v, "heal", 14); refresh(); await wait(60); }
