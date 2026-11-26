@@ -1730,7 +1730,9 @@ class Field {
     this.approachPlayed = false;
     this.paused = false;
     if(this.scroll){
-      this.scene=chapterBackdrop(scene,bank);
+      this.parts=scene.partPlan?new FieldParts(mode,scene,bank):null;
+      this.scene=this.parts?this.parts.canvas:chapterBackdrop(scene,bank);
+      if(this.parts)this.cellProps=[...this.cellProps,...scene.partPlan.blocks,...this.parts.blocks];
       this.centerCamera(0);
       this.ready=true;
       return;
@@ -1908,7 +1910,7 @@ class Field {
       const [cx,feet]=coordinate(npc.col,npc.row);
       return inBox(x-cx,y-feet,[-19,-50,20,8]);
     });
-    const clicked=clickedPerson ?? this.objects.find(object=>{
+    const clicked=this.parts?.tapMark(this,x,y) ?? clickedPerson ?? this.objects.find(object=>{
       const [cx,feet]=coordinate(object.col,object.row);
       const asset=object.image&&this.bank.stills[object.image];
       const whole=asset&&!(object.kind==="body"&&asset.naturalWidth<=asset.naturalHeight);
@@ -2081,18 +2083,25 @@ class Field {
     ctx.save();
     ctx.translate(-this.camera.x,-this.camera.y);
     ctx.drawImage(this.scene,0,0);
-    this.sceneryMotion(ctx,time);
-    for(const item of this.barriers){
-      if(this.visible(...coordinate(item.col,item.row)))chapterProp(ctx,item,this.bank,time);
-    }
-    for (const object of this.objects) {
-      if(this.scroll&&!this.visible(...coordinate(object.col,object.row)))continue;
-      if (object.kind || object.image) fixture(ctx,object,this.bank,this.shot?.freeze?0:time);
-    }
-    this.drawPeople(ctx,time);
-    if(this.scroll){
-      for(const item of this.backdrop.front || []) {
+    if(this.parts){
+      const activeTime=this.shot?.freeze?0:time;
+      this.parts.waterGlints(ctx,this,activeTime);
+      this.drawPeople(ctx,time,this.parts.drawScenery(ctx,this,activeTime));
+      this.parts.marks(ctx,this,time);
+    }else{
+      this.sceneryMotion(ctx,time);
+      for(const item of this.barriers){
         if(this.visible(...coordinate(item.col,item.row)))chapterProp(ctx,item,this.bank,time);
+      }
+      for(const object of this.objects){
+        if(this.scroll&&!this.visible(...coordinate(object.col,object.row)))continue;
+        if(object.kind||object.image)fixture(ctx,object,this.bank,this.shot?.freeze?0:time);
+      }
+      this.drawPeople(ctx,time);
+      if(this.scroll){
+        for(const item of this.backdrop.front||[]){
+          if(this.visible(...coordinate(item.col,item.row)))chapterProp(ctx,item,this.bank,time);
+        }
       }
     }
     this.drawIndicator(ctx,time);
@@ -2115,7 +2124,7 @@ class Field {
     this.camera.y=frame(focusY,this.scene.height,this.view.height);
     const ui=this.view.ui;
     if(ui&&!this.shot&&this.bank.people?.length){
-      const low=ui.dotY(168),high=ui.dotY(697),projected=focusY-this.camera.y;
+      const low=ui.dotY(this.parts?196:168),high=ui.dotY(this.parts?675:697),projected=focusY-this.camera.y;
       if(projected>high)this.camera.y=Math.round(focusY-high);
       else if(projected<low)this.camera.y=Math.round(focusY-low);
     }
@@ -2182,7 +2191,7 @@ class Field {
     }
   }
 
-  drawPeople(ctx,time) {
+  drawPeople(ctx,time,scenery=[]) {
     const cast=this.npcs.filter(npc=>!this.shot?.hidden?.includes(npc.sheet)).map(npc=>{
       let [x,y]=coordinate(npc.col,npc.row);
       const talking=this.interacting?.npc===npc && (this.paused || time-this.interacting.since<2500);
@@ -2214,8 +2223,14 @@ class Field {
       cast.push({x:lerp(sx,dx,a.q),y:lerp(sy,dy,a.q),facing:a.dir??direction(a.from,a.to),
         col:a.q>0&&a.q<1?stepColumn(time):STAND,sheet:this.bank.npcs[a.art]});
     }
-    cast.sort((a,b)=>a.y-b.y || (b.index??9)-(a.index??9));
+    cast.unshift(...scenery);
+    cast.sort((a,b)=>(a.depth??a.y)-(b.depth??b.y) || (b.index??9)-(a.index??9));
     for (const member of cast) {
+      if(member.prop){
+        if(member.item)fixture(ctx,member.item,this.bank,this.shot?.freeze?0:time);
+        else this.parts.drawPart(ctx,member,time);
+        continue;
+      }
       if (!member.sheet || this.scroll&&!this.visible(member.x,member.y)) continue;
       const x=Math.round(member.x);
       const y=Math.round(member.y);

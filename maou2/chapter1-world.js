@@ -354,7 +354,7 @@ function chapterOneScene(id,g){
   } else if(id==="gate"){
     go("climbGate","角影坂");
     if(f.ch1GateEye||f.ch1GateChain)go("gateCourt","玉座庭");
-    else put("gateHint",20,6,"gate","奥の止まり戸","gateHint",{});
+    else put("gateHint",20,7,"gate","奥の止まり戸","gateHint",{});
     aside("gateEye",19,9,"floorLight","綱の光を通す穴",()=>f.ch1GateEye?"c1GateReturn":"c1GateEye",{
       quest:"gate",glint:!f.ch1GateEye,look:f.ch1GateEye?1:0,onEnd:()=>{
         if(f.ch1GateEye)return;

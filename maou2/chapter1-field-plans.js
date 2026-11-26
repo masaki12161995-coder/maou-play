@@ -1,0 +1,289 @@
+"use strict";
+
+// Each row lists the terrain of a 48-dot field tile. Objects are placed by their feet.
+const FIELD_PART_PLANS={
+  town:{grid:`
+FFFFFFFFFFFFFFFcFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFcFFFFFFFFFFFFFFF
+FFFFFFF########c########FFFFFFF
+FFFFFFF########c########FFFFFFF
+FFFFFF#########c##########FFFFF
+FFFFFF#########c##########FFFFF
+FFFFFFggggggggpcpgggggggFFFFFFF
+FFFFFggggggggpcccppggggggggFFFF
+FFFFFgggggggpccccccpgggggggFFFF
+FFFgggggggggpccccccpggggggggFFF
+FFFggBBBBgppcccccccppgBBBggggFF
+FFFFgBBBBgpcccccccccppBBBggggFF
+FFFggBBBBppccccccccccppBBBBggFF
+FFFggBBBBppccccccccccccBBBBggFF
+FFFgggggpccccccccccccccBBBBgggF
+FFFgggggppcccccccccccBBBBBBgggF
+FFFgggggpccccccccccccBBBBBBpgFF
+FFggpggpcccccccccccccBBBBBBpggF
+FFggpgppcccccccccccccccccpppggF
+FFgBpgppcccccccccccccccccccpggF
+FgggpppccccccccccccccccccccgggF
+pppppppppcccccccccccccccccccggF
+FFgggpcccccccccccccccccccccccgF
+FFggggpccccccccccccccccccccccgF
+FFggBgBpcccccccccccccccccpppppp
+FgggBBBpcccccccccccccccccppgggF
+FgggBBBpccccccccccccccccppggggF
+pppppppppgggcccccccccccccggggFF
+FFggggBBBcggggcccccccccccBBBgFF
+FFggggBBBpggggcccccccccccBBBgFF
+FFFFggBBBgggggccccccccpggBBBgFF
+FFFFgggggggggccccccccpggBBBBgFF
+FFFFFgggggggpcccccccggggggggFFF
+FFFFFFggggggpppppcpggggggggFFFF
+FFFFFFFFgggggppppppggggggFFFFFF
+FFFFFFFFgggggpSSSpgggggggFFFFFF
+FFFFFFFFFgggggSSSgggggggFFFFFFF
+FFFFFFFFFFggggpppggggggFFFFFFFF
+FFFFFFFFFFFFggpppgggFFFFFFFFFFF
+FFFFFFFFFFFFFgpppgggFFFFFFFFFFF
+FFFFFFFFFFFFFFpppFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFpFFFFFFFFFFFFFFF
+`.trim().split("\n"),
+  pieces:[],
+  lamps:[], closures:[]},
+  road:{grid:`
+FFFFFFFFFFFFFFF~~~~FFFFFFFFFpFFFFFFF
+FFFFFFFFFFFFFFF~~~~FFFFFFFFpppFFFFFF
+FFFFFFFFFFFFFFFF~~~~FFFFFFFpppFFFFFF
+FFFFFFFFFFFFFFFF~~~~FFFFFFFpppFFFFFF
+FFFFFFFFFFFFFFFF~~~~FFFFFFFpppFFFFFF
+FFFFFFFFFFFFFFFFF~~~FFFFFFFpppFFFFFF
+FFFFFFFFFFFgggggg~~~~FFFgggpppggFFFF
+FFFFFFFFFFggggggg~~~~FFFgggpppggFFFF
+FFFF^^^^^ggggggg~~~~~Fgggggppp^^^^^F
+FFFF^^^^gggggggg~~~~FFggppppppp^^^^^
+FFF^^^^gggggggggg~~~Fgggppppppp^^^^^
+FFF^^^^ggggppppppp~~~gggppppppp^^^^^
+FFF^^^gggggppppp=========ppggggg^^^^
+FF^^^^ggggpppppppp~~~gggpppggggg^^^^
+FF^^^gggggpppggg~~~~FggppSSSpggg^^^^
+F^^^^gggpppppggg~~~~ggpppppppgggg^^^
+F^^^^gggpppppgggg~~~ggppppp^p^^^g^^^
+FF^^^Fggpppppgggg~~~~gpppppgp^^^^^^^
+FF^^^gggggpppgggg~~~~gpppggg^^^^^^^^
+F^^^^gggggpppggg~~~~ggpppgggg^^^^^^^
+F^^^^gggppppppppp~~~Fgpppggggg^^^^^^
+F^^^^gggppppppppp~~~Fgpppggggggggg^^
+F^^^^gggppppppp=======ppppppppgggg^^
+^^^^gggggggggpp=======ppppppppgggg^^
+^^^^gggggggggpp=======ppppppppgggg^^
+^^^^ggggggpppppp~~~~ggpppggpppgggg^^
+^^^^ggggggpppppp~~~~ggppgggpppggggFF
+^^^^Fgggggpppppp~~~~ggpppggppggggggF
+^^^^^gggggppppppgg~~~gpppppppppppppF
+^^^^^gggggppppppgg~ccppppppppppppppp
+^^^^^gggggppppppgggccppppggpBBg^^^^F
+F^^^^gggggppppgggggccppppgggBBg^^^^^
+F^^^^gggggpppgggg~ggpppppggggg^^^^^^
+F^^^^gggggpppgggg~~~pppppggggg^^^^^^
+F^^^^gggppppppppp~~~ggpppppppg^^^^^^
+FFFFFgggppppppp=======pppppppggFFFFF
+FFFFggggppppppppppppggpppppppgFFFFFF
+FFFFFgggggpppggg~~~ggggggggggFFFFFFF
+FFFFFgggggggggg~~~~FgggggggggFFFFFFF
+FFFFFFFFFFFFFFF~~~~FFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFF~~~~~~FFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFF~~~~~~FFFFFFFFFFFFFFFF
+FFFFFFFFFFFFF~~~~~~~FFFFFFFFFFFFFFFF
+FFFFFFFFFFFFF~~~~~~~FFFFFFFFFFFFFFFF
+`.trim().split("\n"),
+  pieces:[],
+  lamps:[], closures:[]},
+  gate:{grid:`
+^^^^^^^^^^^^^d^^^^^^d^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^d^^^^^^d^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^d^^^^^^d^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^####^d#####^d^##########^^^^^^^^^
+^^^^^^^^####^d######d###########^^^^^^^^^
+^^^^^^^^####pd######d###########^^^^^^^^^
+^^^^^^^#####dd######d###########pp^^^^^^^
+^^^^^^^###ppdd####ddddd###ddd###pp^^^^^^^
+^^^^^^^ppppdddddddddddddddddddpppp^^^^^^^
+^^^^^^^ppppddddddddddddddddddddpppp^^^^^^
+^^^^^^^pppdddddddddddddddddddddppppp^^^^^
+^^^^^^^pppdddddddddddddddddddddppppp^^^^^
+^^^^^^^pppddddddddddddddddddddddpppp^^^^^
+^^^^^^pppddddddddddddddddddddddddpppp^^^^
+^^^^^^pppddddddddddddddddddddddddpppppp^^
+^^^^^^pppddSSSdddddSSSdddddSSSddddddddddd
+^^^^^~~~~~~===~~~~d+++d~~~~===~~~~~~pppp^
+^^^^^~~~~~~===~~~~d+++d~~~~==ddd~~~~p^^^^
+^^^^^~~~~~~===~~~~d+++d~~~~===dd~~~~p^^^^
+^^^^^~~~~~~===~~~~d+++d~~~~===dd~~~~^^^^^
+^^^^^~~~~~~===~~~~d+++d~~~~===dd~~~~^^^^^
+^^^^^~~~~~~===~~~~d+++d~~~~===~~~~~~^^^^^
+^^^^^~~~~~~===~~~~d+++d~~~~===~~~~~~^^^^^
+^^^^^pppdddSSSdddddSSSddddddSSddddpp^^^^^
+^^^^^pppddddddddddddddddddddddddddpp^^^^^
+^^^^^^ppdddddddddddddddddddddddddd^^^^^^^
+^^^^^^pppddddddddddddddddddddddddp^^^^^^^
+^^^^^^^pppddddddddddddddddddddddpp^^^^^^^
+^^^^^^^ppppddddddddddddddddddddpp^^^^^^^^
+^^^^^^^^ppppddddddddddddddddddpp^^^^^^^^^
+^^^^^^^^^ppppddddddddddddddddppp^^^^^^^^^
+^^^^^^^^^^ppppddddddddddddddpppp^^^^^^^^^
+^^^^^^^^^^^ppppddddddddddddpppp^^^^^^^^^^
+^^^^^^^^^^^^^ppppddddddddppppp^^^^^^^^^^^
+^^^^^^^^^^^^^^^ppppdddpppppp^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^d^^^^^^^^^^^^^^^^^^^^
+`.trim().split("\n"),
+  pieces:[],
+  lamps:[], closures:[]},
+};
+
+const fieldPiece=(col,row,art,dx=0,dy=0)=>({col,row,art,dx,dy});
+
+function fieldBuilding(col,row,style,{entrance=false,shutters=false,sign=null}={}){
+  const p=(art,dx=0,dy=0)=>fieldPiece(col,row,art,dx,dy);
+  return [
+    p("wall-"+style),p("roof-"+style,0,-49),
+    p(style==="copper"?"chimney":"dormer",style==="copper"?-42:13,-80),
+    p(shutters?"window-dark":"window-lit",-39,-18),
+    p("window-lit",37,-20),
+    ...(entrance?[p("door-inn")]:[]),
+    ...(sign?[p(sign,57,-1)]:[]),
+  ];
+}
+
+function fieldGrove(coords,styles,where=0){
+  return coords.map(([col,row,dx=0,dy=0],i)=>{
+    const art=styles[(i+where)%styles.length],tree=/^(pine|broad)-/.test(art);
+    return {...fieldPiece(col,row,art,dx,tree?Math.min(8,dy):dy),trunk:tree};
+  });
+}
+
+const plazaPieces=[
+  fieldPiece(15,6,"arch-town"),fieldPiece(13,6,"tower-a",-8,-1),fieldPiece(17,6,"tower-b",8,-1),
+  fieldPiece(13,6,"banner-red",-6,-28),fieldPiece(17,6,"banner-blue",6,-28),
+  ...fieldBuilding(10,13,"ridge",{shutters:false}),
+  ...fieldBuilding(23,13,"copper",{shutters:true}),
+  ...fieldBuilding(12,18,"copper",{shutters:false}),
+  ...fieldBuilding(22,18,"slate",{entrance:true,sign:"sign"}),
+  ...fieldBuilding(5,18,"lichen",{shutters:true}),
+  ...fieldBuilding(5,26,"copper",{shutters:true}),
+  ...fieldBuilding(7,30,"slate",{shutters:true}),
+  ...fieldBuilding(26,32,"ridge",{shutters:true}),
+  fieldPiece(4,19,"arch-postern",2,-9),
+  fieldPiece(11,22,"well",-15,-6),fieldPiece(11,21,"flowers-2",10,-6),
+  fieldPiece(24,18,"barrels",2,-2),fieldPiece(21,18,"flowers-0",6,-5),
+  fieldPiece(24,20,"stall-0",10,-7),fieldPiece(21,25,"stall-1",3,0),
+  fieldPiece(12,27,"stall-2",-10,0),fieldPiece(19,25,"barrels",11,0),
+  fieldPiece(21,26,"cargo",14,4),fieldPiece(14,28,"flowers-1",-8,0),
+  fieldPiece(8,21,"flowers-0",15,-2),fieldPiece(9,24,"flowers-1",-7,14),
+  fieldPiece(21,18,"flowers-1",11,-3),fieldPiece(24,29,"flowers-2",16,-6),
+  fieldPiece(11,14,"cargo",0,8),fieldPiece(21,14,"barrels",0,5),
+  fieldPiece(8,30,"wood",3,2),fieldPiece(25,20,"wood",18,13),
+  fieldPiece(9,17,"fence",0,-15),fieldPiece(8,17,"fence",0,-15),
+  fieldPiece(10,36,"parapet"),fieldPiece(11,36,"parapet"),
+  fieldPiece(19,36,"parapet"),fieldPiece(20,36,"parapet"),
+  fieldPiece(0,21,"fence-side",-15,-33),fieldPiece(0,27,"fence-side",-13,29),
+  fieldPiece(30,24,"arch-postern",17,-2),
+  ...fieldGrove([[4,9],[2,11,-8,5],[3,12,10],[2,14],[1,17],[3,23],[4,23,-10,-10],[2,26],
+    [5,31],[3,32],[4,34,-11],[6,35,8,4],[3,40],[6,40,9],[9,40],[10,39],[12,39,-8],[18,40],
+    [21,40,3,-3],[23,41],[25,37],[27,36],[27,38],[29,39],[29,34],[29,30],[29,20],[29,18],[28,15],[28,11],
+    [26,7],[24,6],[25,5],[5,5],[5,7],[6,6],[2,7]],["pine-2","pine-4","pine-0","pine-3","pine-5","pine-1"]),
+  ...fieldGrove([[12,31,-13],[11,30,-22],[10,29,8,-6],[10,33,4],[11,36,9],[20,31,8],[22,31],[28,26],[27,13,4],[6,22,-10],
+    [6,21],[7,24,4,5],[11,15,0,2]],["broad-0","broad-2","broad-1","broad-0","broad-1"],2),
+  ...fieldGrove([[3,28],[6,34],[13,38],[17,39],[21,37],[25,34],[28,30],[27,21],[28,16],[8,24],[5,12]],
+    ["rock-2","rock-0","rock-1"]),
+];
+Object.assign(FIELD_PART_PLANS.town,{
+  pieces:plazaPieces,
+  lamps:[[12,14],[19,14],[13,19],[22,18,-43,1],[22,18,37,0],[21,22],[8,21,-10,4],[5,20],[8,28],[12,18,51,0],
+    [20,29],[13,35,-10],[17,35,10],[28,24,-10],[13,6,25,3],[17,6,-24,3]],
+  blocks:[[11,22],[12,17],[11,17],[12,18],[11,18],[13,18],[21,25],[12,27],[12,31],[10,29],[11,30],[10,33],[20,31],[22,31],[7,24],
+    [9,12],[10,12],[11,12],[9,13],[10,13],[11,13]],
+  floorDetails:[[15,23,"plaza-inlay",0,-8],[10,22,"moss-0",0,-5],[13,30,"moss-1",9,-8],[15,28,"moss-2",-3,-4],
+    [21,27,"moss-0"],[14,14,"moss-1"],[16,12,"moss-2"],[23,18,"moss-1"],[8,25,"moss-0"]],
+  closures:[["hallTown",4,19,"chain"],["townNord",29,24,"fence"]],
+});
+
+const roadPieces=[
+  ...fieldBuilding(29,31,"lichen",{shutters:true}),
+  ...fieldBuilding(7,33,"ridge",{shutters:true}),
+  fieldPiece(30,32,"wood",9,4),fieldPiece(27,33,"cart",-6,4),
+  fieldPiece(28,32,"barrels",17,0),fieldPiece(10,35,"wood",-11,-1),
+  fieldPiece(12,13,"cargo",8,10),fieldPiece(14,10,"wood",13,0),
+  fieldPiece(20,27,"sign",7,0),fieldPiece(23,30,"sign"),
+  ...[15,16,17,18,19,20,21].flatMap(x=>[fieldPiece(x,22,"fence",0,-5),fieldPiece(x,24,"fence",0,1)]),
+  ...[17,18,19,20,21,22,23].map(x=>fieldPiece(x,12,"fence",0,-14)),
+  ...[16,17,18,19,20].map(x=>fieldPiece(x,35,"fence",0,13)),
+  ...fieldGrove([[27,2,-13],[30,4],[29,5,12],[26,5],[31,6],[30,7,12],[25,6,-13],[24,7],[26,9,-19],
+    [22,10],[21,10,-18],[24,13,-10,-3],[30,12],[32,13,-3],[33,13,9],[31,16],[32,16,-19],
+    [29,18,-3,8],[27,17,-11],[28,18,6],[29,20,15],[32,19],[31,21,-2],[33,21,10],[33,23],
+    [25,17,16,-15],[27,19,-14,-7],[26,20,0,-6],[25,20,8,9],[27,20,10,-4],[27,21,13,0],
+    [26,24,13,15],[27,25,14,12],[35,25,-11],[34,27,-1],[34,31],[32,31],[33,33],[31,34],
+    [29,37,-11],[28,39,-14,-4],[25,39],[24,40],[23,41],[22,40,-9],[21,41,-11],
+    [11,8,-13],[8,10],[9,12,-8],[6,15],[7,17],[5,19,-5],[5,21],[4,23,-5],[8,23],
+    [6,25],[5,27],[6,28,4],[8,30,-10],[7,31,-4],[4,32],[4,34],[8,37],[7,38],[10,39],[11,40]], 
+    ["pine-2","pine-4","pine-1","pine-0","pine-5","pine-3","pine-4","pine-2"]),
+  ...fieldGrove([[13,11,14],[19,13,0],[15,16,-14],[14,18,12],[20,16,10],[21,18,2],[16,19,0],
+    [19,21,-14],[20,26],[21,26,-6,3],[15,24,-13,5],[12,27,-9],[17,29],[17,31,8],
+    [21,34],[14,38,-5],[13,37,-4],[24,38],[30,34]],["rock-0","rock-1","rock-2","rock-3"]),
+  ...fieldGrove([[15,10],[13,14,3],[16,17,-12],[21,14],[11,24],[10,23,-14],[15,26,-6,9],[14,27,-10,-8],[15,27,-1,2],
+    [20,31,12,9],[26,34,13],[13,39],[22,38,3],[20,39],[15,21,6,8],[14,20,6,-10],[14,25,8,3]],["broad-1","pine-3","pine-1","broad-0","broad-2"]),
+  fieldPiece(29,18,"flowers-1",9,5),fieldPiece(21,25,"flowers-2",-10,10),fieldPiece(22,32,"flowers-0",15,5),
+];
+Object.assign(FIELD_PART_PLANS.road,{
+  pieces:roadPieces,
+  lamps:[[27,5],[29,9],[25,12,-13,4],[24,16,12,0],[20,22],[16,24],[22,22,15],[10,24,-10],
+    [13,29,-6,5],[12,35,5,4],[26,34,-8],[29,32,-11],[31,28,-14,3]],
+  blocks:[[25,17],[29,18],[31,16],[32,16],[30,12],[29,20],[27,17],[33,21],[23,41],[15,16],[14,18],[21,18],
+    [11,24],[10,23],[21,26],[17,29],[17,31],[26,34],[9,12],[6,15],[25,20],[26,20],[27,20],[27,19],[15,26]],
+  floorDetails:[[22,20,"moss-2",-10,-7],[23,17,"moss-0",6,-6],[22,24,"moss-1"],[24,25,"moss-1"],
+    [20,29,"moss-2"],[22,34,"moss-0"],[15,36,"moss-1"]],
+  anchors:{},closures:[["roadPine",34,29,"fence"]],
+});
+
+const castlePieces=[
+  fieldPiece(15,7,"wall-span",-15,-8),fieldPiece(13,7,"wall-span",-24,-9),
+  fieldPiece(25,7,"wall-span",16,-8),fieldPiece(27,7,"wall-span",25,-9),
+  fieldPiece(20,7,"arch-fort"),fieldPiece(17,7,"tower-a",-9,-1),fieldPiece(23,7,"tower-b",9,-1),
+  fieldPiece(16,6,"tower-a",-9,-9),fieldPiece(24,6,"tower-b",9,-9),
+  fieldPiece(17,7,"banner-red",-6,-26),fieldPiece(23,7,"banner-red",6,-26),
+  fieldPiece(13,6,"arch-postern",3,-7),fieldPiece(29,8,"arch-town",7,-13),
+  fieldPiece(14,8,"tower-b",-4,-5),fieldPiece(26,8,"tower-a",4,-5),
+  fieldPiece(18,10,"horn-left",-9,0),fieldPiece(22,10,"horn-right",9,0),
+  fieldPiece(16,25,"horn-left",-8,-1),fieldPiece(24,25,"horn-right",8,-1),
+  fieldPiece(39,15,"arch-postern",14,-7),fieldPiece(39,14,"tower-b",6,-20),
+  fieldPiece(15,14,"parapet"),fieldPiece(16,14,"parapet"),fieldPiece(17,14,"parapet"),
+  fieldPiece(23,14,"parapet"),fieldPiece(24,14,"parapet"),fieldPiece(25,14,"parapet"),fieldPiece(26,14,"parapet"),
+  fieldPiece(14,23,"parapet"),fieldPiece(15,23,"parapet"),fieldPiece(16,23,"parapet"),fieldPiece(17,23,"parapet"),
+  fieldPiece(23,23,"parapet"),fieldPiece(24,23,"parapet"),fieldPiece(25,23,"parapet"),fieldPiece(26,23,"parapet"),
+  ...[17,18,19,20,21,22].flatMap(y=>[fieldPiece(18,y,"parapet-side",-22,0),fieldPiece(22,y,"parapet-side",22,0)]),
+  ...[17,18,19,20,21,22].flatMap(y=>[fieldPiece(11,y,"fence-side",-22,0),fieldPiece(13,y,"fence-side",22,0),
+    fieldPiece(27,y,"fence-side",-22,0),fieldPiece(29,y,"fence-side",22,0)]),
+  fieldPiece(15,12,"cargo",-7,3),fieldPiece(26,11,"barrels",3,-3),fieldPiece(15,28,"wood"),
+  fieldPiece(26,26,"urn"),fieldPiece(12,28,"cargo",7,-9),fieldPiece(30,21,"barrels",10,-7),
+  fieldPiece(31,13,"urn",8,5),fieldPiece(26,27,"flowers-1",-7,9),
+  ...fieldGrove([[8,9],[7,10,6,2],[7,12],[6,15],[7,15],[6,24],[6,26],[8,28],[9,30],[11,31],[12,34],[15,34],
+    [25,35],[27,34],[29,31],[33,27],[35,24],[34,26],[38,24],[37,22],[37,19],[39,18],[37,10],[37,8]],
+    ["pine-4","pine-0","pine-2","pine-5","pine-3","pine-1"],4),
+  ...fieldGrove([[9,12],[10,14],[6,18],[7,21],[7,23],[10,27],[14,31],[16,32],[24,32],[26,31],
+    [32,28],[32,24,-13,-4],[33,19],[35,17],[38,16],[34,12],[29,9],[28,6],[17,12,-15,4],
+    [25,18,-4,-8],[15,18,1,3],[16,20,-2,5],[24,19,-7,5],[16,22,-6,8],[25,21,8,2]],
+    ["rock-2","rock-1","rock-0","rock-3"],1),
+];
+Object.assign(FIELD_PART_PLANS.gate,{
+  pieces:castlePieces,
+  lamps:[[18,8,12,-6,"brazier"],[22,8,-12,-6,"brazier"],[18,14,14,0,"brazier"],[22,14,-14,0,"brazier"],
+    [18,23,15,-4,"brazier"],[22,23,-15,-4,"brazier"],[15,26,14,-5,"brazier"],[25,26,-14,-5,"brazier"],
+    [12,13,0],[29,13,20],[31,16,2],[39,14,10],[19,31,-6],[21,31,6]],
+  blocks:[[17,7],[23,7],[14,8],[26,8],[18,10],[22,10],[16,25],[24,25],[15,28],[26,26],
+    [9,12],[10,14],[10,27],[32,24],[33,19],[34,12]],
+  floorDetails:[[20,11,"keep-inlay",0,-5],[20,28,"keep-inlay",0,-18],[16,13,"moss-0"],[25,12,"moss-2"],
+    [19,16,"moss-0"],[20,20,"moss-1"],[24,24,"moss-0"],[16,26,"moss-2"],[18,30,"moss-2"]],
+  closures:[["gateCourt",20,5,null],["courtSide",13,5,"chain"],["gateWard",39,15,"fence"]],
+});
+
+for(const [id,plan] of Object.entries(FIELD_PART_PLANS)){
+  Object.assign(CHAPTER1_MAPS[id],{grid:plan.grid,partPlan:plan,
+    backdrop:{props:[],front:[],lamps:[]}});
+}

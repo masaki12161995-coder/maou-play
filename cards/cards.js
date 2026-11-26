@@ -121,6 +121,7 @@ function cardEl(cid,owner,w,h,o={}){
   d.style.borderColor=RARE[c.r]; d.style.borderWidth=c.r>=5?"3px":"2px"; if(c.r>=6) d.classList.add("r6");
   if(c.eq){ const m=eqEl(c.eq,Math.max(14,Math.round(w*0.26))); m.style.position="absolute"; m.style.left="2px"; m.style.bottom=(c.q?Math.round(h*0.16):2)+"px"; d.appendChild(m); }
   if(o.shield) d.classList.add("shielded");
+  holdToShow(d,cid);
   if(o.count>1){ const b=document.createElement("div"); b.className="mark t"; b.style.bottom="auto"; b.style.top="-2px"; b.style.left="auto"; b.style.right="-2px"; b.style.transform="none"; b.textContent="×"+o.count; d.appendChild(b); }
   return d;
 }
@@ -134,6 +135,27 @@ function toast(t){ const e=document.createElement("div"); e.className="toast"; e
 const $app=document.getElementById("app");
 function screen(){ $app.innerHTML=""; const s=document.createElement("div"); s.className="screen"; $app.appendChild(s); return s; }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
+
+// ---------- 長押しで札をくわしく見る ----------
+let HOLD=null, EAT=false;
+function holdToShow(d,cid){
+  const start=(e)=>{ clearTimeout(HOLD); HOLD=setTimeout(()=>{ EAT=true; detail(cid); },420); };
+  const stop=()=>clearTimeout(HOLD);
+  d.addEventListener("pointerdown",start); d.addEventListener("pointerup",stop); d.addEventListener("pointerleave",stop); d.addEventListener("pointercancel",stop);
+  d.addEventListener("contextmenu",e=>e.preventDefault());
+}
+document.addEventListener("click",e=>{ if(EAT){ EAT=false; e.stopPropagation(); e.preventDefault(); } },true);
+function detail(cid){
+  const c=CARDS[cid]; const v=el("div","veil"); v.style.zIndex=40;
+  const k=cardEl(cid,"nb",150,196); k.classList.add("pop"); v.appendChild(k);
+  v.appendChild(el("div","",`<div style="font-size:20px;font-weight:700;text-align:center">${c.nm}</div><div style="text-align:center;color:${RARE[c.r]==="#fff"?"#ffe08a":RARE[c.r]};letter-spacing:2px">${"★".repeat(c.r)}</div>`));
+  const q=el("div","frame",""); q.style.cssText+="padding:10px 14px;max-width:320px;text-align:center;line-height:1.6";
+  q.innerHTML=c.q?`<div style="color:var(--gold);font-size:16px;font-weight:700">${QK[c.q].nm}</div><div style="font-size:14px">${QK[c.q].ds}</div>`:`<div style="font-size:14px;color:var(--sub)">くせなし</div>`;
+  if(c.only) q.innerHTML+=`<div style="font-size:12px;color:#ffb3d0;margin-top:6px">${c.only}</div>`;
+  v.appendChild(q);
+  v.onclick=()=>v.remove();
+  (document.querySelector(".screen")||document.body).appendChild(v);
+}
 
 // ---------- 相手の手札（上限の中で一番強い5枚。看板札は必ず入れる） ----------
 function bestDeck(pool,cap,must){
