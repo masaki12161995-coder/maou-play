@@ -194,7 +194,7 @@ function forest() {
       { id: "w3", x: 20, y: 16, k: "donguri", g: ["donguri", "donguri", "mizugumo"], when: g => S(g) >= 7 },
       { id: "w4", x: 16, y: 24, k: "mizugumo", g: ["mizugumo", "mizugumo", "koromochi"], when: g => S(g) >= 8 },
     ],
-    chests: [{ id: "c_forest1", x: 6, y: 12, item: "oakclub" }, { id: "c_forest2", x: 22, y: 24, item: "needle" }],
+    chests: [{ id: "c_forest1", x: 6, y: 12, item: "oakclub" }, { id: "c_forest2", x: 22, y: 24, item: "needle" }, { id: "c_forest3", x: 15, y: 11, tool: "book1" }],
     trigs: [
       { x: 8, y: 28, when: g => S(g) === 3, run: "s4b" },
       { x: 8, y: 22, when: g => S(g) === 4, run: "s5" },

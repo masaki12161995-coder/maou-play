@@ -112,17 +112,17 @@ function buildPanel(u) {
   const keys = ["attack", ...u.sk];
   const listBox = A("frame plist", "", 12, 68, 277, 132);
   keys.forEach((k, j) => {
-    const s = BT.SKILLS[k], ok = s.bp <= u.bp, at = s.at || (s.kind === "攻撃" ? BT.WTYPE[u.wt].at : []);
+    const s = BT.SKILLS[k], bp = BT.cost(u, s), ok = bp <= u.bp, fxs = BT.fxText(s), at = s.at || (s.kind === "攻撃" ? BT.WTYPE[u.wt].at : []);
     const row = div("srow" + (ok ? "" : " dim") + (st.cmd[u.id] === k ? " sel" : "") + (u.heart && j === keys.length - 1 ? " heart" : ""), "");
     px(row, 4, 3 + j * 25.6, 269, 24.6);
     const rank = s.kind === "攻撃" ? (s.rank && s.rank !== "N" ? s.rank : "—") : null;
-    const dist = k === "attack" ? (u.wt === "bow" ? "遠" : "近") : s.dist || (s.magic ? "遠" : "");
+    const dist = k === "attack" ? (u.wt === "bow" ? "遠" : "近") : s.kind !== "攻撃" ? "" : s.dist || (s.magic ? "遠" : ""); // 近・遠は攻撃の技だけ
     row.innerHTML = `<span class="ic" style="left:${d(4)};width:${d(26)}">${at.map(a => icon(a, 11)).join("")}</span>` +
-      `<span class="sn" style="left:${d(32)};font-size:${d(11)}">${s.nm}</span>` +
+      `<span class="sn${fxs ? " up" : ""}" style="left:${d(32)};font-size:${d(11)}">${s.nm}</span>` + (fxs ? `<span class="fx" style="left:${d(32)};font-size:${d(6.8)}">${fxs}</span>` : "") +
       (rank ? `<span class="rk" style="left:${d(128)};font-size:${d(8)}">威力<b style="font-size:${d(10)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(128)};font-size:${d(8.5)}">${s.kind}</span>`) +
       `<span class="rg" style="left:${d(168)};font-size:${d(8.5)}">${BT.RANGE_NM[s.tg]}</span>` +
       (dist ? `<span class="ds ${dist === "近" ? "near" : "far"}" style="left:${d(202)};font-size:${d(8)};width:${d(13)};height:${d(13)};line-height:${d(13)}">${dist}</span>` : "") +
-      `<span class="bp" style="right:${d(6)};font-size:${d(10)}">${s.bp ? "BP" + s.bp : ""}</span>`;
+      `<span class="bp${bp < s.bp ? " cut" : ""}" style="right:${d(6)};font-size:${d(10)}">${bp ? "BP" + bp : ""}</span>`;
     if (ok) row.onclick = () => pick(k);
     listBox.appendChild(row);
   });
@@ -155,7 +155,7 @@ function pick(key) {
   cmdIdx = next; refresh();
 }
 function back() { const prev = aliveIdx().filter(i => i < cmdIdx).pop(); if (prev !== undefined) { cmdIdx = prev; refresh(); } }
-function repeat() { for (const u of BT.alive(st.party)) { const k = st.lastCmd[u.id]; st.cmd[u.id] = k && BT.SKILLS[k].bp <= u.bp ? k : "attack"; } go(); }
+function repeat() { for (const u of BT.alive(st.party)) { const k = st.lastCmd[u.id]; st.cmd[u.id] = k && BT.cost(u, BT.SKILLS[k]) <= u.bp ? k : "attack"; } go(); }
 function go() {
   if (st.phase !== "command" || busy || ended) return;
   BT.commit(st, autoOn ? autoMode : null, support);

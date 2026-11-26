@@ -228,12 +228,14 @@ async function runBattle(wave) {
     const g = G();
     if (!(wave.loseOk && st.over !== "win")) for (const u of st.party) g.party[u.hi].lp = Math.max(0, u.lp);
     if (st.over === "win") {
-      const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, taken: u.taken, healed: u.healed, ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng) }));
+      const rng = Math.random, growth = st.party.map(u => ({ hi: u.hi, nm: u.nm, img: u.img, dealt: u.dealt, taken: u.taken, healed: u.healed,
+        ups: BT.grow(u.hi, g.party[u.hi], wave.tier, rng), ranks: BT.rankUp(g.party[u.hi], u.used, wave.tier, rng) }));
       await BV.finish(growth);
       const rw = BT.rewards(st, rng);
       g.gold += rw.gold; rw.hearts.forEach(k => { g.hearts[k] = (g.hearts[k] || 0) + 1; }); rw.items.forEach(it => g.bag.push(GS.item(it.id, it.b, it.tag)));
+      rw.mats.forEach(k => { g.mats[k] = (g.mats[k] || 0) + 1; }); rw.tools.forEach(k => { g.tools[k] = (g.tools[k] || 0) + 1; });
       g.wins++; GS.save();
-      await UI.result({ win: true, gold: rw.gold, hearts: rw.hearts, items: rw.items, growth, turns: st.turn });
+      await UI.result({ win: true, gold: rw.gold, hearts: rw.hearts, items: rw.items, mats: rw.mats, tools: rw.tools, growth, turns: st.turn });
       break;
     }
     if (wave.loseOk) { await BV.finish(null); break; }
@@ -296,6 +298,7 @@ async function openChest(c) {
   if (c.open) { await UI.say("", ["からっぽだ。"]); return; }
   c.open = true; G().chests[c.id] = 1;
   if (c.gold) { G().gold += c.gold; GS.save(); await UI.say("", ["宝箱を開けた。", `${c.gold} G を手に入れた！`]); return; }
+  if (c.tool) { G().tools[c.tool] = (G().tools[c.tool] || 0) + 1; GS.save(); await UI.say("", ["宝箱を開けた。", `${BT.TOOLS[c.tool].nm}を手に入れた！`]); return; }
   const it = GS.item(c.item); G().bag.push(it); GS.save();
   await UI.say("", ["宝箱を開けた。", `${GS.itemName(it)}を手に入れた！`]);
 }

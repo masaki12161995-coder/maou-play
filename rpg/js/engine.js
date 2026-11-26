@@ -144,6 +144,24 @@ const GEAR = {
   ring:      { slot: "acc", nm: "力の指輪", rank: "B", st: { str: 2 }, price: 150, icon: "eq_ring_02" },
   charm:     { slot: "acc", nm: "お守り", rank: "B", st: { lov: 2, cha: 1 }, price: 100, icon: "eq_charm_01" },
 };
+// ---------- 素材（魔物が落とす。鍛冶で装備を強くするのに使う）と、道具 ----------
+const MATS = {
+  mochi:   { nm: "もちのかけら", icon: "mat_118", fam: "液体・粉", rare: "白" },
+  ito:     { nm: "クモの糸", icon: "mat_121", fam: "布・紙", rare: "緑" },
+  donguri: { nm: "どんぐり", icon: "mat_103", fam: "植物", rare: "白" },
+  kegawa:  { nm: "茶色の毛皮", icon: "mat_006", fam: "皮・鱗・甲羅", rare: "白" },
+  kai:     { nm: "沼の貝殻", icon: "mat_101", fam: "皮・鱗・甲羅", rare: "緑" },
+  oreha:   { nm: "錆びた折れ刃", icon: "mat_012", fam: "金属", rare: "緑" },
+  ishi:    { nm: "祠の石くれ", icon: "mat_078", fam: "石・結晶", rare: "紫" },
+  kinoko:  { nm: "光るきのこ", icon: "mat_100", fam: "植物", rare: "白" },
+  ryurin:  { nm: "苔竜の鱗", icon: "mat_077", fam: "皮・鱗・甲羅", rare: "紫" },
+};
+// 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
+const TOOLS = {
+  book1: { nm: "秘伝書・壱", icon: "tool_001", ds: "技の覚醒（1回目）に使う" },
+  book2: { nm: "秘伝書・弐", icon: "tool_007", ds: "技の覚醒（2回目）に使う" },
+  book3: { nm: "秘伝書・参", icon: "tool_013", ds: "技の覚醒（3回目）に使う" },
+};
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
 const BONUS = { str: "力", vit: "体", dex: "器", agi: "速", int: "知", wil: "精", lov: "愛", cha: "魅" };
 
@@ -193,20 +211,20 @@ const FORMATIONS = {
 // 能力値は「強さ1」のときの値。場所の強さに合わせて掛け算する。human＝人間（心を落とさず、倒れても消えない）
 const FOES = {
   // 西境：リム川・ささやきの森
-  kawauso:  { nm: "カワウソ盗", img: "m_kawauso", wt: "fang", pow: 6, hp: 80, st: { str: 14, vit: 10, dex: 16, agi: 18, int: 5, wil: 8, lov: 0, cha: 8 }, res: { 斬: -20 }, gold: 5 },
-  koromochi:{ nm: "コロモチ", img: "m_koromochi", wt: "fist", pow: 6, hp: 75, st: { str: 13, vit: 14, dex: 8, agi: 9, int: 6, wil: 14, lov: 0, cha: 6 }, res: { 打: 40, 熱: -40, 雷: -30 }, every: { n: 3, sk: "mochislam" }, gold: 6, heart: "koromochi" },
-  mizugumo: { nm: "ミズグモ", img: "m_mizugumo", wt: "fang", pow: 7, hp: 95, st: { str: 17, vit: 11, dex: 16, agi: 22, int: 12, wil: 9, lov: 0, cha: 10 }, res: { 冷: 40, 熱: -40, 打: -20 }, every: { n: 2, sk: "waterthread" }, gold: 9, heart: "mizugumo" },
-  donguri:  { nm: "ドングリ兵", img: "m_donguri", wt: "spear", pow: 7, hp: 90, st: { str: 16, vit: 14, dex: 14, agi: 12, int: 5, wil: 10, lov: 0, cha: 8 }, res: { 熱: -50, 打: 20, 斬: -20 }, every: { n: 3, sk: "acornshot" }, gold: 8, heart: "donguri" },
-  nushi:    { nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1050, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
+  kawauso:  { mat: "kegawa", nm: "カワウソ盗", img: "m_kawauso", wt: "fang", pow: 6, hp: 80, st: { str: 14, vit: 10, dex: 16, agi: 18, int: 5, wil: 8, lov: 0, cha: 8 }, res: { 斬: -20 }, gold: 5 },
+  koromochi:{ mat: "mochi", nm: "コロモチ", img: "m_koromochi", wt: "fist", pow: 6, hp: 75, st: { str: 13, vit: 14, dex: 8, agi: 9, int: 6, wil: 14, lov: 0, cha: 6 }, res: { 打: 40, 熱: -40, 雷: -30 }, every: { n: 3, sk: "mochislam" }, gold: 6, heart: "koromochi" },
+  mizugumo: { mat: "ito", nm: "ミズグモ", img: "m_mizugumo", wt: "fang", pow: 7, hp: 95, st: { str: 17, vit: 11, dex: 16, agi: 22, int: 12, wil: 9, lov: 0, cha: 10 }, res: { 冷: 40, 熱: -40, 打: -20 }, every: { n: 2, sk: "waterthread" }, gold: 9, heart: "mizugumo" },
+  donguri:  { mat: "donguri", nm: "ドングリ兵", img: "m_donguri", wt: "spear", pow: 7, hp: 90, st: { str: 16, vit: 14, dex: 14, agi: 12, int: 5, wil: 10, lov: 0, cha: 8 }, res: { 熱: -50, 打: 20, 斬: -20 }, every: { n: 3, sk: "acornshot" }, gold: 8, heart: "donguri" },
+  nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1050, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
               res: { 打: 20, 冷: 50, 雷: -40, 熱: -20 }, plan: { 2: "mudsplash", 3: "bodypress", 4: "bigyawn", 6: "swampquake", 7: "bodypress", 8: "mudsplash" }, every: { n: 2, sk: "bodypress" }, rageFrom: 9, rage: "swampquake", stunRes: 1, gold: 120, heart: "nushi" },
   // 黒外套の兵（人間）
   kuro_s:   { nm: "黒外套の兵", img: "monster_019", human: 1, wt: "sword", pow: 11, hp: 340, st: { str: 30, vit: 20, dex: 14, agi: 14, int: 6, wil: 12, lov: 0, cha: 12 }, res: { 斬: 20, 雷: -30 }, every: { n: 3, sk: "gale" }, gold: 24 },
   kuro_a:   { nm: "黒外套の兵", img: "monster_020", human: 1, wt: "bow", pow: 10, hp: 255, st: { str: 12, vit: 12, dex: 32, agi: 20, int: 8, wil: 12, lov: 0, cha: 12 }, res: { 打: -20 }, every: { n: 2, sk: "aim" }, gold: 24 },
   // 苔むす祠（強さ6の場所。ここの値は強さ1のときのもの）
-  kokemusha:{ nm: "コケ武者", img: "m_kokemusha", wt: "sword", pow: 12, hp: 190, st: { str: 26, vit: 22, dex: 14, agi: 13, int: 6, wil: 14, lov: 0, cha: 12 }, res: { 斬: 30, 突: 20, 熱: -50, 陽: -30 }, every: { n: 2, sk: "mosscut" }, gold: 30, heart: "kokemusha" },
-  koma:     { nm: "祠守りの狛", img: "monster_067", wt: "fang", pow: 11, hp: 210, st: { str: 24, vit: 28, dex: 12, agi: 16, int: 6, wil: 18, lov: 0, cha: 12 }, res: { 斬: 40, 突: 40, 打: -40, 熱: 20 }, every: { n: 2, sk: "stonefang" }, stunRes: 1, gold: 32, heart: "koma" },
-  sennen:   { nm: "千年ダケ", img: "m_sennen", wt: "fist", pow: 7, hp: 160, st: { str: 10, vit: 16, dex: 10, agi: 12, int: 26, wil: 20, lov: 0, cha: 24 }, res: { 熱: -60, 冷: 30, 陽: 40 }, every: { n: 2, sk: "glowspore" }, gold: 28, heart: "sennen" },
-  midorinushi:{ nm: "苔竜ミドリヌシ", img: "m_midorinushi", wt: "claw", pow: 14, hp: 1500, boss: 1, st: { str: 30, vit: 26, dex: 14, agi: 14, int: 26, wil: 22, lov: 0, cha: 24 },
+  kokemusha:{ mat: "oreha", nm: "コケ武者", img: "m_kokemusha", wt: "sword", pow: 12, hp: 190, st: { str: 26, vit: 22, dex: 14, agi: 13, int: 6, wil: 14, lov: 0, cha: 12 }, res: { 斬: 30, 突: 20, 熱: -50, 陽: -30 }, every: { n: 2, sk: "mosscut" }, gold: 30, heart: "kokemusha" },
+  koma:     { mat: "ishi", nm: "祠守りの狛", img: "monster_067", wt: "fang", pow: 11, hp: 210, st: { str: 24, vit: 28, dex: 12, agi: 16, int: 6, wil: 18, lov: 0, cha: 12 }, res: { 斬: 40, 突: 40, 打: -40, 熱: 20 }, every: { n: 2, sk: "stonefang" }, stunRes: 1, gold: 32, heart: "koma" },
+  sennen:   { mat: "kinoko", nm: "千年ダケ", img: "m_sennen", wt: "fist", pow: 7, hp: 160, st: { str: 10, vit: 16, dex: 10, agi: 12, int: 26, wil: 20, lov: 0, cha: 24 }, res: { 熱: -60, 冷: 30, 陽: 40 }, every: { n: 2, sk: "glowspore" }, gold: 28, heart: "sennen" },
+  midorinushi:{ mat: "ryurin", book: "book2", nm: "苔竜ミドリヌシ", img: "m_midorinushi", wt: "claw", pow: 14, hp: 1500, boss: 1, st: { str: 30, vit: 26, dex: 14, agi: 14, int: 26, wil: 22, lov: 0, cha: 24 },
               res: { 斬: 20, 突: 20, 冷: 40, 熱: -40 }, plan: { 1: "dragontail", 3: "mossbreath", 5: "dragontail", 6: "mossbreath" }, every: { n: 2, sk: "dragontail" }, rageFrom: 9, rage: "mossbreath", stunRes: 1, gold: 900, heart: "midorinushi" },
 };
 const WAVES = [];
@@ -220,6 +238,22 @@ function hasP(u, id) { return (u.ps || []).includes(id); }
 function log(st, e) { st.log.push(e); }
 function keyOf(s) { return Object.keys(SKILLS).find(k => SKILLS[k] === s); }
 // 耐性→倍率（本家は非公開のため、こちらで決めた形）：−45なら1.45倍、＋30なら約0.77倍、＋125なら約0.44倍
+// その人にとっての消費BP（覚醒した回数だけ減る。1より下にはならない）
+function cost(u, s) { if (!s.bp) return 0; const k = keyOf(s); return Math.max(1, s.bp - (((u && u.aw) || {})[k] || 0)); }
+// 覚醒できる回数（重い技ほど多い）
+function awMax(s) { return !s.bp ? 0 : s.bp <= 3 ? 1 : s.bp <= 7 ? 2 : 3; }
+// 技ランク：使って勝つと上がる。1つ上がるごとに威力・回復量＋0.5%（最大99）
+function rankMul(u, s) { const r = ((u && u.sr) || {})[keyOf(s)] || 1; return 1 + (r - 1) * 0.005; }
+// 技のおまけの効果を短い言葉で（技の一覧に出す）
+function fxText(s) {
+  const out = [];
+  if (s.tg === "rand") out.push(`ランダム${s.hits}回`); else if (s.hits > 1) out.push(`${s.hits}回攻撃`);
+  if (s.stun) out.push("スタン");
+  if (s.poison) out.push("毒");
+  if (s.heal) out.push("倒れた味方も起こす");
+  if (s.cover) out.push(`${s.cover}ターン身代わり`);
+  return out.join("・");
+}
 function resMul(d, at) {
   let best = 0;
   for (const a of at) { const r = d.res[a] || 0; const m = r < 0 ? 1 - r / 100 : 100 / (100 + r); if (m > best) best = m; }
@@ -232,7 +266,7 @@ function defLo() { return { form: "arrow", pos: [0, null, null, null, null] }; }
 function resolveHero(hi, mem) {
   const def = HEROES[hi];
   if (!mem) mem = { st: { ...def.st }, hp: def.hp, lp: def.lp, gear: Object.fromEntries(Object.entries(def.gear).map(([k, id]) => [k, id ? { id, b: null } : null])), heart: def.heart || null };
-  return { ...def, hi, st: mem.st, hp: mem.hp, lpNow: mem.lp, gearList: Object.values(mem.gear).filter(Boolean), heart: mem.heart };
+  return { ...def, hi, st: mem.st, hp: mem.hp, lpNow: mem.lp, gearList: Object.values(mem.gear).filter(Boolean), heart: mem.heart, sr: mem.sr || {}, aw: mem.aw || {} };
 }
 // 能力値：もとの能力×心の％＋装備の上乗せ（拾った物のおまけも）。そこに陣形の％
 function heroStats(h, slotDef) {
@@ -336,6 +370,7 @@ function damage(st, a, d, s) {
   statT = Math.max(A, statT);
   let v = ((magic ? 6 : a.pow) * 1.5 + RANK[s.rank || "N"]) * statT / 100;
   const rm = resMul(d, at); v *= rm;
+  if (a.side === 0) v *= rankMul(a, s);
   if (hasP(a, "swordway") && at.includes("斬")) v *= 1.1;
   if ((hasP(a, "bowway") || hasP(a, "spearway") || hasP(a, "rapierway")) && at.includes("突")) v *= 1.1;
   if ((hasP(a, "clubway") || hasP(a, "fistway")) && at.includes("打")) v *= 1.1;
@@ -373,9 +408,9 @@ function autoChoose(st, u, mode, support) {
   let best = SKILLS.attack;
   for (const k of u.sk) {
     const s = SKILLS[k];
-    if (s.bp > u.bp) continue;
+    if (cost(u, s) > u.bp) continue;
     if ((s.kind === "補助" || s.kind === "防御") && support === false) continue;
-    if (s.bp >= best.bp) best = s;
+    if (cost(u, s) >= cost(u, best)) best = s;
   }
   return best;
 }
@@ -389,15 +424,15 @@ function foeChoose(st, u) {
 function act(st, u) {
   let s;
   if (u.side === 1) s = foeChoose(st, u);
-  else { s = SKILLS[st.cmd[u.id]] || SKILLS.attack; if (s.bp > u.bp) s = SKILLS.attack; }
-  if (u.side === 0) u.bp -= s.bp;
+  else { s = SKILLS[st.cmd[u.id]] || SKILLS.attack; if (cost(u, s) > u.bp) s = SKILLS.attack; }
+  if (u.side === 0) { u.bp -= cost(u, s); if (s !== SKILLS.attack) (u.used = u.used || {})[keyOf(s)] = 1; }
   st.actions++;
   log(st, { t: "act", u: u.id, skill: keyOf(s), nm: s.nm, sk: s !== SKILLS.attack, magic: !!s.magic, kind: s.kind });
   if (s.tg === "self") { if (s.cover) { u.cover = s.cover; log(st, { t: "status", d: u.id, nm: "かばう構え" }); } }
   else if (s.tg === "allies") {
     for (const p of st.party) {
       if (p.down && p.lp <= 0) continue;
-      const v = Math.round((s.heal + u.st.lov * 1.6) * (hasP(u, "healer") ? 1.2 : 1));
+      const v = Math.round((s.heal + u.st.lov * 1.6) * (hasP(u, "healer") ? 1.2 : 1) * rankMul(u, s));
       if (p.down) { p.down = false; p.hp = Math.min(p.max, v); u.healed += p.hp; log(st, { t: "revive", d: p.id, v }); }
       else { const h = Math.min(p.max - p.hp, v); p.hp += h; u.healed += h; log(st, { t: "heal", d: p.id, v: h }); }
     }
@@ -453,6 +488,16 @@ function grow(hi, mem, tier, rng) {
   return out;
 }
 // 拾った武器・防具：決まった中身＋まれに能力のおまけ（(力)なら腕力＋3、さらにまれに＋付きで＋4）
+// 技ランク：その戦いで使った技が、勝つと上がることがある。上限は場所の強さ×10（弱い場所では頭打ち）
+function rankUp(mem, used, tier, rng) {
+  const out = [], cap = Math.min(99, (tier || 1) * 10);
+  mem.sr = mem.sr || {};
+  for (const k of Object.keys(used || {})) {
+    const cur = mem.sr[k] || 1;
+    if (cur < cap && rng() < 0.15 + 0.5 * (1 - cur / cap)) { mem.sr[k] = cur + 1; out.push({ k, nm: SKILLS[k].nm, v: cur + 1 }); }
+  }
+  return out;
+}
 function rollItem(id, rng) {
   const g = GEAR[id], it = { id, b: null, tag: "" };
   if (!g || rng() > 0.22) return it;
@@ -463,10 +508,12 @@ function rollItem(id, rng) {
 }
 // ごほうび：お金と、魔物の心・武器防具の落とし物
 function rewards(st, rng) {
-  const out = { gold: 0, hearts: [], items: [] }, tier = st.wave.tier || 1;
+  const out = { gold: 0, hearts: [], items: [], mats: [], tools: [] }, tier = st.wave.tier || 1;
   for (const f of st.foes) {
     out.gold += Math.round((f.gold || 0) * (1 + 0.15 * (tier - 1)) * (0.8 + rng() * 0.4));
     if (f.heart && !st.wave.noHeart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(f.heart);
+    if (f.mat && rng() < (f.boss ? 1 : 0.4)) out.mats.push(f.mat);
+    if (f.book && f.boss) out.tools.push(f.book);
   }
   const drops = st.wave.drops || [];
   for (const d of drops) if (rng() < d.p) out.items.push(rollItem(d.id, rng));
@@ -474,6 +521,6 @@ function rewards(st, rng) {
 }
 
 const api = { BP0, BP_TURN, BP_MAX, ATTR, RANK, STATS, ST_NM, RANGE_NM, WTYPE, SKILLS, PASSIVES, GEAR, HEARTS, HEROES, START, FORMATIONS, FOES, WAVES,
-  BONUS, AREA_CAP, defLo, resolveHero, heroStats, newBattle, commit, step, alive, resMul, grow, rollItem, rewards };
+  BONUS, AREA_CAP, MATS, TOOLS, cost, awMax, rankMul, fxText, rankUp, defLo, resolveHero, heroStats, newBattle, commit, step, alive, resMul, grow, rollItem, rewards };
 if (typeof module !== "undefined") module.exports = api; else root.BT = api;
 })(this);

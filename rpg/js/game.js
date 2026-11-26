@@ -7,7 +7,7 @@ function item(id, b, tag) { return { u: uid++, id, b: b || null, tag: tag || "" 
 // 仲間1人ぶんの記録（加わったときに作る）
 function newMem(hi) {
   const h = BT.HEROES[hi];
-  return { st: { ...h.st }, hp: h.hp, lp: h.lp, gear: Object.fromEntries(Object.entries(h.gear).map(([k, id]) => [k, id ? item(id) : null])), heart: null };
+  return { st: { ...h.st }, hp: h.hp, lp: h.lp, gear: Object.fromEntries(Object.entries(h.gear).map(([k, id]) => [k, id ? item(id) : null])), heart: null, sr: {}, aw: {} }; // sr＝技ランク、aw＝技の覚醒の回数
 }
 // party＝仲間ごとの記録（BT.HEROESの並び。まだ加わっていない人は null）、roster＝いま一行に居る人、lo.pos＝戦う5人（空きは null）
 function fresh() {
@@ -16,6 +16,7 @@ function fresh() {
     v: 3, gold: 0, map: "hut", x: 2, y: 2, dir: 0,
     party, roster: [...BT.START],
     lo: BT.defLo(), bag: [], hearts: {}, flags: {}, chests: {}, wins: 0,
+    mats: {}, tools: {}, // 素材と道具（名前→個数）
     away: [], home: { map: "hut", x: 3, y: 3 }, // away＝物語の都合で一時はずれている仲間、home＝倒れたときに戻る所
   };
 }
@@ -24,7 +25,8 @@ const S = {
   load() {
     try { const t = localStorage.getItem(KEY); S.G = t ? JSON.parse(t) : fresh(); } catch (e) { S.G = fresh(); }
     if (!S.G || S.G.v !== 3) S.G = fresh(); // 物語が入る前の試作の記録は使えない
-    S.G.away = S.G.away || [];
+    S.G.away = S.G.away || []; S.G.mats = S.G.mats || {}; S.G.tools = S.G.tools || {};
+    S.G.party.forEach(m => { if (m) { m.sr = m.sr || {}; m.aw = m.aw || {}; } });
     while (S.G.party.length < BT.HEROES.length) S.G.party.push(null); // 仲間の顔ぶれが増えたぶん
     const mems = () => S.G.party.filter(Boolean);
     // 古い記録の直し：おまけの名前が欠けていたもの（精神のおまけ）を付け直す
@@ -42,6 +44,12 @@ const S = {
   itemName(it) { const g = BT.GEAR[it.id]; return g.nm + (it.tag || ""); },
   maxLp(hi) { return BT.HEROES[hi].lp; },
   restAll() { S.G.party.forEach((m, hi) => { if (m) m.lp = BT.HEROES[hi].lp; }); },
+  // 技の覚醒：秘伝書を1冊使って、その技の消費BPを1つ減らす。できたら true
+  awakenBook(hi, k) { const n = ((S.G.party[hi].aw || {})[k] || 0) + 1; return n <= BT.awMax(BT.SKILLS[k]) ? "book" + n : null; },
+  awaken(hi, k) {
+    const b = S.awakenBook(hi, k); if (!b || !(S.G.tools[b] > 0)) return false;
+    S.G.tools[b]--; const m = S.G.party[hi]; m.aw = m.aw || {}; m.aw[k] = (m.aw[k] || 0) + 1; S.save(); return true;
+  },
   // ---------- 仲間の出入り ----------
   has(hi) { return S.G.roster.includes(hi); },
   fighters() { return S.G.lo.pos.filter(hi => hi != null && !S.G.away.includes(hi)); },
