@@ -126,21 +126,25 @@ function buildPanel(u) {
     listBox.appendChild(row);
   });
 }
+// 下のボタン：戻る・通常AUTO・全力AUTO・補助/防御・Repeat（オート中は早送り）
+// 通常AUTO／全力AUTOは押したほうで動き出す。光っているほうをもう一度押すとオートが止まり、次のターンから自分で選ぶ
 function buildBar(cmdOn) {
   const B = els.bar; B.innerHTML = "";
   const btn = (html, x, w, fn, cls) => { const b = px(div("px frame bbtn " + (cls || ""), html), x, 0, w, BAR.h); b.style.fontSize = d(9.5); if (fn) b.onclick = fn; B.appendChild(b); return b; };
-  // 横の並び（12〜289）：戻る34・AUTO104・補助/防御76・Repeat51（オート中は AUTO142・補助/防御76・早送り51）
-  if (!autoOn) btn("↩", 12, 34, cmdOn && cmdIdx > aliveIdx()[0] ? back : null, cmdOn && cmdIdx > aliveIdx()[0] ? "" : "dim").style.fontSize = d(13);
-  const ab = btn("", autoOn ? 12 : 50, autoOn ? 142 : 104, null, "auto" + (autoOn ? " lit" : ""));
-  const sw = div("sw", "⟳"); sw.style.width = sw.style.height = d(16); sw.style.fontSize = d(10);
-  sw.onclick = e => { e.stopPropagation(); autoMode = autoMode === "normal" ? "full" : "normal"; keepAuto(); refresh(); };
-  const lb = div("lb", autoMode === "normal" ? "通常AUTO" : "全力AUTO");
-  ab.appendChild(sw); ab.appendChild(lb);
-  ab.onclick = () => { if (ended) return; autoOn = !autoOn; keepAuto(); refresh(); if (autoOn && st.phase === "command" && !busy) go(); };
-  btn(`補助/防御 <b>${support ? "ON" : "OFF"}</b>`, 158, 76, () => { support = !support; refresh(); }, "two");
+  const canBack = cmdOn && cmdIdx > aliveIdx()[0];
+  btn("↩", 12, 28, canBack ? back : null, canBack ? "" : "dim").style.fontSize = d(13);
+  const autoBtn = (mode, label, x) => btn(label, x, 62, () => {
+    if (ended) return;
+    if (autoOn && autoMode === mode) autoOn = false; else { autoMode = mode; autoOn = true; }
+    keepAuto(); refresh();
+    if (autoOn && st.phase === "command" && !busy) go();
+  }, "auto" + (autoOn && autoMode === mode ? " lit" : ""));
+  autoBtn("normal", "通常AUTO", 44);
+  autoBtn("full", "全力AUTO", 110);
+  btn(`補助/防御<br><b>${support ? "ON" : "OFF"}</b>`, 176, 66, () => { support = !support; refresh(); }, "two");
   const canRep = cmdOn && Object.keys(st.lastCmd).length;
-  if (!autoOn) btn("Repeat", 238, 51, canRep ? repeat : null, "rep" + (canRep ? "" : " dim"));
-  else btn(fast ? "▶▶▶" : "▶▶", 238, 51, () => { fast = !fast; keepAuto(); refresh(); }, "ff" + (fast ? " lit" : ""));
+  if (!autoOn) btn("Repeat", 246, 43, canRep ? repeat : null, "rep" + (canRep ? "" : " dim"));
+  else btn(fast ? "▶▶▶" : "▶▶", 246, 43, () => { fast = !fast; keepAuto(); refresh(); }, "ff" + (fast ? " lit" : ""));
 }
 function aliveIdx() { return st.party.map((p, i) => i).filter(i => !st.party[i].down); }
 function pick(key) {

@@ -165,7 +165,7 @@ const FOES = {
   goblin: { nm: "ゴブリン", img: "monster_012", wt: "club", pow: 12, hp: 190, st: { str: 28, vit: 20, dex: 14, agi: 16, int: 6, wil: 10, lov: 0, cha: 12 }, res: { 突: -30 }, every: { n: 3, sk: "pickaxe" } , gold: 18, heart: "goblin" },
   shroom: { nm: "毒キノコ", img: "monster_009", wt: "fist", pow: 8, hp: 160, st: { str: 12, vit: 16, dex: 10, agi: 12, int: 24, wil: 14, lov: 0, cha: 22 }, res: { 熱: -60, 冷: 30 }, every: { n: 2, sk: "spore" } , gold: 12, heart: "shroom" },
   treant: { nm: "苔むす古木", img: "monster_083", wt: "club", pow: 22, hp: 1200, st: { str: 62, vit: 32, dex: 10, agi: 8, int: 20, wil: 26, lov: 0, cha: 20 }, res: { 打: 40, 突: 40, 熱: -50, 斬: -10 }, every: { n: 1, sk: "rootlash" }, stunRes: 1, gold: 90, heart: "treant" },
-  orc:    { nm: "オーク", img: "monster_116", wt: "club", pow: 14, hp: 1300, boss: 1, st: { str: 34, vit: 28, dex: 12, agi: 14, int: 8, wil: 14, lov: 0, cha: 20 },
+  orc:    { nm: "オーク", img: "monster_116", wt: "club", pow: 14, hp: 1150, boss: 1, st: { str: 34, vit: 28, dex: 12, agi: 14, int: 8, wil: 14, lov: 0, cha: 20 },
             res: { 斬: 30, 打: 50, 熱: -40, 雷: -20 }, plan: { 2: "sweepclub", 3: "stomp", 5: "sweepclub", 6: "fury" }, rageFrom: 7, rage: "fury", stunRes: 1, gold: 400 },
 };
 // 戦場：c＝列（0がこちらに近い）、r＝段0〜2。big＝マスを全部使う大きい敵
@@ -325,20 +325,18 @@ function fall(st, d) {
 }
 
 // ---------- オートの選び方 ----------
+// オートの選び方（本家と同じ決まり）
+//  通常AUTO：通常攻撃だけ
+//  全力AUTO：今のBPで使える技の中で、いちばんBPの重いものを使う。同じBPなら下の段（心の技は一番下）。
+//            攻撃と回復の技は使う。補助・防御の技は「補助/防御」がONのときだけ使う
 function autoChoose(st, u, mode, support) {
   if (mode !== "full") return SKILLS.attack;
-  const list = u.sk.map(k => SKILLS[k]).filter(s => s.bp <= u.bp);
-  if (support !== false) {
-    const heal = list.find(s => s.heal); if (heal && st.party.some(p => (p.down && p.lp > 0) || (!p.down && p.hp < p.max * 0.6))) return heal;
-    const cov = list.find(s => s.cover); if (cov && u.cover <= 0 && st.foes.some(f => f.boss && !f.down)) return cov;
-  }
-  const n = alive(st.foes).length;
-  let best = SKILLS.attack, bv = RANK.N;
-  for (const s of list) {
-    if (s.kind !== "攻撃") continue;
-    const cnt = s.tg === "all" ? n : s.tg === "col" || s.tg === "row" ? Math.min(n, 2) : 1;
-    const v = RANK[s.rank] * (s.hits || 1) * cnt;
-    if (v > bv) { bv = v; best = s; }
+  let best = SKILLS.attack;
+  for (const k of u.sk) {
+    const s = SKILLS[k];
+    if (s.bp > u.bp) continue;
+    if ((s.kind === "補助" || s.kind === "防御") && support === false) continue;
+    if (s.bp >= best.bp) best = s;
   }
   return best;
 }
