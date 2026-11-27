@@ -12,7 +12,7 @@
 :root{--bg:#14111a;--panel:#211b26;--line:#7a5a3e;--gold:#e8c27a;--text:#f2e4cb;--sub:#b9a58c;--me:#3d6fb3;--meL:#7fb0ef;--op:#b2484a;--opL:#f08a7e}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:"Hiragino Mincho ProN","Yu Mincho",serif;overscroll-behavior:none;touch-action:manipulation}
-#app{position:fixed;left:env(safe-area-inset-left);right:env(safe-area-inset-right);top:max(env(safe-area-inset-top),52px);bottom:max(env(safe-area-inset-bottom),30px);display:flex;justify-content:center}
+#app{position:fixed;left:env(safe-area-inset-left);right:env(safe-area-inset-right);top:max(var(--st,0px),env(safe-area-inset-top),52px);bottom:max(var(--sb,0px),env(safe-area-inset-bottom),30px);display:flex;justify-content:center}
 .screen{width:100%;max-width:440px;height:100%;display:flex;flex-direction:column;padding:8px 10px 10px;gap:8px;position:relative}
 .bar{display:flex;align-items:center;justify-content:space-between;min-height:40px}
 .title{font-size:20px;font-weight:700;color:var(--gold);letter-spacing:.1em}
@@ -137,8 +137,12 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 </head>
 <body>
 <div id="app"></div>
+<script>
+// RPGの中から開いたときは、画面の上下のさわれない所の広さを親からもらう（枠の中では iPhone がこの広さを教えてくれないため）
+(function () { const q = new URLSearchParams(location.search), r = document.documentElement.style; if (q.get("st")) r.setProperty("--st", q.get("st") + "px"); if (q.get("sb")) r.setProperty("--sb", q.get("sb") + "px"); })();
+</script>
 <script src="../cards/cards-data.js?v=3"></script>
 <script src="../cards/rules.js?v=3"></script>
-<script src="js/cardsapp.js?v=11"></script>
+<script src="js/cardsapp.js?v=12"></script>
 </body>
 </html>

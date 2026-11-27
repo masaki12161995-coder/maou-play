@@ -454,7 +454,7 @@ function draw(now) {
 }
 function fadeOut() { fadeTo = 1; return new Promise(r => setTimeout(r, 320)); }
 function fadeIn() { fade = 1; fadeTo = 0; }
-function flash() { return new Promise(r => { const e = px(div("px battleflash", ""), 0, 0, W, H); hud.appendChild(e); setTimeout(() => { e.remove(); r(); }, 420); }); }
+function flash() { return new Promise(r => { const e = DM.screenLayer("battleflash"); setTimeout(() => { e.remove(); r(); }, 420); }); }
 
 requestAnimationFrame(draw);
 root.FD = { start, enter, get active() { return active; },

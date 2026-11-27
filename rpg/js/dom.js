@@ -14,7 +14,7 @@ M.fit = () => {
   const sl = n("paddingLeft"), sr = n("paddingRight"), st = n("paddingTop"), sb = n("paddingBottom");
   const vw = innerWidth, vh = innerHeight, aw = vw - sl - sr, ah = vh - st - sb;
   const K = Math.min(aw / W, ah / H), bw = W * K, bh = H * K, bx = sl + (aw - bw) / 2, by = st + (ah - bh) / 2;
-  M.K = K;
+  M.K = K; M.safePx = { t: st, b: sb, l: sl, r: sr };
   stage.style.width = vw + "px"; stage.style.height = vh + "px";
   hud.style.left = bx + "px"; hud.style.top = by + "px"; hud.style.width = bw + "px"; hud.style.height = bh + "px";
   M.VW = vw / K; M.VH = vh / K; M.OX = bx / K; M.OY = by / K;
@@ -23,6 +23,8 @@ M.fit = () => {
   if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; cv.getContext("2d").imageSmoothingEnabled = false; }
   M.onFit.forEach(f => f());
 };
+// 画面ぜんぶにかぶせる幕（戦いに入るときの光など）。文字の枠ではなく、画面の端から端まで
+M.screenLayer = cls => { const e = M.div(cls, ""); e.style.cssText = "position:absolute;inset:0;z-index:5"; stage.appendChild(e); return e; };
 // 枠の中に描いた絵（背景）を、枠の外へのばす：左右は端の帯を裏返して、上下は端の1列を引きのばす
 M.bleed = (ctx, cv, keepTop) => { // keepTop：枠の上にも本物の絵が描いてあるときは、上はのばさない
   const bx = Math.round(M.OX * 4), by = Math.round(M.OY * 4), bw = Math.round(W * 4), bh = Math.round(H * 4);

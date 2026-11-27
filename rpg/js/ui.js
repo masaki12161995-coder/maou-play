@@ -530,7 +530,7 @@ function cards(go, k, practice) {
   return new Promise(res => {
     GS.save();
     const f = document.createElement("iframe");
-    f.className = "cardframe"; f.src = `cards.html?go=${go}${k !== undefined ? "&k=" + k : ""}${practice ? "&practice=1" : ""}&v=${Date.now() % 1e6}`;
+    f.className = "cardframe"; const sp = DM.safePx || {}; f.src = `cards.html?st=${Math.round(sp.t || 0)}&sb=${Math.round(sp.b || 0)}&go=${go}${k !== undefined ? "&k=" + k : ""}${practice ? "&practice=1" : ""}&v=${Date.now() % 1e6}`;
     document.body.appendChild(f);
     const on = e => { if (e.data && e.data.t === "close") { removeEventListener("message", on); f.remove(); GS.syncGoldFromDisk(); res(e.data); } };
     addEventListener("message", on);
