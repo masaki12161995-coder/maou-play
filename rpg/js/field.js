@@ -341,9 +341,21 @@ const endDrag = e => {
   if (thing) { goTalk(tx, ty); lastTap.t = 0; return; }
   const dbl = now - lastTap.t < 320 && Math.abs(lastTap.tx - tx) <= 1 && Math.abs(lastTap.ty - ty) <= 1;
   lastTap = { t: now, tx, ty };
+  // 何もない所を1回たたいた＝決定ボタン：向いている先の人・物を調べる（2回たたいて歩くときは、2回目で取り消す）
+  clearTimeout(tapTimer); tapTimer = null;
+  if (!dbl) tapTimer = setTimeout(() => { tapTimer = null; facing(); }, 330);
   if (dbl) { const f = foes.find(f => f.alive && f.x === tx && f.y === ty); route = findPath(tx, ty, !!f); if (route && !P.from) { const n = route.shift(); if (n) stepTo(dirOf(n.x - P.x, n.y - P.y)); } lastTap.t = 0; }
 };
 stage.addEventListener("pointerup", endDrag); stage.addEventListener("pointercancel", endDrag);
+// 向いている1マス先を調べる。帳場の台などをはさんだ向こうの人にも話せる
+function facing() {
+  if (!active || busy || P.from || route || drag) return;
+  const [dx, dy] = [[0, 1], [-1, 0], [1, 0], [0, -1]][P.dir];
+  const has = (x, y) => npcs.some(n => n.x === x && n.y === y && n.talk) || chests.some(c => c.x === x && c.y === y) || !!objAt(x, y);
+  let x = P.x + dx, y = P.y + dy;
+  if (!has(x, y) && M.objs.some(o => o.t === "counter" && o.x === x && o.y === y)) { x += dx; y += dy; }
+  if (has(x, y)) interact(x, y);
+}
 let talkTarget = null;
 function goTalk(tx, ty) {
   // 大きな置き物（舟・家など）は、どのマスを押しても、いちばん近い端から調べる

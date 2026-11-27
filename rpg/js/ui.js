@@ -173,55 +173,60 @@ function heartSummary(k) {
   const ups = h.up.map(s => STAT_SHORT[s]).join("・");
   return `技：${BT.SKILLS[h.sk].nm}　${ups}が伸びやすい`;
 }
-// 技の1行（戦闘の技選びと同じ並び：属性・名前・威力・範囲・近遠・BP）
-function skillRow(parent, k, y, tag, wt, m, onTap) {
-  const s0 = BT.SKILLS[k], s = k === "attack" && wt ? { ...s0, at: BT.WTYPE[wt].at, dist: wt === "bow" ? "遠" : "近" } : s0; // 通常攻撃は武器の属性・間合い
-  const at = s.at || [], row = A(parent, div("skrow" + (skillSel === k ? " sel" : ""), ""), 0, y, 277, 21);
+// 技の1行（2段）。上の段＝属性・名前・技ランク・BP。下の段＝威力・範囲・近遠・効果（入りきらない効果は「…」。全部は押して出る説明に）
+//  本家（ロマサガRS）の技一覧と同じく、一覧は要点だけ。細かい効果は押して見る
+const SK_H = 32;
+function skillRow(parent, k, y, tag, m, onTap) {
+  const s = BT.SKILLS[k], at = s.at || [], row = A(parent, div("skrow two" + (skillSel === k ? " sel" : ""), ""), 0, y, 277, SK_H - 1);
   const rank = s.kind === "攻撃" ? (s.rank && s.rank !== "N" ? s.rank : "—") : null;
-  const bp = BT.cost(m, s0), sr = (m && m.sr && m.sr[k]) || 1, fxs = BT.fxText(s0);
-  row.innerHTML = `<span style="left:${d(6)};width:${d(24)};display:flex;gap:1px">${at.map(a => DM.icon(a, 10)).join("")}</span>` +
-    `<span class="sn${fxs ? " up" : ""}" style="left:${d(32)};font-size:${d(10.5)}">${s.nm}${tag ? `<i class="tagh" style="font-size:${d(7.5)}">${tag}</i>` : ""}${sr > 1 ? `<i class="srk" style="font-size:${d(7.5)}">R${sr}</i>` : ""}</span>` +
-    (fxs ? `<span class="fx" style="left:${d(32)};font-size:${d(6.6)}">${fxs}</span>` : "") +
-    (rank ? `<span class="rk" style="left:${d(140)};font-size:${d(8)}">威力<b style="font-size:${d(9.5)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(140)};font-size:${d(8.5)}">${s.kind}</span>`) +
-    `<span class="rg" style="left:${d(180)};font-size:${d(8.5)}">${BT.RANGE_NM[s.tg]}</span>` +
-    (s.dist ? `<span class="ds ${s.dist === "近" ? "near" : "far"}" style="left:${d(217)};font-size:${d(7.5)};width:${d(12)};height:${d(12)};line-height:${d(12)}">${s.dist}</span>` : "") +
-    `<span class="bp${bp < s0.bp ? " cut" : ""}" style="right:${d(8)};font-size:${d(9.5)}">${bp ? "BP" + bp : ""}</span>`;
-  if (onTap && k !== "attack") row.onclick = () => onTap(k);
+  const bp = BT.cost(m, s), sr = (m && m.sr && m.sr[k]) || 1, fxs = BT.fxText(s);
+  const L1 = d(10), L2 = d(23);
+  row.innerHTML = `<span style="left:${d(6)};top:${d(5)};width:${d(24)};display:flex;flex-direction:column;gap:${d(1)};transform:none">${at.map(a => DM.icon(a, 10)).join("")}</span>` +
+    `<span class="sn" style="left:${d(32)};top:${L1};font-size:${d(10.5)}">${s.nm}${sr > 1 ? `<i class="srk" style="font-size:${d(7.5)}">R${sr}</i>` : ""}${tag ? `<i class="tagh" style="font-size:${d(7.5)}">${tag}</i>` : ""}</span>` +
+    `<span class="bp${bp < s.bp ? " cut" : ""}" style="right:${d(8)};top:${L1};font-size:${d(10)}">${bp ? "BP" + bp : ""}</span>` +
+    (rank ? `<span class="rk" style="left:${d(32)};top:${L2};font-size:${d(8)}">威力<b style="font-size:${d(9.5)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(32)};top:${L2};font-size:${d(8.5)}">${s.kind}</span>`) +
+    `<span class="rg" style="left:${d(74)};top:${L2};font-size:${d(8.5)}">${BT.RANGE_NM[s.tg]}</span>` +
+    (s.dist ? `<span class="ds ${s.dist === "近" ? "near" : "far"}" style="left:${d(112)};top:${L2};font-size:${d(7.5)};width:${d(12)};height:${d(12)};line-height:${d(12)}">${s.dist}</span>` : "") +
+    (fxs ? `<span class="fx2" style="left:${d(130)};top:${L2};width:${d(139)};font-size:${d(8)}">${fxs}</span>` : "");
+  if (onTap) row.onclick = () => onTap(k);
   return row;
 }
 // 技のくわしい説明（本家と同じ並び：種類／近・遠／直接・間接／範囲（属性））と、技ランク・覚醒
 function skillDetail(L, k, hi, m, isHeart, redraw) {
-  const s = BT.SKILLS[k], G = GS.G, box = A(L, div("frame sdetail", ""), 12, 470, 277, 150);
+  const s = BT.SKILLS[k], G = GS.G;
   const sr = (m.sr && m.sr[k]) || 1, aw = (m.aw && m.aw[k]) || 0, max = isHeart ? 0 : BT.awMax(s);
-  T(box, 10, 6, 180, 18, s.nm, 12.5, "name");
-  const x = A(box, div("btn chip xbtn", "×"), 249, 4, 22, 22); x.style.fontSize = d(12); x.onclick = () => { skillSel = null; redraw(); };
-  const line = [s.kind, s.dist, s.dir, { one: "敵単体", col: "敵縦一列", row: "敵横一列", all: "敵全体", rand: "敵ランダム", self: "自分", allies: "味方全体" }[s.tg]].filter(Boolean).join("／") + (s.at ? `（${s.at.join("＋")}）` : "");
-  T(box, 10, 26, 257, 15, line, 9, "dim2");
   const fx = [];
   if (s.kind === "攻撃") fx.push(s.tg === "rand" ? `ランダムな敵に攻撃する（${s.hits}回）` : `攻撃する${s.hits > 1 ? `（${s.hits}回）` : ""}`);
   if (s.stun) fx.push("攻撃が当たると、確率でスタンさせる");
   if (s.poison) fx.push("攻撃が当たると、確率で毒にする");
   if (s.heal) fx.push("味方全体のHPを回復する。倒れた味方も起こす");
   if (s.cover) fx.push(`${s.cover}ターンの間、狙われやすくなり、受けるダメージが半分になる`);
-  fx.forEach((t, i) => T(box, 10, 43 + i * 13, 257, 13, t, 8.5, ""));
+  // 効果の行の数で高さが決まる（強い技で効果が増えても、はみ出さない）。下の端は画面の下にそろえる
+  const fy = 43, ry = fy + fx.length * 14 + 6, hgt = ry + (max > 0 ? 62 : 26) + 4;
+  const box = A(L, div("frame sdetail", ""), 12, Math.min(470, 644 - hgt), 277, hgt);
+  T(box, 10, 6, 180, 18, s.nm, 12.5, "name");
+  const x = A(box, div("btn chip xbtn", "×"), 249, 4, 22, 22); x.style.fontSize = d(12); x.onclick = () => { skillSel = null; redraw(); };
+  const line = [s.kind, s.dist, s.dir, { one: "敵単体", col: "敵縦一列", row: "敵横一列", all: "敵全体", rand: "敵ランダム", self: "自分", allies: "味方全体" }[s.tg]].filter(Boolean).join("／") + (s.at ? `（${s.at.join("＋")}）` : "");
+  T(box, 10, 26, 257, 15, line, 9, "dim2");
+  fx.forEach((t, i) => T(box, 10, fy + i * 14, 257, 14, t, 8.5, ""));
   // 技ランク（使って勝つと上がる）
-  T(box, 10, 86, 60, 16, "技ランク", 8.5, "label");
-  T(box, 62, 86, 30, 16, `${sr}`, 11, "num2");
-  T(box, 92, 86, 175, 16, s.kind === "攻撃" || s.heal ? `${s.heal ? "回復量" : "威力"} ＋${((sr - 1) * 0.5).toFixed(1)}%` : "", 8.5, "dim2");
+  T(box, 10, ry, 60, 16, "技ランク", 8.5, "label");
+  T(box, 62, ry, 30, 16, `${sr}`, 11, "num2");
+  T(box, 92, ry, 175, 16, s.kind === "攻撃" || s.heal ? `${s.heal ? "回復量" : "威力"} ＋${((sr - 1) * 0.5).toFixed(1)}%` : "", 8.5, "dim2");
   // 覚醒（秘伝書で、使うBPを減らす）
   if (max > 0) {
-    T(box, 10, 108, 60, 16, "覚醒", 8.5, "label");
-    T(box, 62, 108, 60, 16, `<span class="awk">${"◆".repeat(aw)}</span><span class="awk off">${"◇".repeat(max - aw)}</span>`, 10, "");
-    T(box, 110, 108, 60, 16, `BP${BT.cost(m, s)}`, 10, "num2 gold");
+    T(box, 10, ry + 22, 60, 16, "覚醒", 8.5, "label");
+    T(box, 62, ry + 22, 60, 16, `<span class="awk">${"◆".repeat(aw)}</span><span class="awk off">${"◇".repeat(max - aw)}</span>`, 10, "");
+    T(box, 110, ry + 22, 60, 16, `BP${BT.cost(m, s)}`, 10, "num2 gold");
     if (aw < max) {
       const bk = GS.awakenBook(hi, k), have = G.tools[bk] || 0, tl = BT.TOOLS[bk];
-      const b = A(box, div("frame btn chip" + (have ? " lit" : " off"), ""), 150, 104, 121, 40);
+      const b = A(box, div("frame btn chip" + (have ? " lit" : " off"), ""), 150, ry + 18, 121, 40);
       A(b, DM.iconImg(tl.icon, 18 * DM.K), 5, 9, undefined, undefined);
       T(b, 27, 3, 90, 16, have ? `覚醒する　BP${BT.cost(m, s) - 1}へ` : "秘伝書が足りない", 8.5, have ? "gold" : "dim");
       T(b, 27, 20, 90, 14, `${tl.nm}<small>　持っている ${have}</small>`, 7.5, "dim2");
       if (have) b.onclick = () => { if (GS.awaken(hi, k)) { DM.toast(`${s.nm}が覚醒した`, 440); redraw(); } };
-    } else T(box, 150, 108, 121, 16, "覚醒しきった", 8.5, "dim right");
-  } else if (isHeart) T(box, 10, 108, 257, 16, "心の技は、覚醒できない", 8.5, "dim");
+    } else T(box, 150, ry + 22, 121, 16, "覚醒しきった", 8.5, "dim right");
+  } else if (isHeart) T(box, 10, ry + 22, 257, 16, "心の技は、覚醒できない", 8.5, "dim");
 }
 // 顔の並び：5人ずつ。5人より多いときだけ両端に◀▶が出て、めくれる
 //  list＝仲間の番号、o.sel＝選んでいる人、o.ok(hi)＝押せるか、o.pick(hi)＝押したとき、o.pg＝{n:今の枚目}、o.small＝小さい顔
@@ -244,7 +249,7 @@ function faceStrip(parent, x, y, w, list, o, redraw) {
   });
 }
 const roster = () => [...GS.fighters(), ...GS.bench()]; // 戦う5人が先、控えがあと
-const pgWho = { n: 0 }, pgPick = { n: 0 }, pgBench = { n: 0 }, pgBag = { n: 0 };
+const pgWho = { n: 0 }, pgPick = { n: 0 }, pgBench = { n: 0 }, pgBag = { n: 0 }, pgCand = { n: 0 };
 // 仲間：上の顔を押すと人が替わる。下は「能力・技」と「装備」を切り替える
 function member(L, redraw) {
   const list = roster();
@@ -277,13 +282,14 @@ function statView(L, h, m, redraw) {
   });
   // 技（通常攻撃＋本人の3つ＋心の技）
   T(L, 14, 304, 100, 14, "技", 9, "label");
-  const box = A(L, div("frame rbox", ""), 12, 320, 277, 6 + (4 + (heart ? 1 : 0)) * 22);
+  // 通常攻撃はいつでも使えるので、ここには出さない（本家のスタイルの技一覧と同じ。武器の種類は名前の下に出ている）
+  const nsk = h.sk.length + (heart ? 1 : 0), box = A(L, div("frame rbox", ""), 12, 320, 277, 4 + nsk * SK_H);
   const tapSk = k => { skillSel = skillSel === k ? null : k; redraw(); };
-  ["attack", ...h.sk].forEach((k, i) => skillRow(box, k, 3 + i * 22, "", h.wt, m, tapSk));
-  if (heart) skillRow(box, heart.sk, 3 + 4 * 22, "心", null, m, tapSk);
+  h.sk.forEach((k, i) => skillRow(box, k, 2 + i * SK_H, "", m, tapSk));
+  if (heart) skillRow(box, heart.sk, 2 + h.sk.length * SK_H, "心", m, tapSk);
   if (skillSel && ![...h.sk, heart && heart.sk].includes(skillSel)) skillSel = null;
   // パッシブ（本人の3つ＋装備に付いているもの）
-  const py = 320 + 6 + (4 + (heart ? 1 : 0)) * 22 + 8;
+  const py = 320 + 4 + nsk * SK_H + 8;
   T(L, 14, py, 100, 14, "パッシブ", 9, "label");
   const ps = [...h.ps.map(k => [k, ""]), ...Object.values(m.gear).filter(it => it && BT.GEAR[it.id].ps).map(it => [BT.GEAR[it.id].ps, "装備"])];
   const pb = A(L, div("frame rbox", ""), 12, py + 16, 277, 6 + ps.length * 21);
@@ -316,7 +322,7 @@ function gearView(L, redraw, h, m) {
       if (it) { const g = BT.GEAR[it.id]; A(row, DM.iconImg(g.icon, 24 * DM.K), 54, 4, undefined, undefined); T(row, 84, 2, 188, 16, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, 10.5, "name"); T(row, 84, 17, 188, 14, itemSummary(it), 8.5, "dim2"); }
       else T(row, 58, 0, 210, 32, "なし", 10, "dim");
     }
-    row.onclick = () => { slotSel = slotSel === sl ? null : sl; redraw(); };
+    row.onclick = () => { slotSel = slotSel === sl ? null : sl; pgCand.n = 0; redraw(); };
   });
   if (!slotSel) return;
   const G = GS.G, sl = slotSel, list = [];
@@ -327,20 +333,44 @@ function gearView(L, redraw, h, m) {
     if (sl !== "weapon" && m.gear[sl]) list.push({ nm: "外す", diff: statDiff(who, m, sl, null), act: () => { G.bag.push(m.gear[sl]); m.gear[sl] = null; } });
     G.bag.filter(it => { const g = BT.GEAR[it.id]; return g.slot === sl && (sl !== "weapon" || g.wt === h.wt); }).forEach(it => {
       const g = BT.GEAR[it.id];
-      list.push({ icon: g.icon, html: `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, diff: statDiff(who, m, sl, it), act: () => { G.bag.splice(G.bag.indexOf(it), 1); if (m.gear[sl]) G.bag.push(m.gear[sl]); m.gear[sl] = it; } });
+      list.push({ icon: g.icon, html: `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, main: mainVal(it, m.gear[sl]), ps: g.ps, diff: statDiff(who, m, sl, it), act: () => { G.bag.splice(G.bag.indexOf(it), 1); if (m.gear[sl]) G.bag.push(m.gear[sl]); m.gear[sl] = it; } });
     });
   }
-  const y0 = ey + 5 * 36 + 4, n = Math.min(6, list.length);
-  const box = A(L, div("frame cands", ""), 12, y0, 277, Math.max(34, n * 36 + 4));
+  // 候補：6つまでは全部。それより多いときは5つずつ、下の◀▶でめくる
+  const per = list.length > 6 ? 5 : 6, pages = Math.max(1, Math.ceil(list.length / per));
+  pgCand.n = Math.max(0, Math.min(pages - 1, pgCand.n));
+  const y0 = ey + 5 * 36 + 4, shown = list.slice(pgCand.n * per, pgCand.n * per + per);
+  const box = A(L, div("frame cands", ""), 12, y0, 277, Math.max(34, shown.length * 36 + 4));
   if (!list.length) { T(box, 10, 4, 257, 26, sl === "weapon" ? `使える${BT.WTYPE[h.wt].nm}を持っていない` : "替えられる物を持っていない", 9.5, "dim"); return; }
-  list.slice(0, 6).forEach((c, i) => {
+  shown.forEach((c, i) => {
     const r = A(box, div("cand2", ""), 2, 2 + i * 36, 273, 34);
     if (c.icon) A(r, DM.iconImg(c.icon, 22 * DM.K), 8, 5, undefined, undefined);
     if (c.heart) A(r, heartIcon(c.heart, 22), 8, 5, 22, 22);
-    T(r, 38, 1, 230, 17, c.nm ? `<b>${c.nm}</b>` : c.html, 10.5, "name");
-    T(r, 38, 17, 230, 15, c.diff, 8.5, "");
-    r.onclick = () => { c.act(); slotSel = null; GS.save(); redraw(); };
+    T(r, 38, 1, c.ps ? 178 : 230, 17, c.nm ? `<b>${c.nm}</b>` : c.html, 10.5, "name");
+    if (c.ps) T(r, 214, 1, 56, 17, `<span class="pstag">${BT.PASSIVES[c.ps].nm}</span>`, 9, "right");   // 付いているパッシブ
+    // 下の段：武器は威力、防具は守り（今の装備との差）を決まった位置に。その右に能力値の変わり方
+    if (c.main) { T(r, 38, 17, 64, 15, c.main, 8.5, ""); T(r, 104, 17, 166, 15, c.diff, 8.5, ""); }
+    else T(r, 38, 17, 230, 15, c.diff, 8.5, "");
+    r.onclick = () => { c.act(); slotSel = null; pgCand.n = 0; GS.save(); redraw(); };
   });
+  if (pages > 1) {
+    const py = y0 + shown.length * 36 + 6;
+    [["◀", -1, 12], ["▶", 1, 225]].forEach(([t, dv, bx]) => {
+      const on = pgCand.n + dv >= 0 && pgCand.n + dv < pages;
+      const b = A(L, div("frame btn chip pgbtn" + (on ? "" : " off"), t), bx, py, 64, 24); b.style.fontSize = d(9);
+      if (on) b.onclick = () => { pgCand.n += dv; redraw(); };
+    });
+    T(L, 80, py, 141, 24, `${pgCand.n + 1} / ${pages}`, 9.5, "dim2 center");
+  }
+}
+// 武器の威力・防具の守り（物理）と、今付けている物との差
+function mainVal(it, cur) {
+  const g = BT.GEAR[it.id], c = cur && BT.GEAR[cur.id];
+  const phys = x => x && x.res ? Math.round(((x.res.斬 || 0) + (x.res.打 || 0) + (x.res.突 || 0)) / 3) : 0;
+  const [nm, v, v0] = g.slot === "weapon" ? ["威力", g.pow, c ? c.pow : 0] : g.res ? ["物理", phys(g), phys(c)] : [null];
+  if (!nm) return null;
+  const df = v - v0, dfs = df ? `<span class="${df > 0 ? "pcup" : "pcdn"}">${df > 0 ? "+" : ""}${df}</span>` : `<span class="dim">±0</span>`;
+  return `<span class="dim2">${nm}</span><span class="mv">${v}</span>${dfs}`;
 }
 // 持ち物：装備していない武器・防具と、魔物の心。押すと、だれに付けるかを選ぶ
 const RARE_COL = { 白: "#e5e7eb", 緑: "#7fd88a", 青: "#6ab0ff", 紫: "#c08aff", 金: "#ffd24a", 虹: "#ff9ad8" };
