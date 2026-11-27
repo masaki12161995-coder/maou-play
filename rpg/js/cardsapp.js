@@ -8,18 +8,18 @@ const KEY="rpgCards1";
 // n＝上・右・下・左の数字。★1は合計13前後、★2は16、★3は21、★4は25
 const WORLD={
   w_koromochi:{nm:"コロモチ",r:1,n:[3,3,3,4],src:"img/m_koromochi.png",sz:[26,20],k:"魔物"},
-  w_kawauso:{nm:"カワウソ盗",r:1,n:[5,5,2,1],src:"img/monster_011.png",sz:[19,20],k:"魔物"},
+  w_kawauso:{nm:"カワウソ盗",r:1,n:[5,5,2,1],src:"img/monster_131.png",sz:[24,22],k:"魔物"},
   w_mizugumo:{nm:"ミズグモ",r:1,n:[2,5,4,2],src:"img/m_mizugumo.png",sz:[57,40],k:"魔物"},
-  w_donguri:{nm:"ドングリ兵",r:1,n:[4,2,3,4],src:"img/m_donguri.png",sz:[28,30],k:"魔物"},
+  w_donguri:{nm:"ドングリ兵",r:1,n:[4,2,3,4],src:"img/monster_130.png",sz:[23,30],k:"魔物"},
   w_fukuro:{nm:"見張りのフクロウ",r:1,n:[3,4,2,4],src:"img/monster_112.png",sz:[22,30],k:"魔物"},
-  w_hane:{nm:"ハネネズミ",r:1,n:[5,2,5,1],src:"img/m_hanenezumi.png",sz:[55,29],k:"魔物"},
+  w_hane:{nm:"ハネネズミ",r:1,n:[5,2,5,1],src:"img/monster_132.png",sz:[20,22],k:"魔物"},
   w_kakashi:{nm:"カカシ番",r:2,n:[2,6,5,3],src:"img/monster_088.png",sz:[65,70],k:"魔物"},
   w_ookami:{nm:"モリオオカミ",r:2,n:[6,4,2,4],src:"img/m_ookami.png",sz:[56,45],k:"魔物"},
-  w_oya:{nm:"オヤミズグモ",r:3,n:[4,7,6,4],src:"img/m_oyagumo.png",sz:[114,80],k:"魔物"},
-  w_ishikoro:{nm:"イシコロ小僧",r:1,n:[3,4,4,2],src:"img/m_ishikoro.png",sz:[38,45],k:"魔物"},
+  w_oya:{nm:"オヤミズグモ",r:3,n:[4,7,6,4],src:"img/monster_134.png",sz:[89,70],k:"魔物"},
+  w_ishikoro:{nm:"イシコロ小僧",r:1,n:[3,4,4,2],src:"img/monster_133.png",sz:[35,35],k:"魔物"},
   w_tsuta:{nm:"ツタ鎧",r:2,n:[5,3,6,2],src:"img/monster_005.png",sz:[37,72],k:"魔物"},
   w_garm:{nm:"石橋のガルム",r:4,n:[7,5,7,6],src:"img/c_garm.png",sz:[44,59],k:"魔物"},
-  w_nushi:{nm:"ヌシガエル",r:4,n:[5,6,8,6],src:"img/m_nushi.png",sz:[129,98],k:"魔物"},
+  w_nushi:{nm:"ヌシガエル",r:4,n:[5,6,8,6],src:"img/monster_135.png",sz:[89,90],k:"魔物"},
   w_bram:{nm:"脱走騎士",r:3,n:[6,6,5,4],src:"img/c_bram.png",sz:[42,59],k:"人物"},
   w_teo:{nm:"見習い剣士",r:2,n:[5,4,3,4],src:"img/c_teo.png",sz:[32,59],k:"人物"},
   w_rinka:{nm:"拳法娘",r:2,n:[6,3,3,4],src:"img/c_rinka.png",sz:[35,59],k:"人物"},
@@ -29,14 +29,14 @@ const WORLD={
   w_komari:{nm:"森のいたずらっ子",r:2,n:[5,2,4,5],src:"img/c_komari.png",sz:[37,49],k:"人物"},
   w_nat:{nm:"旅の機械いじり",r:2,n:[3,3,5,5],src:"img/c_nat.png",sz:[41,58],k:"人物"},
   w_karin:{nm:"鐘つき見習い",r:2,n:[4,4,4,4],src:"img/c_karin.png",sz:[39,59],k:"人物"},
-  w_mugiwara:{nm:"ムギワラ坊",r:1,n:[4,3,3,3],src:"img/m_mugiwara.png",sz:[38,45],k:"魔物"},
+  w_mugiwara:{nm:"ムギワラ坊",r:1,n:[4,3,3,3],src:"img/monster_136.png",sz:[31,35],k:"魔物"},
   w_kamausagi:{nm:"カマウサギ",r:1,n:[5,4,1,3],src:"img/monster_003.png",sz:[40,45],k:"魔物"},
   w_fusha:{nm:"フウシャ虫",r:2,n:[3,6,2,5],src:"img/monster_082.png",sz:[35,35],k:"魔物"},
   w_doro:{nm:"ドロ人形",r:2,n:[6,2,6,2],src:"img/monster_031.png",sz:[72,70],k:"魔物"},
   w_hakamori:{nm:"ハカモリ鴉",r:1,n:[4,4,2,3],src:"img/monster_037.png",sz:[31,30],k:"魔物"},
   w_rousoku:{nm:"ロウソク霊",r:2,n:[2,5,5,4],src:"img/monster_007.png",sz:[22,35],k:"魔物"},
   w_sekkan:{nm:"石棺ヤドカリ",r:2,n:[6,2,3,5],src:"img/m_sekkan.png",sz:[41,30],k:"魔物"},
-  w_shishi:{nm:"双頭の石獅子",r:4,n:[7,6,6,6],src:"img/m_shishiL.png",sz:[49,45],k:"魔物"},
+  w_shishi:{nm:"双頭の石獅子",r:4,n:[7,6,6,6],src:"img/monster_139.png",sz:[88,75],k:"魔物"},
   w_honeban:{nm:"ホネ番兵",r:2,n:[5,5,3,3],src:"img/monster_035.png",sz:[43,70],k:"魔物"},
   w_rizeria:{nm:"王女リゼリア",r:4,n:[6,8,5,6],src:"img/c_rizeria.png",sz:[31,64],k:"人物"},
   w_hanna:{nm:"木こり娘",r:3,n:[7,6,3,5],src:"img/c_hanna.png",sz:[39,58],k:"人物"},
@@ -64,6 +64,7 @@ const WORLD={
   w_keihin:{nm:"景品係",r:1,n:[3,3,4,3],src:"img/c_keihin.png",sz:[33,59],k:"人物"},
   w_serinin:{nm:"競り人",r:1,n:[4,3,3,3],src:"img/c_serinin.png",sz:[42,58],k:"人物"},
   w_sunamogu:{nm:"スナモグリ",r:2,n:[6,5,2,3],src:"img/m_sunamogu.png",sz:[131,90],k:"魔物"},
+  w_saboten:{nm:"サボテン拳士",r:2,n:[6,2,4,4],src:"img/monster_142.png",sz:[67,45],k:"魔物"},
   w_sasori:{nm:"サソリ武者",r:2,n:[5,3,6,2],src:"img/monster_046.png",sz:[61,55],k:"魔物"},
   w_kinkoro:{nm:"金のコロモチ",r:3,n:[6,5,5,5],src:"img/m_kinkoro.png",sz:[26,20],k:"魔物"},
   w_muku:{nm:"麦わら帽の子",r:3,n:[5,6,6,4],src:"img/c_muku.png",sz:[41,60],k:"人物"},
@@ -87,15 +88,15 @@ OPPS.length=0; OPPS.push(
   {nm:"胴元ゴンゾ",who:"135",cap:12,depth:2,sig:"w_rousoku",pool:["w_rousoku","w_rousoku","w_jako","w_nakiya","w_nakiya","w_tomon","w_hakamori","w_hakamori","w_honeban","w_sekkan","w_doro","w_akamugi","w_akamugi","w_kakashi","w_ookami"]},
   {nm:"村長の孫ティム",who:"069",cap:9,depth:1,sig:"w_donguri",pool:["w_donguri","w_donguri","w_koromochi","w_koromochi","w_kawauso","w_mizugumo","w_hane","w_fukuro","w_mugiwara","w_kamausagi","w_ookami"]},
   {nm:"大頭取マルゴ",who:"134",cap:14,depth:3,sig:"w_margo",pool:["w_margo","w_aster","w_shokanban","w_shokanban","w_taisho","w_taisho","w_ryogae","w_mizuuri","w_sasori","w_sasori","w_sunamogu","w_akamugi","w_doro","w_tsubo"]},
-  {nm:"闘技場の受付ジーナ",who:"137",cap:13,depth:3,sig:"w_sunamogu",pool:["w_sunamogu","w_sunamogu","w_sasori","w_sasori","w_tobakuban","w_gina","w_keihin","w_serinin","w_akamugi","w_doro","w_ookami","w_kakashi","w_teo","w_rinka"]});
+  {nm:"闘技場の受付ジーナ",who:"137",cap:13,depth:3,sig:"w_sunamogu",pool:["w_sunamogu","w_sunamogu","w_sasori","w_saboten","w_saboten","w_tobakuban","w_gina","w_keihin","w_serinin","w_akamugi","w_doro","w_ookami","w_kakashi","w_teo","w_rinka"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）
 // 物語で出会うまでは相手の札に出さない人（RPGの進みの数）。出会う前の人物の絵を先に見せないため
-const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46,w_aster:51,w_taisho:48,w_mizuuri:50};
+const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46,w_aster:51,w_taisho:48,w_mizuuri:50,w_saboten:48};
 function rpgStage(){ try{ return JSON.parse(localStorage.getItem("rpgPlay1")).flags.s||0; }catch(e){ return 0; } }
 // 後から足した札（相手の持ち札に、記録が作られた後で加えるもの）
-const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi","w_taisho","w_mizuuri"];
+const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi","w_taisho","w_mizuuri","w_saboten"];
 function rpgGold(add){ try{ const t=JSON.parse(localStorage.getItem("rpgPlay1")); if(add){ t.gold+=add; localStorage.setItem("rpgPlay1",JSON.stringify(t)); } return t.gold; }catch(e){ return 0; } }
 function goldTag(){ return `<span style="color:var(--text)">${rpgGold().toLocaleString()} G</span>`; }
 

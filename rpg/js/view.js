@@ -39,7 +39,11 @@ DM.onFit.push(() => { if (active && st && !ended) buildHud(); });
 
 // ---------- 位置 ----------
 function heroPos(u) { return { x: HERO_X[u.c], y: HERO_Y[u.r] }; }
+// 双頭の魔物（twin）：一つの体の絵を真ん中に1回だけ描き、頭ごとに狙う場所を分ける。数字は、左右反転した後の絵の中の頭の場所（ドット）
+const TWIN = { A: [54, 0, 34, 46], B: [25, 0, 29, 38] };
+function twinBody(u) { const img = IM[u.img], w = img.naturalWidth * QM, h = img.naturalHeight * QM, y = Math.round((MID_Y + h / 2) * 4) / 4; return { x: BIG.x, y, w, h, left: Math.round((BIG.x - w / 2) * 4) / 4, top: y - h }; }
 function foeBox(u) {
+  if (u.twin) { const b = twinBody(u), [hx, hy, hw, hh] = TWIN[u.twin], left = b.left + hx * QM, top = b.top + hy * QM, w = hw * QM, h = hh * QM; return { x: left + w / 2, y: b.y, w, h, left, top, body: b }; }
   const img = IM[u.img];
   // 人間の敵は、仲間と同じ人物の絵・同じ大きさ（歩く絵の1コマ）
   // ただし魔物の兵を従える隊長などは、魔物と同じ点の細かさ（psc＝1.5で魔物の倍率と同じ）にして、手下より小さく見えないようにする
@@ -47,6 +51,27 @@ function foeBox(u) {
   if (u.big) { const y = Math.round((MID_Y + h / 2) * 4) / 4; return { x: BIG.x, y, w, h, left: Math.round((BIG.x - w / 2) * 4) / 4, top: y - h }; }
   const x = FOE_X[u.c], y = FOE_Y[u.r];
   return { x, y, w, h, left: Math.round((x - w / 2) * 4) / 4, top: y - h }; // 点の境目にそろえる
+}
+// 双頭の体：両方の頭が倒れたら消える。倒れた頭だけ暗くし、光るのは当たった頭だけ
+function drawTwin(tw, t) {
+  const u0 = tw[0], body = twinBody(u0), img = IM[u0.img], fs = tw.map(u => fx[u.id] || {});
+  const allDown = tw.every(u => u.down), fadeT = Math.max(...fs.map(f => f.fade || 0));
+  if (allDown && !(fadeT > t)) return;
+  let ox = 0;
+  if (fs.some(f => f.shake > t)) ox = Math.round(Math.sin(t / 18) * 2);
+  if (fs.some(f => f.lunge > t)) ox += 4;
+  ctx.save();
+  if (allDown) ctx.globalAlpha = Math.max(0, (fadeT - t) / 500);
+  ctx.fillStyle = "#0006"; ctx.fillRect(body.x - Math.floor(body.w * 0.35), body.y - 1, Math.floor(body.w * 0.7), 1.5);
+  ctx.translate(Math.round((body.left + ox + body.w) * 4) / 4, Math.round(body.top * 4) / 4); ctx.scale(-1, 1);
+  ctx.drawImage(img, 0, 0, body.w, body.h);
+  tw.forEach((u, i) => {
+    const [hx, hy, hw, hh] = TWIN[u.twin], rx = body.w - (hx + hw) * QM, ry = hy * QM, rw = hw * QM, rh = hh * QM;
+    if (fs[i].flash > t) { ctx.save(); ctx.beginPath(); ctx.rect(rx, ry, rw, rh); ctx.clip(); ctx.globalAlpha = 0.7; ctx.drawImage(white(img), 0, 0, body.w, body.h); ctx.restore(); }
+    if (u.down && !allDown) { ctx.save(); ctx.beginPath(); ctx.rect(rx, ry, rw, rh); ctx.clip(); ctx.globalAlpha = 0.5; ctx.drawImage(white(img, "#000"), 0, 0, body.w, body.h); ctx.restore(); } // 倒れた頭は暗く沈む
+  });
+  ctx.restore();
+  tw.forEach(u => { if (!u.down) { const b = foeBox(u), bw = Math.min(30, Math.max(16, Math.floor(b.w * 0.7))); hpBar(b.x - Math.floor(bw / 2), b.y + 2, bw, u.hp / u.max); } });
 }
 function where(u) {
   if (u.side === 1) { const b = foeBox(u); return { x: b.x, y: b.top + b.h * 0.45 }; }
@@ -177,11 +202,12 @@ function go() {
 
 // ---------- 描く ----------
 const WHITE = new Map();
-function white(img) {
-  if (WHITE.has(img)) return WHITE.get(img);
+function white(img, col = "#fff") {
+  const key = col === "#fff" ? img : img.src + col;
+  if (WHITE.has(key)) return WHITE.get(key);
   const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
-  const x = c.getContext("2d"); x.drawImage(img, 0, 0); x.globalCompositeOperation = "source-in"; x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
-  WHITE.set(img, c); return c;
+  const x = c.getContext("2d"); x.drawImage(img, 0, 0); x.globalCompositeOperation = "source-in"; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height);
+  WHITE.set(key, c); return c;
 }
 // HPの数字（今/最大）。ゲージのすぐ下に小さく
 function hpText(x, y, u) {
@@ -213,7 +239,9 @@ function draw(t) {
   if (st) drawEfx(t); // 範囲の光は人の後ろに
   if (st) {
     ctx.fillStyle = "#000a"; ctx.fillRect(-DM.OX, 44, DM.VW, 52); // 上の帯の下地（画面の端まで）
+    const twins = st.foes.filter(u => u.twin);
     for (const u of st.foes) { // 敵（右向きにして描く）
+      if (u.twin) { if (u === twins[0]) drawTwin(twins, t); continue; }
       const b = foeBox(u), img = IM[u.img], f = fx[u.id] || {};
       if (u.down && !(f.fade > t) && !u.human) continue; // 人間は、倒れてもそこに残る
       let ox = 0;

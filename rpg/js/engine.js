@@ -129,6 +129,7 @@ const SKILLS = {
   windsting: { nm: "風車針", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 50, dist: "遠", dir: "間接", kind: "攻撃" },
   mugikami:  { nm: "麦穂噛み", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 45, dist: "近", dir: "直接", kind: "攻撃" },
   sunakaki:  { nm: "砂かき", bp: 4, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  togeken:   { nm: "とげ拳", bp: 4, rank: "C", tg: "one", at: ["突", "打"], dist: "近", dir: "直接", kind: "攻撃" },
   hasami:    { nm: "大ばさみ", bp: 4, rank: "C", tg: "one", at: ["斬"], hits: 2, dist: "近", dir: "直接", kind: "攻撃" },
   // ジャコ（弓）：賽の目のように散らばる矢、泣き声で怯ませる矢、逃げ際の一矢
   j_sai:     { nm: "賽の目撃ち", bp: 5, rank: "E", tg: "rand", hits: 3, at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
@@ -243,6 +244,7 @@ const MATS = {
   akauroko: { nm: "赤麦蛇の鱗", icon: "mat_008", fam: "皮・鱗・甲羅", rare: "白" },
   tsume:    { nm: "白い大爪", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
   kokaku:   { nm: "蠍の甲殻", icon: "mat_008", fam: "皮・鱗・甲羅", rare: "緑" },
+  sabotane: { nm: "サボテンの種", icon: "mat_024", fam: "植物", rare: "白" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
 const TOOLS = {
@@ -284,6 +286,7 @@ const HEARTS = {
   rousoku:  { nm: "ロウソク霊の心", col: "白", mul: { str: 90, vit: 92, dex: 98, agi: 104, int: 114, wil: 108, lov: 100, cha: 100 }, sk: "bluefire", up: ["int", "wil"] },
   akamugi:  { nm: "アカムギ蛇の心", col: "白", mul: { str: 98, vit: 94, dex: 108, agi: 110, int: 98, wil: 96, lov: 100, cha: 100 }, sk: "mugikami", up: ["agi", "dex"] },
   sunamogu: { nm: "スナモグリの心", col: "緑", mul: { str: 112, vit: 112, dex: 90, agi: 86, int: 92, wil: 100, lov: 100, cha: 96 }, sk: "sunakaki", up: ["str", "vit"] },
+  saboten:  { nm: "サボテン拳士の心", col: "緑", mul: { str: 108, vit: 108, dex: 106, agi: 94, int: 90, wil: 102, lov: 96, cha: 98 }, sk: "togeken", up: ["str", "vit"] },
   sasori:   { nm: "サソリ武者の心", col: "緑", mul: { str: 110, vit: 106, dex: 104, agi: 96, int: 90, wil: 96, lov: 96, cha: 100 }, sk: "hasami", up: ["str", "dex"] },
   sekkan:   { nm: "石棺ヤドカリの心", col: "白", mul: { str: 104, vit: 116, dex: 96, agi: 86, int: 94, wil: 104, lov: 100, cha: 100 }, sk: "lidpinch", up: ["vit", "wil"] },
   shishi:   { nm: "石獅子の心", col: "青", mul: { str: 112, vit: 114, dex: 100, agi: 98, int: 96, wil: 110, lov: 100, cha: 104 }, sk: "lionclaw", up: ["str", "vit"], ps: "standfast" },
@@ -370,20 +373,20 @@ const FORMATIONS = {
 // 能力値は「強さ1」のときの値。場所の強さに合わせて掛け算する。human＝人間（心を落とさず、倒れても消えない）
 const FOES = {
   // 西境：リム川・ささやきの森
-  kawauso:  { mat: "kegawa", nm: "カワウソ盗", img: "m_kawauso", wt: "fang", pow: 6, hp: 80, st: { str: 14, vit: 10, dex: 16, agi: 18, int: 5, wil: 8, lov: 0, cha: 8 }, res: { 斬: -20 }, gold: 5 },
+  kawauso:  { mat: "kegawa", nm: "カワウソ盗", img: "monster_131", wt: "fang", pow: 6, hp: 80, st: { str: 14, vit: 10, dex: 16, agi: 18, int: 5, wil: 8, lov: 0, cha: 8 }, res: { 斬: -20 }, gold: 5 },
   koromochi:{ mat: "mochi", nm: "コロモチ", img: "m_koromochi", wt: "club", pow: 10, hp: 80, st: { str: 29, vit: 14, dex: 8, agi: 9, int: 6, wil: 14, lov: 0, cha: 6 }, res: { 打: 40, 熱: -40, 雷: -30 }, every: { n: 3, sk: "mochislam" }, gold: 6, heart: "koromochi" },
   mizugumo: { mat: "ito", nm: "ミズグモ", img: "m_mizugumo", wt: "fang", pow: 11, hp: 90, st: { str: 31, vit: 11, dex: 16, agi: 22, int: 12, wil: 9, lov: 0, cha: 10 }, res: { 冷: 40, 熱: -40, 打: -20 }, every: { n: 2, sk: "waterthread" }, gold: 9, heart: "mizugumo" },
-  donguri:  { mat: "donguri", nm: "ドングリ兵", img: "m_donguri", wt: "spear", pow: 11, hp: 90, st: { str: 30, vit: 14, dex: 14, agi: 12, int: 5, wil: 10, lov: 0, cha: 8 }, res: { 熱: -50, 打: 20, 斬: -20 }, every: { n: 3, sk: "acornshot" }, gold: 8, heart: "donguri" },
+  donguri:  { mat: "donguri", nm: "ドングリ兵", img: "monster_130", wt: "spear", pow: 11, hp: 90, st: { str: 30, vit: 14, dex: 14, agi: 12, int: 5, wil: 10, lov: 0, cha: 8 }, res: { 熱: -50, 打: 20, 斬: -20 }, every: { n: 3, sk: "acornshot" }, gold: 8, heart: "donguri" },
   // 親蜘蛛：カイ1人で戦う山場。子を呼ぶ。親を倒せば、子は逃げる
-  oyamizugumo:{ mat: "ito", nm: "オヤミズグモ", img: "m_oyagumo", wt: "fang", pow: 16, hp: 315, boss: 1, st: { str: 40, vit: 13, dex: 16, agi: 14, int: 14, wil: 12, lov: 0, cha: 14 },
+  oyamizugumo:{ mat: "ito", nm: "オヤミズグモ", img: "monster_134", wt: "fang", pow: 16, hp: 315, boss: 1, st: { str: 40, vit: 13, dex: 16, agi: 14, int: 14, wil: 12, lov: 0, cha: 14 },
               res: { 冷: 40, 熱: -40, 打: -20 }, plan: { 2: "callkids", 4: "silkbind", 5: "callkids" }, every: { n: 4, sk: "callkids" }, every2: { n: 3, sk: "silkbind" }, stunRes: 1, gold: 45 },
   komizu:   { nm: "子グモ", img: "m_mizugumo", wt: "fang", pow: 9, hp: 55, st: { str: 26, vit: 9, dex: 14, agi: 20, int: 8, wil: 7, lov: 0, cha: 8 }, res: { 冷: 40, 熱: -40, 打: -20 }, gold: 3 },
   moriookami:{ mat: "kiba", nm: "モリオオカミ", img: "m_ookami", wt: "fang", pow: 11, hp: 110, st: { str: 32, vit: 12, dex: 14, agi: 24, int: 5, wil: 8, lov: 0, cha: 10 }, res: { 熱: -30, 突: -20, 冷: 20 }, every: { n: 3, sk: "wolfbite" }, gold: 11, heart: "ookami" },
   // 西街道
-  hanenezumi:{ mat: "hane", nm: "ハネネズミ", img: "m_hanenezumi", wt: "fang", pow: 9, hp: 70, st: { str: 26, vit: 9, dex: 18, agi: 27, int: 8, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 打: 20 }, every: { n: 3, sk: "wingslap" }, gold: 8, heart: "hanenezumi" },
+  hanenezumi:{ mat: "hane", nm: "ハネネズミ", img: "monster_132", wt: "fang", pow: 9, hp: 70, st: { str: 26, vit: 9, dex: 18, agi: 27, int: 8, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 打: 20 }, every: { n: 3, sk: "wingslap" }, gold: 8, heart: "hanenezumi" },
   kakashi:  { mat: "tetsu", nm: "カカシ番", img: "monster_088", wt: "claw", pow: 11, hp: 130, st: { str: 31, vit: 15, dex: 12, agi: 9, int: 5, wil: 12, lov: 0, cha: 9 }, res: { 熱: -60, 斬: -20, 突: 30, 打: 20 }, every: { n: 3, sk: "sickle" }, gold: 12, heart: "kakashi" },
   // 中央平原（強さ2〜3）
-  mugiwara: { mat: "mugi", nm: "ムギワラ坊", img: "m_mugiwara", wt: "club", pow: 10, hp: 105, st: { str: 30, vit: 15, dex: 15, agi: 14, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 熱: -50, 斬: -20, 打: 10 }, every: { n: 3, sk: "strawroll" }, gold: 12, heart: "mugiwara" },
+  mugiwara: { mat: "mugi", nm: "ムギワラ坊", img: "monster_136", wt: "club", pow: 10, hp: 105, st: { str: 30, vit: 15, dex: 15, agi: 14, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 熱: -50, 斬: -20, 打: 10 }, every: { n: 3, sk: "strawroll" }, gold: 12, heart: "mugiwara" },
   kamausagi:{ mat: "usage", nm: "カマウサギ", img: "monster_003", wt: "claw", pow: 10, hp: 85, st: { str: 30, vit: 11, dex: 18, agi: 26, int: 6, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 冷: 20 }, every: { n: 2, sk: "sickleear" }, gold: 11, heart: "kamausagi" },
   fusha:    { mat: "hane", nm: "フウシャ虫", img: "monster_082", wt: "fang", pow: 9, hp: 80, st: { str: 27, vit: 10, dex: 22, agi: 24, int: 8, wil: 10, lov: 0, cha: 10 }, res: { 熱: -40, 雷: -30, 打: -20, 斬: 10 }, every: { n: 3, sk: "windsting" }, gold: 12, heart: "fusha" },
   doro:     { mat: "doro", nm: "ドロ人形", img: "monster_031", wt: "fist", pow: 12, hp: 170, st: { str: 32, vit: 20, dex: 10, agi: 8, int: 6, wil: 14, lov: 0, cha: 9 }, res: { 打: 30, 斬: 10, 冷: -30, 雷: -30 }, every: { n: 3, sk: "mudslap" }, gold: 16, heart: "doro" },
@@ -393,12 +396,13 @@ const FOES = {
   rousoku:  { mat: "rou", nm: "ロウソク霊", img: "monster_007", wt: "fang", pow: 9, hp: 75, st: { str: 20, vit: 10, dex: 14, agi: 20, int: 26, wil: 18, lov: 0, cha: 12 }, mag: 11, res: { 斬: 30, 突: 30, 冷: -60, 熱: 60, 陽: -30 }, every: { n: 2, sk: "bluefire" }, gold: 14, heart: "rousoku" },
   akamugi:  { mat: "akauroko", nm: "アカムギ蛇", img: "m_akamugi", wt: "fang", pow: 11, hp: 120, st: { str: 31, vit: 13, dex: 20, agi: 24, int: 7, wil: 10, lov: 0, cha: 10 }, res: { 斬: -20, 冷: -40, 熱: 20 }, every: { n: 2, sk: "mugikami" }, gold: 15, heart: "akamugi" },
   sunamogu: { mat: "tsume", nm: "スナモグリ", img: "m_sunamogu", fsc: 0.3, wt: "claw", pow: 13, hp: 260, st: { str: 36, vit: 24, dex: 12, agi: 9, int: 6, wil: 14, lov: 0, cha: 8 }, res: { 打: 20, 斬: 10, 冷: -40, 雷: -30 }, every: { n: 3, sk: "sunakaki" }, gold: 24, heart: "sunamogu" },
+  saboten:  { mat: "sabotane", nm: "サボテン拳士", img: "monster_142", wt: "fist", pow: 13, hp: 210, st: { str: 34, vit: 24, dex: 18, agi: 12, int: 6, wil: 14, lov: 0, cha: 10 }, res: { 突: 20, 冷: 20, 熱: -40, 斬: -20 }, every: { n: 2, sk: "togeken" }, gold: 22, heart: "saboten" },
   sasori:   { mat: "kokaku", nm: "サソリ武者", img: "monster_046", wt: "axe", pow: 13, hp: 190, st: { str: 35, vit: 22, dex: 20, agi: 16, int: 6, wil: 12, lov: 0, cha: 10 }, res: { 斬: 30, 突: 10, 打: -20, 冷: -30 }, every: { n: 2, sk: "hasami" }, gold: 22, heart: "sasori" },
   sekkan:   { mat: "sekkan", nm: "石棺ヤドカリ", img: "m_sekkan", wt: "claw", pow: 11, hp: 175, st: { str: 31, vit: 26, dex: 12, agi: 8, int: 6, wil: 16, lov: 0, cha: 9 }, res: { 斬: 40, 突: 30, 打: -30, 雷: -40 }, every: { n: 3, sk: "lidpinch" }, gold: 16, heart: "sekkan" },
-  // 双頭の石獅子：二つの頭が別々に動く。片方が倒れると、残った頭は荒れる（lone）
-  shishiL:  { mat: "sekkan", book: "book1", nm: "石獅子・右の頭", img: "m_shishiL", wt: "claw", pow: 12, hp: 400, boss: 1, st: { str: 28, vit: 22, dex: 16, agi: 14, int: 10, wil: 18, lov: 0, cha: 14 },
+  // 双頭の石獅子：一つの体の絵に、二つの頭（twin）。頭ごとに狙えて、別々に動く。片方が倒れると、残った頭は荒れる（lone）
+  shishiL:  { mat: "sekkan", book: "book1", nm: "石獅子・右の頭", img: "monster_139", twin: "A", wt: "claw", pow: 12, hp: 400, boss: 1, st: { str: 28, vit: 22, dex: 16, agi: 14, int: 10, wil: 18, lov: 0, cha: 14 },
               res: { 斬: 30, 突: 20, 打: -20, 雷: -30 }, plan: { 3: "lionroar" }, every: { n: 2, sk: "lionclaw" }, lone: "lionroar", stunRes: 1, gold: 60 },
-  shishiR:  { mat: "hone", nm: "石獅子・左の頭", img: "m_shishiR", wt: "fang", pow: 12, hp: 400, boss: 1, mag: 12, st: { str: 27, vit: 22, dex: 16, agi: 16, int: 22, wil: 18, lov: 0, cha: 14 },
+  shishiR:  { mat: "hone", nm: "石獅子・左の頭", img: "monster_139", twin: "B", wt: "fang", pow: 12, hp: 400, boss: 1, mag: 12, st: { str: 27, vit: 22, dex: 16, agi: 16, int: 22, wil: 18, lov: 0, cha: 14 },
               res: { 斬: 30, 突: 20, 打: -20, 冷: -30 }, plan: { 2: "lionbreath", 5: "lionbreath" }, every: { n: 3, sk: "lionfang" }, lone: "lionfang", stunRes: 1, gold: 60 },
   // 一本杉の拳法娘（腕試し）
   rinka:    { nm: "リンカ", img: "person_004", person: 1, human: 1, wt: "fist", pow: 11, hp: 680, boss: 1, st: { str: 33, vit: 20, dex: 18, agi: 30, int: 8, wil: 16, lov: 0, cha: 16 },
@@ -407,12 +411,12 @@ const FOES = {
   sig:      { nm: "シグ", img: "person_010", person: 1, psc: 1.5, human: 1, wt: "spear", pow: 13, hp: 520, boss: 1, st: { str: 37, vit: 20, dex: 20, agi: 24, int: 8, wil: 20, lov: 0, cha: 18 },
               res: {}, plan: { 2: "pierce", 4: "sig_sandan", 6: "pierce" }, every: { n: 2, sk: "vitalstab" }, rageFrom: 8, rage: "sig_sandan", stunRes: 1, gold: 0 },
   // 古い見張り塔
-  ishikoro: { mat: "koishi", nm: "イシコロ小僧", img: "m_ishikoro", wt: "club", pow: 10, hp: 85, st: { str: 29, vit: 18, dex: 16, agi: 13, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 打: 20, 突: 30, 斬: 20, 冷: -30, 雷: -20 }, every: { n: 2, sk: "pebble" }, gold: 11, heart: "ishikoro" },
+  ishikoro: { mat: "koishi", nm: "イシコロ小僧", img: "monster_133", wt: "club", pow: 10, hp: 85, st: { str: 29, vit: 18, dex: 16, agi: 13, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 打: 20, 突: 30, 斬: 20, 冷: -30, 雷: -20 }, every: { n: 2, sk: "pebble" }, gold: 11, heart: "ishikoro" },
   tsutayoroi:{ mat: "tsuta", nm: "ツタ鎧", img: "monster_005", wt: "sword", pow: 12, hp: 150, st: { str: 31, vit: 20, dex: 13, agi: 10, int: 8, wil: 14, lov: 0, cha: 10 }, res: { 熱: -50, 斬: -20, 突: 20, 打: 20, 冷: 20 }, every: { n: 3, sk: "vinewhip" }, gold: 15, heart: "tsutayoroi" },
   // 石橋のガルム：3人で勝てる強さ。倒れる前に「参った」と言うので、心は落ちない
   garm:     { mat: "koishi", book: "book1", nm: "石橋のガルム", img: "person_132", person: 1, psc: 1.6, wt: "fist", pow: 12, hp: 650, boss: 1, st: { str: 33, vit: 20, dex: 14, agi: 8, int: 8, wil: 18, lov: 0, cha: 16 },
               res: { 斬: 30, 突: 10, 打: -10, 冷: -30, 雷: -20, 熱: 20 }, plan: { 2: "stonethrow", 4: "bridgequake", 6: "stonethrow", 7: "bridgequake" }, every: { n: 2, sk: "stonethrow" }, rageFrom: 10, rage: "bridgequake", stunRes: 1, gold: 120 },
-  nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1130, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
+  nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "monster_135", wt: "fist", pow: 14, hp: 1130, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
               res: { 打: 20, 冷: 50, 雷: -40, 熱: -20 }, plan: { 2: "mudsplash", 3: "bodypress", 4: "bigyawn", 6: "swampquake", 7: "bodypress", 8: "mudsplash" }, every: { n: 2, sk: "bodypress" }, rageFrom: 9, rage: "swampquake", stunRes: 1, gold: 120, heart: "nushi" },
   // 黒外套の兵（人間）
   kuro_s:   { nm: "黒外套の兵", img: "monster_019", human: 1, wt: "sword", pow: 11, hp: 340, st: { str: 30, vit: 20, dex: 14, agi: 14, int: 6, wil: 12, lov: 0, cha: 12 }, res: { 斬: 20, 雷: -30 }, every: { n: 3, sk: "gale" }, gold: 24 },
