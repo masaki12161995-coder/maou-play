@@ -745,13 +745,15 @@ function rollItem(id, rng) {
 }
 // 心のレア度：同じ魔物の心でも、落ちるたびに 白〜虹 のどれか。同じ魔物の同じレア度なら、どこで拾っても同じ性能
 //  id は「魔物の名前@レア度」（白は名前だけ）。レア度が1つ上がるごとに、能力の倍率がすべて上がる
-const HEART_RANKS = ["白", "緑", "青", "紫", "金", "虹"], HEART_ADD = { 白: 0, 緑: 2, 青: 4, 紫: 6, 金: 9, 虹: 13 };
+//  上がり方は本家（ロマサガRS）のスタイル補正を参考に：虹では得意な能力が200%近く、苦手な能力は120%前後。白は種ごとの85〜115%のまま
+//  倍率＝白の倍率＋（レア度の上乗せ）×（その能力の得意さ）。得意さ＝白で100%より高いほど大きい（0.3〜1.2）
+const HEART_RANKS = ["白", "緑", "青", "紫", "金", "虹"], HEART_ADD = { 白: 0, 緑: 15, 青: 30, 紫: 45, 金: 65, 虹: 85 };
 const HEART_ODDS = [62, 25, 9, 3, 0.9, 0.1]; // 落ちたときのレア度の出やすさ（％）
 function heartOf(id) {
   if (!id) return null;
   const [k, r] = String(id).split("@"), base = HEARTS[k]; if (!base) return null;
   const rank = r || "白", add = HEART_ADD[rank] || 0, mul = {};
-  for (const s of STATS) mul[s] = base.mul[s] + add;
+  for (const s of STATS) { const w = Math.max(0.3, Math.min(1.2, 0.5 + (base.mul[s] - 100) / 20)); mul[s] = Math.round(base.mul[s] + add * w); }
   return { ...base, key: k, rank, mul };
 }
 function rollHeart(k, rng, boss) {
