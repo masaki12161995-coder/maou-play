@@ -408,7 +408,7 @@ const FOES = {
   rinka:    { nm: "リンカ", img: "person_004", person: 1, human: 1, wt: "fist", pow: 11, hp: 680, boss: 1, st: { str: 33, vit: 20, dex: 18, agi: 30, int: 8, wil: 16, lov: 0, cha: 16 },
               res: {}, plan: { 2: "r_senpu", 4: "r_hyaku", 6: "r_senpu" }, every: { n: 2, sk: "r_shotei" }, rageFrom: 8, rage: "r_hyaku", gold: 0 },
   // 黒外套の隊長（人間。心は落とさない）
-  sig:      { nm: "シグ", img: "person_010", person: 1, psc: 1.5, human: 1, wt: "spear", pow: 13, hp: 520, boss: 1, st: { str: 37, vit: 20, dex: 20, agi: 24, int: 8, wil: 20, lov: 0, cha: 18 },
+  sig:      { nm: "シグ", img: "person_146", person: 1, psc: 1.5, human: 1, wt: "spear", pow: 13, hp: 520, boss: 1, st: { str: 37, vit: 20, dex: 20, agi: 24, int: 8, wil: 20, lov: 0, cha: 18 },
               res: {}, plan: { 2: "pierce", 4: "sig_sandan", 6: "pierce" }, every: { n: 2, sk: "vitalstab" }, rageFrom: 8, rage: "sig_sandan", stunRes: 1, gold: 0 },
   // 古い見張り塔
   ishikoro: { mat: "koishi", nm: "イシコロ小僧", img: "monster_133", wt: "club", pow: 10, hp: 85, st: { str: 29, vit: 18, dex: 16, agi: 13, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 打: 20, 突: 30, 斬: 20, 冷: -30, 雷: -20 }, every: { n: 2, sk: "pebble" }, gold: 11, heart: "ishikoro" },

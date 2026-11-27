@@ -40,7 +40,7 @@ const WORLD={
   w_honeban:{nm:"ホネ番兵",r:2,n:[5,5,3,3],src:"img/monster_035.png",sz:[43,70],k:"魔物"},
   w_rizeria:{nm:"王女リゼリア",r:4,n:[6,8,5,6],src:"img/c_rizeria.png",sz:[31,64],k:"人物"},
   w_hanna:{nm:"木こり娘",r:3,n:[7,6,3,5],src:"img/c_hanna.png",sz:[39,58],k:"人物"},
-  w_sig:{nm:"黒外套の隊長",r:3,n:[7,4,6,4],src:"img/c_sig.png",sz:[35,58],k:"人物"},
+  w_sig:{nm:"黒外套の隊長",r:3,n:[7,4,6,4],src:"img/c_sig2.png",sz:[41,59],k:"人物"},
   w_vald:{nm:"宰相",r:4,n:[5,7,6,7],src:"img/c_vald.png",sz:[33,59],k:"人物"},
   w_edmon:{nm:"慈王",r:4,n:[4,8,7,6],src:"img/c_edmon.png",sz:[41,58],k:"人物"},
   w_shoki:{nm:"役場の書記",r:1,n:[2,4,3,5],src:"img/c_shoki.png",sz:[33,59],k:"人物"},

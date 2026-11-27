@@ -64,7 +64,7 @@ function ferry() {
       { id: "yan", x: 8, y: 29, img: "person_019", dir: 2, nm: "ヤン爺", talk: "yan", when: g => S(g) >= 3 && S(g) !== 11 && S(g) !== 12 },
       { id: "oya", x: 11, y: 29, mon: "monster_134", face: 1, big: 1, nm: "オヤミズグモ", when: g => S(g) === 2 },
       // 場面10：黒外套の一団と、村の人たち
-      { id: "sig", x: 8, y: 17, img: "person_010", dir: 1, nm: "傷の男", when: g => cut(g, "s10") },
+      { id: "sig", x: 8, y: 17, img: "person_146", dir: 1, nm: "傷の男", when: g => cut(g, "s10") },
       { id: "k1", x: 8, y: 16, mon: "monster_019", face: -1, nm: "黒外套の兵", when: g => cut(g, "s10") },
       { id: "k2", x: 8, y: 18, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => cut(g, "s10") },
       { id: "k3", x: 9, y: 15, mon: "monster_021", face: -1, nm: "黒外套の兵", when: g => cut(g, "s10") },
@@ -78,7 +78,7 @@ function ferry() {
       // 場面12：土手の上の兵
       { id: "ka", x: 5, y: 16, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "s12b") || cut(g, "s12c") },
       { id: "kb", x: 4, y: 17, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "s12b") || cut(g, "s12c") },
-      { id: "sig11", x: 3, y: 17, img: "person_010", dir: 2, nm: "傷の男", when: g => cut(g, "s12c") },
+      { id: "sig11", x: 3, y: 17, img: "person_146", dir: 2, nm: "傷の男", when: g => cut(g, "s12c") },
     ],
     foes: [
       // 川べりの魔物：1体なら楽、2体はきつい。道の脇に居るので、避けて通れる
@@ -127,7 +127,7 @@ function village() {
       // 集める仲間（序章のあいだは、会えるだけ）
       { id: "seri", x: 12, y: 14, img: "person_017", dir: 0, nm: "セリ", talk: "seri", when: g => !(g.roster || []).includes(7) },
       { id: "karin", x: 12, y: 8, img: "person_105", dir: 0, nm: "カリン", talk: "karin", when: g => !(g.roster || []).includes(11) },
-      { id: "sig", x: 8, y: 9, img: "person_010", dir: 0, nm: "傷の男", talk: "sigVillage", when: g => S(g) === 12 },
+      { id: "sig", x: 8, y: 9, img: "person_146", dir: 0, nm: "傷の男", talk: "sigVillage", when: g => S(g) === 12 },
       { id: "k1", x: 6, y: 10, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "town", n: 0, when: g => S(g) === 12 },
       { id: "k2", x: 10, y: 10, mon: "monster_020", face: 1, nm: "黒外套の兵", talk: "town", n: 1, when: g => S(g) === 12 },
       { id: "k3", x: 9, y: 13, mon: "monster_021", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
@@ -415,7 +415,7 @@ function kawauso() {
       { id: "bramN", x: 7, y: 6, img: "person_005", dir: 1, nm: "ブラム", when: g => cut(g, "c1s11") },
       { id: "nomi1", x: 3, y: 4, img: "person_075", dir: 2, nm: "商人", talk: "nomi1", when: g => S(g) === 27 && !g.flags.cut },
       { id: "nomi2", x: 4, y: 4, mon: "monster_010", face: -1, nm: "兵士", talk: "nomi2", when: g => S(g) === 27 && !g.flags.cut },
-      { id: "sigK", x: 5, y: 7, img: "person_010", dir: 3, nm: "傷の男", when: g => cut(g, "c1s12") },
+      { id: "sigK", x: 5, y: 7, img: "person_146", dir: 3, nm: "傷の男", when: g => cut(g, "c1s12") },
       { id: "kk1", x: 4, y: 8, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s12") },
       { id: "kk2", x: 6, y: 8, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => cut(g, "c1s12") },
       { id: "totoK", x: 5, y: 5, img: "person_100", dir: 0, nm: "トト", when: g => cut(g, "c1s12") },
@@ -478,7 +478,7 @@ function ohashi() {
       // 夜明けからは、橋のたもとに橋番
       { id: "garmB", x: 10, y: 11, img: "person_132", dir: 0, psc: 1.5, nm: "ガルム", talk: "garmBridge", card: () => 1, when: g => S(g) >= 28 && !(g.roster || []).includes(13) },
       { id: "kogarumu", x: 10, y: 11, img: "person_132", dir: 0, psc: 1, nm: "コガルム", talk: "kogarumu", card: () => 1, when: g => S(g) >= 28 && (g.roster || []).includes(13) },  // ガルムの甥（小さめの石の巨人）
-      { id: "sigB", x: 6, y: 13, img: "person_010", dir: 2, nm: "傷の男", when: g => cut(g, "c1s13b") },
+      { id: "sigB", x: 6, y: 13, img: "person_146", dir: 2, nm: "傷の男", when: g => cut(g, "c1s13b") },
       { id: "kb1", x: 5, y: 12, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
       { id: "kb2", x: 5, y: 14, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
       { id: "kb3", x: 4, y: 13, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
@@ -683,7 +683,7 @@ function lux() {
       ...[["jako16b", 19, 15, "person_133", 2], ["lise16b", 16, 15, "person_002", 2], ["muku16b", 16, 16, "person_058h", 2], ["bram16b", 17, 16, "person_005", 2], ["naki16d", 15, 15, "person_074k", 2], ["naki16e", 15, 16, "person_076", 2], ["naki16f", 14, 15, "person_074k", 2],
         ["tomon16", 19, 14, "person_138", 0], ["machiM2", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16b") })),
       ...[[W - 1, 15, "monster_019"], [W - 1, 16, "monster_020"], [W - 2, 13, "monster_021"], [W - 2, 18, "monster_019"]].map(([x, y, mon], i) => ({ id: "kuro16" + i, x, y, mon, face: -1, nm: "", when: g => cut(g, "c2s16b") })),
-      { id: "sig16", x: W - 2, y: 16, img: "person_010", dir: 1, nm: "", when: g => cut(g, "c2s16b") && !!g.flags.sigHand && !!g.flags.sig16 },
+      { id: "sig16", x: W - 2, y: 16, img: "person_146", dir: 1, nm: "", when: g => cut(g, "c2s16b") && !!g.flags.sigHand && !!g.flags.sig16 },
       { id: "mortoG", x: 12, y: 31, img: "person_019k", dir: 3, nm: "モルト", when: g => cut(g, "c2s3") },
       // 町の人（段階2から。台詞は TOWNTALK）
       { id: "monouri", x: 9, y: 21, img: "person_075m", dir: 2, nm: "物売り", talk: "monouri", when: g => S(g) >= 31 && !g.flags.cut },
@@ -829,7 +829,7 @@ function nakaniwa() { // 一行は下（寝所の回廊）から出てくる。�
     npcs: [
       { id: "vald", x: 7, y: 6, img: "person_123", dir: 0, nm: "ヴァルド", when: g => S(g) <= 41 },
       { id: "vald2", x: 3, y: 6, img: "person_123", dir: 2, nm: "ヴァルド", when: g => S(g) >= 42 },
-      { id: "sigN", x: 7, y: 5, img: "person_010", dir: 0, nm: "シグ" },
+      { id: "sigN", x: 7, y: 5, img: "person_146", dir: 0, nm: "シグ" },
       { id: "kNiwa1", x: 6, y: 4, mon: "monster_018", face: 1, nm: "黒外套の兵", when: g => S(g) <= 41 },
       { id: "kNiwa2", x: 8, y: 4, mon: "monster_021", face: -1, nm: "黒外套の兵", when: g => S(g) <= 41 },
       { id: "kNiwa3", x: 7, y: 3, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => S(g) <= 41 },
