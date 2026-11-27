@@ -1404,11 +1404,39 @@ T.c1s12 = async () => {
 // ==================== 第2章「王都の葬列」 ====================
 // 進み具合 flags.s：28第1章の終わり→29平原に着いた→30王都の門を見た（ミルナへ）→31王都に入った（酒場へ）→32酒場の後→33裏通りの後（古い礼拝堂へ）
 // 大橋の通行料：渡るたびに、一人銅貨五枚（5 G）。渡った回数は flags.toll（寄り道の仲間の条件に使う）
+// 通行料：一人5G、子どもは半分（切り上げ）。払った回数を数え、1・3・5・7・9回目はガルムの台詞が変わる（寄り道の仲間ドン・ガルム）
+const CHILD = ["muku", "komari"];
+const GARM_TOLL = {
+  1: `
+ガルム：…一人、銅貨五枚。…こどもは、半分。
+ガルム：…最初の、客だ。…いや、最初ではない。…でも、最初だ。
+カイ：どっちだ。
+ガルム：…おまえは、最初に、払った。…談判の後で。`,
+  3: `
+ガルム：…三回目。…覚えた。…おまえの、銅貨の音。
+ガルム：…棹で、川底を突く音に、似ている。`,
+  5: `
+ガルム：…五回目。…指が、足りなくなった。
+ガルム：…片方の手で、五。…もう片方は、まだ、いらない。
+カイ：あと半分だ。
+ガルム：…半分は、まだ、分からん。`,
+  7: `
+ガルム：…七回目。…おまえは、よく、渡る。
+ガルム：…わしは、橋になって、三百年。…渡ったことが、ない。
+カイ：一度もか。
+ガルム：…橋は、渡らない。…渡られる、ものだ。`,
+  9: `
+ガルム：…九回目。…あと、一つで、両手が、そろう。
+ガルム：…そろったら、どうなるか。…わしにも、分からん。`,
+};
 async function toll(to, x, y, dir) {
-  const n = GS.fighters().length, cost = n * 5;
+  const fs = GS.fighters(), n = fs.length, cost = fs.reduce((a, hi) => a + (CHILD.includes(BT.HEROES[hi].id) ? 3 : 5), 0);
   if (G().gold < cost) { await talk(`ガルム：…一人、銅貨五枚。…足りん。`); return false; }
   G().gold -= cost; F().toll = (F().toll || 0) + 1; SND.se("get");
   DM.toast(`通行料 ${cost} G（${n}人）`, 300);
+  const k = F().toll, garmHi = BT.HEROES.findIndex(h => h.id === "garm");
+  if (k >= 10 && garmHi >= 0 && !joined(garmHi)) await T.garmJoin(garmHi);   // 仲間の絵がそろってから（それまでは数えるだけ）
+  else await talk(GARM_TOLL[k] || `ガルム：…いい音だ。`);
   await A.fadeOut(); A.enter(to, x, y, dir); A.fadeIn();
   return true;
 }
@@ -1418,6 +1446,85 @@ T.eastShut = async () => { await UI.say("", ["東の関所は閉まっている�
 T.luxShut = async () => {
   await talk(`ブラム：見ろ。先回りされてる。`);
   A.enter("plain", 20, 5, 0);
+};
+
+// ---------- 寄り道の仲間：ハンナ（ミルナの外れの木こり小屋） ----------
+T.hanna = async () => {
+  if (joined(12)) return;
+  await talk(`
+〔木こり小屋の前。そばかすの娘が、大斧で丸太を割っている。割った薪が、背丈より高く積み上がっている。〕
+ハンナ：ふんっ！…よし、今日の分、終わり。
+ハンナ：…あ、旅の人？見て、この薪の山。三日分。
+ハンナ：三日分を一日で割っちゃうから、あとの二日が暇なの。
+ハンナ：ねえ、どこから来たの。どこへ行くの。
+カイ：西の川から。行き先は、まだ決めてない。
+ハンナ：決めてないの！？いいなあ！
+ハンナ：わたし、この里から出たことないの。風車と薪と、粉ばっかり。
+ハンナ：退屈で、退屈で。斧を振ってないと、頭が退屈で溶けそう。`);
+  if (await pick(["来るか", "薪は、足りてるか"]) === 0) await talk(`
+カイ：来るか。
+ハンナ：旅？行く行く！
+ハンナ：…あ、待って。斧、持っていっていい？
+カイ：好きにしろ。
+ハンナ：やった！大きい木があったら、全部わたしに任せて！`);
+  else await talk(`
+カイ：薪は、足りてるか。
+ハンナ：足りすぎてる！里じゅうの冬の分、もうあるよ！
+ハンナ：…ねえ。それって、遠回しに「来い」ってこと？
+カイ：好きに取れ。
+ハンナ：じゃあ、行く行く！`);
+  await talk(`
+〔ハンナが小屋の戸に、炭で大きく書く。「ちょっと旅に出ます。ハンナ」〕
+ハンナ：これで、よし。父さんも分かるでしょ。
+ハンナ：…三日で帰るって思ってるだろうけどね。`);
+  await FD.joinMember(12);
+};
+
+// ---------- 寄り道の仲間：シロ（ハルネ・王都・ザハラを渡り歩く白い犬。3つの町で干し肉をやると付いてくる） ----------
+const SHIRO_TOWN = { harune: "ハルネ", lux: "王都", zahara: "ザハラ" };
+T.shiro = async n => {
+  const f = F(), fed = f.shiro = f.shiro || {}, done = Object.keys(fed), town = n.town;
+  if (!(G().tools.hoshiniku > 0)) return talk(`〔白い大きな犬が寝そべっている。においをかいで、また寝そべった。〕`);
+  const feed = async () => { G().tools.hoshiniku--; fed[town] = 1; A.sync(); };
+  if (done.length === 0) {
+    await talk(`
+〔白い大きな犬が寝そべっている。片耳が折れている。首に赤い布。〕
+町の人：その犬かい。ふらっと来て、ふらっと行くんだ。
+町の人：誰の犬でもない。でも、子どもには噛みつかない。`);
+    if (await pick(["干し肉をやる", "やらない"]) !== 0) return talk(`〔犬は片目だけ開けて、また閉じる。〕`);
+    await talk(`
+〔犬が起き上がり、干し肉をくわえる。一口で飲みこむ。〕
+カイ：…早いな。
+〔犬はしっぽを一度だけ振り、通りの向こうへ歩いていく。〕`);
+    return feed();
+  }
+  if (done.length === 1) {
+    await talk(`
+〔あの白い犬が寝そべっている。片耳が折れている。〕
+カイ：…おまえ、${SHIRO_TOWN[done[0]]}にいたな。
+〔犬が鼻をひくつかせる。〕`);
+    if (await pick(["干し肉をやる", "やらない"]) !== 0) return talk(`〔犬は片目だけ開けて、また閉じる。〕`);
+    await talk(`
+〔犬が干し肉を食べる。カイの足もとに座り、しばらくカイの顔を見上げる。〕
+カイ：……。
+〔犬は立ち上がり、また歩いていく。今度は一度、振り返る。〕`);
+    return feed();
+  }
+  const hi = BT.HEROES.findIndex(h => h.id === "shiro");
+  await talk(`
+〔あの白い犬が、通りの真ん中に座って、こちらを見ている。〕
+カイ：また会ったな。`);
+  if (await pick(["干し肉をやる", "やらない"]) !== 0) return talk(`〔犬は、カイが歩きだすまで、じっと待っている。〕`);
+  await talk(`
+〔犬が干し肉を食べる。食べ終わると、カイの横にぴたりと並んで座る。〕
+カイ：…来るのか。
+〔犬が、カイの棹のにおいをかぐ。しっぽを振る。〕
+カイ：食い扶持は、自分で稼げよ。
+〔犬が一声だけ吠える。〕
+カイ：…名前がいるな。白いから、シロだ。
+〔シロが、もう一声吠える。〕`);
+  await feed();
+  if (hi >= 0) await FD.joinMember(hi);
 };
 
 // ---------- 場面1　中央平原 ----------
@@ -2024,6 +2131,11 @@ async function talkThenCards(place, who, k) {
   await townTalk(place, who, 0);
   if (await UI.choose(who, "", ["札勝負をする", "やめる"]) === 0) await UI.cards("duel", k);
 }
+// 王都の物売り：話してから、干した食べ物を売る
+T.monouri = async () => {
+  await townTalk("lux", "物売り", 0);
+  await UI.shop("物売り", ["t:hoshiniku", "t:onigiri"]);
+};
 // ミルナの宿：主人と話してから泊まる
 T.milnaInn = async () => {
   await townTalk("milna", "宿の主人", 0);
@@ -2041,7 +2153,7 @@ T.town = async n => {
 T.fuki = async n => {
   await townTalk("toruka", "フキ", 0);
   if (S() === 12) return; // 黒外套が来た日は店じまい
-  await UI.shop("よろず屋", ["t:onigiri", "tunic", "cloak", "hood", "buckler", "oakclub", "thinblade", "shortbow", "ironspear", "wraps"]);
+  await UI.shop("よろず屋", ["t:onigiri", "t:hoshiniku", "tunic", "cloak", "hood", "buckler", "oakclub", "thinblade", "shortbow", "ironspear", "wraps"]);
 };
 // 簗場のヤン爺：第1章からは川魚を分けてくれる（第1章の最初の1回は、1匹ただで）
 T.yan = async () => {

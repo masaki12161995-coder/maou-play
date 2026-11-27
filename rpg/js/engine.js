@@ -62,6 +62,10 @@ const SKILLS = {
   // 集める仲間（西境地方）
   r_shotei:  { nm: "掌底", bp: 2, rank: "D", tg: "one", at: ["打"], stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
   r_senpu:   { nm: "旋風脚", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // ハンナ（斧）
+  h_maki:    { nm: "薪割り", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  h_maruta:  { nm: "丸太転がし", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  h_taiboku: { nm: "大木断ち", bp: 9, rank: "B", tg: "one", at: ["斬"], stun: 1, dist: "近", dir: "直接", kind: "攻撃" },
   sig_sandan:{ nm: "三段突き", bp: 9, rank: "C", tg: "one", hits: 3, at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   r_hyaku:   { nm: "百烈拳", bp: 9, rank: "D", tg: "one", hits: 3, at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
   t_neko:    { nm: "猫の一突き", bp: 8, rank: "B", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
@@ -149,6 +153,7 @@ const PASSIVES = {
   quickdraw:{ nm: "速射", ds: "［戦いの始め］素早さ＋15%" },
   sunway:   { nm: "陽の心得", ds: "［いつも］陽のダメージ＋15%" },
   greatway: { nm: "大剣の心得", ds: "［いつも］斬のダメージ＋10%" },
+  axeway:   { nm: "斧の心得", ds: "［いつも］斬のダメージ＋10%" },
   spearway: { nm: "槍の心得", ds: "［いつも］突のダメージ＋10%" },
   charge:   { nm: "突撃", ds: "［戦いの始め］腕力＋10%" },
   thunder:  { nm: "雷の心得", ds: "［いつも］雷のダメージ＋15%" },
@@ -175,6 +180,7 @@ const GEAR = {
   heavybook: { slot: "weapon", wt: "club", nm: "分厚い本", rank: "B", pow: 11, st: { int: 2 }, price: 150, icon: "mat_046" },
   spanner:   { slot: "weapon", wt: "club", nm: "大きなスパナ", rank: "B", pow: 12, st: { dex: 1 }, price: 150, icon: "eq_club_03" },
   bellstaff: { slot: "weapon", wt: "staff", nm: "鈴の杖", rank: "B", pow: 5, mp: { 陽: 12 }, st: { lov: 2 }, price: 160, icon: "eq_staff_02" },
+  woodaxe:   { slot: "weapon", wt: "axe", nm: "木こりの大斧", rank: "C", pow: 13, st: { str: 2, dex: -1 }, price: 120, icon: "eq_axe_02" },
   scoutgreat:{ slot: "weapon", wt: "great", nm: "斥候の大剣", rank: "B", pow: 15, st: { str: 2, agi: -2 }, price: 200, icon: "eq_great_01" },
   iron_great:{ slot: "weapon", wt: "great", nm: "鉄の大剣", rank: "B", pow: 15, st: { str: 1, agi: -1 }, price: 220, icon: "eq_great_03" },
   oar:       { slot: "weapon", wt: "spear", nm: "渡しの棹", rank: "B", pow: 12, st: { vit: 1 }, price: 60, icon: "eq_spear_01" },
@@ -228,6 +234,7 @@ const TOOLS = {
   book2: { nm: "秘伝書・弐", icon: "tool_007", ds: "技の覚醒（2回目）に使う" },
   book3: { nm: "秘伝書・参", icon: "tool_013", ds: "技の覚醒（3回目）に使う" },
   // 食べ物：戦いの中で、技と同じように選んで食べる（food＝戻るHPの割合）。その人の1回の行動を使う
+  hoshiniku: { nm: "干し肉", icon: "tool_034", ds: "戦いの中で食べると、HPが2割戻る。犬の好物", food: 0.2, price: 10 },
   onigiri: { nm: "握り飯", icon: "tool_onigiri", ds: "戦いの中で食べると、HPが3割戻る", food: 0.3, price: 20 },
   uo: { nm: "川魚", icon: "tool_uo", ds: "リム川でとれた魚。ヤン爺が分けてくれる" },
   hon: { nm: "貸本", icon: "mat_046", ds: "半年も返ってこなかった、ハルネの貸本屋の本", key: 1 },
@@ -307,6 +314,10 @@ const HEROES = [
   { id: "karin", nm: "カリン", img: "person_105", wt: "staff", rare: "A", col: 1, hp: 175, hpCap: 1000, lp: 7, st: { str: 11, vit: 15, dex: 14, agi: 17, int: 22, wil: 21, lov: 27, cha: 20 },
     cap: { str: 70, vit: 88, dex: 86, agi: 98, int: 112, wil: 114, lov: 126, cha: 106 }, up: ["lov", "int"],
     res: {}, sk: ["c_suzu", "c_genki", "c_kane"], ps: ["healer", "focus", "sunway"], gear: { weapon: "bellstaff", armor: "cloak", sub: null, acc: null } },
+  // ---- 寄り道で加わる仲間（side＝寄り道。加わり方は story.js） ----
+  { id: "hanna", nm: "ハンナ", img: "person_020", wt: "axe", rare: "A", side: 1, hp: 240, hpCap: 1150, lp: 9, st: { str: 28, vit: 23, dex: 13, agi: 16, int: 7, wil: 14, lov: 15, cha: 17 },
+    cap: { str: 126, vit: 116, dex: 84, agi: 92, int: 52, wil: 88, lov: 92, cha: 98 }, up: ["str", "vit"],
+    res: {}, sk: ["h_maki", "h_maruta", "h_taiboku"], ps: ["axeway", "charge", "spirit"], gear: { weapon: "woodaxe", armor: "tunic", sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -539,7 +550,7 @@ function damage(st, a, d, s) {
   let v = ((magic ? mpow : a.pow) * 1.5 + RANK[s.rank || "N"]) * statT / 100;
   const rm = resMul(d, at); v *= rm;
   if (a.side === 0) v *= rankMul(a, s);
-  if ((hasP(a, "swordway") || hasP(a, "greatway")) && at.includes("斬")) v *= 1.1;
+  if ((hasP(a, "swordway") || hasP(a, "greatway") || hasP(a, "axeway")) && at.includes("斬")) v *= 1.1;
   if ((hasP(a, "bowway") || hasP(a, "spearway") || hasP(a, "rapierway")) && at.includes("突")) v *= 1.1;
   if ((hasP(a, "clubway") || hasP(a, "fistway")) && at.includes("打")) v *= 1.1;
   if (hasP(a, "heatway") && at.includes("熱")) v *= 1.15;
