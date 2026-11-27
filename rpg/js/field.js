@@ -379,9 +379,9 @@ function person(img, x, y, dir, moving, now, lift, n) {
     const hx = (x + (n.ox || 0)) * TD + TD / 2, hy = y * TD + 4;
     ctx.drawImage(IM[img], col * 48, 0, 48, 26, Math.round((hx - 12) * 4) / 4, Math.round(hy * 4) / 4, 24, 13); return;
   }
-  const px0 = x * TD + TD / 2, py0 = y * TD + TD - 1 - (lift || 0);
-  if (!lift) { ctx.fillStyle = "#0006"; ctx.fillRect(px0 - 6, py0 - 1, 12, 2); }
-  ctx.drawImage(IM[img], col * 48, dir * 60, 48, 60, Math.round((px0 - 12) * 4) / 4, Math.round((py0 - 30) * 4) / 4, 24, 30);
+  const px0 = x * TD + TD / 2, py0 = y * TD + TD - 1 - (lift || 0), k = (n && n.psc) || 1;   // psc＝人の型の絵を大きく描く（石の巨人など）
+  if (!lift) { ctx.fillStyle = "#0006"; ctx.fillRect(px0 - 6 * k, py0 - 1, 12 * k, 2); }
+  ctx.drawImage(IM[img], col * 48, dir * 60, 48, 60, Math.round((px0 - 12 * k) * 4) / 4, Math.round((py0 - 30 * k) * 4) / 4, 24 * k, 30 * k);
 }
 function beast(name, x, y, face, sc) { // 魔物の絵の人（立っているだけ）
   const img = IM[name], w = img.naturalWidth * sc, h = img.naturalHeight * sc, cx = x * TD + TD / 2, by = y * TD + TD - 2;

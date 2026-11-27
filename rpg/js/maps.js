@@ -464,14 +464,15 @@ function ohashi() {
     exits: [{ x: 0, y: 13, to: "harune", tx: 17, ty: 14, dir: 1 }],
     npcs: [
       // 場面10：塔から下りてきた巨人と、町の人たち
-      { id: "garmS", x: 9, y: 11, mon: "monster_063", face: -1, sc: 0.8, nm: "ガルム", when: g => cut(g, "c1s10") },
+      { id: "garmS", x: 9, y: 11, img: "person_132", dir: 2, psc: 1.5, nm: "ガルム", when: g => cut(g, "c1s10") },
       { id: "moriS", x: 4, y: 12, img: "person_099", dir: 2, nm: "モーリス", when: g => cut(g, "c1s10") },
       { id: "dakkaS", x: 4, y: 14, mon: "monster_010", face: 1, nm: "ダッカ", when: g => cut(g, "c1s10") },
       { id: "gidoS", x: 3, y: 13, img: "person_030", dir: 2, nm: "ギド", when: g => cut(g, "c1s10") },
       { id: "akinS", x: 2, y: 12, img: "person_075", dir: 2, nm: "商人", when: g => cut(g, "c1s10") },
       { id: "totoS", x: 2, y: 14, img: "person_100", dir: 2, nm: "トト", when: g => cut(g, "c1s10") },
       // 夜明けからは、橋のたもとに橋番
-      { id: "garmB", x: 10, y: 11, mon: "monster_063", face: 1, sc: 0.8, nm: "ガルム", talk: "garmBridge", when: g => S(g) >= 28 },
+      { id: "garmB", x: 10, y: 11, img: "person_132", dir: 0, psc: 1.5, nm: "ガルム", talk: "garmBridge", when: g => S(g) >= 28 && !(g.roster || []).includes(13) },
+      { id: "kogarumu", x: 10, y: 11, img: "person_132", dir: 0, psc: 1, nm: "コガルム", talk: "kogarumu", when: g => S(g) >= 28 && (g.roster || []).includes(13) },  // ガルムの甥（小さめの石の巨人）
       { id: "sigB", x: 6, y: 13, img: "person_010", dir: 2, nm: "傷の男", when: g => cut(g, "c1s13b") },
       { id: "kb1", x: 5, y: 12, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
       { id: "kb2", x: 5, y: 14, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
@@ -538,7 +539,7 @@ function towerTop() {
     id: "towerTop", nm: "見張り塔のてっぺん", g, tier: 3, bg: "stone", inside: 1,
     objs: [],
     exits: [{ x: 6, y: 11, to: "tower2", tx: 9, ty: 4, dir: 0 }],
-    npcs: [{ id: "garm", x: 6, y: 4, mon: "monster_063", face: 1, sc: 0.8, nm: "ガルム", talk: "garm" }],
+    npcs: [{ id: "garm", x: 6, y: 4, img: "person_132", dir: 0, psc: 1.5, nm: "ガルム", talk: "garm" }],
     foes: [], chests: [],
     trigs: [{ x: 2, y: 8, w: 9, h: 1, when: g => S(g) === 24, run: "c1s9" }],
   };

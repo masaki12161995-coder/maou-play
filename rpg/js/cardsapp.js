@@ -17,7 +17,7 @@ const WORLD={
   w_oya:{nm:"オヤミズグモ",r:3,n:[4,7,6,4],src:"img/m_oyagumo.png",sz:[114,80],k:"魔物"},
   w_ishikoro:{nm:"イシコロ小僧",r:1,n:[3,4,4,2],src:"img/m_ishikoro.png",sz:[38,45],k:"魔物"},
   w_tsuta:{nm:"ツタ鎧",r:2,n:[5,3,6,2],src:"img/monster_005.png",sz:[37,72],k:"魔物"},
-  w_garm:{nm:"石橋のガルム",r:4,n:[7,5,7,6],src:"img/monster_063.png",sz:[72,70],k:"魔物"},
+  w_garm:{nm:"石橋のガルム",r:4,n:[7,5,7,6],src:"img/c_garm.png",sz:[44,59],k:"魔物"},
   w_nushi:{nm:"ヌシガエル",r:4,n:[5,6,8,6],src:"img/m_nushi.png",sz:[129,98],k:"魔物"},
   w_bram:{nm:"脱走騎士",r:3,n:[6,6,5,4],src:"img/c_bram.png",sz:[42,59],k:"人物"},
   w_teo:{nm:"見習い剣士",r:2,n:[5,4,3,4],src:"img/c_teo.png",sz:[32,59],k:"人物"},
@@ -123,7 +123,7 @@ function backEl(w,h){ const d=el("div","card back"); d.style.width=w+"px"; d.sty
 function who(id,box){ // 人物の正面の立ち姿（2倍、上半身で切る）。"g"＝橋番のガルム（魔物の絵の顔）
   const d=document.createElement("div"); d.className="sprite";
   if(id==="g10"){ d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background:url(img/monster_010.png) no-repeat;background-size:${box[0]*1.7}px auto;background-position:45% 4%;image-rendering:pixelated`; return d; }
-  if(id==="g"){ d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background:url(img/monster_063.png) no-repeat;background-size:${box[0]*1.6}px auto;background-position:30% 6%;image-rendering:pixelated`; return d; }
+  if(id==="g") id="132";   // 橋番のガルム（人の型の石の巨人の絵）
   d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background-image:url(img/person_${id}.png);background-size:288px 600px;background-position:${-(96)+(box[0]-96)/2}px ${box[1]>=120?0:-4}px`;
   return d;
 }

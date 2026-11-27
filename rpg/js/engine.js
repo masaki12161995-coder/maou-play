@@ -62,6 +62,10 @@ const SKILLS = {
   // 集める仲間（西境地方）
   r_shotei:  { nm: "掌底", bp: 2, rank: "D", tg: "one", at: ["打"], stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
   r_senpu:   { nm: "旋風脚", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // ドン・ガルム（棍棒）
+  g_ranpan:  { nm: "欄干打ち", bp: 2, rank: "D", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  g_jinarashi:{ nm: "地ならし", bp: 6, rank: "C", tg: "row", at: ["打"], stun: 1, dist: "近", dir: "直接", kind: "攻撃" },
+  g_hashi:   { nm: "橋の構え", bp: 4, tg: "self", cover: 3, kind: "防御" },
   // ハンナ（斧）
   h_maki:    { nm: "薪割り", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   h_maruta:  { nm: "丸太転がし", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
@@ -180,6 +184,7 @@ const GEAR = {
   heavybook: { slot: "weapon", wt: "club", nm: "分厚い本", rank: "B", pow: 11, st: { int: 2 }, price: 150, icon: "mat_046" },
   spanner:   { slot: "weapon", wt: "club", nm: "大きなスパナ", rank: "B", pow: 12, st: { dex: 1 }, price: 150, icon: "eq_club_03" },
   bellstaff: { slot: "weapon", wt: "staff", nm: "鈴の杖", rank: "B", pow: 5, mp: { 陽: 12 }, st: { lov: 2 }, price: 160, icon: "eq_staff_02" },
+  ranpan:    { slot: "weapon", wt: "club", nm: "石の欄干", rank: "B", pow: 14, st: { vit: 2, agi: -1 }, icon: "eq_club_03" },
   woodaxe:   { slot: "weapon", wt: "axe", nm: "木こりの大斧", rank: "C", pow: 13, st: { str: 2, dex: -1 }, price: 120, icon: "eq_axe_02" },
   scoutgreat:{ slot: "weapon", wt: "great", nm: "斥候の大剣", rank: "B", pow: 15, st: { str: 2, agi: -2 }, price: 200, icon: "eq_great_01" },
   iron_great:{ slot: "weapon", wt: "great", nm: "鉄の大剣", rank: "B", pow: 15, st: { str: 1, agi: -1 }, price: 220, icon: "eq_great_03" },
@@ -318,6 +323,9 @@ const HEROES = [
   { id: "hanna", nm: "ハンナ", img: "person_020", wt: "axe", rare: "A", side: 1, hp: 240, hpCap: 1150, lp: 9, st: { str: 28, vit: 23, dex: 13, agi: 16, int: 7, wil: 14, lov: 15, cha: 17 },
     cap: { str: 126, vit: 116, dex: 84, agi: 92, int: 52, wil: 88, lov: 92, cha: 98 }, up: ["str", "vit"],
     res: {}, sk: ["h_maki", "h_maruta", "h_taiboku"], ps: ["axeway", "charge", "spirit"], gear: { weapon: "woodaxe", armor: "tunic", sub: null, acc: null } },
+  { id: "garm", nm: "ガルム", img: "person_132", wt: "club", rare: "A", side: 1, hp: 300, hpCap: 1400, lp: 12, st: { str: 27, vit: 31, dex: 8, agi: 8, int: 5, wil: 21, lov: 14, cha: 12 },
+    cap: { str: 122, vit: 132, dex: 60, agi: 58, int: 40, wil: 104, lov: 86, cha: 80 }, up: ["vit", "str"],
+    res: { 斬: 15, 打: 10, 突: 15 }, sk: ["g_ranpan", "g_jinarashi", "g_hashi"], ps: ["clubway", "ironwall", "standfast"], gear: { weapon: "ranpan", armor: null, sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -379,7 +387,7 @@ const FOES = {
   ishikoro: { mat: "koishi", nm: "イシコロ小僧", img: "m_ishikoro", wt: "club", pow: 10, hp: 85, st: { str: 29, vit: 18, dex: 16, agi: 13, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 打: 20, 突: 30, 斬: 20, 冷: -30, 雷: -20 }, every: { n: 2, sk: "pebble" }, gold: 11, heart: "ishikoro" },
   tsutayoroi:{ mat: "tsuta", nm: "ツタ鎧", img: "monster_005", wt: "sword", pow: 12, hp: 150, st: { str: 31, vit: 20, dex: 13, agi: 10, int: 8, wil: 14, lov: 0, cha: 10 }, res: { 熱: -50, 斬: -20, 突: 20, 打: 20, 冷: 20 }, every: { n: 3, sk: "vinewhip" }, gold: 15, heart: "tsutayoroi" },
   // 石橋のガルム：3人で勝てる強さ。倒れる前に「参った」と言うので、心は落ちない
-  garm:     { mat: "koishi", book: "book1", nm: "石橋のガルム", img: "monster_063", wt: "fist", pow: 12, hp: 650, boss: 1, st: { str: 33, vit: 20, dex: 14, agi: 8, int: 8, wil: 18, lov: 0, cha: 16 },
+  garm:     { mat: "koishi", book: "book1", nm: "石橋のガルム", img: "person_132", person: 1, psc: 1.6, wt: "fist", pow: 12, hp: 650, boss: 1, st: { str: 33, vit: 20, dex: 14, agi: 8, int: 8, wil: 18, lov: 0, cha: 16 },
               res: { 斬: 30, 突: 10, 打: -10, 冷: -30, 雷: -20, 熱: 20 }, plan: { 2: "stonethrow", 4: "bridgequake", 6: "stonethrow", 7: "bridgequake" }, every: { n: 2, sk: "stonethrow" }, rageFrom: 10, rage: "bridgequake", stunRes: 1, gold: 120 },
   nushi:    { mat: "kai", book: "book1", nm: "ヌシガエル", img: "m_nushi", wt: "fist", pow: 14, hp: 1130, boss: 1, st: { str: 42, vit: 22, dex: 10, agi: 10, int: 18, wil: 18, lov: 0, cha: 22 },
               res: { 打: 20, 冷: 50, 雷: -40, 熱: -20 }, plan: { 2: "mudsplash", 3: "bodypress", 4: "bigyawn", 6: "swampquake", 7: "bodypress", 8: "mudsplash" }, every: { n: 2, sk: "bodypress" }, rageFrom: 9, rage: "swampquake", stunRes: 1, gold: 120, heart: "nushi" },

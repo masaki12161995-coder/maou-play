@@ -1240,6 +1240,29 @@ T.c1s10 = async () => {
 };
 T.eastEnd = async () => { await UI.say("", ["この先は、第2章で。"]); A.enter("ohashi", 20, A.pos().y - A.map().padTop, 1); };
 T.garmBridge = () => talkThenCards("harune", "ガルム", 2);
+T.kogarumu = () => talkThenCards("harune", "ガルム", 2, "コガルム");
+// 10回目の通行料：ガルムが番を甥のコガルムに譲って、仲間に加わる
+T.garmJoin = async hi => {
+  await talk(`
+ガルム：…十。
+〔ガルムが両手を広げ、指を全部立てて、長いこと眺めている。〕
+ガルム：…両手が、そろった。
+ガルム：…三百年で、初めて、そろった。
+〔橋の下の川原から、ガルムを小さくしたような石の巨人がよじ登ってくる。〕
+コガルム：…おじき。…呼んだか。
+ガルム：…呼んで、ない。…だが、来た。…ちょうどいい。
+ガルム：…コガルム。…橋を、頼む。
+コガルム：…おじきは。
+ガルム：…渡る。…向こう側へ。…一度、渡ってみたい。
+ガルム：…渡し守。…わしを、渡せ。…重いが。
+カイ：舟は沈む。歩いて渡れ。
+ガルム：…それが、いい。
+〔ガルムが、自分の橋の上を、ゆっくり一歩ずつ渡っていく。真ん中で立ち止まり、川を見下ろす。〕
+ガルム：…ここから見ると、川は、こんな顔を、しとったのか。
+コガルム：…一人、銅貨五枚。…こどもは、半分。
+コガルム：…半分は、まだ、分からん。`);
+  await FD.joinMember(hi);
+};
 
 // ---------- 場面11　夜の酒場 ----------
 T.c1s11 = async () => {
@@ -1435,7 +1458,8 @@ async function toll(to, x, y, dir) {
   G().gold -= cost; F().toll = (F().toll || 0) + 1; SND.se("get");
   DM.toast(`通行料 ${cost} G（${n}人）`, 300);
   const k = F().toll, garmHi = BT.HEROES.findIndex(h => h.id === "garm");
-  if (k >= 10 && garmHi >= 0 && !joined(garmHi)) await T.garmJoin(garmHi);   // 仲間の絵がそろってから（それまでは数えるだけ）
+  if (garmHi >= 0 && joined(garmHi)) await talk(`コガルム：…一人、銅貨五枚。…こどもは、半分。`);   // 番を継いだ甥
+  else if (k >= 10 && garmHi >= 0) await T.garmJoin(garmHi);
   else await talk(GARM_TOLL[k] || `ガルム：…いい音だ。`);
   await A.fadeOut(); A.enter(to, x, y, dir); A.fadeIn();
   return true;
@@ -2115,20 +2139,23 @@ T.bookMan = async () => {
 const STAGE_KEY = v => v === 0 ? "0a" : v === 0.5 ? "0b" : String(v);
 // 町ごとの切りかわり（物語担当の「仕組み担当への連絡」のとおり）。ハルネと大橋は、橋がつながった夜明けから段階2
 const PLACE_STAGE = { harune: g => (g.flags.s < 28 ? 1 : 2) };
-async function townTalk(place, who, n) {
+// as：台詞を言う人を差しかえる（ガルムが旅に出た後は、甥のコガルムが同じ台詞を言う）
+async function townTalk(place, who, n, as) {
   const key = STAGE_KEY((PLACE_STAGE[place] || root.townStage)(G())), list = ((TOWNTALK[place] || {})[key] || []).filter(b => b.who === who || b.who.split("（")[0] === who);
   const blk = list[n || 0] || list[0];
   if (!blk) return false;
   const f = F(); f.tk = f.tk || {}; const id = `${place}:${key}:${who}:${n || 0}`;
-  await talk(f.tk[id] ? blk.lines[blk.lines.length - 1] : blk.lines.join("\n"));
+  let lines = f.tk[id] ? [blk.lines[blk.lines.length - 1]] : blk.lines;
+  if (as) lines = lines.map(l => l.startsWith(who + "：") ? as + l.slice(who.length) : l);
+  await talk(lines.join("\n"));
   f.tk[id] = 1;
   return key;
 }
 // 町の人（台詞は TOWNTALK だけ）：地図の npc に tp（町）と、要るときは tw（見分けの印つきの名前）を書く
 T.tt = n => townTalk(n.tp, n.tw || n.nm, 0);
 // 札勝負のできる人：町の台詞のあとで勝負を聞く
-async function talkThenCards(place, who, k) {
-  await townTalk(place, who, 0);
+async function talkThenCards(place, who, k, as) {
+  await townTalk(place, who, 0, as);
   if (await UI.choose(who, "", ["札勝負をする", "やめる"]) === 0) await UI.cards("duel", k);
 }
 // 王都の物売り：話してから、干した食べ物を売る
