@@ -1047,7 +1047,7 @@ function shokan() { // 商館の広間
     ],
     exits: [{ x: 6, y: 8, to: "zahara", tx: 13, ty: 7, dir: 0 }],
     npcs: [
-      { id: "margo", x: 6, y: 2, img: "person_026m", dir: 0, nm: "マルゴ", talk: "margo", card: g => S(g) >= 52 },
+      { id: "margo", x: 6, y: 2, img: "person_134", dir: 0, nm: "マルゴ", talk: "margo", card: g => S(g) >= 52 },
       { id: "asterS", x: 6, y: 6, img: "person_013", dir: 3, nm: "", when: g => cut(g, "c3s3b") },
     ],
     foes: [], chests: [], trigs: [],

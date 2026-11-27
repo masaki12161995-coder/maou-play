@@ -86,7 +86,7 @@ OPPS.length=0; OPPS.push(
   {nm:"門番ダリオ",who:"g10",cap:12,depth:2,sig:"w_honeban",pool:["w_honeban","w_sig","w_vald","w_shishi","w_doro","w_doro","w_kamausagi","w_fusha","w_mugiwara","w_hakamori","w_rousoku","w_sekkan","w_ookami","w_teo","w_rinka","w_sekimori","w_tomon","w_akamugi"]},
   {nm:"胴元ゴンゾ",who:"135",cap:12,depth:2,sig:"w_rousoku",pool:["w_rousoku","w_rousoku","w_jako","w_nakiya","w_nakiya","w_tomon","w_hakamori","w_hakamori","w_honeban","w_sekkan","w_doro","w_akamugi","w_akamugi","w_kakashi","w_ookami"]},
   {nm:"村長の孫ティム",who:"069",cap:9,depth:1,sig:"w_donguri",pool:["w_donguri","w_donguri","w_koromochi","w_koromochi","w_kawauso","w_mizugumo","w_hane","w_fukuro","w_mugiwara","w_kamausagi","w_ookami"]},
-  {nm:"大頭取マルゴ",who:"026m",cap:14,depth:3,sig:"w_margo",pool:["w_margo","w_aster","w_shokanban","w_shokanban","w_taisho","w_taisho","w_ryogae","w_mizuuri","w_sasori","w_sasori","w_sunamogu","w_akamugi","w_doro","w_tsubo"]},
+  {nm:"大頭取マルゴ",who:"134",cap:14,depth:3,sig:"w_margo",pool:["w_margo","w_aster","w_shokanban","w_shokanban","w_taisho","w_taisho","w_ryogae","w_mizuuri","w_sasori","w_sasori","w_sunamogu","w_akamugi","w_doro","w_tsubo"]},
   {nm:"闘技場の受付ジーナ",who:"137",cap:13,depth:3,sig:"w_sunamogu",pool:["w_sunamogu","w_sunamogu","w_sasori","w_sasori","w_tobakuban","w_gina","w_keihin","w_serinin","w_akamugi","w_doro","w_ookami","w_kakashi","w_teo","w_rinka"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
