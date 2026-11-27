@@ -1454,7 +1454,7 @@ const GARM_TOLL = {
 async function toll(to, x, y, dir) {
   const fs = GS.fighters(), n = fs.length, cost = fs.reduce((a, hi) => a + (CHILD.includes(BT.HEROES[hi].id) ? 3 : 5), 0);
   if (G().gold < cost) { await talk(`ガルム：…一人、銅貨五枚。…足りん。`); return false; }
-  G().gold -= cost; F().toll = (F().toll || 0) + 1; SND.se("get");
+  G().gold -= cost; F().toll = (F().toll || 0) + 1; SND.se("coin");
   DM.toast(`通行料 ${cost} G（${n}人）`, 300);
   const k = F().toll, garmHi = BT.HEROES.findIndex(h => h.id === "garm");
   if (garmHi >= 0 && joined(garmHi)) await talk(`コガルム：…一人、銅貨五枚。…こどもは、半分。`);   // 番を継いだ甥
@@ -2106,7 +2106,7 @@ async function meet(id) {
     const have = J.mat ? (G().mats[J.mat] || 0) : (G().tools[J.item] || 0);
     if (have < J.n) { DM.toast(`${J.mat ? BT.MATS[J.mat].nm : BT.TOOLS[J.item].nm}：${have}／${J.n}`, 300); return; }
   }
-  if (J.how === "pay" && G().gold < J.gold) { DM.toast("お金が足りない", 300); return; }
+  if (J.how === "pay" && G().gold < J.gold) { SND.se("cancel"); DM.toast("お金が足りない", 300); return; }
   if (await UI.choose("", "", [J.btn, "やめる"]) !== 0) return;
   if (J.how === "pay") G().gold -= J.gold;
   if (J.how === "items") { if (J.mat) G().mats[J.mat] -= J.n; else G().tools[J.item] -= J.n; }
@@ -2189,7 +2189,7 @@ T.yan = async () => {
   if (key === "1" && !f.yanFish) { f.yanFish = 1; give("uo", 1); SND.se("get"); await sys("「川魚」を1匹もらった。"); return; }
   const c = await UI.choose("ヤン爺", "", ["川魚を分けてもらう（10 G）", "やめる"]);
   if (c !== 0) return;
-  if (G().gold < 10) { DM.toast("お金が足りない", 300); return; }
+  if (G().gold < 10) { SND.se("cancel"); DM.toast("お金が足りない", 300); return; }
   G().gold -= 10; give("uo", 1); SND.se("get"); DM.toast(`川魚を手に入れた（${G().tools.uo}匹）`, 300);
 };
 

@@ -226,7 +226,7 @@ function skillDetail(L, k, hi, m, isHeart, redraw) {
       A(b, DM.iconImg(tl.icon, 18 * DM.K), 5, 9, undefined, undefined);
       T(b, 27, 3, 90, 16, have ? `覚醒する　BP${BT.cost(m, s) - 1}へ` : "秘伝書が足りない", 8.5, have ? "gold" : "dim");
       T(b, 27, 20, 90, 14, `${tl.nm}<small>　持っている ${have}</small>`, 7.5, "dim2");
-      if (have) b.onclick = () => { if (GS.awaken(hi, k)) { DM.toast(`${s.nm}が覚醒した`, 440); redraw(); } };
+      if (have) b.onclick = () => { if (GS.awaken(hi, k)) { SND.se("up"); DM.toast(`${s.nm}が覚醒した`, 440); redraw(); } };
     } else T(box, 150, ry + 22, 121, 16, "覚醒しきった", 8.5, "dim right");
   } else if (isHeart) T(box, 10, ry + 22, 257, 16, "心の技は、覚醒できない", 8.5, "dim");
 }
@@ -356,7 +356,7 @@ function gearView(L, redraw, h, m) {
     if (c.ps) T(r, 214, 1, 56, 17, `<span class="pstag">${BT.PASSIVES[c.ps].nm}</span>`, 9, "right");
     if (c.main) { T(r, 38, 17, 64, 15, c.main, 8.5, ""); T(r, 104, 17, 166, 15, c.diff, 8.5, ""); }
     else T(r, 38, 17, 230, 15, c.diff, 8.5, "");
-    r.onclick = () => { c.act(); slotSel = null; pgCand.n = 0; GS.save(); redraw(); };
+    r.onclick = () => { c.act(); SND.se(c.nm ? "unequip" : sl === "heart" ? "heart" : "equip"); slotSel = null; pgCand.n = 0; GS.save(); redraw(); };
   });
   if (pages > 1) {
     const py = y0 + shown.length * 36 + 6;
@@ -439,7 +439,7 @@ function bag(L, redraw) {
       const m = G.party[hi], h = BT.HEROES[hi];
       if (isHeart) { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[pickItem]--; m.heart = pickItem; }
       else { G.bag.splice(G.bag.indexOf(pickItem), 1); if (m.gear[g.slot]) G.bag.push(m.gear[g.slot]); m.gear[g.slot] = pickItem; }
-      DM.toast(`${h.nm}に付けた`, 540); pickItem = null; GS.save(); redraw();
+      SND.se(isHeart ? "heart" : "equip"); DM.toast(`${h.nm}に付けた`, 540); pickItem = null; GS.save(); redraw();
     } }, redraw);
 }
 // 目的：いま向かう所。続きから遊ぶときに迷わないように
@@ -471,7 +471,7 @@ function formation(L, redraw) {
   A(L, div("frame", ""), 12, 134, 277, 236);
   T(L, 20, 138, 60, 14, "← 敵", 8, "dim");
   // マスを押してから別のマスを押すと場所が入れ替わる。マスと控えの顔を（どちらが先でも）押すと、その人が入れ替わる
-  const put = (slot, hi) => { G.lo.pos[slot] = hi; fsel = -1; bsel = null; GS.save(); if (window.FD) FD.syncParty(); redraw(); };
+  const put = (slot, hi) => { SND.se("place"); G.lo.pos[slot] = hi; fsel = -1; bsel = null; GS.save(); if (window.FD) FD.syncParty(); redraw(); };
   F.slots.forEach((sl, slot) => {
     const hi = G.lo.pos[slot], h = hi != null ? BT.HEROES[hi] : null;
     const cx = 44 + sl.c * 80, cy = 152 + sl.r * 42;
@@ -511,7 +511,7 @@ function shop(title, ids) {
           T(r, 196, 2, 76, 17, `${t.price}<small> G</small>`, 11, "num2 right");
           T(r, 196, 18, 76, 14, have ? `持っている ${have}` : "", 8, "dim right");
           r.onclick = () => {
-            if (GS.G.gold < t.price) { DM.toast("お金が足りない", 560); return; }
+            if (GS.G.gold < t.price) { SND.se("cancel"); DM.toast("お金が足りない", 560); return; } SND.se("coin");
             GS.G.gold -= t.price; GS.G.tools[k] = have + 1; GS.save(); draw(); DM.toast(`${t.nm}を買った`, 560);
           };
           return;
@@ -524,7 +524,7 @@ function shop(title, ids) {
         T(r, 196, 2, 76, 17, `${g.price}<small> G</small>`, 11, "num2 right");
         T(r, 196, 18, 76, 14, have ? `持っている ${have}` : "", 8, "dim right");
         r.onclick = () => {
-          if (GS.G.gold < g.price) { DM.toast("お金が足りない", 560); return; }
+          if (GS.G.gold < g.price) { SND.se("cancel"); DM.toast("お金が足りない", 560); return; } SND.se("coin");
           GS.G.gold -= g.price; GS.G.bag.push(GS.item(id)); GS.save(); draw(); DM.toast(`${g.nm}を買った`, 560);
         };
       });

@@ -79,6 +79,12 @@ const SE = {
   status: t => tone(seBus, t, 700, 0.14, { type: "square", v: 0.1, to: 520, lp: 1600 }),
   up: t => { tone(seBus, t, 1568, 0.07, { v: 0.16 }); tone(seBus, t + 0.06, 2093, 0.14, { v: 0.16 }); },
   get: t => { tone(seBus, t, 988, 0.08, { type: "triangle", v: 0.24 }); tone(seBus, t + 0.08, 1319, 0.18, { type: "triangle", v: 0.24 }); },
+  // 装備をはめる（金具がカチャッと収まる）・外す（ゆるむ）・心を宿す（澄んだ鈴）・編成で人を置く（足を据える）
+  equip: t => { tone(seBus, t, 170, 0.07, { type: "triangle", v: 0.26, to: 115 }); noise(seBus, t, 0.035, { type: "bandpass", f: 3600, q: 2.2, v: 0.38 }); tone(seBus, t + 0.01, 1480, 0.05, { type: "square", v: 0.07, lp: 3800 }); tone(seBus, t + 0.055, 2217, 0.14, { type: "triangle", v: 0.13 }); },
+  unequip: t => { noise(seBus, t, 0.04, { type: "bandpass", f: 2300, q: 1.6, v: 0.22 }); tone(seBus, t, 1175, 0.09, { type: "triangle", v: 0.14, to: 830 }); },
+  heart: t => { tone(seBus, t, 392, 0.45, { v: 0.06, a: 0.05, wet: 1 }); [784, 1175, 1568].forEach((f, i) => tone(seBus, t + i * 0.055, f, 0.34, { v: 0.12, wet: 1 })); },
+  place: t => { tone(seBus, t, 210, 0.08, { type: "triangle", v: 0.26, to: 140 }); noise(seBus, t, 0.05, { f: 700, v: 0.18 }); },
+  coin: t => { [1976, 2637].forEach((f, i) => tone(seBus, t + i * 0.07, f, 0.16, { type: "triangle", v: 0.15 })); noise(seBus, t, 0.03, { type: "highpass", f: 6000, v: 0.15 }); }, // お金を払う（店）
   rest: t => [392, 494, 587, 784].forEach((f, i) => tone(seBus, t + i * 0.09, f, 0.7, { v: 0.13, a: 0.04 })),
   encounter: t => { noise(seBus, t, 0.4, { type: "bandpass", f: 400, to: 5000, q: 1.5, v: 0.3, a: 0.05 }); tone(seBus, t, 220, 0.4, { type: "sawtooth", v: 0.14, to: 880, lp: 2000 }); },
   win: t => [[523, 0, 0.12], [659, 0.12, 0.12], [784, 0.24, 0.12], [1047, 0.36, 0.5], [784, 0.36, 0.5], [659, 0.36, 0.5]].forEach(([f, dt, d]) => { tone(seBus, t + dt, f, d, { type: "triangle", v: 0.2 }); tone(seBus, t + dt, f, d, { type: "square", v: 0.05, lp: 2400 }); }),
@@ -186,7 +192,7 @@ function toggle() {
 document.addEventListener("visibilitychange", () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
 // 押せる所を押したときの音（どの画面でも同じ）
 addEventListener("click", e => {
-  const t = e.target.closest && e.target.closest(".btn,.chip,.srow,.skrow,.chrow,.bbtn,.fbtn,.ttlbtn,.prow,.face");
+  const t = e.target.closest && e.target.closest(".btn,.chip,.srow,.skrow,.chrow,.bbtn,.fbtn,.ttlbtn,.prow,.face,.facebtn,.slotrow,.tile"); // 装備の候補（.cand2）は、押すと「はめる音」だけ鳴らす
   if (t) se(t.classList.contains("dim") || t.classList.contains("off") ? "cancel" : "tap");
   else if (e.target.closest && e.target.closest(".uilayer")) se("page");
 }, true);

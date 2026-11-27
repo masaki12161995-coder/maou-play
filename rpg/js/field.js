@@ -396,6 +396,13 @@ function person(img, x, y, dir, moving, now, lift, n) {
   if (!lift) { ctx.fillStyle = "#0006"; ctx.fillRect(px0 - 6 * k, py0 - 1, 12 * k, 2); }
   ctx.drawImage(IM[img], col * 48, dir * 60, 48, 60, Math.round((px0 - 12 * k) * 4) / 4, Math.round((py0 - 30 * k) * 4) / 4, 24 * k, 30 * k);
 }
+function cardMark(cx, by) { // 札の印：幅5・高さ7の小さな札（裏の模様）。by＝札の下の端
+  const x = Math.round((cx - 2.5) * 4) / 4, y = Math.round((by - 7) * 4) / 4;
+  ctx.fillStyle = "#1a1210"; ctx.fillRect(x - 0.5, y - 0.5, 6, 8);
+  ctx.fillStyle = "#e8c27a"; ctx.fillRect(x, y, 5, 7);
+  ctx.fillStyle = "#8a2a2a"; ctx.fillRect(x + 1, y + 1, 3, 5);
+  ctx.fillStyle = "#e8c27a"; ctx.fillRect(x + 2, y + 2.5, 1, 2);
+}
 function beast(name, x, y, face, sc) { // 魔物の絵の人（立っているだけ）
   const img = IM[name], w = img.naturalWidth * sc, h = img.naturalHeight * sc, cx = x * TD + TD / 2, by = y * TD + TD - 2;
   ctx.fillStyle = "#0007"; ctx.fillRect(cx - w * 0.3, by - 1, w * 0.6, 2);
@@ -440,6 +447,11 @@ function draw(now) {
     } });
   }
   ents.sort((a, b) => a.y - b.y).forEach(e => e.f());
+  // 札勝負のできる人：頭の上に小さな札の印（ゆっくり上下する）
+  if (!G().flags.cut) for (const n of npcs) if (n.card && n.card(G())) {
+    const top = n.mon ? (n.y * TD + TD - 2) - IM[n.mon].naturalHeight * (n.sc || (n.big ? 0.42 : 0.5)) : n.y * TD + TD - 1 - (n.lift || 0) - 30 * (n.psc || 1);
+    cardMark(n.x * TD + TD / 2, top - 2 + Math.sin(now / 420) * 0.8);
+  }
   ctx.drawImage(over, 0, -TD, over.width / 2, over.height / 2);
   // 坑道は暗い（自分のまわりだけ明るい）
   if (M.dark) {

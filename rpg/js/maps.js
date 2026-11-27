@@ -407,8 +407,8 @@ function kawauso() {
     ],
     exits: [{ x: 5, y: 9, to: "harune", tx: 5, ty: 9, dir: 0 }],
     npcs: [
-      { id: "bela", x: 5, y: 1, img: "person_070", dir: 0, nm: "ベラ", talk: "bela" },
-      { id: "toto", x: 2, y: 7, img: "person_100", dir: 2, nm: "トト", talk: "toto", when: g => g.flags.cut !== "c1s12" },
+      { id: "bela", x: 5, y: 1, img: "person_070", dir: 0, nm: "ベラ", talk: "bela", card: g => S(g) >= 18 && !!g.flags.cardsOk },
+      { id: "toto", x: 2, y: 7, img: "person_100", dir: 2, nm: "トト", talk: "toto", card: g => S(g) >= 18, when: g => g.flags.cut !== "c1s12" },
       { id: "teo", x: 8, y: 7, img: "person_001", dir: 1, nm: "テオ", talk: "teo", when: g => !(g.roster || []).includes(4) },
       { id: "umeba", x: 2, y: 8, img: "person_101", dir: 2, nm: "ウメ婆", talk: "tt", tp: "harune", when: g => S(g) >= 18 && !g.flags.cut },
       { id: "liseN", x: 7, y: 5, img: "person_002", dir: 1, nm: "リゼット", when: g => cut(g, "c1s6") || cut(g, "c1s11") },
@@ -476,8 +476,8 @@ function ohashi() {
       { id: "akinS", x: 2, y: 12, img: "person_075", dir: 2, nm: "商人", when: g => cut(g, "c1s10") },
       { id: "totoS", x: 2, y: 14, img: "person_100", dir: 2, nm: "トト", when: g => cut(g, "c1s10") },
       // 夜明けからは、橋のたもとに橋番
-      { id: "garmB", x: 10, y: 11, img: "person_132", dir: 0, psc: 1.5, nm: "ガルム", talk: "garmBridge", when: g => S(g) >= 28 && !(g.roster || []).includes(13) },
-      { id: "kogarumu", x: 10, y: 11, img: "person_132", dir: 0, psc: 1, nm: "コガルム", talk: "kogarumu", when: g => S(g) >= 28 && (g.roster || []).includes(13) },  // ガルムの甥（小さめの石の巨人）
+      { id: "garmB", x: 10, y: 11, img: "person_132", dir: 0, psc: 1.5, nm: "ガルム", talk: "garmBridge", card: () => 1, when: g => S(g) >= 28 && !(g.roster || []).includes(13) },
+      { id: "kogarumu", x: 10, y: 11, img: "person_132", dir: 0, psc: 1, nm: "コガルム", talk: "kogarumu", card: () => 1, when: g => S(g) >= 28 && (g.roster || []).includes(13) },  // ガルムの甥（小さめの石の巨人）
       { id: "sigB", x: 6, y: 13, img: "person_010", dir: 2, nm: "傷の男", when: g => cut(g, "c1s13b") },
       { id: "kb1", x: 5, y: 12, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
       { id: "kb2", x: 5, y: 14, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
@@ -615,7 +615,7 @@ function milna() {
     ],
     exits: [{ x: 8, y: 0, to: "plain", tx: 31, ty: 28, dir: 3 }],
     npcs: [
-      { id: "morto", x: 6, y: 11, img: "person_019k", dir: 0, nm: "モルト", talk: "morto" },
+      { id: "morto", x: 6, y: 11, img: "person_019k", dir: 0, nm: "モルト", talk: "morto", card: g => S(g) !== 30 },
       // 町の人（段階2から。台詞は TOWNTALK）
       { id: "hanna", x: 6, y: 4, img: "person_020", dir: 0, nm: "ハンナ", talk: "hanna", when: g => !(g.roster || []).includes(12) },
       { id: "yado", x: 14, y: 14, img: "person_008", dir: 0, nm: "宿の主人", talk: "milnaInn" },
@@ -660,7 +660,7 @@ function lux() {
     ],
     exits: [{ x: 10, y: 39, to: "plain", tx: 20, ty: 1, dir: 0 }, { x: 11, y: 39, to: "plain", tx: 20, ty: 1, dir: 0 }],
     npcs: [
-      { id: "dario", x: 13, y: 27, mon: "monster_010", face: -1, nm: "ダリオ", talk: "dario", when: g => S(g) >= 31 },
+      { id: "dario", x: 13, y: 27, mon: "monster_010", face: -1, nm: "ダリオ", talk: "dario", card: () => 1, when: g => S(g) >= 31 },
       { id: "kgate1", x: 9, y: 28, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => S(g) >= 31 },
       { id: "kgate2", x: 12, y: 28, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => S(g) >= 31 },
       { id: "mortoG", x: 12, y: 31, img: "person_019k", dir: 3, nm: "モルト", when: g => cut(g, "c2s3") },
@@ -694,10 +694,10 @@ function sakaba() {
     exits: [{ x: 5, y: 8, to: "lux", tx: 5, ty: 14, dir: 0 }],
     exitRun: g => S(g) === 32 ? "c2s5" : null,
     npcs: [
-      { id: "niko", x: 5, y: 1, img: "person_070n", dir: 0, nm: "ニコ", talk: "niko" },
+      { id: "niko", x: 5, y: 1, img: "person_070n", dir: 0, nm: "ニコ", talk: "niko", card: g => S(g) >= 32 },
       { id: "kyaku1", x: 2, y: 5, img: "person_074", dir: 2, nm: "酒場の客", talk: "kyaku" },
       { id: "kyaku2", x: 4, y: 6, img: "person_071", dir: 3, nm: "酒場の客", talk: "kyaku" },
-      { id: "totoL", x: 8, y: 6, img: "person_100", dir: 1, nm: "トト", talk: "totoL" },
+      { id: "totoL", x: 8, y: 6, img: "person_100", dir: 1, nm: "トト", talk: "totoL", card: () => 1 },
     ],
     foes: [], chests: [],
     trigs: [{ x: 5, y: 7, when: g => S(g) === 31, run: "c2s4" }],
