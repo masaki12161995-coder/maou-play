@@ -677,10 +677,10 @@ function lux() {
       { id: "kuroE2", x: W - 1, y: 16, mon: "monster_020", face: -1, nm: "黒外套の兵", talk: "kuroEast", when: g => S(g) < 46 && !g.flags.cut },
       { id: "tomon", x: W - 2, y: 14, img: "person_080e", dir: 1, nm: "東門の門番", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       // 場面16の一：朝の大通りを行く葬列（荷車は14,15）
-      ...[["jako16", 16, 15, "person_007", 2], ["lise16", 13, 15, "person_002", 2], ["muku16", 16, 16, "person_058h", 2], ["bram16", 15, 16, "person_005", 2], ["naki16a", 12, 15, "person_074k", 2], ["naki16b", 12, 16, "person_076", 2], ["naki16c", 13, 16, "person_074k", 2],
+      ...[["jako16", 16, 15, "person_133", 2], ["lise16", 13, 15, "person_002", 2], ["muku16", 16, 16, "person_058h", 2], ["bram16", 15, 16, "person_005", 2], ["naki16a", 12, 15, "person_074k", 2], ["naki16b", 12, 16, "person_076", 2], ["naki16c", 13, 16, "person_074k", 2],
         ["machiW", 17, 14, "person_066", 0], ["machiM", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16a") })),
       // 場面16の二：東門（荷車は17,15）
-      ...[["jako16b", 19, 15, "person_007", 2], ["lise16b", 16, 15, "person_002", 2], ["muku16b", 16, 16, "person_058h", 2], ["bram16b", 17, 16, "person_005", 2], ["naki16d", 15, 15, "person_074k", 2], ["naki16e", 15, 16, "person_076", 2], ["naki16f", 14, 15, "person_074k", 2],
+      ...[["jako16b", 19, 15, "person_133", 2], ["lise16b", 16, 15, "person_002", 2], ["muku16b", 16, 16, "person_058h", 2], ["bram16b", 17, 16, "person_005", 2], ["naki16d", 15, 15, "person_074k", 2], ["naki16e", 15, 16, "person_076", 2], ["naki16f", 14, 15, "person_074k", 2],
         ["tomon16", 19, 14, "person_080e", 0], ["machiM2", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16b") })),
       ...[[W - 1, 15, "monster_019"], [W - 1, 16, "monster_020"], [W - 2, 13, "monster_021"], [W - 2, 18, "monster_019"]].map(([x, y, mon], i) => ({ id: "kuro16" + i, x, y, mon, face: -1, nm: "", when: g => cut(g, "c2s16b") })),
       { id: "sig16", x: W - 2, y: 16, img: "person_010", dir: 1, nm: "", when: g => cut(g, "c2s16b") && !!g.flags.sigHand && !!g.flags.sig16 },
@@ -883,7 +883,7 @@ function tsuya() {
     exits: [{ x: 5, y: 8, to: "lux", tx: 5, ty: 23, dir: 0 }],
     npcs: [
       { id: "gonzo", x: 8, y: 1, img: "person_045", dir: 0, nm: "ゴンゾ", talk: "gonzo", card: g => S(g) >= 45, when: g => !night },
-      { id: "jakoT", x: 5, y: 3, img: "person_007", dir: 0, nm: "ジャコ", talk: "jakoT", when: g => (S(g) === 44 || S(g) === 45) && !night },
+      { id: "jakoT", x: 5, y: 3, img: "person_133", dir: 0, nm: "ジャコ", talk: "jakoT", when: g => (S(g) === 44 || S(g) === 45) && !night },
       { id: "nakiA", x: 4, y: 4, img: "person_074k", dir: 2, nm: "泣き屋", talk: "nakiya", when: g => !night },
       { id: "nakiB", x: 6, y: 4, img: "person_076", dir: 1, nm: "泣き屋", talk: "nakiya", when: g => !night },
       { id: "nakiC", x: 5, y: 5, img: "person_074k", dir: 3, nm: "泣き屋", talk: "nakiya", when: g => !night && S(g) >= 47 },   // ジャコが抜けた後の席
@@ -895,7 +895,7 @@ function tsuya() {
       { id: "bramN", x: 9, y: 4, img: "person_005", dir: 4, col: 2, nm: "", when: g => night },
       { id: "nakiN1", x: 2, y: 5, img: "person_074k", dir: 4, col: 2, nm: "", when: g => night },
       { id: "nakiN2", x: 3, y: 6, img: "person_076", dir: 2, nm: "", when: g => night },
-      { id: "jakoN", x: 8, y: 6, img: "person_007", dir: 2, nm: "", when: g => cut(g, "c2s15b") },
+      { id: "jakoN", x: 8, y: 6, img: "person_133", dir: 2, nm: "", when: g => cut(g, "c2s15b") },
     ],
     foes: [], chests: [], trigs: [],
   };

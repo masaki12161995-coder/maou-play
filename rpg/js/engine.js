@@ -336,7 +336,7 @@ const HEROES = [
     cap: { str: 122, vit: 132, dex: 60, agi: 58, int: 40, wil: 104, lov: 86, cha: 80 }, up: ["vit", "str"],
     res: { 斬: 15, 打: 10, 突: 15 }, sk: ["g_ranpan", "g_jinarashi", "g_hashi"], ps: ["clubway", "ironwall", "standfast"], gear: { weapon: "ranpan", armor: null, sub: null, acc: null } },
   // ---- 物語の仲間（5人目。第2章の終わりの葬列で加わる） ----
-  { id: "jako", nm: "ジャコ", img: "person_007", wt: "bow", rare: "S", hp: 250, hpCap: 1050, lp: 8, st: { str: 17, vit: 18, dex: 30, agi: 28, int: 14, wil: 14, lov: 15, cha: 26 },
+  { id: "jako", nm: "ジャコ", img: "person_133", wt: "bow", rare: "S", hp: 250, hpCap: 1050, lp: 8, st: { str: 17, vit: 18, dex: 30, agi: 28, int: 14, wil: 14, lov: 15, cha: 26 },
     cap: { str: 84, vit: 92, dex: 126, agi: 122, int: 80, wil: 82, lov: 92, cha: 124 }, up: ["dex", "agi"],
     res: {}, sk: ["j_sai", "j_naki", "j_miyage"], ps: ["bowway", "quickdraw", "momentum"], gear: { weapon: "saibow", armor: "cloak", sub: null, acc: null } },
 ];

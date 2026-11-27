@@ -2082,7 +2082,7 @@ T.tsuyaDoor = async () => {
 ジャコ：仏さんが退屈しねえように、夜明けまでな。
 ジャコ：賽を三つ、どんぶりに振る。目の強い方が勝ち。
 ジャコ：細かいことは、振りながら覚えな。`);
-  const r = await UI.chinchiro({ who: "ジャコ", img: "person_007", story: 1 });
+  const r = await UI.chinchiro({ who: "ジャコ", img: "person_133", story: 1 });
   if (r === "win") await talk(`ジャコ：ちっ。仏さんにしちゃ、いい腕だ。`);
   else {
     await talk(`ジャコ：毎度あり。仏さんは賽まで静かだな。`);
@@ -2216,7 +2216,7 @@ T.c2s16 = async () => {
 黒外套の兵：…本物だ。隊長は医務室だぞ。どうする。
 黒外套の兵：法は法だ。通せ。あとで面倒になる。`);
   await talk(`〔葬列が東門を出る。〕`);
-  F().guest = ["person_007", "person_074k"]; setS(46);
+  F().guest = ["person_133", "person_074k"]; setS(46);
   await move("akamugi", 2, 8, 2, "soretsu", "");
   G().home = { map: "akamugi", x: 2, y: 8 }; // 葬列のあいだに倒れても、丘の入口からやり直す
   await talk(`〔赤麦の丘。赤い麦畑の中の道を、葬列が進む。〕`);

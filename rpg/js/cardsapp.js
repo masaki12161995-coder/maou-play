@@ -46,7 +46,7 @@ const WORLD={
   w_shoki:{nm:"役場の書記",r:1,n:[2,4,3,5],src:"img/c_shoki.png",sz:[33,59],k:"人物"},
   w_kai:{nm:"渡し守",r:3,n:[6,5,4,6],src:"img/c_kai.png",sz:[35,59],k:"人物"},
   w_iei:{nm:"渡し守（遺影）",r:3,n:[5,6,5,5],src:"img/c_iei.png",sz:[34,59],k:"人物"},
-  w_jako:{nm:"泣き屋のジャコ",r:3,n:[6,4,5,6],src:"img/c_jako.png",sz:[30,58],k:"人物"},
+  w_jako:{nm:"泣き屋のジャコ",r:3,n:[6,4,5,6],src:"img/c_jako.png",sz:[36,59],k:"人物"},
   w_gonzo:{nm:"胴元ゴンゾ",r:3,n:[7,5,4,5],src:"img/c_gonzo.png",sz:[41,59],k:"人物"},
   w_sekimori:{nm:"東の関守",r:2,n:[3,6,5,2],src:"img/c_sekimori.png",sz:[42,58],k:"人物"},
   w_tomon:{nm:"東門の門番",r:1,n:[4,4,3,2],src:"img/c_tomon.png",sz:[44,59],k:"人物"},
