@@ -57,14 +57,20 @@ function choose(name, text, opts) {
 }
 
 // ---------- 戦いの結果（お金・手に入れた物・与えたダメージ・成長を、ひと目で） ----------
-function heartImg(k) { const f = Object.values(BT.FOES).find(f => f.heart === k) || BT.FOES[k] || Object.entries(BT.FOES).find(([id]) => id.startsWith(k))?.[1]; return f ? f.img : null; } // 心を落とす魔物の絵（出来事でもらう心は、同じ名前の魔物の絵）
-function heartIcon(k, size) { // 心の絵：その魔物の姿を丸い枠に入れる
+function heartImg(k) { k = String(k).split("@")[0]; const f = Object.values(BT.FOES).find(f => f.heart === k) || BT.FOES[k] || Object.entries(BT.FOES).find(([id]) => id.startsWith(k))?.[1]; return f ? f.img : null; } // 心を落とす魔物の絵（出来事でもらう心は、同じ名前の魔物の絵）
+// 心の並び：レア度の高い順、同じなら名前順
+const heartOrder = (a, b) => BT.HEART_RANKS.indexOf(BT.heart(b).rank) - BT.HEART_RANKS.indexOf(BT.heart(a).rank) || BT.heart(a).nm.localeCompare(BT.heart(b).nm);
+// 心の名前：レア度の色で（装備の名前と同じ考え）
+const hNm = id => { const h = BT.heart(id); return h ? (h.rank === "虹" ? `<span class="heartnm rainbow">${h.nm}</span>` : `<span class="heartnm" style="color:${RARE_COL[h.rank]}">${h.nm}</span>`) : ""; };
+function heartIcon(k, size) { // 心の絵：その魔物の姿を丸い枠に入れる。枠の色＝レア度
   const box = div("hicon", ""); box.style.width = box.style.height = d(size);
+  const rk = (BT.heart(k) || {}).rank || "白", rc = RARE_COL[rk]; box.style.boxShadow = `0 0 0 ${d(1.5)} ${rc}`; box.style.background = `radial-gradient(circle at 50% 45%, ${rc}55, #1a1622 75%)`;
   const im = IM[heartImg(k)]; if (im) { const e = document.createElement("img"); e.src = im.src; const sc = Math.min(size * 0.86 / im.naturalWidth, size * 0.86 / im.naturalHeight); e.style.width = d(im.naturalWidth * sc); e.style.height = d(im.naturalHeight * sc); box.appendChild(e); }
   return box;
 }
 function result(r) {
   SND.se(r.win ? "win" : "lose");
+  if (r.win && (r.hearts || []).some(h => ["金", "虹"].includes(BT.heart(h).rank))) setTimeout(() => SND.se("get"), 700); // 金・虹の心が落ちたら、もうひと鳴り
   return new Promise(res => {
     const L = newLayer("veil solid result");
     if (!r.win) {
@@ -86,7 +92,7 @@ function result(r) {
     if (!drops.length) { T(L, 14, y, 260, 24, "なし", 10, "dim"); y += 26; }
     drops.forEach((dp, i) => {
       const x = 12 + (i % 2) * 140, yy = y + Math.floor(i / 2) * 32, t = A(L, div("frame dtile", ""), x, yy, 137, 29);
-      if (dp.h) { A(t, heartIcon(dp.h, 23), 3, 2, 23, 23); T(t, 30, 0, 104, 27, `<span class="heartnm">${BT.HEARTS[dp.h].nm}</span>`, 9.5, ""); }
+      if (dp.h) { A(t, heartIcon(dp.h, 23), 3, 2, 23, 23); T(t, 30, 0, 104, 27, `${hNm(dp.h)}`, 9.5, ""); }
       else if (dp.t) { A(t, DM.iconImg(BT.TOOLS[dp.t].icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span class="toolnm">${BT.TOOLS[dp.t].nm}</span>`, 9.5, "name"); }
       else if (dp.m) { const mt = BT.MATS[dp.m]; A(t, DM.iconImg(mt.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `${mt.nm}${dp.n > 1 ? `<small> ×${dp.n}</small>` : ""}`, 9.5, "name"); }
       else { const g = BT.GEAR[dp.it.id]; A(t, DM.iconImg(g.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(dp.it)}</span>`, 9.5, "name"); }
@@ -173,7 +179,7 @@ function itemSummary(it) {
   return s;
 }
 function heartSummary(k) {
-  const h = BT.HEARTS[k];
+  const h = BT.heart(k);
   const ups = h.up.map(s => STAT_SHORT[s]).join("・");
   return `技：${BT.SKILLS[h.sk].nm}　${ups}が伸びやすい`;
 }
@@ -258,7 +264,7 @@ const pgWho = { n: 0 }, pgPick = { n: 0 }, pgBench = { n: 0 }, pgBag = { n: 0 },
 
 // 能力8つ：4列×2段。名前のすぐ下に置き、「技」「装備」のどちらでも同じ場所に出る（王道RPGの装備画面と同じく、付け替えながら見比べられる）
 function statBlock(L, y, h, m) {
-  const S = BT.heroStats(BT.resolveHero(who, m)).st, heart = m.heart && BT.HEARTS[m.heart];
+  const S = BT.heroStats(BT.resolveHero(who, m)).st, heart = m.heart && BT.heart(m.heart);
   BT.STATS.forEach((k, i) => {
     const cw = 68, x = 12 + (i % 4) * 69.7, yy = y + Math.floor(i / 4) * 30, box = A(L, div("frame sbox", ""), x, yy, cw, 28);
     T(box, 5, 1, 40, 12, STAT_SHORT[k], 8, "label");
@@ -275,7 +281,7 @@ function member(L, redraw) {
   faceStrip(L, 12, 46, 280, list, { sel: who, pg: pgWho, lp: 1, pick: hi => { who = hi; slotSel = null; skillSel = null; redraw(); } }, redraw);
   const h = BT.HEROES[who], m = GS.G.party[who];
   T(L, 12, 94, 170, 20, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 13, "name");
-  T(L, 12, 114, 170, 14, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.HEARTS[m.heart].nm : ""}`, 8.5, "dim2");
+  T(L, 12, 114, 170, 14, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.heart(m.heart).nm : ""}`, 8.5, "dim2");
   T(L, 180, 94, 30, 20, "HP", 9.5, "k");
   T(L, 204, 94, 85, 20, `${m.hp}`, 13, "num2");
   T(L, 180, 114, 30, 14, "LP", 9.5, "k");
@@ -288,7 +294,7 @@ function member(L, redraw) {
   view === "stat" ? statView(L, h, m, redraw) : gearView(L, redraw, h, m);
 }
 function statView(L, h, m, redraw) {
-  const heart = m.heart && BT.HEARTS[m.heart], Y = 230;
+  const heart = m.heart && BT.heart(m.heart), Y = 230;
   T(L, 14, Y, 100, 14, "技", 9, "label");
   const nsk = h.sk.length + (heart ? 1 : 0), box = A(L, div("frame rbox", ""), 12, Y + 16, 277, 4 + nsk * SK_H);
   const tapSk = k => { skillSel = skillSel === k ? null : k; redraw(); };
@@ -309,7 +315,7 @@ function statView(L, h, m, redraw) {
 // 心の倍率：100%でない能力だけを、上がれば青・下がれば赤で（例：腕110% 知92%）
 const ST1 = { str: "腕", vit: "体", dex: "器", agi: "素", int: "知", wil: "精", lov: "愛", cha: "魅" };
 function heartMul(k) {
-  const mul = BT.HEARTS[k].mul, out = BT.STATS.filter(s => mul[s] !== 100).map(s => `<span class="dim2">${ST1[s]}</span><span class="${mul[s] > 100 ? "pcup" : "pcdn"}">${mul[s]}%</span>`);
+  const mul = BT.heart(k).mul, out = BT.STATS.filter(s => mul[s] !== 100).map(s => `<span class="dim2">${ST1[s]}</span><span class="${mul[s] > 100 ? "pcup" : "pcdn"}">${mul[s]}%</span>`);
   return out.join(" ") || '<span class="dim">能力は変わらない</span>';
 }
 // 付け替えた後の値（変わるものだけ）。上の能力の欄の今の値と見比べる
@@ -326,7 +332,7 @@ function gearView(L, redraw, h, m) {
     const y = ey + i * 36, row = A(L, div("frame slotrow" + (slotSel === sl ? " on" : ""), ""), 12, y, 277, 34);
     T(row, 8, 0, 46, 32, SLOT_NM[sl], 9.5, "label");
     if (sl === "heart") {
-      if (m.heart) { A(row, heartIcon(m.heart, 24), 54, 4, 24, 24); T(row, 84, 2, 188, 16, `<span class="heartnm">${BT.HEARTS[m.heart].nm}</span>`, 10.5, "name"); T(row, 84, 17, 188, 14, heartSummary(m.heart), 8.5, "dim2"); }
+      if (m.heart) { A(row, heartIcon(m.heart, 24), 54, 4, 24, 24); T(row, 84, 2, 188, 16, `${hNm(m.heart)}`, 10.5, "name"); T(row, 84, 17, 188, 14, heartSummary(m.heart), 8.5, "dim2"); }
       else T(row, 58, 0, 210, 32, "なし", 10, "dim");
     } else {
       const it = m.gear[sl];
@@ -339,7 +345,7 @@ function gearView(L, redraw, h, m) {
   const G = GS.G, sl = slotSel, list = [], fmt = afterVals;
   if (sl === "heart") {
     if (m.heart) list.push({ key: "x", v: null, nm: "外す", diff: '<span class="dim2">能力の倍率がなくなる</span>', act: () => { G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; m.heart = null; } });
-    Object.keys(G.hearts).filter(k => G.hearts[k] > 0 && k !== m.heart).forEach(k => list.push({ key: k, v: k, heart: k, html: `<span class="heartnm">${BT.HEARTS[k].nm}</span><small> ×${G.hearts[k]}</small>`, diff: heartMul(k), act: () => { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[k]--; m.heart = k; } }));
+    Object.keys(G.hearts).filter(k => G.hearts[k] > 0 && k !== m.heart).sort(heartOrder).forEach(k => list.push({ key: k, v: k, heart: k, html: `${hNm(k)}<small> ×${G.hearts[k]}</small>`, diff: heartMul(k), act: () => { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[k]--; m.heart = k; } }));
   } else {
     if (sl !== "weapon" && m.gear[sl]) list.push({ key: "x", v: null, nm: "外す", diff: fmt(who, m, sl, null), act: () => { G.bag.push(m.gear[sl]); m.gear[sl] = null; } });
     // 同じ物（名前も付いた力も同じ）は1行にまとめて「×数」
@@ -362,7 +368,7 @@ function gearView(L, redraw, h, m) {
     if (c.heart) A(r, heartIcon(c.heart, 22), 8, 5, 22, 22);
     T(r, 38, 1, c.ps ? 178 : c.heart ? 140 : 230, 17, c.nm ? `<b>${c.nm}</b>` : c.html, 10.5, "name");
     if (c.ps) T(r, 214, 1, 56, 17, `<span class="pstag">${BT.PASSIVES[c.ps].nm}</span>`, 9, "right");   // 付いているパッシブ
-    if (c.heart) fitT(T(r, 176, 1, 94, 17, `<span class="pstag">技 ${BT.SKILLS[BT.HEARTS[c.heart].sk].nm}</span>`, 9, "right")); // 心で使えるようになる技
+    if (c.heart) fitT(T(r, 176, 1, 94, 17, `<span class="pstag">技 ${BT.SKILLS[BT.heart(c.heart).sk].nm}</span>`, 9, "right")); // 心で使えるようになる技
     if (c.main) { T(r, 38, 17, 64, 15, c.main, 8.5, ""); fitT(T(r, 104, 17, 166, 15, c.diff, 8.5, "")); }
     else fitT(T(r, 38, 17, 230, 15, c.diff, 8.5, ""));
     r.onclick = () => { c.act(); SND.se(c.nm ? "unequip" : sl === "heart" ? "heart" : "equip"); slotSel = null; pgCand.n = 0; GS.save(); redraw(); };
@@ -400,7 +406,7 @@ function bag(L, redraw) {
     const seen = {}, sig = it => JSON.stringify([it.id, it.el || "", it.b || {}]);
     G.bag.slice().sort((a, b) => order[BT.GEAR[a.id].slot] - order[BT.GEAR[b.id].slot] || BT.GEAR[a.id].nm.localeCompare(BT.GEAR[b.id].nm)).forEach(it => { const s = sig(it); if (seen[s]) { seen[s].n++; return; } seen[s] = { it, n: 1 }; rows.push(seen[s]); });
   }
-  else if (bagTab === "heart") Object.keys(G.hearts).filter(k => G.hearts[k] > 0).forEach(k => rows.push({ h: k }));
+  else if (bagTab === "heart") Object.keys(G.hearts).filter(k => G.hearts[k] > 0).sort(heartOrder).forEach(k => rows.push({ h: k }));
   else if (bagTab === "mat") Object.keys(BT.MATS).filter(k => G.mats[k] > 0).forEach(k => rows.push({ m: k }));
   else Object.keys(BT.TOOLS).filter(k => G.tools[k] > 0).forEach(k => rows.push({ t: k }));
   if (!rows.length) { T(L, 12, 120, 277, 24, { gear: "付けていない装備はない", heart: "宿していない心はない", mat: "素材はない", tool: "道具はない" }[bagTab], 10.5, "dim center"); return; }
@@ -432,7 +438,7 @@ function bag(L, redraw) {
       T(row, 196, 2, 76, 17, g.slot === "weapon" ? BT.WTYPE[g.wt].nm : SLOT_NM[g.slot], 8.5, "dim right");
     } else {
       A(row, heartIcon(r.h, 26), 5, 4, 26, 26);
-      T(row, 36, 2, 160, 17, `<span class="heartnm">${BT.HEARTS[r.h].nm}</span><small> ×${G.hearts[r.h]}</small>`, 10.5, "name");
+      T(row, 36, 2, 160, 17, `${hNm(r.h)}<small> ×${G.hearts[r.h]}</small>`, 10.5, "name");
       fitT(T(row, 36, 18, 236, 15, heartSummary(r.h), 8.5, "dim2"));
       T(row, 196, 2, 76, 17, "心", 8.5, "dim right");
     }
@@ -463,7 +469,7 @@ function goal(L) {
   const sb = A(L, div("frame btn chip" + (SND.on ? " sel" : ""), SND.on ? "音　入" : "音　切"), 12, 256, 137, 26); sb.style.fontSize = d(10.5);
   sb.onclick = () => { SND.toggle(); sb.textContent = SND.on ? "音　入" : "音　切"; sb.classList.toggle("sel", SND.on); };
   T(L, 14, 176, 200, 14, "これまで", 9, "label");
-  const kinds = new Set([...Object.keys(G.hearts).filter(k => G.hearts[k] > 0), ...G.party.filter(Boolean).map(m => m.heart).filter(Boolean)]).size;
+  const kinds = new Set([...Object.keys(G.hearts).filter(k => G.hearts[k] > 0), ...G.party.filter(Boolean).map(m => m.heart).filter(Boolean)].map(k => k.split("@")[0])).size; // 種類はレア度を数えない
   [["仲間", `${G.roster.length}人`], ["勝った戦い", `${G.wins}回`], ["集めた心", `${kinds}種`], ["お金", `${G.gold.toLocaleString()} G`]].forEach(([k, v], i) => {
     const r = A(L, div("frame sbox", ""), 12 + (i % 2) * 140, 192 + Math.floor(i / 2) * 27, 137, 24);
     T(r, 8, 0, 60, 22, k, 9.5, "label"); T(r, 60, 0, 70, 22, v, 11.5, "num2 right");

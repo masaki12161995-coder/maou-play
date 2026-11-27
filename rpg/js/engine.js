@@ -468,7 +468,7 @@ function resolveHero(hi, mem) {
 // 能力値：もとの能力×心の％＋装備の上乗せ（拾った物のおまけも）。そこに陣形の％
 function heroStats(h, slotDef) {
   if (typeof h === "number") h = resolveHero(h);
-  const heart = h.heart && HEARTS[h.heart], st = {}, res = { ...h.res }, ps = [...h.ps];
+  const heart = h.heart && heartOf(h.heart), st = {}, res = { ...h.res }, ps = [...h.ps];
   for (const k of STATS) st[k] = h.st[k] * (heart ? heart.mul[k] / 100 : 1);
   let pow = 6; const mp = {}; // mp＝属性ごとの術威力（術の技は、その属性の術威力で撃つ。無ければ素手と同じ6）
   for (const it of h.gearList) {
@@ -704,7 +704,7 @@ function checkEnd(st) {
 // ---------- 戦いのあと ----------
 // 成長：勝った戦いに出ていた人だけ。上がる先は「場所の上限」と「本人の上限」の低いほう。上限から遠いほど上がりやすい
 function grow(hi, mem, tier, rng) {
-  const def = HEROES[hi], A = capOf(tier), heart = mem.heart && HEARTS[mem.heart], out = [];
+  const def = HEROES[hi], A = capOf(tier), heart = mem.heart && heartOf(mem.heart), out = [];
   for (const k of STATS) {
     const cap = Math.min(A.st, def.cap[k]), v = mem.st[k];
     if (v >= cap) continue;
@@ -743,13 +743,29 @@ function rollItem(id, rng) {
   it.b = { [k]: plus ? 4 : 3 }; it.tag = "(" + BONUS[k] + (plus ? "+" : "") + ")";
   return it;
 }
+// 心のレア度：同じ魔物の心でも、落ちるたびに 白〜虹 のどれか。同じ魔物の同じレア度なら、どこで拾っても同じ性能
+//  id は「魔物の名前@レア度」（白は名前だけ）。レア度が1つ上がるごとに、能力の倍率がすべて上がる
+const HEART_RANKS = ["白", "緑", "青", "紫", "金", "虹"], HEART_ADD = { 白: 0, 緑: 2, 青: 4, 紫: 6, 金: 9, 虹: 13 };
+const HEART_ODDS = [62, 25, 9, 3, 0.9, 0.1]; // 落ちたときのレア度の出やすさ（％）
+function heartOf(id) {
+  if (!id) return null;
+  const [k, r] = String(id).split("@"), base = HEARTS[k]; if (!base) return null;
+  const rank = r || "白", add = HEART_ADD[rank] || 0, mul = {};
+  for (const s of STATS) mul[s] = base.mul[s] + add;
+  return { ...base, key: k, rank, mul };
+}
+function rollHeart(k, rng, boss) {
+  let x = rng() * 100, i = 0; for (; i < HEART_ODDS.length - 1; i++) { if ((x -= HEART_ODDS[i]) < 0) break; }
+  if (boss) i = Math.min(HEART_RANKS.length - 1, i + 1); // ボスの心は1つ上から
+  return i ? `${k}@${HEART_RANKS[i]}` : k;
+}
 // ごほうび：お金と、魔物の心・武器防具の落とし物
 function rewards(st, rng) {
   const out = { gold: 0, hearts: [], items: [], mats: [], tools: [] }, tier = st.wave.tier || 1;
   for (const f of st.foes) {
     if (f.wait || f.fled) continue; // 出てこなかった者・逃げた者のぶんは無い
     out.gold += Math.round((f.gold || 0) * Math.pow(1.3, tier - 1) * (0.8 + rng() * 0.4)); // お金は強さ1つごとに1.3倍
-    if (f.heart && !st.wave.noHeart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(f.heart);
+    if (f.heart && !st.wave.noHeart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(rollHeart(f.heart, rng, f.boss));
     if (f.mat && rng() < (f.boss ? 1 : 0.4)) out.mats.push(f.mat);
     if (f.book && f.boss) out.tools.push(f.book);
   }
@@ -758,7 +774,7 @@ function rewards(st, rng) {
   return out;
 }
 
-const api = { BP0, BP_TURN, BP_MAX, ATTR, RANK, STATS, ST_NM, RANGE_NM, WTYPE, SKILLS, PASSIVES, GEAR, HEARTS, HEROES, START, FORMATIONS, FOES, WAVES,
+const api = { BP0, BP_TURN, BP_MAX, ATTR, RANK, STATS, ST_NM, RANGE_NM, WTYPE, SKILLS, PASSIVES, GEAR, HEARTS, HEROES, START, FORMATIONS, FOES, WAVES, HEART_RANKS, heart: heartOf,
   BONUS, AREA_CAP, MATS, TOOLS, FOODS, foodLeft, cost, awMax, rankMul, fxText, rankUp, defLo, resolveHero, heroStats, newBattle, commit, step, alive, resMul, grow, rollItem, rewards };
 if (typeof module !== "undefined") module.exports = api; else root.BT = api;
 })(this);

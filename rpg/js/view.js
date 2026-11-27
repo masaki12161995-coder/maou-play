@@ -104,7 +104,7 @@ function buildPanel(u) {
   const P = els.panel, A = (cls, html, x, y, w, h) => { const e = px(div("px " + cls, html), x, y, w, h); P.appendChild(e); return e; };
   const card = A("frame pcard", "", 12, 0, 277, 42);
   const nm = div("pn", u.nm); nm.style.fontSize = d(13); nm.style.left = d(12); nm.style.top = d(5); card.appendChild(nm);
-  const sub = div("ps", `${BT.WTYPE[u.wt].nm}${u.heart ? "・" + BT.HEARTS[u.heart].nm : ""}`); sub.style.fontSize = d(8); sub.style.left = d(12); sub.style.top = d(25); card.appendChild(sub);
+  const sub = div("ps", `${BT.WTYPE[u.wt].nm}${u.heart ? "・" + BT.heart(u.heart).nm : ""}`); sub.style.fontSize = d(8); sub.style.left = d(12); sub.style.top = d(25); card.appendChild(sub);
   const fc = spriteBox(IM[u.img], FACE[0], FACE[1], FACE[2], FACE[3], 40 * DM.K); fc.style.position = "absolute"; fc.style.right = d(8); fc.style.top = d(1); card.appendChild(fc);
   const dots = div("pdots", st.party.map((p, i) => `<i class="${i === cmdIdx ? "on" : st.cmd[p.id] ? "done" : ""}${p.down ? " ko" : ""}"></i>`).join("")); dots.style.left = d(120); dots.style.top = d(17); card.appendChild(dots);
   [["HP", `${u.hp}<small>/${u.max}</small>`], ["LP", `${u.lp}<small>/${u.lp_max || BT.HEROES.find(h => h.id === u.id).lp}</small>`], ["BP", `${u.bp}<small>/${BT.BP_MAX}</small>`]].forEach(([k, v], i) => {
