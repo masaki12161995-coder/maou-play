@@ -35,7 +35,7 @@ const WORLD={
   w_doro:{nm:"ドロ人形",r:2,n:[6,2,6,2],src:"img/monster_031.png",sz:[72,70],k:"魔物"},
   w_hakamori:{nm:"ハカモリ鴉",r:1,n:[4,4,2,3],src:"img/monster_037.png",sz:[31,30],k:"魔物"},
   w_rousoku:{nm:"ロウソク霊",r:2,n:[2,5,5,4],src:"img/monster_007.png",sz:[22,35],k:"魔物"},
-  w_sekkan:{nm:"石棺ヤドカリ",r:2,n:[6,2,3,5],src:"img/m_sekkan.png",sz:[41,30],k:"魔物"},
+  w_sekkan:{nm:"石棺ヤドカリ",r:2,n:[6,2,3,5],src:"img/monster_138.png",sz:[27,30],k:"魔物"},
   w_shishi:{nm:"双頭の石獅子",r:4,n:[7,6,6,6],src:"img/monster_139.png",sz:[88,75],k:"魔物"},
   w_honeban:{nm:"ホネ番兵",r:2,n:[5,5,3,3],src:"img/monster_035.png",sz:[43,70],k:"魔物"},
   w_rizeria:{nm:"王女リゼリア",r:4,n:[6,8,5,6],src:"img/c_rizeria.png",sz:[31,64],k:"人物"},
