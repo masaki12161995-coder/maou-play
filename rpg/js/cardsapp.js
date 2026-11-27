@@ -88,6 +88,24 @@ const WORLD={
   w_kurage:{nm:"クラゲ提灯",r:1,n:[2,4,4,2],src:"img/monster_086.png",sz:[33,40],k:"魔物"},
   w_kamome:{nm:"カモメ団",r:1,n:[4,3,1,4],src:"img/monster_026.png",sz:[37,30],k:"魔物"},
   w_utsubo:{nm:"大ウツボ",r:4,n:[7,8,5,6],src:"img/m_utsubo.png",sz:[114,95],k:"魔物"},
+  w_mifa:{nm:"神託の巫女ミーファ",r:4,n:[6,8,6,7],src:"img/c_mifa.png",sz:[36,58],k:"人物"},
+  w_ordo:{nm:"大司教オルド",r:3,n:[5,6,6,5],src:"img/c_ordo.png",sz:[32,58],k:"人物"},
+  w_riko:{nm:"司書見習いリコ",r:1,n:[3,4,3,3],src:"img/c_riko.png",sz:[28,50],k:"人物"},
+  w_monso:{nm:"門の僧",r:1,n:[3,3,4,3],src:"img/c_monso.png",sz:[31,58],k:"人物"},
+  w_kairouso:{nm:"回廊の僧",r:2,n:[4,5,3,5],src:"img/c_kairouso.png",sz:[31,58],k:"人物"},
+  w_junreiM:{nm:"巡礼の男",r:1,n:[3,3,3,4],src:"img/c_junreim.png",sz:[37,59],k:"人物"},
+  w_junreiF:{nm:"巡礼の女",r:1,n:[4,3,3,3],src:"img/c_junreif.png",sz:[38,58],k:"人物"},
+  w_hoshigashi:{nm:"星菓子売り",r:1,n:[2,5,3,3],src:"img/c_hoshigashi.png",sz:[40,59],k:"人物"},
+  w_kanetsukiS:{nm:"鐘つきの老僧",r:2,n:[5,3,5,4],src:"img/c_kanetsukis.png",sz:[40,59],k:"人物"},
+  w_seitonoko:{nm:"聖都の子",r:1,n:[4,2,4,3],src:"img/c_seitonoko.png",sz:[40,47],k:"人物"},
+  w_junreigani:{nm:"巡礼ガニ",r:1,n:[4,4,2,3],src:"img/monster_025.png",sz:[41,30],k:"魔物"},
+  w_shirayuri:{nm:"白百合の精",r:2,n:[3,4,5,4],src:"img/monster_147.png",sz:[19,25],k:"魔物"},
+  w_kanetsuki:{nm:"鐘つきコウモリ",r:1,n:[4,2,4,3],src:"img/monster_015.png",sz:[63,30],k:"魔物"},
+  w_irogarasu:{nm:"色硝子蝶",r:2,n:[5,3,4,4],src:"img/monster_148.png",sz:[41,30],k:"魔物"},
+  w_inoriseki:{nm:"祈り石像",r:3,n:[4,7,6,4],src:"img/monster_058.png",sz:[32,70],k:"魔物"},
+  w_rouko:{nm:"蝋涙コロモチ",r:1,n:[3,4,3,2],src:"img/m_rouko.png",sz:[20,20],k:"魔物"},
+  w_shugozo:{nm:"沈黙の守護像",r:4,n:[7,6,7,7],src:"img/monster_065.png",sz:[87,70],k:"魔物"},
+  w_seiei:{nm:"黒外套の精鋭",r:3,n:[6,5,5,6],src:"img/monster_077.png",sz:[52,70],k:"魔物"},
   w_serinin:{nm:"競り人",r:1,n:[4,3,3,3],src:"img/c_serinin.png",sz:[42,58],k:"人物"},
   w_sunamogu:{nm:"スナモグリ",r:2,n:[6,5,2,3],src:"img/m_sunamogu.png",sz:[131,90],k:"魔物"},
   w_saboten:{nm:"サボテン拳士",r:2,n:[6,2,4,4],src:"img/monster_142.png",sz:[67,45],k:"魔物"},
@@ -115,15 +133,17 @@ OPPS.length=0; OPPS.push(
   {nm:"村長の孫ティム",who:"069",cap:9,depth:1,sig:"w_donguri",pool:["w_donguri","w_donguri","w_koromochi","w_koromochi","w_kawauso","w_mizugumo","w_hane","w_fukuro","w_mugiwara","w_kamausagi","w_ookami"]},
   {nm:"大頭取マルゴ",who:"134",cap:14,depth:3,sig:"w_koganegai",pool:["w_koganegai","w_fukumen","w_rojin","w_margo","w_aster","w_shokanban","w_shokanban","w_taisho","w_taisho","w_ryogae","w_mizuuri","w_sasori","w_sasori","w_sunamogu","w_akamugi","w_doro","w_tsubo"]},
   {nm:"闘技場の受付ジーナ",who:"137",cap:13,depth:3,sig:"w_sunamogu",pool:["w_sunamogu","w_sunamogu","w_sasori","w_saboten","w_saboten","w_hagewashi","w_sunaningyo","w_miira","w_tozoku","w_sasha","w_zazan","w_tobakuban","w_gina","w_keihin","w_serinin","w_akamugi","w_doro","w_ookami","w_kakashi","w_teo","w_rinka"]},
-  {nm:"船大工ハッチ",who:"099c",cap:13,depth:3,sig:"w_hagewashi",pool:["w_hagewashi","w_hagewashi","w_minarai","w_minarai","w_yakunin","w_ryoshi","w_uouri","w_todai","w_okamiS","w_kaizoku","w_gaikotsu","w_yadokahou","w_fujitsubo","w_tobiuo","w_kamome","w_kurage","w_sunaningyo","w_sasori"]});
+  {nm:"船大工ハッチ",who:"099c",cap:13,depth:3,sig:"w_hagewashi",pool:["w_hagewashi","w_hagewashi","w_minarai","w_minarai","w_yakunin","w_ryoshi","w_uouri","w_todai","w_okamiS","w_kaizoku","w_gaikotsu","w_yadokahou","w_fujitsubo","w_tobiuo","w_kamome","w_kurage","w_sunaningyo","w_sasori"]},
+  {nm:"大司教オルド",who:"008",cap:14,depth:3,sig:"w_mifa",pool:["w_mifa","w_ordo","w_monso","w_monso","w_kairouso","w_junreiM","w_junreiF","w_hoshigashi","w_kanetsukiS","w_seitonoko","w_inoriseki","w_shirayuri","w_junreigani","w_rouko"]},
+  {nm:"司書見習いリコ",who:"129r",cap:12,depth:2,sig:"w_inoriseki",pool:["w_inoriseki","w_riko","w_riko","w_irogarasu","w_kanetsuki","w_rouko","w_rouko","w_shirayuri","w_junreigani","w_junreigani","w_monso","w_seitonoko","w_hoshigashi"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）
 // 物語で出会うまでは相手の札に出さない人（RPGの進みの数）。出会う前の人物の絵を先に見せないため
-const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46,w_aster:51,w_taisho:48,w_mizuuri:50,w_saboten:48,w_hagewashi:53,w_sunaningyo:53,w_rojin:53,w_miira:54,w_tozoku:54,w_koganegai:54,w_sasha:56,w_zazan:56,w_fukumen:59,w_dreg:65,w_kaizoku:64,w_yakunin:63,w_ryoshi:63,w_okamiS:63,w_uouri:63,w_todai:63,w_minarai:63,w_hatch:63,w_suifu:66,w_gaikotsu:64,w_fujitsubo:64,w_yadokahou:64,w_tobiuo:66,w_kurage:66,w_kamome:66,w_utsubo:66};
+const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46,w_aster:51,w_taisho:48,w_mizuuri:50,w_saboten:48,w_hagewashi:53,w_sunaningyo:53,w_rojin:53,w_miira:54,w_tozoku:54,w_koganegai:54,w_sasha:56,w_zazan:56,w_fukumen:59,w_dreg:65,w_kaizoku:64,w_yakunin:63,w_ryoshi:63,w_okamiS:63,w_uouri:63,w_todai:63,w_minarai:63,w_hatch:63,w_suifu:66,w_gaikotsu:64,w_fujitsubo:64,w_yadokahou:64,w_tobiuo:66,w_kurage:66,w_kamome:66,w_utsubo:66,w_mifa:73,w_ordo:68,w_riko:69,w_monso:68,w_kairouso:71,w_junreiM:67,w_junreiF:67,w_hoshigashi:68,w_kanetsukiS:68,w_seitonoko:68,w_junreigani:67,w_shirayuri:67,w_kanetsuki:71,w_irogarasu:71,w_inoriseki:71,w_rouko:71,w_shugozo:73,w_seiei:73};
 function rpgStage(){ try{ return JSON.parse(localStorage.getItem("rpgPlay1")).flags.s||0; }catch(e){ return 0; } }
 // 後から足した札（相手の持ち札に、記録が作られた後で加えるもの）
-const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi","w_taisho","w_mizuuri","w_saboten","w_hagewashi","w_sunaningyo","w_rojin","w_miira","w_tozoku","w_koganegai","w_sasha","w_zazan","w_fukumen","w_dreg","w_kaizoku","w_yakunin","w_ryoshi","w_okamiS","w_uouri","w_todai","w_minarai","w_hatch","w_suifu","w_gaikotsu","w_fujitsubo","w_yadokahou","w_tobiuo","w_kurage","w_kamome","w_utsubo"];
+const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi","w_taisho","w_mizuuri","w_saboten","w_hagewashi","w_sunaningyo","w_rojin","w_miira","w_tozoku","w_koganegai","w_sasha","w_zazan","w_fukumen","w_dreg","w_kaizoku","w_yakunin","w_ryoshi","w_okamiS","w_uouri","w_todai","w_minarai","w_hatch","w_suifu","w_gaikotsu","w_fujitsubo","w_yadokahou","w_tobiuo","w_kurage","w_kamome","w_utsubo","w_mifa","w_ordo","w_riko","w_monso","w_kairouso","w_junreiM","w_junreiF","w_hoshigashi","w_kanetsukiS","w_seitonoko","w_junreigani","w_shirayuri","w_kanetsuki","w_irogarasu","w_inoriseki","w_rouko","w_shugozo","w_seiei"];
 function rpgGold(add){ try{ const t=JSON.parse(localStorage.getItem("rpgPlay1")); if(add){ t.gold+=add; localStorage.setItem("rpgPlay1",JSON.stringify(t)); } return t.gold; }catch(e){ return 0; } }
 function goldTag(){ return `<span style="color:var(--text)">${rpgGold().toLocaleString()} G</span>`; }
 

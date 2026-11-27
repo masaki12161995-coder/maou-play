@@ -689,7 +689,7 @@ function lux() {
       { id: "monouri", x: 9, y: 21, img: "person_075m", dir: 2, nm: "物売り", talk: "monouri", when: g => S(g) >= 31 && !g.flags.cut },
       { id: "mofuku", x: 7, y: 17, img: "person_076", dir: 1, nm: "喪服の婦人", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       { id: "eihei", x: 12, y: 5, img: "person_138c", dir: 0, nm: "城門の衛兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
-      { id: "oodori", x: 14, y: 16, img: "person_073", dir: 1, nm: "大通りの子", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
+      { id: "oodori", x: 14, y: 16, img: "person_022o", dir: 1, nm: "大通りの子", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       { id: "shiroL", x: 14, y: 14, img: "person_131", dir: 1, nm: "白い犬", talk: "shiro", town: "lux", when: g => S(g) >= 31 && !g.flags.cut && !((g.flags.shiro || {}).lux) },
       { id: "kkado", x: 12, y: 14, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && S(g) < 46 && !g.flags.cut },
     ],
@@ -1216,7 +1216,7 @@ function uchiumi() {
   return {
     id: "uchiumi", nm: "内海", g, tier: 4, bg: "sea", music: null, sea: 1, noFollow: 1, pad: "K",
     objs: [],
-    exits: [{ x: 8, y: 14, to: "seirena", tx: 22, ty: 9, dir: 1 }, { x: 8, y: 15, to: "seirena", tx: 22, ty: 9, dir: 1 }, { x: 8, y: 16, to: "seirena", tx: 22, ty: 9, dir: 1 }],
+    exits: [{ x: 8, y: 14, to: "seirena", tx: 22, ty: 9, dir: 1 }, { x: 8, y: 15, to: "seirena", tx: 22, ty: 9, dir: 1 }, { x: 8, y: 16, to: "seirena", tx: 22, ty: 9, dir: 1 }, { x: 37, y: 13, to: "junrei", tx: 3, ty: 15, dir: 2 }, { x: 37, y: 14, to: "junrei", tx: 3, ty: 15, dir: 2 }, { x: 37, y: 15, to: "junrei", tx: 3, ty: 16, dir: 2 }],
     npcs: [],
     foes: [
       { id: "u1", x: 14, y: 12, k: "tobiuo", g: ["tobiuo", "kurage"] },
@@ -1227,10 +1227,132 @@ function uchiumi() {
     ],
     chests: [],
     trigs: [
-      { x: 37, y: 13, w: 1, h: 3, run: "junreiDock" },
       { x: 2, y: 2, w: W - 4, h: 1, run: "stormWall", d: [0, 1] }, { x: 2, y: H - 3, w: W - 4, h: 1, run: "stormWall", d: [0, -1] },
       { x: 2, y: 3, w: 1, h: H - 6, run: "stormWall", d: [1, 0] }, { x: W - 3, y: 3, w: 1, h: H - 6, run: "stormWall", d: [-1, 0] },
     ],
+  };
+}
+
+// ---------- 巡礼の浜〜巡礼の道（S4）：西の船着き場から、白い浜を経て北の丘の聖都へ。南の山道は土砂でふさがっている ----------
+function junrei() {
+  const W = 20, H = 26, g = grid(W, H, ".");
+  fill(g, "T", 0, 0, W, 2); fill(g, "T", W - 2, 0, 2, H); fill(g, "T", 0, H - 2, W, 2);
+  fill(g, "~", 0, 2, 3, H - 4); fill(g, "Z", 3, 12, 6, 10); fill(g, "b", 0, 15, 3, 2);   // 西の海・白い浜・船着き場
+  fill(g, "c", 3, 15, 6, 2); fill(g, "c", 8, 5, 2, 12); fill(g, "c", 8, 0, 2, 6);         // 石畳の巡礼の道（北へ）
+  fill(g, "c", 10, 20, 2, 4); fill(g, "T", 12, 4, 6, 5); fill(g, "T", 13, 14, 5, 6);      // 南の山道（第5章で開く）
+  g[H - 2][10] = "c"; g[H - 1][10] = "c"; g[H - 2][11] = "c"; g[H - 1][11] = "c";
+  return {
+    id: "junrei", nm: "巡礼の道", g, tier: 4, bg: "meadow", music: null, pad: "T",
+    objs: [
+      { t: "offering", x: 10, y: 9, text: ["道ばたの祠。星の形の石が祀ってある。"] }, { t: "sign", x: 10, y: 4, text: ["北　聖都エリュシス"] },
+      { t: "rubble", x: 10, y: 22, text: ["土砂で道がふさがっている。南の山道は、通れない。"] }, { t: "rubble", x: 11, y: 22, text: ["土砂で道がふさがっている。南の山道は、通れない。"] },
+      { t: "sign", x: 12, y: 18, text: ["南　山道（崩れのため通れず）"] }, { t: "boat", x: 0, y: 17, w: 3, h: 1, text: ["商盟の船の小舟。沖の船まで漕いで戻れる。"] },
+    ],
+    exits: [{ x: 0, y: 15, to: "uchiumi", tx: 36, ty: 14, dir: 1 }, { x: 0, y: 16, to: "uchiumi", tx: 36, ty: 14, dir: 1 }, { x: 8, y: 0, to: "seito", tx: 11, ty: 25, dir: 3 }, { x: 9, y: 0, to: "seito", tx: 12, ty: 25, dir: 3 }],
+    npcs: [
+      { id: "junreiM", x: 11, y: 9, img: "person_074w", dir: 1, nm: "巡礼の男", when: g => S(g) <= 68 },
+      { id: "junreiF", x: 11, y: 10, img: "person_026w", dir: 1, nm: "巡礼の女", when: g => S(g) <= 68 },
+    ],
+    foes: [
+      { id: "j1", x: 5, y: 19, k: "junreigani", g: ["junreigani", "junreigani"] },
+      { id: "j2", x: 6, y: 9, k: "shirayuri", g: ["shirayuri", "junreigani"] },
+      { id: "j3", x: 12, y: 12, k: "shirayuri", g: ["shirayuri", "shirayuri"] },
+    ],
+    chests: [{ id: "c_junrei1", x: 4, y: 20, tool: "onigiri" }, { id: "c_junrei2", x: 15, y: 11, gold: 250 }],
+    trigs: [{ x: 8, y: 9, w: 2, h: 2, when: g => S(g) === 67, run: "c4s6" }],
+  };
+}
+// ---------- 聖都エリュシス（S5）：白い石の都。北に大聖堂、西に大書庫、東に宿坊 ----------
+function seito() {
+  const W = 24, H = 28, g = grid(W, H, "c");
+  fill(g, "Q", 0, 0, W, 1); fill(g, "Q", 0, 0, 1, H); fill(g, "Q", W - 1, 0, 1, H); fill(g, "Q", 0, H - 1, W, 1);
+  g[H - 1][11] = "c"; g[H - 1][12] = "c";                                                    // 南の門（巡礼の道へ）
+  fill(g, ".", 2, 14, 6, 4); fill(g, ".", 16, 14, 6, 4); fill(g, ".", 2, 21, 5, 4); fill(g, ".", 17, 21, 5, 4);
+  return {
+    id: "seito", nm: "聖都エリュシス", g, tier: 0, bg: null, music: "town",
+    objs: [
+      { t: "house", x: 7, y: 2, w: 10, h: 5, roof: "blue", door: 5, chimney: 0, sign: "大聖堂" },          // 大聖堂（扉 12,7）
+      { t: "column", x: 6, y: 7 }, { t: "column", x: 17, y: 7 },
+      { t: "house", x: 1, y: 9, w: 5, h: 3, roof: "brown", door: 2, sign: "大書庫" },                          // 大書庫（扉 3,12）
+      { t: "house", x: 18, y: 9, w: 5, h: 3, roof: "green", door: 2, sign: "宿", kind: "inn", nm: "聖都の宿坊" }, // 宿坊
+      { t: "house", x: 2, y: 18, w: 4, h: 2, roof: "red", door: 1 }, { t: "house", x: 18, y: 18, w: 4, h: 2, roof: "blue", door: 2, chimney: 1 },
+      { t: "fountain", x: 11, y: 14 }, { t: "fountain", x: 12, y: 14 }, { t: "stall", x: 14, y: 17, w: 2 }, { t: "bell", x: 20, y: 5 },
+    ],
+    exits: [{ x: 11, y: H - 1, to: "junrei", tx: 8, ty: 1, dir: 0 }, { x: 12, y: H - 1, to: "junrei", tx: 9, ty: 1, dir: 0 }],
+    npcs: [
+      { id: "monso", x: 11, y: 8, img: "person_078m", dir: 0, nm: "門の僧", talk: "monso" },
+      { id: "ordo", x: 13, y: 8, img: "person_008", dir: 0, nm: "オルド", talk: "ordo", card: g => S(g) >= 69, when: g => S(g) >= 69 || cut(g, "c4s7") },
+      { id: "hoshigashi", x: 15, y: 17, img: "person_075h", dir: 0, nm: "星菓子売り", talk: "tt", tp: "seito" },
+      { id: "kanetsukiS", x: 20, y: 6, img: "person_071b", dir: 0, nm: "鐘つきの老僧", talk: "tt", tp: "seito" },
+      { id: "seitonoko", x: 10, y: 15, img: "person_109h", dir: 2, nm: "聖都の子", talk: "tt", tp: "seito" },
+      { id: "junreiM2", x: 17, y: 13, img: "person_074w", dir: 1, nm: "巡礼の男", talk: "tt", tp: "seito", when: g => S(g) >= 69 },
+      { id: "junreiF2", x: 17, y: 14, img: "person_026w", dir: 1, nm: "巡礼の女", talk: "tt", tp: "seito", when: g => S(g) >= 69 },
+    ],
+    foes: [], chests: [],
+    trigs: [
+      { x: 11, y: H - 3, w: 2, h: 2, when: g => S(g) === 68, run: "c4s7" },
+      { x: 3, y: 12, run: "shokoDoor" },
+      { x: 12, y: 7, run: "seidoDoor" },
+    ],
+  };
+}
+function shoko() { // 聖都の大書庫
+  const g = grid(13, 9, "w"); fill(g, "p", 1, 1, 11, 7); g[8][6] = "D";
+  return {
+    id: "shoko", nm: "聖都の大書庫", g, tier: 0, bg: null, inside: 1, music: "town",
+    objs: [
+      { t: "itae", x: 5, y: 0, w: 3, h: 2, talk: "itae" },
+      ...[1, 2, 3, 9, 10, 11].map(x => ({ t: "shelf", x, y: 1, text: ["天井まで本が詰まっている。"] })), ...[1, 2, 10, 11].map(x => ({ t: "shelf", x, y: 4, text: ["古い記録の棚。どの本にも、顔の削られた絵のことは書いていない。"] })),
+      { t: "table", x: 4, y: 5 }, { t: "chair", x: 8, y: 6 },
+    ],
+    exits: [{ x: 6, y: 8, to: "seito", tx: 3, ty: 13, dir: 0 }],
+    npcs: [
+      { id: "riko", x: 6, y: 3, img: "person_129r", dir: 0, nm: "リコ", talk: "riko", card: g => S(g) >= 70 },
+      { id: "totoSh", x: 8, y: 5, img: "person_100", dir: 3, nm: "トト", talk: "totoL", card: () => 1, when: g => S(g) >= 69 },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 4, y: 3, w: 5, h: 4, when: g => S(g) === 69, run: "c4s8" }],
+  };
+}
+// ---------- 大聖堂・沈黙の回廊（S6）：手を組んだ石の聖人像が並ぶ長い回廊。突き当たりに守護像 ----------
+function kairou() {
+  const W = 13, H = 26, g = grid(W, H, "w"); fill(g, "p", 2, 1, 9, 24); g[H - 1][6] = "D";
+  fill(g, "w", 2, 8, 3, 2); fill(g, "w", 8, 8, 3, 2); fill(g, "w", 2, 15, 3, 2); fill(g, "w", 8, 15, 3, 2);
+  return {
+    id: "kairou", nm: "沈黙の回廊", g, tier: 4, bg: "stone", inside: 1, afterWin: "kairouWin",
+    objs: [
+      ...[3, 6, 11, 13, 19, 22].map(y => ({ t: "statue", x: 2, y, text: ["手を組んだ石の聖人像。目を閉じている。"] })), ...[3, 6, 11, 13, 19, 22].map(y => ({ t: "statue", x: 10, y, text: ["手を組んだ石の聖人像。目を閉じている。"] })),
+      { t: "stele", x: 7, y: 2, text: ["問う者は、まず己に問え。"] }, { t: "candleStand", x: 4, y: 1 }, { t: "candleStand", x: 8, y: 1 },
+    ],
+    exits: [{ x: 6, y: H - 1, to: "seito", tx: 12, ty: 8, dir: 0 }, ...((window.GS && GS.G && (GS.G.flags.s || 0) >= 73) ? [{ x: 6, y: 1, to: "hoshinoma", tx: 5, ty: 7, dir: 3 }] : [])],
+    npcs: [
+      { id: "kairouso", x: 5, y: 23, img: "person_078k", dir: 3, nm: "回廊の僧", talk: "tt", tp: "seito" },
+      { id: "shugozoN", x: 6, y: 1, mon: "monster_065", face: 1, big: 1, nm: "沈黙の守護像", when: g => S(g) < 73 },
+    ],
+    foes: [
+      { id: "kr1", x: 6, y: 20, k: "inoriseki", g: ["inoriseki", "rouko"] },
+      { id: "kr2", x: 6, y: 12, k: "kanetsuki", g: ["kanetsuki", "irogarasu", "rouko"] },
+      { id: "kr3", x: 4, y: 5, k: "irogarasu", g: ["irogarasu", "irogarasu"] },
+      { id: "kr4", x: 9, y: 17, k: "rouko", g: ["rouko", "inoriseki"] },
+    ],
+    chests: [{ id: "c_kairou1", x: 3, y: 17, item: "knightswd" }, { id: "c_kairou2", x: 9, y: 4, tool: "onigiri" }],
+    trigs: [{ x: 3, y: 3, w: 7, h: 1, when: g => S(g) === 72, run: "c4s10" }],
+  };
+}
+function hoshinoma() { // 星の間：硝子の丸屋根。床に星図
+  const W = 11, H = 9, g = grid(W, H, "w"); fill(g, "N", 1, 1, 9, 7); g[H - 1][5] = "D";
+  return {
+    id: "hoshinoma", nm: "星の間", g, tier: 4, bg: "stone", inside: 1, music: null,
+    objs: [{ t: "candleStand", x: 1, y: 1 }, { t: "candleStand", x: 9, y: 1 }],
+    exits: [{ x: 5, y: H - 1, to: "kairou", tx: 6, ty: 2, dir: 0 }],
+    npcs: [
+      { id: "mifaH", x: 5, y: 2, img: "person_011", dir: 0, nm: "ミーファ", col: 1, when: g => S(g) === 73 || cut(g, "c4s11") },
+      { id: "ordoH", x: 4, y: 5, img: "person_008", dir: 3, nm: "", when: g => cut(g, "c4s12") },
+      { id: "kuroH1", x: 3, y: 6, mon: "monster_077", face: 1, nm: "", when: g => cut(g, "c4s11b") },
+      { id: "kuroH2", x: 7, y: 6, mon: "monster_076", face: -1, nm: "", when: g => cut(g, "c4s11b") },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 2, y: 4, w: 7, h: 3, when: g => S(g) === 73, run: "c4s11" }],
   };
 }
 
@@ -1391,5 +1513,5 @@ function minka() {
 }
 
 root.MINKA_FOLK = MINKA_FOLK;
-root.MAPS = { seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+root.MAPS = { junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

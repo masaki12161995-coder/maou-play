@@ -515,6 +515,20 @@ function fountain(c) { cobble(c, 0, 0, () => "c"); blob(c, "#5d5966", 24, 26, 20
 function woodpile(c) { grass(c, 0, 0); for (let r = 0; r < 3; r++) for (let i = 0; i < 4 - (r === 2 ? 1 : 0); i++) { const x = 6 + i * 10 + (r === 2 ? 5 : 0), y = 32 - r * 10; blob(c, "#7a5230", x + 4, y, 5, 5); blob(c, "#e2c08a", x + 4, y, 3.2, 3.2); blob(c, "#b88a52", x + 4, y, 1.2, 1.2); } } // 割った薪の山
 function veiled(c) { floor(c, 0, 0); R(c, "#4f4a55", 10, 28, 28, 16); R(c, "#6d6670", 10, 28, 28, 3); blob(c, "#d8d2c0", 24, 22, 14, 10); R(c, "#d8d2c0", 11, 22, 26, 10); blob(c, "#efe9d8", 22, 17, 8, 5); R(c, "#b8b2a0", 12, 30, 2, 6); R(c, "#b8b2a0", 34, 30, 2, 6); } // 布をかけた台座
 
+
+function itae(c, o) { // 大書庫の古い板絵（横3マス×縦2マス）：倒れた人と、その手を取ってひざをつく人。顔は削られている。ひざをついた方の頭に、とがった形が二つ
+  const W = (o.w || 3) * T, H = (o.h || 2) * T;
+  R(c, "#3a2a1c", 0, 0, W, H); R(c, "#b8a47a", 4, 4, W - 8, H - 8); R(c, "#cdbb92", 4, 4, W - 8, 3);
+  R(c, "#5a4430", W * 0.12, H * 0.66, W * 0.42, 10); blob(c, "#7a7484", W * 0.12, H * 0.66 + 4, 7, 7);  // 倒れた人（顔は削れて灰色）
+  R(c, "#d8d2c0", W * 0.3, H * 0.6, 3, 22); R(c, "#d8d2c0", W * 0.27, H * 0.6 + 8, 9, 2);                 // 倒れた方の手もとの剣
+  R(c, "#3e2c40", W * 0.62, H * 0.36, 16, H * 0.36); blob(c, "#7a7484", W * 0.62 + 8, H * 0.3, 8, 8);   // ひざをつく人
+  R(c, "#3e2c40", W * 0.62, H * 0.14, 3, 9); R(c, "#3e2c40", W * 0.62 + 13, H * 0.14, 3, 9);             // 頭のとがった形
+  R(c, "#3e2c40", W * 0.45, H * 0.62, W * 0.18, 4); blob(c, "#e2d2a8", W * 0.45, H * 0.64, 5, 4);         // 取った手
+}
+function starFloor(c) { // 星の間の床（星図）
+  R(c, "#1c1f38", 0, 0, T, T); R(c, "#262a4a", 0, 0, T, 1); R(c, "#262a4a", 0, 0, 1, T);
+  blob(c, "#d8d0a0", 14, 16, 2, 2); blob(c, "#efe8c0", 34, 30, 1, 1); R(c, "#4a5080", 14, 16, 20, 1); R(c, "#4a5080", 33, 16, 1, 14);
+}
 function ship(c, o) { // 帆船（横3マス×高さ3マス）。商盟の旗。o.left＝左向き
   const W = T * 3;
   c.save(); if (o && o.left) { c.translate(W, 0); c.scale(-1, 1); }
@@ -547,5 +561,5 @@ function cage(c) { // 水の中の鉄の檻（2×2マス）
   R(c, "#3d3a44", 6, 12, 84, 6); R(c, "#3d3a44", 6, 84, 84, 6);
 }
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage, itae, starFloor };
 })(window);

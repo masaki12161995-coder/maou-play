@@ -137,6 +137,17 @@ const SKILLS = {
   sasoribari:{ nm: "蠍の針", bp: 6, rank: "C", tg: "one", at: ["突"], poison: 50, dist: "近", dir: "直接", kind: "攻撃" },
   sunanami:  { nm: "砂の大波", bp: 8, rank: "B", tg: "all", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
   nomikomi:  { nm: "呑みこみ", bp: 7, rank: "B", tg: "one", at: ["打"], stun: 40, dist: "近", dir: "直接", kind: "攻撃" },
+  m_hoshibi: { nm: "星の灯", bp: 3, rank: "D", tg: "one", at: ["陽"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  m_inori:   { nm: "祈りの声", bp: 5, tg: "allies", heal: 32, magic: 1, kind: "回復" },
+  m_hoshifuri:{ nm: "星降り", bp: 9, rank: "C", tg: "all", at: ["陽"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  kahun:     { nm: "白い花粉", bp: 3, rank: "D", tg: "row", at: ["陽"], magic: 1, stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  warekane:  { nm: "割れ鐘", bp: 4, rank: "D", tg: "row", at: ["打"], stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  garasuko:  { nm: "硝子の粉", bp: 4, rank: "D", tg: "row", at: ["陽"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  ishikobushi:{ nm: "祈りの拳", bp: 4, rank: "C", tg: "one", at: ["打"], stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
+  rodare:    { nm: "蝋だれ", bp: 3, rank: "D", tg: "one", at: ["熱"], magic: 1, dist: "近", dir: "直接", kind: "攻撃" },
+  chinmoku:  { nm: "沈黙", bp: 6, tg: "all", seal: 75, noDmg: 1, dist: "遠", dir: "間接", kind: "補助" },
+  ishitsubasa:{ nm: "石の翼", bp: 7, rank: "B", tg: "row", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  jufu:      { nm: "呪符", bp: 5, rank: "C", tg: "one", at: ["陰"], magic: 1, seal: 40, dist: "遠", dir: "間接", kind: "攻撃" },
   honenagi:  { nm: "骨薙ぎ", bp: 5, rank: "C", tg: "row", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   iwaotoshi: { nm: "岩落とし", bp: 5, rank: "C", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
   taihou:    { nm: "大砲", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
@@ -198,6 +209,7 @@ const PASSIVES = {
 // ---------- 装備（ランクB〜SSS。st＝能力値の上乗せ、res＝耐性） ----------
 const GEAR = {
   // 武器（威力powは武器の種類ごとに決まった値。拾った物には、まれに能力のおまけが付く）
+  starstaff: { slot: "weapon", wt: "staff", nm: "小さな星の杖", rank: "A", pow: 5, mp: { 陽: 15 }, st: { lov: 2, wil: 1 }, icon: "eq_staff_03" }, // ミーファの杖
   alba:      { slot: "weapon", wt: "sword", nm: "聖剣アルバ", rank: "S", pow: 20, st: { str: 3, wil: 2 }, icon: "eq_sword_04", noShop: 1 }, // 勇者アスターの剣（客分だけが持つ。手に入らない）
   ironsword: { slot: "weapon", wt: "sword", nm: "鉄の剣", rank: "B", pow: 12, st: { str: 1 }, price: 120, icon: "eq_sword_02" },
   knightswd: { slot: "weapon", wt: "sword", nm: "騎士の剣", rank: "A", pow: 14, st: { str: 2, vit: 1 }, ps: "w_sword", price: 420, icon: "eq_sword_03" },
@@ -264,6 +276,10 @@ const MATS = {
   kokaku:   { nm: "蠍の甲殻", icon: "mat_008", fam: "皮・鱗・甲羅", rare: "緑" },
   sabotane: { nm: "サボテンの種", icon: "mat_024", fam: "植物", rare: "白" },
   hagehane: { nm: "禿鷲の羽根", icon: "mat_015", fam: "羽", rare: "白" },
+  kanihasami:{ nm: "巡礼ガニのはさみ", icon: "mat_033", fam: "骨・牙・爪", rare: "白" },
+  yurihana: { nm: "白百合の花びら", icon: "mat_024", fam: "植物", rare: "緑" },
+  garasu:   { nm: "色硝子のかけら", icon: "mat_037", fam: "石・結晶", rare: "緑" },
+  sekihen:  { nm: "祈り石のかけら", icon: "mat_078", fam: "石・結晶", rare: "紫" },
   kaigara:  { nm: "フジツボの殻", icon: "mat_009", fam: "石・結晶", rare: "白" },
   hire:     { nm: "飛魚のひれ", icon: "mat_015", fam: "羽", rare: "白" },
   kurage:   { nm: "光るクラゲの傘", icon: "mat_rou", fam: "液体・粉", rare: "緑" },
@@ -313,6 +329,13 @@ const HEARTS = {
   rousoku:  { nm: "ロウソク霊の心", col: "白", mul: { str: 90, vit: 92, dex: 98, agi: 104, int: 114, wil: 108, lov: 100, cha: 100 }, sk: "bluefire", up: ["int", "wil"] },
   akamugi:  { nm: "アカムギ蛇の心", col: "白", mul: { str: 98, vit: 94, dex: 108, agi: 110, int: 98, wil: 96, lov: 100, cha: 100 }, sk: "mugikami", up: ["agi", "dex"] },
   sunamogu: { nm: "スナモグリの心", col: "緑", mul: { str: 112, vit: 112, dex: 90, agi: 86, int: 92, wil: 100, lov: 100, cha: 96 }, sk: "sunakaki", up: ["str", "vit"] },
+  junreigani:{ nm: "巡礼ガニの心", col: "白", mul: { str: 108, vit: 110, dex: 98, agi: 92, int: 94, wil: 102, lov: 100, cha: 96 }, sk: "hasami", up: ["str", "vit"] },
+  shirayuri:{ nm: "白百合の精の心", col: "緑", mul: { str: 90, vit: 96, dex: 100, agi: 104, int: 110, wil: 108, lov: 112, cha: 104 }, sk: "kahun", up: ["lov", "int"] },
+  kanetsuki:{ nm: "鐘つきコウモリの心", col: "白", mul: { str: 100, vit: 96, dex: 104, agi: 112, int: 102, wil: 98, lov: 98, cha: 100 }, sk: "warekane", up: ["agi", "dex"] },
+  irogarasu:{ nm: "色硝子蝶の心", col: "緑", mul: { str: 92, vit: 94, dex: 108, agi: 110, int: 112, wil: 100, lov: 100, cha: 106 }, sk: "garasuko", up: ["int", "agi"] },
+  inoriseki:{ nm: "祈り石像の心", col: "青", mul: { str: 108, vit: 116, dex: 96, agi: 88, int: 100, wil: 116, lov: 104, cha: 98 }, sk: "ishikobushi", up: ["vit", "wil"] },
+  rouko:    { nm: "蝋涙コロモチの心", col: "白", mul: { str: 96, vit: 104, dex: 100, agi: 98, int: 106, wil: 104, lov: 102, cha: 100 }, sk: "rodare", up: ["int", "vit"] },
+  shugozo:  { nm: "守護像の心", col: "金", mul: { str: 112, vit: 118, dex: 104, agi: 96, int: 96, wil: 120, lov: 100, cha: 104 }, sk: "ishitsubasa", up: ["wil", "vit"], ps: "ironwall" },
   gaikotsu: { nm: "海賊ガイコツの心", col: "緑", mul: { str: 108, vit: 98, dex: 106, agi: 104, int: 92, wil: 96, lov: 98, cha: 102 }, sk: "honenagi", up: ["str", "dex"] },
   fujitsubo:{ nm: "フジツボ岩男の心", col: "緑", mul: { str: 110, vit: 116, dex: 92, agi: 84, int: 92, wil: 108, lov: 100, cha: 96 }, sk: "iwaotoshi", up: ["vit", "str"] },
   yadokahou:{ nm: "ヤドカリ砲の心", col: "青", mul: { str: 106, vit: 108, dex: 112, agi: 90, int: 98, wil: 100, lov: 96, cha: 100 }, sk: "taihou", up: ["dex", "vit"] },
@@ -388,6 +411,10 @@ const HEROES = [
   { id: "jako", nm: "ジャコ", img: "person_133", wt: "bow", rare: "S", hp: 250, hpCap: 1050, lp: 8, st: { str: 17, vit: 18, dex: 30, agi: 28, int: 14, wil: 14, lov: 15, cha: 26 },
     cap: { str: 84, vit: 92, dex: 126, agi: 122, int: 80, wil: 82, lov: 92, cha: 124 }, up: ["dex", "agi"],
     res: {}, sk: ["j_sai", "j_naki", "j_miyage"], ps: ["bowway", "quickdraw", "momentum"], gear: { weapon: "saibow", armor: "cloak", sub: null, acc: null } },
+  // 神託の巫女ミーファ（第4章で加わる）：杖（陽）。回復と、陽の術
+  { id: "mifa", nm: "ミーファ", img: "person_011", wt: "staff", rare: "S", hp: 170, hpCap: 990, lp: 7, st: { str: 9, vit: 14, dex: 14, agi: 17, int: 27, wil: 28, lov: 29, cha: 21 },
+    cap: { str: 66, vit: 88, dex: 88, agi: 100, int: 124, wil: 126, lov: 130, cha: 110 }, up: ["lov", "wil"],
+    res: { 陽: 20 }, sk: ["m_hoshibi", "m_inori", "m_hoshifuri"], ps: ["healer", "sunway", "focus"], gear: { weapon: "starstaff", armor: "cloak", sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -435,6 +462,20 @@ const FOES = {
   rousoku:  { mat: "rou", nm: "ロウソク霊", img: "monster_007", wt: "fang", pow: 9, hp: 75, st: { str: 20, vit: 10, dex: 14, agi: 20, int: 26, wil: 18, lov: 0, cha: 12 }, mag: 11, res: { 斬: 30, 突: 30, 冷: -60, 熱: 60, 陽: -30 }, every: { n: 2, sk: "bluefire" }, gold: 14, heart: "rousoku" },
   akamugi:  { mat: "akauroko", nm: "アカムギ蛇", img: "m_akamugi", wt: "fang", pow: 11, hp: 120, st: { str: 31, vit: 13, dex: 20, agi: 24, int: 7, wil: 10, lov: 0, cha: 10 }, res: { 斬: -20, 冷: -40, 熱: 20 }, every: { n: 2, sk: "mugikami" }, gold: 15, heart: "akamugi" },
   sunamogu: { mat: "tsume", nm: "スナモグリ", img: "m_sunamogu", fsc: 0.3, wt: "claw", pow: 13, hp: 260, st: { str: 36, vit: 24, dex: 12, agi: 9, int: 6, wil: 14, lov: 0, cha: 8 }, res: { 打: 20, 斬: 10, 冷: -40, 雷: -30 }, every: { n: 3, sk: "sunakaki" }, gold: 24, heart: "sunamogu" },
+  junreigani:{ mat: "kanihasami", nm: "巡礼ガニ", img: "monster_025", wt: "claw", pow: 14, hp: 220, st: { str: 36, vit: 30, dex: 18, agi: 14, int: 6, wil: 16, lov: 0, cha: 10 }, res: { 斬: 30, 突: 20, 雷: -40 }, every: { n: 3, sk: "hasami" }, gold: 28, heart: "junreigani" },
+  shirayuri:{ mat: "yurihana", nm: "白百合の精", img: "monster_147", wt: "fang", pow: 11, hp: 170, mag: 12, st: { str: 18, vit: 16, dex: 20, agi: 26, int: 32, wil: 28, lov: 0, cha: 16 }, res: { 熱: -40, 陽: 40, 陰: -30 }, every: { n: 2, sk: "kahun" }, gold: 26, heart: "shirayuri" },
+  kanetsuki:{ mat: "hagehane", nm: "鐘つきコウモリ", img: "monster_015", wt: "fang", pow: 13, hp: 200, st: { str: 30, vit: 18, dex: 24, agi: 34, int: 10, wil: 14, lov: 0, cha: 10 }, res: { 突: -20, 陽: -20 }, every: { n: 3, sk: "warekane" }, gold: 28, heart: "kanetsuki" },
+  irogarasu:{ mat: "garasu", nm: "色硝子蝶", img: "monster_148", wt: "fang", pow: 11, hp: 180, mag: 12, st: { str: 18, vit: 16, dex: 24, agi: 30, int: 32, wil: 24, lov: 0, cha: 14 }, res: { 打: -40, 斬: 20, 陽: 30 }, every: { n: 2, sk: "garasuko" }, gold: 30, heart: "irogarasu" },
+  inoriseki:{ mat: "sekihen", nm: "祈り石像", img: "monster_058", wt: "fist", pow: 14, hp: 220, st: { str: 36, vit: 34, dex: 14, agi: 10, int: 18, wil: 34, lov: 0, cha: 14 }, res: { 斬: 30, 突: 30, 打: -20, 陽: 30, 陰: -30 }, every: { n: 3, sk: "ishikobushi" }, gold: 34, heart: "inoriseki" },
+  rouko:    { mat: "rou", nm: "蝋涙コロモチ", img: "m_rouko", wt: "fang", pow: 11, hp: 160, mag: 10, st: { str: 22, vit: 20, dex: 16, agi: 20, int: 24, wil: 20, lov: 0, cha: 12 }, res: { 熱: -40, 冷: 30 }, every: { n: 2, sk: "rodare" }, gold: 22, heart: "rouko" },
+  // 沈黙の守護像：口のない天使像。術を封じる（術に頼らず、武器と道具で押し切る戦い）
+  shugozo:  { mat: "sekihen", nm: "沈黙の守護像", img: "monster_065", wt: "fist", pow: 24, hp: 640, boss: 1, mag: 10, st: { str: 62, vit: 30, dex: 20, agi: 16, int: 26, wil: 40, lov: 0, cha: 20 },
+              res: { 熱: 30, 冷: 30, 雷: 30, 陽: 50, 陰: 30, 打: -20 }, plan: { 1: "chinmoku", 5: "chinmoku", 9: "chinmoku" }, every: { n: 2, sk: "ishitsubasa" }, rageFrom: 10, rage: "ishitsubasa", stunRes: 1, gold: 240 },
+  // 黒外套の精鋭（鉄の仮面の男）と兵（人間。心は落とさない）
+  seiei:    { nm: "黒外套の精鋭", img: "monster_077", human: 1, wt: "sword", pow: 14, hp: 420, boss: 1, mag: 12, st: { str: 34, vit: 24, dex: 26, agi: 26, int: 28, wil: 24, lov: 0, cha: 22 },
+              res: { 陰: 30, 陽: -20 }, plan: { 2: "jufu", 4: "gale", 5: "jufu" }, every: { n: 3, sk: "jufu" }, gold: 0 },
+  seiei_t:  { nm: "黒外套の盾兵", img: "monster_076", human: 1, wt: "spear", pow: 13, hp: 240, st: { str: 32, vit: 32, dex: 18, agi: 14, int: 8, wil: 20, lov: 0, cha: 14 }, res: { 斬: 30, 突: 20, 雷: -30 }, every: { n: 3, sk: "gale" }, gold: 0 },
+  seiei_k:  { nm: "黒外套の旗手", img: "monster_078", human: 1, wt: "sword", pow: 13, hp: 210, st: { str: 32, vit: 22, dex: 24, agi: 24, int: 8, wil: 18, lov: 0, cha: 16 }, res: { 雷: -30 }, every: { n: 3, sk: "gale" }, gold: 0 },
   gaikotsu: { mat: "hone", nm: "海賊ガイコツ", img: "m_gaikotsu", wt: "sword", pow: 14, hp: 190, st: { str: 36, vit: 22, dex: 24, agi: 22, int: 8, wil: 18, lov: 0, cha: 12 }, res: { 突: 30, 打: -30, 陽: -40, 陰: 30 }, every: { n: 3, sk: "honenagi" }, gold: 30, heart: "gaikotsu" },
   fujitsubo:{ mat: "kaigara", nm: "フジツボ岩男", img: "m_fujitsubo", fsc: 0.38, wt: "fist", pow: 15, hp: 270, st: { str: 38, vit: 34, dex: 12, agi: 8, int: 6, wil: 22, lov: 0, cha: 10 }, res: { 斬: 30, 突: 30, 打: -20, 雷: -40 }, every: { n: 3, sk: "iwaotoshi" }, gold: 34, heart: "fujitsubo" },
   yadokahou:{ mat: "kaigara", nm: "ヤドカリ砲", img: "monster_146", wt: "claw", pow: 14, hp: 190, st: { str: 30, vit: 30, dex: 30, agi: 10, int: 8, wil: 18, lov: 0, cha: 10 }, res: { 斬: 30, 突: 20, 雷: -40 }, every: { n: 3, sk: "taihou" }, gold: 32, heart: "yadokahou" },
@@ -681,6 +722,7 @@ function damage(st, a, d, s) {
   if (hasP(a, "w_bp") && rnd(st) < 0.15) bpAdd(st, a, 1, "鋭気");
   if (d.hp <= 0) { fall(st, d); return v; }
   if (s.stun && !d.stunRes && rnd(st) * 100 < s.stun + (a.st.cha - d.st.cha)) { d.stun = 1; log(st, { t: "status", d: d.id, nm: "スタン" }); }
+  if (s.seal && d.side === 0 && rnd(st) * 100 < s.seal) { d.seal = 2; log(st, { t: "status", d: d.id, nm: "沈黙" }); } // 沈黙：2ターン、術が使えない
   if (s.poison && rnd(st) * 100 < s.poison + (a.st.cha - d.st.cha)) { d.poison = 3; log(st, { t: "status", d: d.id, nm: "毒" }); }
   if (s.dir === "直接" && hasP(d, "counter") && !a.down && rnd(st) < 0.25) { log(st, { t: "passive", u: d.id, nm: "反撃" }); damage(st, d, a, SKILLS.attack); }
   return v;
@@ -732,7 +774,7 @@ function act(st, u) {
     }
   }
   if (u.side === 1) s = foeChoose(st, u);
-  else { s = SKILLS[c] || SKILLS.attack; if (cost(u, s) > u.bp) s = SKILLS.attack; }
+  else { s = SKILLS[c] || SKILLS.attack; if (cost(u, s) > u.bp) s = SKILLS.attack; if (u.seal > 0 && s.magic) { log(st, { t: "passive", u: u.id, nm: "沈黙", v: "術が出ない" }); s = SKILLS.attack; } }
   if (u.side === 0) { u.bp -= cost(u, s); if (s !== SKILLS.attack) (u.used = u.used || {})[keyOf(s)] = 1; }
   st.actions++;
   log(st, { t: "act", u: u.id, skill: keyOf(s), nm: s.nm, sk: s !== SKILLS.attack, magic: !!s.magic, kind: s.kind });
@@ -752,7 +794,8 @@ function act(st, u) {
     for (let k = 0; k < s.hits; k++) { const l = alive(opps(st, u)); if (!l.length) break; damage(st, u, l[Math.floor(rnd(st) * l.length)], s); }
   } else {
     const tg = targets(st, u, s);
-    for (const d of tg) for (let k = 0; k < (s.hits || 1) && !d.down && !u.down; k++) damage(st, u, d, s);
+    if (s.noDmg) { for (const d of tg) if (s.seal && d.side === 0 && rnd(st) * 100 < s.seal) { d.seal = 2; log(st, { t: "status", d: d.id, nm: "沈黙" }); } } // 傷を負わせず、沈黙だけをかける技
+    else for (const d of tg) for (let k = 0; k < (s.hits || 1) && !d.down && !u.down; k++) damage(st, u, d, s);
     if (u.side === 1 && s.tg === "all") for (const d of st.party.filter(p => p.down && !tg.includes(p))) hitDown(st, d); // 全体攻撃は倒れた仲間も巻き込む
   }
   if (u.side === 0 && s !== SKILLS.attack && hasP(u, "afterglow") && rnd(st) < 0.35) bpAdd(st, u, 2, "余熱");
@@ -773,6 +816,7 @@ function endTurn(st) {
   for (const u of alive(all(st))) {
     if (u.poison > 0) { const v = Math.max(1, Math.round(u.max * 0.06)); u.hp = Math.max(0, u.hp - v); u.poison--; log(st, { t: "dot", d: u.id, v, nm: "毒" }); if (u.hp <= 0) fall(st, u); }
     if (u.cover > 0) u.cover--;
+    if (u.seal > 0) u.seal--;
   }
   checkEnd(st);
   if (!st.over && st.wave.until && st.turn >= st.wave.until) st.over = st.wave.untilOver || "lose"; // 物語で決まっている終わり方
