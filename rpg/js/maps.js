@@ -375,7 +375,7 @@ function harune() {
       // 町の人（段階1から）。ダッカとギドは場面4の後は問屋場の前に
       { id: "dakkaO", x: 12, y: 10, mon: "monster_010", face: 1, nm: "ダッカ", talk: "dakka", when: g => S(g) >= 19 && !g.flags.cut },
       { id: "gidoO", x: 16, y: 10, img: "person_030", dir: 1, nm: "ギド", talk: "gido", when: g => S(g) >= 19 && !g.flags.cut },
-      { id: "shiroH", x: 16, y: 3, mon: "m_shiro", face: -1, sc: 0.4, nm: "白い犬", talk: "shiro", town: "harune", when: g => S(g) >= 17 && !g.flags.cut && !((g.flags.shiro || {}).harune) },
+      { id: "shiroH", x: 16, y: 3, img: "person_131", dir: 1, nm: "白い犬", talk: "shiro", town: "harune", when: g => S(g) >= 17 && !g.flags.cut && !((g.flags.shiro || {}).harune) },
       { id: "shukuko", x: 14, y: 3, img: "person_022", dir: 0, nm: "宿場の子", talk: "tt", tp: "harune", when: g => S(g) >= 17 && !g.flags.cut },
       { id: "poruka", x: 6, y: 23, img: "person_029", dir: 0, nm: "ポルカ", talk: "poruka", when: g => !(g.roster || []).includes(8) },
     ],
@@ -663,7 +663,7 @@ function lux() {
       { id: "mofuku", x: 7, y: 17, img: "person_076", dir: 1, nm: "喪服の婦人", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       { id: "eihei", x: 12, y: 5, img: "person_080", dir: 0, nm: "城門の衛兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       { id: "oodori", x: 14, y: 16, img: "person_073", dir: 1, nm: "大通りの子", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
-      { id: "shiroL", x: 14, y: 14, mon: "m_shiro", face: -1, sc: 0.4, nm: "白い犬", talk: "shiro", town: "lux", when: g => S(g) >= 31 && !g.flags.cut && !((g.flags.shiro || {}).lux) },
+      { id: "shiroL", x: 14, y: 14, img: "person_131", dir: 1, nm: "白い犬", talk: "shiro", town: "lux", when: g => S(g) >= 31 && !g.flags.cut && !((g.flags.shiro || {}).lux) },
       { id: "kkado", x: 12, y: 14, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
     ],
     foes: [], chests: [],
