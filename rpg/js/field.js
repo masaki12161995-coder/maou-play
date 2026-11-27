@@ -267,6 +267,7 @@ async function runBattle(wave) {
     const g = G();
     // 食べ物は戦いの中で使う。使ったぶんは、勝っても負けても減る。hurt＝傷を負ったままの主人公（HPの割合）
     wave.items = Object.fromEntries(BT.FOODS.filter(k => g.tools[k] > 0).map(k => [k, g.tools[k]]));
+    if (g.flags.ally && !wave.guests && !wave.solo) wave.guests = [g.flags.ally]; // 物語で一緒に旅している客分（アスターなど）も戦う
     wave.hp0 = g.flags.hurt ? { 0: g.flags.hurt } : null;
     st = await new Promise(res => BV.start(wave, g.party, battleLo(), res));
     for (const k of BT.FOODS) if (wave.items[k]) g.tools[k] = st.items[k] || 0;
@@ -458,6 +459,7 @@ function draw(now) {
   else if (!M.noLeader) ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) }); // noLeader＝主人公がその場に居ない場面（外で待っている など）
   for (const f of foes) if (f.alive) {
     const k = f.from ? Math.min(1, (now - f.t0) / (STEP * 1.8)) : 1, x = f.from ? f.from.x + (f.x - f.from.x) * k : f.x, y = f.from ? f.from.y + (f.y - f.from.y) * k : f.y;
+    if (BT.FOES[f.def.k].person) { ents.push({ y, f: () => person(BT.FOES[f.def.k].img, x, y, f.face < 0 ? 1 : 2, !!f.from, now) }); continue; } // 人間の敵（盗賊など）は、人の歩く絵で
     ents.push({ y, f: () => {
       const img = IM[BT.FOES[f.def.k].img], s = BT.FOES[f.def.k].fsc || (f.def.boss ? 0.42 : 0.5), w = img.naturalWidth * s, h = img.naturalHeight * s;
       const bob = Math.round(Math.sin(now / 260 + f.hx) * 1.5 * 2) / 2, cx = x * TD + TD / 2, by = y * TD + TD - 2;

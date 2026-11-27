@@ -8,7 +8,7 @@ function grid(w, h, ch) { return Array.from({ length: h }, () => Array(w).fill(c
 function fill(g, ch, x, y, w, h) { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (g[j] && g[j][i] !== undefined) g[j][i] = ch; }
 const S = g => g.flags.s || 0, cut = (g, k) => g.flags.cut === k;
 // 町の会話の段階（骨組み0-4）。0＝序章の朝、0.5＝黒外套が来た後、1＝第1章、2＝第2章（第1章の場面10の後から）
-const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : 2; };
+const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : s < 60 ? 2 : 3; }; // 段階3：第3章の不戦の約定（聖剣の競り）の後から
 root.townStage = townStage;
 
 // ---------- 渡し小屋の中 ----------
@@ -378,7 +378,7 @@ function harune() {
       { id: "akindo", x: 5, y: 13, img: "person_075", dir: 2, nm: "商人", talk: "akindo", when: g => S(g) < 28 },   // 足止めの客（橋が直ると発つ）
       { id: "hei", x: 8, y: 13, mon: "monster_010", face: 1, nm: "兵士", talk: "heishi", when: g => S(g) < 28 },
       // 町の人（段階1から）。ダッカとギドは場面4の後は問屋場の前に
-      { id: "dakkaO", x: 12, y: 10, mon: "monster_010", face: 1, nm: "ダッカ", talk: "dakka", when: g => S(g) >= 19 && !g.flags.cut },
+      { id: "dakkaO", x: 12, y: 10, mon: "monster_010", face: 1, nm: "ダッカ", talk: "dakka", when: g => S(g) >= 19 && S(g) < 60 && !g.flags.cut }, // 段階3からは居ない（段階8でまた来る）
       { id: "gidoO", x: 16, y: 10, img: "person_030", dir: 1, nm: "ギド", talk: "gido", when: g => S(g) >= 19 && !g.flags.cut },
       { id: "shiroH", x: 16, y: 3, img: "person_131", dir: 1, nm: "白い犬", talk: "shiro", town: "harune", when: g => S(g) >= 17 && !g.flags.cut && !((g.flags.shiro || {}).harune) },
       { id: "shukuko", x: 14, y: 3, img: "person_022", dir: 0, nm: "宿場の子", talk: "tt", tp: "harune", when: g => S(g) >= 17 && !g.flags.cut },
@@ -997,6 +997,9 @@ function zahara() {
   g[15][0] = "c"; g[16][0] = "c";                                         // 西の門
   fill(g, "c", 1, 15, W - 2, 2); fill(g, "c", 13, 2, 2, 26);              // 大通り（東西・南北）
   fill(g, "c", 4, 8, 9, 1); fill(g, "c", 15, 8, 9, 1); fill(g, "c", 4, 23, 9, 1); fill(g, "c", 15, 23, 9, 1);
+  const zs = window.GS && GS.G ? (GS.G.flags.s || 0) : 0;
+  if (zs >= 53) { g[H - 1][13] = "c"; g[H - 1][14] = "c"; g[H - 2][13] = "c"; g[H - 2][14] = "c"; }   // 南の門（涸れ谷へ）
+  if (zs >= 62) { g[15][W - 1] = "c"; g[16][W - 1] = "c"; }                                         // 東の門（港町セイレナへ）
   return {
     id: "zahara", nm: "金砂の都ザハラ", g, tier: 0, bg: null, music: "town", pad: "Z", noFollow: window.GS && GS.G && GS.G.flags.cut === "c3s4" ? 1 : 0,
     objs: [
@@ -1006,24 +1009,33 @@ function zahara() {
       { t: "house", x: 2, y: 18, w: 7, h: 4, roof: "sand", door: 3, sign: "闘技場" },             // 闘技場（扉 5,22）
       { t: "house", x: 2, y: 9, w: 5, h: 3, roof: "brown", door: 2, sign: "宿" },                  // 宿（扉 4,12）
       { t: "house", x: 18, y: 9, w: 6, h: 3, roof: "blue", door: 2 },                               // 競売館（まだ閉まっている）
-      { t: "sign", x: 17, y: 12, text: ["競売館　次の競りは未定"] },
+      { t: "sign", x: 17, y: 12, text: ["競売館　次の競りは未定"], when: g => S(g) < 58 }, { t: "sign", x: 17, y: 12, text: ["競売館　本日、特別の競り"], when: g => S(g) >= 58 },
       { t: "fountain", x: 13, y: 12 }, { t: "fountain", x: 14, y: 12 },
       { t: "stall", x: 4, y: 13, w: 2 }, { t: "stall", x: 8, y: 13, w: 2 }, { t: "stall", x: 18, y: 13, w: 2 }, { t: "stall", x: 22, y: 13, w: 2 },
       { t: "palm", x: 2, y: 2, h: 2 }, { t: "palm", x: 25, y: 2, h: 2 }, { t: "palm", x: 11, y: 25, h: 2 }, { t: "palm", x: 16, y: 25, h: 2 },
       { t: "gatePost", x: 0, y: 13, w: 1, h: 2 }, { t: "gatePost", x: 0, y: 17, w: 1, h: 2 },
+      { t: "gatePost", x: 12, y: 28, w: 1, h: 1, when: g => S(g) >= 53 }, { t: "gatePost", x: 15, y: 28, w: 1, h: 1, when: g => S(g) >= 53 },
+      { t: "gatePost", x: 27, y: 13, w: 1, h: 2, when: g => S(g) >= 62 }, { t: "gatePost", x: 27, y: 17, w: 1, h: 2, when: g => S(g) >= 62 },
     ],
-    exits: [{ x: 0, y: 15, to: "kinsa", tx: 24, ty: 9, dir: 1 }, { x: 0, y: 16, to: "kinsa", tx: 24, ty: 9, dir: 1 }],
+    exits: [{ x: 0, y: 15, to: "kinsa", tx: 24, ty: 9, dir: 1 }, { x: 0, y: 16, to: "kinsa", tx: 24, ty: 9, dir: 1 },
+      ...(window.GS && GS.G && (GS.G.flags.s || 0) >= 53 ? [{ x: 13, y: H - 1, to: "kareta", tx: 11, ty: 2, dir: 0 }, { x: 14, y: H - 1, to: "kareta", tx: 12, ty: 2, dir: 0 }] : [])],
     npcs: [
       { id: "shokanban", x: 14, y: 7, img: "person_139", dir: 0, nm: "商館の番人", talk: "tt", tp: "zahara" },
       { id: "tobakuban", x: 21, y: 22, img: "person_140", dir: 0, nm: "賭場の番人", talk: "tt", tp: "zahara" },
       { id: "seriN", x: 19, y: 12, img: "person_014", dir: 0, nm: "競り人", talk: "tt", tp: "zahara" },
       { id: "mizuuri", x: 12, y: 13, img: "person_070w", dir: 0, nm: "水売りの娘", talk: "tt", tp: "zahara" },
       { id: "ryogae", x: 23, y: 14, img: "person_078z", dir: 0, nm: "両替商", talk: "tt", tp: "zahara" },
-      { id: "totoZ", x: 9, y: 14, img: "person_100", dir: 0, nm: "トト", talk: "totoL", card: () => 1 },
+      { id: "totoZ", x: 9, y: 14, img: "person_100", dir: 0, nm: "トト", talk: "totoL", card: () => 1, when: g => S(g) !== 60 },
       { id: "liseZ", x: 13, y: 8, img: "person_002", dir: 0, nm: "", when: g => cut(g, "c3s4") },
       { id: "jakoZ", x: 14, y: 8, img: "person_133", dir: 3, nm: "", when: g => cut(g, "c3s4") },
       { id: "bramZ", x: 12, y: 8, img: "person_005", dir: 2, nm: "", when: g => cut(g, "c3s4") },
       { id: "mukuZ", x: 12, y: 9, img: "person_058h", dir: 3, nm: "", when: g => cut(g, "c3s4") },
+      { id: "asterZ", x: 15, y: 8, img: "person_013", dir: 1, nm: "", when: g => cut(g, "c3s10b") || cut(g, "c3s12b") },
+      { id: "totoN", x: 6, y: 14, img: "person_100", dir: 1, nm: "トト", talk: "totoL", card: () => 1, when: g => S(g) === 60 },
+      { id: "taishoZ", x: 2, y: 14, img: "person_075d", dir: 2, nm: "隊商の男", when: g => cut(g, "c3s14") },
+      { id: "asterGate", x: 26, y: 15, img: "person_013", dir: 1, nm: "", when: g => cut(g, "c3s14b") },
+      { id: "heiGate1", x: 26, y: 17, mon: "monster_010", face: -1, nm: "王国兵", when: g => cut(g, "c3s14b") },
+      { id: "heiGate2", x: 25, y: 17, mon: "monster_010", face: -1, nm: "王国兵", when: g => cut(g, "c3s14b") },
     ],
     foes: [], chests: [],
     trigs: [
@@ -1033,6 +1045,7 @@ function zahara() {
       { x: 5, y: 22, run: "arenaDoor" },
       { x: 4, y: 12, run: "zInnDoor" },
       { x: 20, y: 12, run: "auctionDoor" },
+      { x: 26, y: 15, w: 1, h: 2, when: g => S(g) >= 62, run: "seirenaGate" },
     ],
   };
 }
@@ -1048,7 +1061,7 @@ function shokan() { // 商館の広間
     exits: [{ x: 6, y: 8, to: "zahara", tx: 13, ty: 7, dir: 0 }],
     npcs: [
       { id: "margo", x: 6, y: 2, img: "person_134", dir: 0, nm: "マルゴ", talk: "margo", card: g => S(g) >= 52 },
-      { id: "asterS", x: 6, y: 6, img: "person_013", dir: 3, nm: "", when: g => cut(g, "c3s3b") },
+      { id: "asterS", x: 7, y: 6, img: "person_013", dir: 1, nm: "", when: g => cut(g, "c3s3b") || cut(g, "c3s10") || cut(g, "c3s12") },
     ],
     foes: [], chests: [], trigs: [],
   };
@@ -1089,6 +1102,122 @@ function zinn() { // ザハラの宿
     objs: [{ t: "bed", x: 1, y: 1, w: 1, h: 2, talk: "zRest" }, { t: "bed", x: 3, y: 1, w: 1, h: 2, talk: "zRest" }, { t: "bed", x: 7, y: 1, w: 1, h: 2, talk: "zRest" }, { t: "counter", x: 6, y: 3 }],
     exits: [{ x: 4, y: 6, to: "zahara", tx: 3, ty: 12, dir: 0 }],
     npcs: [{ id: "zinnH", x: 6, y: 2, img: "person_078", dir: 0, nm: "宿の主人", talk: "zRest" }],
+    foes: [], chests: [], trigs: [],
+  };
+}
+
+// ---------- 涸れ谷（E3）：干上がった川床。北はザハラの南門、東の岩山に盗賊の岩窟 ----------
+function kareta() {
+  const W = 24, H = 20, g = grid(W, H, "Z"), wet = window.GS && GS.G && (GS.G.flags.s || 0) >= 56; // ザザーンを倒した後は、川床に水が戻る
+  fill(g, "U", 0, 0, W, 2); fill(g, "U", 0, 0, 2, H); fill(g, "U", W - 2, 0, 2, H); fill(g, "U", 0, H - 2, W, 2);
+  g[0][11] = "Z"; g[1][11] = "Z"; g[0][12] = "Z"; g[1][12] = "Z";                    // 北の口（ザハラへ）
+  fill(g, "U", 2, 2, 4, 3); fill(g, "U", 16, 2, 6, 4); fill(g, "U", 2, 14, 5, 4); fill(g, "U", 9, 15, 4, 3); fill(g, "U", 17, 13, 5, 5);
+  // 川床：北の口から南へ下り、東の岩山のふもとへ曲がる
+  fill(g, "=", 11, 2, 2, 7); fill(g, "=", 11, 8, 9, 2); fill(g, "=", 18, 8, 2, 3);
+  if (wet) { fill(g, "~", 7, 10, 1, 4); fill(g, "~", 7, 10, 9, 1); fill(g, "~", 15, 10, 1, 3); } // 水の筋（道はふさがない）
+  return {
+    id: "kareta", nm: "涸れ谷", g, tier: 4, bg: "gold", music: null, pad: "U",
+    objs: [
+      { t: "well", x: 9, y: 6, text: wet ? ["井戸の底に、水の光が見える。"] : ["のぞきこんでも、底は乾いた砂だけだ。"] },
+      { t: "mine", x: 18, y: 6, w: 2, h: 2 },                                                       // 盗賊の岩窟の入り口
+      { t: "cactus", x: 4, y: 11 }, { t: "cactus", x: 14, y: 4 }, { t: "cactus", x: 21, y: 11 }, { t: "cactus", x: 8, y: 16 },
+      { t: "sign", x: 13, y: 3, text: ["北　金砂の都ザハラ"] },
+    ],
+    exits: [{ x: 11, y: 0, to: "zahara", tx: 13, ty: 27, dir: 3 }, { x: 12, y: 0, to: "zahara", tx: 14, ty: 27, dir: 3 }, { x: 18, y: 8, to: "gankutsu", tx: 9, ty: 18, dir: 3 }],
+    npcs: [
+      { id: "rojin", x: 10, y: 6, img: "person_071v", dir: 2, nm: "谷の老人", talk: "rojin", when: g => S(g) >= 53 },
+      { id: "heiK1", x: 10, y: 3, mon: "monster_010", face: 1, nm: "王国兵", when: g => cut(g, "c3s6") },
+      { id: "heiK2", x: 13, y: 3, mon: "monster_010", face: -1, nm: "王国兵", when: g => cut(g, "c3s6") },
+    ],
+    foes: [
+      { id: "kr1", x: 13, y: 5, k: "hagewashi", g: ["hagewashi", "hagewashi"] },
+      { id: "kr2", x: 6, y: 12, k: "sunaningyo", g: ["sunaningyo", "sasori"] },
+      { id: "kr3", x: 15, y: 11, k: "sasori", g: ["sasori", "hagewashi"] },
+      { id: "kr4", x: 3, y: 7, k: "sunaningyo", g: ["sunaningyo"] },
+    ],
+    chests: [{ id: "c_kareta1", x: 2, y: 12, gold: 200 }, { id: "c_kareta2", x: 21, y: 6, tool: "hoshiniku" }],
+    trigs: [
+      { x: 11, y: 6, w: 2, h: 1, when: g => S(g) === 53, run: "c3s6b" },         // 枯れ井戸のそば（川床の道の上）
+      { x: 11, y: 2, w: 2, h: 3, when: g => S(g) === 56, run: "c3s9" },          // 帰り道（夕暮れ）
+    ],
+  };
+}
+// ---------- 盗賊の岩窟（E4）：ダンジョン。奥の広間にサーシャ ----------
+function gankutsu() {
+  const W = 19, H = 20, g = grid(W, H, "W");
+  fill(g, "_", 8, 14, 3, 6); g[19][9] = "_";                    // 入口
+  fill(g, "_", 2, 12, 15, 3);                                   // 横の洞
+  fill(g, "_", 2, 3, 3, 9); fill(g, "_", 14, 3, 3, 9);         // 左右の縦穴
+  fill(g, "_", 2, 2, 15, 3); fill(g, "_", 8, 5, 3, 3);         // 奥の通路
+  g[1][9] = "_"; g[0][9] = "_";
+  return {
+    id: "gankutsu", nm: "盗賊の岩窟", g, tier: 4, bg: "stone", dark: 1, inside: 1, afterWin: "gankutsuWin",
+    objs: [
+      { t: "chest2", x: 2, y: 8, text: ["王国の紋の焼き印がある木箱。中は空だ。"] }, { t: "basket", x: 16, y: 13 }, { t: "basket", x: 2, y: 14 },
+      { t: "candle", x: 7, y: 14 }, { t: "candle", x: 11, y: 14 }, { t: "candle", x: 8, y: 2 }, { t: "candle", x: 10, y: 2 },
+    ],
+    exits: [{ x: 9, y: 19, to: "kareta", tx: 18, ty: 9, dir: 0 }, { x: 9, y: 0, to: "gankutsu2", tx: 6, ty: 9, dir: 3 }],
+    npcs: [],
+    foes: [
+      { id: "gk1", x: 9, y: 13, k: "sunaningyo", g: ["sunaningyo", "miira"] },
+      { id: "gk2", x: 3, y: 10, k: "miira", g: ["miira", "miira", "tozoku"] },
+      { id: "gk3", x: 15, y: 6, k: "tozoku", g: ["tozoku", "tozoku"] },
+      { id: "gk4", x: 15, y: 11, k: "koganegai", g: ["koganegai"], once: "kogane1" },
+      { id: "gk5", x: 9, y: 6, k: "miira", g: ["miira", "tozoku"] },
+    ],
+    chests: [{ id: "c_gank1", x: 16, y: 3, item: "knightswd" }, { id: "c_gank2", x: 2, y: 3, tool: "onigiri" }],
+    trigs: [],
+  };
+}
+function gankutsu2() { // 岩窟の奥の広間
+  const W = 13, H = 11, g = grid(W, H, "W"); fill(g, "_", 1, 1, 11, 9); g[10][6] = "_";
+  const after = window.GS && GS.G && (GS.G.flags.s || 0) >= 56;
+  return {
+    id: "gankutsu2", nm: "岩窟の奥", g, tier: 4, bg: "stone", dark: 1, inside: 1,
+    objs: [
+      ...(after ? [2, 3] : [2, 3, 4, 8, 9]).map(x => ({ t: "chest2", x, y: 1, text: ["王国の紋の焼き印がある木箱。"] })),
+      ...[2, 3, 9, 10].map(x => ({ t: "basket", x, y: 8, text: ["水がめ。たっぷり入っている。"] })),
+      { t: "candle", x: 1, y: 4 }, { t: "candle", x: 11, y: 4 },
+    ],
+    exits: [{ x: 6, y: 10, to: "gankutsu", tx: 9, ty: 1, dir: 0 }],
+    npcs: [
+      { id: "sasha", x: 6, y: 2, img: "person_055", dir: 0, nm: "サーシャ", when: g => S(g) === 55 || cut(g, "c3s8") },
+      { id: "kobunA", x: 4, y: 3, img: "person_010k", dir: 0, nm: "子分", when: g => S(g) === 55 || cut(g, "c3s8") },
+      { id: "kobunB", x: 8, y: 3, img: "person_010k", dir: 0, nm: "子分", when: g => S(g) === 55 || cut(g, "c3s8") },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 1, y: 6, w: 11, h: 3, when: g => S(g) === 55, run: "c3s8" }],
+  };
+}
+// ---------- 競売館：丸天井の広間。壇上に競り人、二階の桟敷に覆面の人 ----------
+function kyobai() {
+  const W = 13, H = 11, g = grid(W, H, "w"); fill(g, "p", 1, 1, 11, 9); g[10][6] = "D";
+  return {
+    id: "kyobai", nm: "ザハラの競売館", g, tier: 0, bg: null, inside: 1, music: "town",
+    objs: [
+      ...[4, 5, 6, 7, 8].map(x => ({ t: "counter", x, y: 2 })), { t: "candleStand", x: 3, y: 1 }, { t: "candleStand", x: 9, y: 1 },
+      { t: "column", x: 1, y: 1 }, { t: "column", x: 11, y: 1 }, { t: "veiled", x: 6, y: 1, text: ["布をかけた台座。"] },
+      ...[3, 5, 7, 9].map(x => ({ t: "chair", x, y: 5 })), ...[3, 5, 7, 9].map(x => ({ t: "chair", x, y: 7 })),
+    ],
+    exits: [{ x: 6, y: 10, to: "zahara", tx: 20, ty: 13, dir: 0 }],
+    npcs: [
+      { id: "seriK", x: 6, y: 3, img: "person_014", dir: 0, nm: "競り人", talk: "kyobaiSeri" },
+      { id: "kyakuA", x: 3, y: 6, img: "person_075d", dir: 3, nm: "競売の客", when: g => cut(g, "c3s11") },
+      { id: "kyakuB", x: 7, y: 6, img: "person_070p", dir: 3, nm: "競売の客", when: g => cut(g, "c3s11") },
+      { id: "kyakuC", x: 9, y: 8, img: "person_078z", dir: 3, nm: "競売の客", when: g => cut(g, "c3s11") },
+      { id: "margoK", x: 5, y: 4, img: "person_134", dir: 3, nm: "マルゴ", when: g => cut(g, "c3s11") },
+      { id: "fukumen", x: 10, y: 2, img: "person_075m", dir: 0, nm: "覆面の買い手", when: g => cut(g, "c3s11") },
+    ],
+    foes: [], chests: [], trigs: [],
+  };
+}
+// ---------- ザハラの宿の屋上（夜。砂漠の星） ----------
+function zroof() {
+  const W = 9, H = 7, g = grid(W, H, "c"); fill(g, "U", 0, 0, W, 1);
+  return {
+    id: "zroof", nm: "宿の屋上", g, tier: 0, bg: null, inside: 1, music: null,
+    objs: [{ t: "basket", x: 1, y: 1 }, { t: "woodpile", x: 7, y: 1 }],
+    exits: [], npcs: [{ id: "liseR", x: 4, y: 3, img: "person_002", dir: 0, nm: "" }],
     foes: [], chests: [], trigs: [],
   };
 }
@@ -1134,5 +1263,5 @@ function minka() {
 }
 
 root.MINKA_FOLK = MINKA_FOLK;
-root.MAPS = { minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+root.MAPS = { kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

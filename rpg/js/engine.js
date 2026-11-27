@@ -129,6 +129,14 @@ const SKILLS = {
   windsting: { nm: "風車針", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 50, dist: "遠", dir: "間接", kind: "攻撃" },
   mugikami:  { nm: "麦穂噛み", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 45, dist: "近", dir: "直接", kind: "攻撃" },
   sunakaki:  { nm: "砂かき", bp: 4, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  tsuibami:  { nm: "ついばみ", bp: 3, rank: "D", tg: "one", at: ["突"], hits: 2, dist: "近", dir: "直接", kind: "攻撃" },
+  sunakabe:  { nm: "砂かぶせ", bp: 4, rank: "D", tg: "row", at: ["打"], stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
+  noroizume: { nm: "呪いの爪", bp: 3, rank: "D", tg: "one", at: ["斬"], poison: 35, dist: "近", dir: "直接", kind: "攻撃" },
+  kamitsuki: { nm: "かみつき", bp: 4, rank: "C", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  sougetsu:  { nm: "双月斬り", bp: 5, rank: "C", tg: "one", at: ["斬"], hits: 2, dist: "近", dir: "直接", kind: "攻撃" },
+  sasoribari:{ nm: "蠍の針", bp: 6, rank: "C", tg: "one", at: ["突"], poison: 50, dist: "近", dir: "直接", kind: "攻撃" },
+  sunanami:  { nm: "砂の大波", bp: 8, rank: "B", tg: "all", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
+  nomikomi:  { nm: "呑みこみ", bp: 7, rank: "B", tg: "one", at: ["打"], stun: 40, dist: "近", dir: "直接", kind: "攻撃" },
   togeken:   { nm: "とげ拳", bp: 4, rank: "C", tg: "one", at: ["突", "打"], dist: "近", dir: "直接", kind: "攻撃" },
   hasami:    { nm: "大ばさみ", bp: 4, rank: "C", tg: "one", at: ["斬"], hits: 2, dist: "近", dir: "直接", kind: "攻撃" },
   // ジャコ（弓）：賽の目のように散らばる矢、泣き声で怯ませる矢、逃げ際の一矢
@@ -181,6 +189,7 @@ const PASSIVES = {
 // ---------- 装備（ランクB〜SSS。st＝能力値の上乗せ、res＝耐性） ----------
 const GEAR = {
   // 武器（威力powは武器の種類ごとに決まった値。拾った物には、まれに能力のおまけが付く）
+  alba:      { slot: "weapon", wt: "sword", nm: "聖剣アルバ", rank: "S", pow: 20, st: { str: 3, wil: 2 }, icon: "eq_sword_04", noShop: 1 }, // 勇者アスターの剣（客分だけが持つ。手に入らない）
   ironsword: { slot: "weapon", wt: "sword", nm: "鉄の剣", rank: "B", pow: 12, st: { str: 1 }, price: 120, icon: "eq_sword_02" },
   knightswd: { slot: "weapon", wt: "sword", nm: "騎士の剣", rank: "A", pow: 14, st: { str: 2, vit: 1 }, ps: "w_sword", price: 420, icon: "eq_sword_03" },
   oakstaff:  { slot: "weapon", wt: "staff", nm: "樫の杖", rank: "B", pow: 5, mp: { 熱: 12 }, st: { int: 2 }, ps: "w_fire", price: 110, icon: "eq_staff_02" },
@@ -245,6 +254,11 @@ const MATS = {
   tsume:    { nm: "白い大爪", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
   kokaku:   { nm: "蠍の甲殻", icon: "mat_008", fam: "皮・鱗・甲羅", rare: "緑" },
   sabotane: { nm: "サボテンの種", icon: "mat_024", fam: "植物", rare: "白" },
+  hagehane: { nm: "禿鷲の羽根", icon: "mat_015", fam: "羽", rare: "白" },
+  sunakaku: { nm: "砂の核", icon: "mat_037", fam: "石・結晶", rare: "緑" },
+  houtai:   { nm: "古い包帯", icon: "mat_028", fam: "布・紙", rare: "緑" },
+  koban:    { nm: "コガネガイの金貨", icon: "mat_057", fam: "金属", rare: "紫" },
+  zazankiba:{ nm: "大砂蟲の牙", icon: "mat_033", fam: "骨・牙・爪", rare: "青" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
 const TOOLS = {
@@ -286,6 +300,11 @@ const HEARTS = {
   rousoku:  { nm: "ロウソク霊の心", col: "白", mul: { str: 90, vit: 92, dex: 98, agi: 104, int: 114, wil: 108, lov: 100, cha: 100 }, sk: "bluefire", up: ["int", "wil"] },
   akamugi:  { nm: "アカムギ蛇の心", col: "白", mul: { str: 98, vit: 94, dex: 108, agi: 110, int: 98, wil: 96, lov: 100, cha: 100 }, sk: "mugikami", up: ["agi", "dex"] },
   sunamogu: { nm: "スナモグリの心", col: "緑", mul: { str: 112, vit: 112, dex: 90, agi: 86, int: 92, wil: 100, lov: 100, cha: 96 }, sk: "sunakaki", up: ["str", "vit"] },
+  hagewashi:{ nm: "ハゲワシ僧の心", col: "緑", mul: { str: 102, vit: 94, dex: 110, agi: 112, int: 96, wil: 100, lov: 96, cha: 100 }, sk: "tsuibami", up: ["agi", "dex"] },
+  sunaningyo:{ nm: "砂人形の心", col: "白", mul: { str: 104, vit: 114, dex: 92, agi: 86, int: 94, wil: 110, lov: 100, cha: 96 }, sk: "sunakabe", up: ["vit", "wil"] },
+  miira:    { nm: "ミイラ猫の心", col: "緑", mul: { str: 96, vit: 98, dex: 110, agi: 108, int: 106, wil: 98, lov: 94, cha: 100 }, sk: "noroizume", up: ["dex", "int"] },
+  koganegai:{ nm: "コガネガイの心", col: "青", mul: { str: 106, vit: 108, dex: 100, agi: 92, int: 100, wil: 104, lov: 100, cha: 112 }, sk: "kamitsuki", up: ["cha", "vit"] },
+  zazan:    { nm: "ザザーンの心", col: "金", mul: { str: 116, vit: 120, dex: 94, agi: 88, int: 100, wil: 108, lov: 102, cha: 104 }, sk: "sunanami", up: ["vit", "str"], ps: "standfast" },
   saboten:  { nm: "サボテン拳士の心", col: "緑", mul: { str: 108, vit: 108, dex: 106, agi: 94, int: 90, wil: 102, lov: 96, cha: 98 }, sk: "togeken", up: ["str", "vit"] },
   sasori:   { nm: "サソリ武者の心", col: "緑", mul: { str: 110, vit: 106, dex: 104, agi: 96, int: 90, wil: 96, lov: 96, cha: 100 }, sk: "hasami", up: ["str", "dex"] },
   sekkan:   { nm: "石棺ヤドカリの心", col: "白", mul: { str: 104, vit: 116, dex: 96, agi: 86, int: 94, wil: 104, lov: 100, cha: 100 }, sk: "lidpinch", up: ["vit", "wil"] },
@@ -396,6 +415,18 @@ const FOES = {
   rousoku:  { mat: "rou", nm: "ロウソク霊", img: "monster_007", wt: "fang", pow: 9, hp: 75, st: { str: 20, vit: 10, dex: 14, agi: 20, int: 26, wil: 18, lov: 0, cha: 12 }, mag: 11, res: { 斬: 30, 突: 30, 冷: -60, 熱: 60, 陽: -30 }, every: { n: 2, sk: "bluefire" }, gold: 14, heart: "rousoku" },
   akamugi:  { mat: "akauroko", nm: "アカムギ蛇", img: "m_akamugi", wt: "fang", pow: 11, hp: 120, st: { str: 31, vit: 13, dex: 20, agi: 24, int: 7, wil: 10, lov: 0, cha: 10 }, res: { 斬: -20, 冷: -40, 熱: 20 }, every: { n: 2, sk: "mugikami" }, gold: 15, heart: "akamugi" },
   sunamogu: { mat: "tsume", nm: "スナモグリ", img: "m_sunamogu", fsc: 0.3, wt: "claw", pow: 13, hp: 260, st: { str: 36, vit: 24, dex: 12, agi: 9, int: 6, wil: 14, lov: 0, cha: 8 }, res: { 打: 20, 斬: 10, 冷: -40, 雷: -30 }, every: { n: 3, sk: "sunakaki" }, gold: 24, heart: "sunamogu" },
+  hagewashi:{ mat: "hagehane", nm: "ハゲワシ僧", img: "monster_047", wt: "fang", pow: 13, hp: 200, st: { str: 33, vit: 18, dex: 26, agi: 30, int: 8, wil: 14, lov: 0, cha: 10 }, res: { 突: -20, 雷: -30, 打: 10 }, every: { n: 2, sk: "tsuibami" }, gold: 24, heart: "hagewashi" },
+  sunaningyo:{ mat: "sunakaku", nm: "砂人形", img: "m_sunaningyo", wt: "club", pow: 14, hp: 250, st: { str: 36, vit: 30, dex: 12, agi: 8, int: 6, wil: 20, lov: 0, cha: 8 }, res: { 斬: 30, 突: 30, 打: -30, 冷: -40 }, every: { n: 3, sk: "sunakabe" }, gold: 26, heart: "sunaningyo" },
+  miira:    { mat: "houtai", nm: "ミイラ猫", img: "monster_143", wt: "claw", pow: 13, hp: 210, st: { str: 32, vit: 20, dex: 26, agi: 28, int: 18, wil: 18, lov: 0, cha: 12 }, res: { 熱: -40, 陽: -40, 陰: 30 }, every: { n: 2, sk: "noroizume" }, gold: 26, heart: "miira" },
+  koganegai:{ mat: "koban", nm: "コガネガイ", img: "m_koganegai", wt: "claw", pow: 14, hp: 320, st: { str: 36, vit: 30, dex: 14, agi: 10, int: 8, wil: 24, lov: 0, cha: 20 }, res: { 斬: 30, 突: 20, 雷: -40 }, every: { n: 2, sk: "kamitsuki" }, gold: 90, heart: "koganegai" },
+  tozoku:   { nm: "岩窟の盗賊", img: "person_010", person: 1, human: 1, wt: "sword", pow: 13, hp: 260, st: { str: 34, vit: 20, dex: 22, agi: 22, int: 8, wil: 14, lov: 0, cha: 12 }, res: {}, every: { n: 3, sk: "gale" }, gold: 30 },
+  kobun:    { nm: "砂蠍の子分", img: "person_010k", person: 1, human: 1, wt: "sword", pow: 12, hp: 240, st: { str: 34, vit: 22, dex: 22, agi: 22, int: 8, wil: 14, lov: 0, cha: 12 }, res: {}, every: { n: 3, sk: "gale" }, gold: 0 },
+  // 砂蠍のサーシャ（人間。心は落とさない）：素早い双短剣。体力が減ると蠍の針（毒）
+  sasha:    { nm: "サーシャ", img: "person_055", person: 1, human: 1, wt: "rapier", pow: 13, hp: 620, boss: 1, st: { str: 30, vit: 22, dex: 38, agi: 36, int: 12, wil: 20, lov: 0, cha: 24 },
+              res: {}, plan: { 2: "sougetsu", 4: "sasoribari", 6: "sougetsu" }, every: { n: 2, sk: "sougetsu" }, rageFrom: 7, rage: "sasoribari", gold: 0 },
+  // 大砂蟲ザザーン：谷の水をせき止めていた巨大なみみず（とどめは一行が刺す）
+  zazan:    { mat: "zazankiba", nm: "大砂蟲ザザーン", img: "monster_024", wt: "fang", pow: 12, hp: 800, boss: 1, st: { str: 36, vit: 28, dex: 14, agi: 12, int: 20, wil: 24, lov: 0, cha: 22 },
+              res: { 打: 20, 冷: -40, 雷: 20, 熱: 10 }, plan: { 2: "nomikomi", 4: "sunanami", 7: "nomikomi", 8: "sunanami" }, every: { n: 3, sk: "nomikomi" }, rageFrom: 11, rage: "sunanami", stunRes: 1, gold: 200 },
   saboten:  { mat: "sabotane", nm: "サボテン拳士", img: "monster_142", wt: "fist", pow: 13, hp: 210, st: { str: 34, vit: 24, dex: 18, agi: 12, int: 6, wil: 14, lov: 0, cha: 10 }, res: { 突: 20, 冷: 20, 熱: -40, 斬: -20 }, every: { n: 2, sk: "togeken" }, gold: 22, heart: "saboten" },
   sasori:   { mat: "kokaku", nm: "サソリ武者", img: "monster_046", wt: "axe", pow: 13, hp: 190, st: { str: 35, vit: 22, dex: 20, agi: 16, int: 6, wil: 12, lov: 0, cha: 10 }, res: { 斬: 30, 突: 10, 打: -20, 冷: -30 }, every: { n: 2, sk: "hasami" }, gold: 22, heart: "sasori" },
   sekkan:   { mat: "sekkan", nm: "石棺ヤドカリ", img: "monster_138", wt: "claw", pow: 11, hp: 175, st: { str: 31, vit: 26, dex: 12, agi: 8, int: 6, wil: 16, lov: 0, cha: 9 }, res: { 斬: 40, 突: 30, 打: -30, 雷: -40 }, every: { n: 3, sk: "lidpinch" }, gold: 16, heart: "sekkan" },
@@ -433,8 +464,13 @@ const WAVES = [];
 // ---------- 小道具 ----------
 function rnd(st) { st.seed = (st.seed * 1103515245 + 12345) & 0x7fffffff; return st.seed / 0x7fffffff; }
 function alive(list) { return list.filter(u => !u.down); }
-function all(st) { return [...st.party, ...st.foes]; }
-function opps(st, u) { return u.side === 0 ? st.foes : st.party; }
+function all(st) { return [...st.party, ...(st.guests || []), ...st.foes]; }
+function opps(st, u) { return u.side === 0 ? st.foes : [...st.party, ...(st.guests || [])]; }
+// 客分（物語で一時だけ一緒に戦う人。編成の5人には数えず、自分で動く）
+const GUESTS = {
+  aster: { id: "aster", nm: "アスター", img: "person_013", wt: "sword", hp: 470, lp: 9, st: { str: 40, vit: 31, dex: 27, agi: 25, int: 14, wil: 27, lov: 20, cha: 28 },
+           res: {}, sk: ["gale", "cleave", "holycut"], ps: ["swordway"], gear: ["alba"], holy: 1 }, // holy：この人が倒した魔物は心を落とさない（聖剣が祓う）
+};
 function hasP(u, id) { return (u.ps || []).includes(id); }
 function log(st, e) { st.log.push(e); }
 function keyOf(s) { return Object.keys(SKILLS).find(k => SKILLS[k] === s); }
@@ -514,6 +550,13 @@ function newBattle(wave, seed, lo, roster) {
     if (f.wait) { u.down = true; u.hp = 0; u.wait = true; } // まだ出てきていない（呼ばれると出てくる）
     return u;
   });
+  // 客分：空いているマスに立つ（真ん中の列から）
+  st.guests = (W.guests || []).map((k, i) => {
+    const def = GUESTS[k], used = new Set(st.party.map(p => p.c + "," + p.r));
+    const [c, r] = [[1, 2], [1, 1], [1, 3], [2, 2], [0, 2], [2, 1], [2, 3], [1, 0], [1, 4]].find(([c, r]) => !used.has(c + "," + r)) || [2, 2];
+    const h = { ...def, hi: -1, lpNow: def.lp, gearList: def.gear.map(id => ({ id, b: null })), heart: null, sr: {}, aw: {} }, s = heroStats(h, { b: {} });
+    return base({ ...h, ...s, id: "g_" + k, side: 0, guest: 1, slot: 5 + i, c, r, hate: 1, max: def.hp, hp: def.hp, lp: def.lp, bp: BP0 });
+  });
   for (const u of st.party) {
     if (hasP(u, "spirit")) bpAdd(st, u, 2, "闘志");
     if (hasP(u, "focus")) bpAdd(st, u, 3, "魔力集中");
@@ -527,7 +570,7 @@ function bpAdd(st, u, v, why) { const b = u.bp; u.bp = Math.min(BP_MAX, u.bp + v
 
 function beginTurn(st) {
   st.turn++;
-  for (const u of alive(st.party)) {
+  for (const u of alive([...st.party, ...(st.guests || [])])) {
     if (st.turn > 1) u.bp = Math.min(BP_MAX, u.bp + BP_TURN);
     if (hasP(u, "standfast") && u.stack < 3) { u.stack++; u.st.vit = Math.round(u.st.vit * 1.05); }
   }
@@ -540,6 +583,7 @@ function beginTurn(st) {
 // コマンドを選び終えたら動き出す。auto＝"normal"/"full"なら自動で選ぶ。support＝補助・防御・回復の技もオートで使うか
 function commit(st, auto, support) {
   for (const u of alive(st.party)) if (auto || !st.cmd[u.id]) st.cmd[u.id] = (auto === "full" && u.hp < u.max * 0.4 && alive(st.party).length === 1 && foodLeft(st, u)) || keyOf(autoChoose(st, u, auto || "normal", support));
+  for (const g of alive(st.guests || [])) st.cmd[g.id] = keyOf(autoChoose(st, g, "full", false)); // 客分は自分で決める
   st.lastCmd = { ...st.cmd };
   st.queue = alive(all(st)).map(u => ({ u, s: u.st.agi * (0.9 + rnd(st) * 0.2) })).sort((a, b) => b.s - a.s).map(x => x.u);
   st.phase = "run";
@@ -596,7 +640,9 @@ function damage(st, a, d, s) {
   if (d.cover > 0) v *= 0.5;
   v *= 0.95 + rnd(st) * 0.1;
   v = Math.max(1, Math.round(v));
+  if (a.guest && d.boss && d.hp - v <= 0) v = Math.max(0, d.hp - 1); // 客分はボスにとどめを刺さない（とどめは一行が）
   d.hp = Math.max(0, d.hp - v); a.dealt += v; d.taken += v;
+  if (d.hp <= 0 && a.holy) d.holy = 1; // 聖剣で倒された魔物は、心を残さない
   log(st, { t: "hit", a: a.id, d: d.id, v, weak: rm > 1.05, resist: rm < 0.95 });
   if (hasP(a, "momentum") && rnd(st) < 0.3) bpAdd(st, a, 1, "勢い");
   if (hasP(a, "w_bp") && rnd(st) < 0.15) bpAdd(st, a, 1, "鋭気");
@@ -771,7 +817,7 @@ function rewards(st, rng) {
   for (const f of st.foes) {
     if (f.wait || f.fled) continue; // 出てこなかった者・逃げた者のぶんは無い
     out.gold += Math.round((f.gold || 0) * Math.pow(1.3, tier - 1) * (0.8 + rng() * 0.4)); // お金は強さ1つごとに1.3倍
-    if (f.heart && !st.wave.noHeart && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(rollHeart(f.heart, rng, f.boss));
+    if (f.heart && !st.wave.noHeart && !f.holy && rng() < (f.boss ? 1 : 0.07)) out.hearts.push(rollHeart(f.heart, rng, f.boss));
     if (f.mat && rng() < (f.boss ? 1 : 0.4)) out.mats.push(f.mat);
     if (f.book && f.boss) out.tools.push(f.book);
   }

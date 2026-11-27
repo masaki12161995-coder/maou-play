@@ -83,7 +83,7 @@ function where(u) {
   if (u.side === 1) { const b = foeBox(u); return { x: b.x, y: b.top + b.h * 0.45 }; }
   const p = heroPos(u); return { x: p.x, y: p.y - 20 };
 }
-function byId(id) { return [...st.party, ...st.foes].find(u => u.id === id); }
+function byId(id) { return [...st.party, ...(st.guests || []), ...st.foes].find(u => u.id === id); }
 
 // ---------- 上下の飾り（DOM） ----------
 let els = {};
@@ -271,7 +271,7 @@ function draw(t) {
       ctx.restore();
       if (!u.down) { const bw = Math.min(30, Math.max(16, Math.floor(b.w * 0.7))); hpBar(b.x - Math.floor(bw / 2), b.y + 2, bw, u.hp / u.max); }
     }
-    for (const u of [...st.party].sort((a, b) => heroPos(a).y - heroPos(b).y)) { // 仲間（左向き）。奥から描く
+    for (const u of [...st.party, ...(st.guests || [])].sort((a, b) => heroPos(a).y - heroPos(b).y)) { // 仲間（左向き）。奥から描く
       const p = heroPos(u), img = IM[u.img], f = fx[u.id] || {}, ps = pose[u.id];
       let col = 1, row = 1, ox = 0;
       const sp = spin[u.id];
