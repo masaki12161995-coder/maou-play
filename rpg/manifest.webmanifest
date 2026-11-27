@@ -1,8 +1,9 @@
 {
+  "id": "./",
   "name": "千の心と空の玉座",
   "short_name": "千の心と空の玉座",
   "lang": "ja",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
