@@ -5,6 +5,8 @@ const { hud, W, H } = DM, d = DM.d, px = DM.px, div = DM.div;
 const IM = window.IMG;
 const A = (parent, el, x, y, w, h) => { px(el, x, y, w, h); el.style.position = "absolute"; parent.appendChild(el); return el; };
 const T = (parent, x, y, w, h, html, size, cls) => { const e = A(parent, div("t " + (cls || ""), html), x, y, w, h); e.style.fontSize = d(size); e.style.lineHeight = d(h); return e; };
+// 1行の文が枠に入りきらないときは、字を少しずつ小さくして全部見せる（「…」で切らない）。いちばん小さくて元の7割
+const fitT = e => { requestAnimationFrame(() => { let k = 1; const base = parseFloat(e.style.fontSize); e.style.whiteSpace = "nowrap"; while (e.scrollWidth > e.clientWidth + 1 && k > 0.7) { k -= 0.05; e.style.fontSize = base * k + "px"; } }); return e; };
 const SLOT_NM = { weapon: "武器", armor: "主防具", sub: "副防具", acc: "装飾品", heart: "心" }; // 本家と同じ呼び方
 const STAT_SHORT = { str: "腕力", vit: "体力", dex: "器用", agi: "素早", int: "知力", wil: "精神", lov: "愛", cha: "魅力" };
 
@@ -55,7 +57,7 @@ function choose(name, text, opts) {
 }
 
 // ---------- 戦いの結果（お金・手に入れた物・与えたダメージ・成長を、ひと目で） ----------
-function heartImg(k) { const f = Object.values(BT.FOES).find(f => f.heart === k); return f ? f.img : null; }
+function heartImg(k) { const f = Object.values(BT.FOES).find(f => f.heart === k) || BT.FOES[k] || Object.entries(BT.FOES).find(([id]) => id.startsWith(k))?.[1]; return f ? f.img : null; } // 心を落とす魔物の絵（出来事でもらう心は、同じ名前の魔物の絵）
 function heartIcon(k, size) { // 心の絵：その魔物の姿を丸い枠に入れる
   const box = div("hicon", ""); box.style.width = box.style.height = d(size);
   const im = IM[heartImg(k)]; if (im) { const e = document.createElement("img"); e.src = im.src; const sc = Math.min(size * 0.86 / im.naturalWidth, size * 0.86 / im.naturalHeight); e.style.width = d(im.naturalWidth * sc); e.style.height = d(im.naturalHeight * sc); box.appendChild(e); }
@@ -194,7 +196,7 @@ function skillRow(parent, k, y, tag, m, onTap) {
   return row;
 }
 // 技のくわしい説明（本家と同じ並び：種類／近・遠／直接・間接／範囲（属性））と、技ランク・覚醒
-function skillDetail(L, k, hi, m, isHeart, redraw) {
+function skillDetail(L, k, hi, m, isHeart, redraw, y0) {
   const s = BT.SKILLS[k], G = GS.G;
   const sr = (m.sr && m.sr[k]) || 1, aw = (m.aw && m.aw[k]) || 0, max = isHeart ? 0 : BT.awMax(s);
   const fx = [];
@@ -205,7 +207,7 @@ function skillDetail(L, k, hi, m, isHeart, redraw) {
   if (s.cover) fx.push(`${s.cover}ターンの間、狙われやすくなり、受けるダメージが半分になる`);
   // 効果の行の数で高さが決まる（強い技で効果が増えても、はみ出さない）。下の端は画面の下にそろえる
   const fy = 43, ry = fy + fx.length * 14 + 6, hgt = ry + (max > 0 ? 62 : 26) + 4;
-  const box = A(L, div("frame sdetail", ""), 12, Math.min(470, 644 - hgt), 277, hgt);
+  const box = A(L, div("frame sdetail", ""), 12, y0 != null ? Math.min(y0, 644 - hgt) : Math.min(470, 644 - hgt), 277, hgt);
   T(box, 10, 6, 180, 18, s.nm, 12.5, "name");
   const x = A(box, div("btn chip xbtn", "×"), 249, 4, 22, 22); x.style.fontSize = d(12); x.onclick = () => { skillSel = null; redraw(); };
   const line = [s.kind, s.dist, s.dir, { one: "敵単体", col: "敵縦一列", row: "敵横一列", all: "敵全体", rand: "敵ランダム", self: "自分", allies: "味方全体" }[s.tg]].filter(Boolean).join("／") + (s.at ? `（${s.at.join("＋")}）` : "");
@@ -294,15 +296,21 @@ function statView(L, h, m, redraw) {
   if (heart) skillRow(box, heart.sk, 2 + h.sk.length * SK_H, "心", m, tapSk);
   if (skillSel && ![...h.sk, heart && heart.sk].includes(skillSel)) skillSel = null;
   const py = Y + 16 + 4 + nsk * SK_H + 8;
+  if (skillSel) return skillDetail(L, skillSel, who, m, !!heart && heart.sk === skillSel, redraw, py); // 押した技の説明は、パッシブの欄と入れかえて出す（重ねない）
   T(L, 14, py, 100, 14, "パッシブ", 9, "label");
   const ps = [...h.ps.map(k => [k, ""]), ...Object.values(m.gear).filter(it => it && BT.GEAR[it.id].ps).map(it => [BT.GEAR[it.id].ps, "装備"])];
   const pb = A(L, div("frame rbox", ""), 12, py + 16, 277, 6 + ps.length * 21);
   ps.forEach(([k, tag], i) => {
     const P = BT.PASSIVES[k];
     T(pb, 8, 3 + i * 21, 70, 20, P.nm + (tag ? `<i class="tagw">${tag}</i>` : ""), 9.5, "name");
-    T(pb, 84, 3 + i * 21, 188, 20, P.ds, 8.5, "dim2");
+    fitT(T(pb, 84, 3 + i * 21, 188, 20, P.ds, 8.5, "dim2"));
   });
-  if (skillSel) skillDetail(L, skillSel, who, m, !!heart && heart.sk === skillSel, redraw);
+}
+// 心の倍率：100%でない能力だけを、上がれば青・下がれば赤で（例：腕110% 知92%）
+const ST1 = { str: "腕", vit: "体", dex: "器", agi: "素", int: "知", wil: "精", lov: "愛", cha: "魅" };
+function heartMul(k) {
+  const mul = BT.HEARTS[k].mul, out = BT.STATS.filter(s => mul[s] !== 100).map(s => `<span class="dim2">${ST1[s]}</span><span class="${mul[s] > 100 ? "pcup" : "pcdn"}">${mul[s]}%</span>`);
+  return out.join(" ") || '<span class="dim">能力は変わらない</span>';
 }
 // 付け替えた後の値（変わるものだけ）。上の能力の欄の今の値と見比べる
 function afterVals(hi, m, slot, item) {
@@ -330,8 +338,8 @@ function gearView(L, redraw, h, m) {
   if (!slotSel) return;
   const G = GS.G, sl = slotSel, list = [], fmt = afterVals;
   if (sl === "heart") {
-    if (m.heart) list.push({ key: "x", v: null, nm: "外す", diff: fmt(who, m, "heart", null), act: () => { G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; m.heart = null; } });
-    Object.keys(G.hearts).filter(k => G.hearts[k] > 0 && k !== m.heart).forEach(k => list.push({ key: k, v: k, heart: k, html: `<span class="heartnm">${BT.HEARTS[k].nm}</span><small> ×${G.hearts[k]}</small>`, diff: fmt(who, m, "heart", k), act: () => { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[k]--; m.heart = k; } }));
+    if (m.heart) list.push({ key: "x", v: null, nm: "外す", diff: '<span class="dim2">能力の倍率がなくなる</span>', act: () => { G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; m.heart = null; } });
+    Object.keys(G.hearts).filter(k => G.hearts[k] > 0 && k !== m.heart).forEach(k => list.push({ key: k, v: k, heart: k, html: `<span class="heartnm">${BT.HEARTS[k].nm}</span><small> ×${G.hearts[k]}</small>`, diff: heartMul(k), act: () => { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[k]--; m.heart = k; } }));
   } else {
     if (sl !== "weapon" && m.gear[sl]) list.push({ key: "x", v: null, nm: "外す", diff: fmt(who, m, sl, null), act: () => { G.bag.push(m.gear[sl]); m.gear[sl] = null; } });
     // 同じ物（名前も付いた力も同じ）は1行にまとめて「×数」
@@ -352,10 +360,11 @@ function gearView(L, redraw, h, m) {
     const r = A(box, div("cand2", ""), 2, 2 + i * 36, 273, 34);
     if (c.icon) A(r, DM.iconImg(c.icon, 22 * DM.K), 8, 5, undefined, undefined);
     if (c.heart) A(r, heartIcon(c.heart, 22), 8, 5, 22, 22);
-    T(r, 38, 1, c.ps ? 178 : 230, 17, c.nm ? `<b>${c.nm}</b>` : c.html, 10.5, "name");
-    if (c.ps) T(r, 214, 1, 56, 17, `<span class="pstag">${BT.PASSIVES[c.ps].nm}</span>`, 9, "right");
-    if (c.main) { T(r, 38, 17, 64, 15, c.main, 8.5, ""); T(r, 104, 17, 166, 15, c.diff, 8.5, ""); }
-    else T(r, 38, 17, 230, 15, c.diff, 8.5, "");
+    T(r, 38, 1, c.ps ? 178 : c.heart ? 140 : 230, 17, c.nm ? `<b>${c.nm}</b>` : c.html, 10.5, "name");
+    if (c.ps) T(r, 214, 1, 56, 17, `<span class="pstag">${BT.PASSIVES[c.ps].nm}</span>`, 9, "right");   // 付いているパッシブ
+    if (c.heart) fitT(T(r, 176, 1, 94, 17, `<span class="pstag">技 ${BT.SKILLS[BT.HEARTS[c.heart].sk].nm}</span>`, 9, "right")); // 心で使えるようになる技
+    if (c.main) { T(r, 38, 17, 64, 15, c.main, 8.5, ""); fitT(T(r, 104, 17, 166, 15, c.diff, 8.5, "")); }
+    else fitT(T(r, 38, 17, 230, 15, c.diff, 8.5, ""));
     r.onclick = () => { c.act(); SND.se(c.nm ? "unequip" : sl === "heart" ? "heart" : "equip"); slotSel = null; pgCand.n = 0; GS.save(); redraw(); };
   });
   if (pages > 1) {
@@ -411,7 +420,7 @@ function bag(L, redraw) {
       const def = r.m ? BT.MATS[r.m] : BT.TOOLS[r.t], have = r.m ? G.mats[r.m] : G.tools[r.t];
       A(row, DM.iconImg(def.icon, 24 * DM.K), 6, 5, undefined, undefined);
       T(row, 36, 2, 180, 17, `<span style="color:${RARE_COL[def.rare] || "#f3e4c8"}">${def.nm}</span>`, 10.5, "name");
-      T(row, 36, 18, 200, 15, r.m ? def.fam : def.ds, 8.5, "dim2");
+      fitT(T(row, 36, 18, 180, 15, r.m ? def.fam : def.ds, 8.5, "dim2"));
       T(row, 216, 2, 56, 32, `×${have}`, 12, "num2 right");
       return;
     }
@@ -419,12 +428,12 @@ function bag(L, redraw) {
       const g = BT.GEAR[r.it.id];
       A(row, DM.iconImg(g.icon, 24 * DM.K), 6, 5, undefined, undefined);
       T(row, 36, 2, 160, 17, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(r.it)}</span>${r.n > 1 ? `<small class="dim2"> ×${r.n}</small>` : ""}`, 10.5, "name");
-      T(row, 36, 18, 236, 15, itemSummary(r.it), 8.5, "dim2");
+      fitT(T(row, 36, 18, 236, 15, itemSummary(r.it), 8.5, "dim2"));
       T(row, 196, 2, 76, 17, g.slot === "weapon" ? BT.WTYPE[g.wt].nm : SLOT_NM[g.slot], 8.5, "dim right");
     } else {
       A(row, heartIcon(r.h, 26), 5, 4, 26, 26);
       T(row, 36, 2, 160, 17, `<span class="heartnm">${BT.HEARTS[r.h].nm}</span><small> ×${G.hearts[r.h]}</small>`, 10.5, "name");
-      T(row, 36, 18, 236, 15, heartSummary(r.h), 8.5, "dim2");
+      fitT(T(row, 36, 18, 236, 15, heartSummary(r.h), 8.5, "dim2"));
       T(row, 196, 2, 76, 17, "心", 8.5, "dim right");
     }
     row.onclick = () => { pickItem = pickItem === (r.it || r.h) ? null : (r.it || r.h); redraw(); };
