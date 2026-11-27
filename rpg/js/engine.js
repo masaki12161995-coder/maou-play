@@ -175,6 +175,15 @@ const SKILLS = {
   lionbreath:{ nm: "灰の息", bp: 0, rank: "C", tg: "row", at: ["陰"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
   wolfbite:  { nm: "かみ裂き", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   dragontail:{ nm: "竜の尾", bp: 0, rank: "A", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // 宰相の館（第5章）
+  tetsukiba: { nm: "鉄の牙", bp: 4, rank: "C", tg: "one", at: ["突"], hits: 2, dist: "近", dir: "直接", kind: "攻撃" },
+  fuuin:     { nm: "封蝋のしずく", bp: 4, rank: "D", tg: "one", at: ["熱"], magic: 1, seal: 35, dist: "遠", dir: "間接", kind: "攻撃" },
+  // 三つ首の鉄犬ケルベ：首ごとに技が違い、順に大技を出す
+  k_hoeru:   { nm: "鉄の遠吠え", bp: 0, rank: "C", tg: "all", at: ["打"], stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  k_kudaku:  { nm: "噛み砕き", bp: 0, rank: "A", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  k_hibana:  { nm: "火花の息", bp: 0, rank: "C", tg: "row", at: ["熱"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  k_kiba:    { nm: "鉄の顎", bp: 0, rank: "C", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  sankubi:   { nm: "三つ首噛み", bp: 7, rank: "C", tg: "rand", hits: 3, at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
 };
 
 // ---------- パッシブ ----------
@@ -288,6 +297,9 @@ const MATS = {
   houtai:   { nm: "古い包帯", icon: "mat_028", fam: "布・紙", rare: "緑" },
   koban:    { nm: "コガネガイの金貨", icon: "mat_057", fam: "金属", rare: "紫" },
   zazankiba:{ nm: "大砂蟲の牙", icon: "mat_033", fam: "骨・牙・爪", rare: "青" },
+  haguruma: { nm: "鉄の歯車", icon: "mat_010", fam: "金属", rare: "緑" },
+  furou:    { nm: "封蝋のかけら", icon: "mat_rou", fam: "液体・粉", rare: "白" },
+  jouhen:   { nm: "鉄犬の錠前", icon: "mat_073", fam: "金属", rare: "紫" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
 const TOOLS = {
@@ -305,6 +317,8 @@ const TOOLS = {
   shibou: { nm: "死亡届の控え", icon: "mat_021", ds: "王都の役場で受け取った、届けの控え", key: 1 },
   hakamairi: { nm: "墓参りの札", icon: "mat_072", ds: "関守に見せれば、墓参りの者として東の関所を通れる", key: 1 },
   medal: { nm: "金の蠍のメダル", icon: "mat_073", ds: "金の蠍亭の遊びに使うメダル", key: 1 },
+  albaKey: { nm: "聖剣アルバ", icon: "eq_sword_04", ds: "白い鞘の剣。勇者アスターに返す約束の品。だれにも装備できない", key: 1 },
+  tsuko: { nm: "鉄門の通行証", icon: "mat_072", ds: "騎士団長の印のある通行証。北の鉄門砦を通れる", key: 1 },
 };
 const FOODS = Object.keys(TOOLS).filter(k => TOOLS[k].food); // 弱いものから先に食べる
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
@@ -358,6 +372,9 @@ const HEARTS = {
   koma:     { nm: "祠守りの狛の心", col: "緑", mul: { str: 108, vit: 116, dex: 96, agi: 96, int: 90, wil: 110, lov: 100, cha: 95 }, sk: "stonefang", up: ["vit", "str"] },
   sennen:   { nm: "千年ダケの心", col: "緑", mul: { str: 84, vit: 104, dex: 96, agi: 92, int: 116, wil: 112, lov: 108, cha: 104 }, sk: "glowspore", up: ["int", "wil"] },
   midorinushi:{ nm: "苔竜ミドリヌシの心", col: "青", mul: { str: 112, vit: 118, dex: 96, agi: 90, int: 112, wil: 114, lov: 104, cha: 106 }, sk: "mossbreath", up: ["vit", "int"] },
+  tetsuken: { nm: "鉄の番犬の心", col: "緑", mul: { str: 108, vit: 110, dex: 104, agi: 104, int: 88, wil: 100, lov: 96, cha: 98 }, sk: "tetsukiba", up: ["vit", "str"] },
+  fuurou:   { nm: "封蝋コウモリの心", col: "白", mul: { str: 94, vit: 96, dex: 104, agi: 110, int: 110, wil: 102, lov: 100, cha: 98 }, sk: "fuuin", up: ["int", "agi"] },
+  kerbe:    { nm: "ケルベの心", col: "金", mul: { str: 116, vit: 116, dex: 104, agi: 104, int: 92, wil: 108, lov: 100, cha: 102 }, sk: "sankubi", up: ["str", "vit"], ps: "standfast" },
 };
 
 // ---------- 仲間（物語の順。0＝主人公） ----------
@@ -532,6 +549,18 @@ const FOES = {
   sennen:   { mat: "kinoko", nm: "千年ダケ", img: "m_sennen", wt: "fist", pow: 7, hp: 160, st: { str: 10, vit: 16, dex: 10, agi: 12, int: 26, wil: 20, lov: 0, cha: 24 }, res: { 熱: -60, 冷: 30, 陽: 40 }, every: { n: 2, sk: "glowspore" }, gold: 28, heart: "sennen" },
   midorinushi:{ mat: "ryurin", book: "book2", nm: "苔竜ミドリヌシ", img: "m_midorinushi", wt: "claw", pow: 14, hp: 1500, boss: 1, st: { str: 30, vit: 26, dex: 14, agi: 14, int: 26, wil: 22, lov: 0, cha: 24 },
               res: { 斬: 20, 突: 20, 冷: 40, 熱: -40 }, plan: { 1: "dragontail", 3: "mossbreath", 5: "dragontail", 6: "mossbreath" }, every: { n: 2, sk: "dragontail" }, rageFrom: 9, rage: "mossbreath", stunRes: 1, gold: 900, heart: "midorinushi" },
+  // 宰相の館（第5章・強さ5）
+  tetsuken: { mat: "haguruma", nm: "鉄の番犬", img: "monster_079", wt: "fang", pow: 13, hp: 210, st: { str: 34, vit: 28, dex: 20, agi: 26, int: 6, wil: 16, lov: 0, cha: 10 }, res: { 斬: 30, 突: 20, 打: -30, 雷: -40 }, every: { n: 2, sk: "tetsukiba" }, gold: 26, heart: "tetsuken" },
+  fuurou:   { mat: "furou", nm: "封蝋コウモリ", img: "m_fuurou", wt: "fang", pow: 11, hp: 170, mag: 12, st: { str: 22, vit: 16, dex: 24, agi: 36, int: 30, wil: 22, lov: 0, cha: 12 }, res: { 熱: 30, 冷: -40, 突: -20 }, every: { n: 2, sk: "fuuin" }, gold: 24, heart: "fuurou" },
+  kurohei:  { nm: "黒外套の兵", img: "monster_018", human: 1, wt: "sword", pow: 13, hp: 260, st: { str: 35, vit: 26, dex: 20, agi: 20, int: 8, wil: 16, lov: 0, cha: 12 }, res: { 斬: 20, 雷: -30 }, every: { n: 3, sk: "gale" }, gold: 30 },
+  kuroyumi: { nm: "黒外套の弓兵", img: "monster_020", human: 1, wt: "bow", pow: 12, hp: 200, st: { str: 14, vit: 16, dex: 36, agi: 24, int: 8, wil: 14, lov: 0, cha: 12 }, res: { 打: -20 }, every: { n: 2, sk: "aim" }, gold: 30 },
+  // 三つ首の鉄犬ケルベ：一つの体に三つの首（twin）。首ごとに苦手が違い、大技を順に出す（左→真ん中→右）
+  kerbeL:   { mat: "jouhen", book: "book2", nm: "ケルベ・左の首", img: "m_kerbe", twin: "C", wt: "fang", pow: 12, hp: 220, boss: 1, mag: 12, st: { str: 27, vit: 26, dex: 18, agi: 20, int: 26, wil: 20, lov: 0, cha: 16 },
+              res: { 打: -40, 斬: 30, 突: 20, 熱: 40 }, plan: { 1: "k_hibana", 4: "k_hibana", 7: "k_hibana", 10: "k_hibana" }, every: { n: 2, sk: "k_kiba" }, stunRes: 1, gold: 80 },
+  kerbeM:   { mat: "jouhen", nm: "ケルベ・真ん中の首", img: "m_kerbe", twin: "D", wt: "fang", pow: 12, hp: 250, boss: 1, st: { str: 31, vit: 28, dex: 18, agi: 18, int: 10, wil: 22, lov: 0, cha: 16 },
+              res: { 陽: -50, 熱: -20, 斬: 20, 突: 20, 打: 20 }, plan: { 2: "k_kudaku", 5: "k_kudaku", 8: "k_kudaku", 11: "k_kudaku" }, every: { n: 3, sk: "k_kiba" }, stunRes: 1, gold: 80 },
+  kerbeR:   { mat: "jouhen", nm: "ケルベ・右の首", img: "m_kerbe", twin: "E", wt: "fang", pow: 12, hp: 220, boss: 1, st: { str: 27, vit: 26, dex: 18, agi: 22, int: 10, wil: 20, lov: 0, cha: 16 },
+              res: { 斬: -40, 突: 30, 打: 20, 雷: 20 }, plan: { 3: "k_hoeru", 6: "k_hoeru", 9: "k_hoeru", 12: "k_hoeru" }, every: { n: 2, sk: "k_kiba" }, stunRes: 1, gold: 80 },
 };
 const WAVES = [];
 

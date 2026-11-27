@@ -7,7 +7,7 @@ const IM = window.IMG;
 const cv = document.getElementById("field"), ctx = cv.getContext("2d");
 const TD = 24, TP = TL.T;         // 1マス＝24ドット（絵は48点）
 const STEP = 170;                 // 1歩の時間
-const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D", "S", "Z", "N"]);
+const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D", "S", "Z", "N", "C"]);
 const LEADER = 0;
 
 let M = null, ground = [], over = null, blocked = null;
@@ -75,7 +75,7 @@ function paint(frame) {
     ({ ".": () => TL.grass(x, tx, ty), "=": () => TL.dirt(x, tx, ty, nb), c: () => TL.cobble(x, tx, ty, nb), T: () => TL.treeBase(x, tx, ty, nb),
        "~": () => TL.water(x, tx, ty, nb, frame), b: () => TL.bridge(x, tx, ty, nb, frame), s: () => TL.stones(x, tx, ty, nb, frame), R: () => TL.rockWall(x, tx, ty, nb),
        f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x),
-       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), K: () => TL.storm(x, tx, ty), N: () => TL.starFloor(x), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty), Z: () => TL.sand(x, tx, ty), U: () => TL.sandRock(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
+       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), K: () => TL.storm(x, tx, ty), N: () => TL.starFloor(x), C: () => TL.carpet(x, tx, ty, nb), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty), Z: () => TL.sand(x, tx, ty), U: () => TL.sandRock(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
     x.restore();
   }
   for (const o of M.objs) {
@@ -246,7 +246,7 @@ const DROPS = {
   6: [{ id: "mosssword", p: 0.06 }, { id: "chain", p: 0.10 }, { id: "plate", p: 0.08 }, { id: "ring", p: 0.10 }, { id: "longbow", p: 0.05 }],
 };
 const CELLS = [[0, 1], [0, 0], [0, 2], [1, 1], [1, 0], [1, 2], [2, 1], [2, 0], [2, 2]];
-const BACK = ["mizugumo", "sennen", "kuro_a"]; // 後ろの列に置く者（飛び道具・術）
+const BACK = ["mizugumo", "sennen", "kuro_a", "kuroyumi"]; // 後ろの列に置く者（飛び道具・術）
 function makeWave(def) {
   const tier = def.tier || M.tier || 1;
   if (def.boss) return { nm: M.nm, foes: [{ k: def.g[0], big: 1 }], tier, bg: def.bg || M.bg, drops: DROPS[tier] || [] };

@@ -40,7 +40,7 @@ DM.onFit.push(() => { if (active && st && !ended) buildHud(); });
 // ---------- 位置 ----------
 function heroPos(u) { return { x: HERO_X[u.c], y: HERO_Y[u.r] }; }
 // 双頭の魔物（twin）：一つの体の絵を真ん中に1回だけ描き、頭ごとに狙う場所を分ける。数字は、左右反転した後の絵の中の頭の場所（ドット）
-const TWIN = { A: [54, 0, 34, 46], B: [25, 0, 29, 38] };
+const TWIN = { A: [54, 0, 34, 46], B: [25, 0, 29, 38], C: [24, 20, 34, 38], D: [60, 0, 32, 34], E: [92, 16, 34, 42] }; // C〜E：三つ首のケルベ（画面の左・真ん中・右の首）
 function twinBody(u) { const img = IM[u.img], w = img.naturalWidth * QM, h = img.naturalHeight * QM, y = Math.round((MID_Y + h / 2) * 4) / 4; return { x: BIG.x, y, w, h, left: Math.round((BIG.x - w / 2) * 4) / 4, top: y - h }; }
 function foeBox(u) {
   if (u.twin) { const b = twinBody(u), [hx, hy, hw, hh] = TWIN[u.twin], left = b.left + hx * QM, top = b.top + hy * QM, w = hw * QM, h = hh * QM; return { x: left + w / 2, y: b.y, w, h, left, top, body: b }; }

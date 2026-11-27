@@ -106,6 +106,13 @@ const WORLD={
   w_rouko:{nm:"蝋涙コロモチ",r:1,n:[3,4,3,2],src:"img/m_rouko.png",sz:[20,20],k:"魔物"},
   w_shugozo:{nm:"沈黙の守護像",r:4,n:[7,6,7,7],src:"img/monster_065.png",sz:[87,70],k:"魔物"},
   w_seiei:{nm:"黒外套の精鋭",r:3,n:[6,5,5,6],src:"img/monster_077.png",sz:[52,70],k:"魔物"},
+  w_tetsuken:{nm:"鉄の番犬",r:2,n:[5,4,3,4],src:"img/monster_079.png",sz:[54,45],k:"魔物"},
+  w_fuurou:{nm:"封蝋コウモリ",r:1,n:[3,4,3,3],src:"img/m_fuurou.png",sz:[55,29],k:"魔物"},
+  w_kurohei:{nm:"黒外套の兵",r:1,n:[4,3,3,3],src:"img/monster_018.png",sz:[42,70],k:"魔物"},
+  w_kerbe:{nm:"三つ首の鉄犬ケルベ",r:4,n:[7,7,6,7],src:"img/m_kerbe.png",sz:[126,90],k:"魔物"},
+  w_oswald:{nm:"騎士団長オズワルド",r:3,n:[6,5,5,5],src:"img/c_oswald.png",sz:[40,58],k:"人物"},
+  w_kishi:{nm:"王城の騎士",r:1,n:[4,3,3,3],src:"img/c_kishi.png",sz:[35,58],k:"人物"},
+  w_teishin:{nm:"廷臣",r:1,n:[2,4,3,4],src:"img/c_teishin.png",sz:[31,58],k:"人物"},
   w_serinin:{nm:"競り人",r:1,n:[4,3,3,3],src:"img/c_serinin.png",sz:[42,58],k:"人物"},
   w_sunamogu:{nm:"スナモグリ",r:2,n:[6,5,2,3],src:"img/m_sunamogu.png",sz:[131,90],k:"魔物"},
   w_saboten:{nm:"サボテン拳士",r:2,n:[6,2,4,4],src:"img/monster_142.png",sz:[67,45],k:"魔物"},
@@ -128,7 +135,7 @@ OPPS.length=0; OPPS.push(
   {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_bram","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_ookami","w_hane","w_donguri","w_nat","w_toraji","w_komari"]},
   {nm:"看板娘ニコ",who:"070n",cap:12,depth:2,sig:"w_rizeria",pool:["w_rizeria","w_edmon","w_shoki","w_mugiwara","w_mugiwara","w_kamausagi","w_kamausagi","w_fusha","w_doro","w_kakashi","w_ookami","w_hane","w_seri","w_karin"]},
   {nm:"粉屋のモルト",who:"019k",cap:11,depth:2,sig:"w_fusha",pool:["w_fusha","w_hanna","w_fusha","w_mugiwara","w_mugiwara","w_mugiwara","w_kamausagi","w_doro","w_koromochi","w_hane","w_kakashi","w_poruka","w_nat"]},
-  {nm:"門番ダリオ",who:"g10",cap:12,depth:2,sig:"w_honeban",pool:["w_honeban","w_sig","w_vald","w_shishi","w_doro","w_doro","w_kamausagi","w_fusha","w_mugiwara","w_hakamori","w_rousoku","w_sekkan","w_ookami","w_teo","w_rinka","w_sekimori","w_tomon","w_akamugi"]},
+  {nm:"門番ダリオ",who:"g10",cap:12,depth:2,sig:"w_honeban",pool:["w_honeban","w_sig","w_vald","w_kerbe","w_tetsuken","w_tetsuken","w_fuurou","w_fuurou","w_kurohei","w_kurohei","w_oswald","w_kishi","w_kishi","w_teishin","w_shishi","w_doro","w_doro","w_kamausagi","w_fusha","w_mugiwara","w_hakamori","w_rousoku","w_sekkan","w_ookami","w_teo","w_rinka","w_sekimori","w_tomon","w_akamugi"]},
   {nm:"胴元ゴンゾ",who:"135",cap:12,depth:2,sig:"w_rousoku",pool:["w_rousoku","w_rousoku","w_jako","w_nakiya","w_nakiya","w_tomon","w_hakamori","w_hakamori","w_honeban","w_sekkan","w_doro","w_akamugi","w_akamugi","w_kakashi","w_ookami"]},
   {nm:"村長の孫ティム",who:"069",cap:9,depth:1,sig:"w_donguri",pool:["w_donguri","w_donguri","w_koromochi","w_koromochi","w_kawauso","w_mizugumo","w_hane","w_fukuro","w_mugiwara","w_kamausagi","w_ookami"]},
   {nm:"大頭取マルゴ",who:"134",cap:14,depth:3,sig:"w_koganegai",pool:["w_koganegai","w_fukumen","w_rojin","w_margo","w_aster","w_shokanban","w_shokanban","w_taisho","w_taisho","w_ryogae","w_mizuuri","w_sasori","w_sasori","w_sunamogu","w_akamugi","w_doro","w_tsubo"]},
@@ -140,10 +147,10 @@ PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）
 // 物語で出会うまでは相手の札に出さない人（RPGの進みの数）。出会う前の人物の絵を先に見せないため
-const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46,w_aster:51,w_taisho:48,w_mizuuri:50,w_saboten:48,w_hagewashi:53,w_sunaningyo:53,w_rojin:53,w_miira:54,w_tozoku:54,w_koganegai:54,w_sasha:56,w_zazan:56,w_fukumen:59,w_dreg:65,w_kaizoku:64,w_yakunin:63,w_ryoshi:63,w_okamiS:63,w_uouri:63,w_todai:63,w_minarai:63,w_hatch:63,w_suifu:66,w_gaikotsu:64,w_fujitsubo:64,w_yadokahou:64,w_tobiuo:66,w_kurage:66,w_kamome:66,w_utsubo:66,w_mifa:73,w_ordo:68,w_riko:69,w_monso:68,w_kairouso:71,w_junreiM:67,w_junreiF:67,w_hoshigashi:68,w_kanetsukiS:68,w_seitonoko:68,w_junreigani:67,w_shirayuri:67,w_kanetsuki:71,w_irogarasu:71,w_inoriseki:71,w_rouko:71,w_shugozo:73,w_seiei:73};
+const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46,w_aster:51,w_taisho:48,w_mizuuri:50,w_saboten:48,w_hagewashi:53,w_sunaningyo:53,w_rojin:53,w_miira:54,w_tozoku:54,w_koganegai:54,w_sasha:56,w_zazan:56,w_fukumen:59,w_dreg:65,w_kaizoku:64,w_yakunin:63,w_ryoshi:63,w_okamiS:63,w_uouri:63,w_todai:63,w_minarai:63,w_hatch:63,w_suifu:66,w_gaikotsu:64,w_fujitsubo:64,w_yadokahou:64,w_tobiuo:66,w_kurage:66,w_kamome:66,w_utsubo:66,w_mifa:73,w_ordo:68,w_riko:69,w_monso:68,w_kairouso:71,w_junreiM:67,w_junreiF:67,w_hoshigashi:68,w_kanetsukiS:68,w_seitonoko:68,w_junreigani:67,w_shirayuri:67,w_kanetsuki:71,w_irogarasu:71,w_inoriseki:71,w_rouko:71,w_shugozo:73,w_seiei:73,w_tetsuken:78,w_fuurou:78,w_kurohei:78,w_kerbe:80,w_oswald:81,w_kishi:81,w_teishin:81};
 function rpgStage(){ try{ return JSON.parse(localStorage.getItem("rpgPlay1")).flags.s||0; }catch(e){ return 0; } }
 // 後から足した札（相手の持ち札に、記録が作られた後で加えるもの）
-const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi","w_taisho","w_mizuuri","w_saboten","w_hagewashi","w_sunaningyo","w_rojin","w_miira","w_tozoku","w_koganegai","w_sasha","w_zazan","w_fukumen","w_dreg","w_kaizoku","w_yakunin","w_ryoshi","w_okamiS","w_uouri","w_todai","w_minarai","w_hatch","w_suifu","w_gaikotsu","w_fujitsubo","w_yadokahou","w_tobiuo","w_kurage","w_kamome","w_utsubo","w_mifa","w_ordo","w_riko","w_monso","w_kairouso","w_junreiM","w_junreiF","w_hoshigashi","w_kanetsukiS","w_seitonoko","w_junreigani","w_shirayuri","w_kanetsuki","w_irogarasu","w_inoriseki","w_rouko","w_shugozo","w_seiei"];
+const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi","w_taisho","w_mizuuri","w_saboten","w_hagewashi","w_sunaningyo","w_rojin","w_miira","w_tozoku","w_koganegai","w_sasha","w_zazan","w_fukumen","w_dreg","w_kaizoku","w_yakunin","w_ryoshi","w_okamiS","w_uouri","w_todai","w_minarai","w_hatch","w_suifu","w_gaikotsu","w_fujitsubo","w_yadokahou","w_tobiuo","w_kurage","w_kamome","w_utsubo","w_mifa","w_ordo","w_riko","w_monso","w_kairouso","w_junreiM","w_junreiF","w_hoshigashi","w_kanetsukiS","w_seitonoko","w_junreigani","w_shirayuri","w_kanetsuki","w_irogarasu","w_inoriseki","w_rouko","w_shugozo","w_seiei","w_tetsuken","w_fuurou","w_kurohei","w_kerbe","w_oswald","w_kishi","w_teishin"];
 function rpgGold(add){ try{ const t=JSON.parse(localStorage.getItem("rpgPlay1")); if(add){ t.gold+=add; localStorage.setItem("rpgPlay1",JSON.stringify(t)); } return t.gold; }catch(e){ return 0; } }
 function goldTag(){ return `<span style="color:var(--text)">${rpgGold().toLocaleString()} G</span>`; }
 

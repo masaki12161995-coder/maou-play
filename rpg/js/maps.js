@@ -8,7 +8,7 @@ function grid(w, h, ch) { return Array.from({ length: h }, () => Array(w).fill(c
 function fill(g, ch, x, y, w, h) { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (g[j] && g[j][i] !== undefined) g[j][i] = ch; }
 const S = g => g.flags.s || 0, cut = (g, k) => g.flags.cut === k;
 // 町の会話の段階（骨組み0-4）。0＝序章の朝、0.5＝黒外套が来た後、1＝第1章、2＝第2章（第1章の場面10の後から）
-const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : s < 60 ? 2 : s < 62 ? 3 : 4; }; // 段階4：第4章の始まり（ザハラを出た後）から // 段階3：第3章の不戦の約定（聖剣の競り）の後から
+const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : s < 60 ? 2 : s < 62 ? 3 : s < 81 ? 4 : 5; }; // 段階5：第5章の謁見の間（宰相を捕らえた）から // 段階4：第4章の始まり（ザハラを出た後）から // 段階3：第3章の不戦の約定（聖剣の競り）の後から
 root.townStage = townStage;
 
 // ---------- 渡し小屋の中 ----------
@@ -563,14 +563,17 @@ function plain() {
   for (const [x, y, w, h] of [[3, 4, 7, 5], [24, 4, 8, 6], [5, 17, 9, 6], [17, 18, 8, 7], [34, 18, 5, 5]]) fill(g, "h", x, y, w, h); // 麦と牧草
   for (const [x, y] of [[12, 3], [13, 9], [2, 11], [15, 16], [27, 17], [36, 9], [38, 4], [11, 25], [26, 26], [2, 23]]) g[y][x] = "T";
   fill(g, "f", 3, 9, 7, 1); fill(g, "f", 24, 10, 8, 1); fill(g, "f", 5, 16, 9, 1);
+  fill(g, "=", 0, 24, 5, 1); fill(g, "=", 4, 15, 1, 10);                    // 西：南の山道へ（第5章で開く）
   return {
     id: "plain", nm: "中央平原", g, tier: 3, bg: "meadow",
     objs: [
       { t: "windmill", x: 33, y: 23, w: 2, h: 3 }, { t: "windmill", x: 36, y: 24, w: 2, h: 3 },
       { t: "kaeri", x: 18, y: 12, talk: "kaeri" },
       { t: "sign", x: 21, y: 13, text: ["北　王都ルクスベル"] }, { t: "sign", x: 32, y: 15, text: ["南　風車の里ミルナ"] }, { t: "sign", x: 37, y: 13, text: ["東　赤麦の丘・東の関所"] },
+      { t: "sign", x: 5, y: 23, text: ["道しるべの柱。真新しい貼り紙が二枚。", "王女リゼリアを名乗る偽者あり。見つけ次第、役所へ届け出よ。宰相ヴァルド", "鉄門砦は、軍のほか通行を禁ず。宰相ヴァルド"], when: g => S(g) >= 75 && S(g) < 81 },
+      { t: "sign", x: 5, y: 23, text: ["道しるべの柱。「西　南の山道・巡礼の道」", "貼り紙をはがした跡が残っている。"], when: g => S(g) >= 81 },
     ],
-    exits: [{ x: 20, y: 0, to: "lux", tx: 11, ty: 38, dir: 3 }, { x: 31, y: 29, to: "milna", tx: 8, ty: 1, dir: 0 }],
+    exits: [{ x: 20, y: 0, to: "lux", tx: 11, ty: 38, dir: 3 }, { x: 31, y: 29, to: "milna", tx: 8, ty: 1, dir: 0 }, { x: 0, y: 24, to: "yamamichi", tx: 12, ty: 10, dir: 1 }],
     npcs: [
       { id: "gyoshoP", x: 12, y: 13, img: "person_075", dir: 1, nm: "行商人", when: g => cut(g, "c2s1") },
     ],
@@ -589,6 +592,8 @@ function plain() {
       { x: 20, y: 3, w: 1, h: 1, when: g => S(g) <= 30, run: "luxShut" },
       { x: 0, y: 14, run: "tollWest" },
       { x: 39, y: 14, run: "eastShut" },
+      { x: 1, y: 24, w: 4, h: 1, when: g => S(g) === 75, run: "c5s1" }, { x: 20, y: 6, when: g => S(g) === 75, run: "c5s1" },
+      { x: 20, y: 3, when: g => S(g) === 76, run: "c5s2" },
     ],
   };
 }
@@ -640,6 +645,8 @@ function lux() {
   fill(g, "c", 2, 17, 1, 6); fill(g, "c", 3, 22, 5, 1);                   // 裏通りの奥（通夜小屋へ）
   g[15][W - 1] = "c"; g[16][W - 1] = "c";                                 // 東門
   const gc = window.GS && GS.G ? GS.G.flags.cut : "", soretsu = gc === "c2s16a" || gc === "c2s16b"; // 場面16：葬列（カイは棺の中）
+  const sNow = window.GS && GS.G ? GS.G.flags.s || 0 : 0;
+  if (sNow >= 77) { fill(g, "c", 12, 7, 10, 1); }                          // 東の坂：丘の上の宰相の館へ（第5章）
   return {
     id: "lux", nm: "王都ルクスベル", g, tier: 0, bg: null, music: "town", noFollow: soretsu ? 1 : 0, noLeader: soretsu ? 1 : 0,
     objs: [
@@ -664,10 +671,12 @@ function lux() {
       { t: "sign", x: 9, y: 17, text: ["魔王討伐の軍資金にご協力を"] },
       { t: "sign", x: 12, y: 24, text: ["魔王討伐の軍資金にご協力を"] },
       { t: "kaeri", x: 18, y: 16, talk: "kaeri" },
+      { t: "sign", x: 19, y: 8, text: ["東の坂　宰相の館"], when: g => S(g) >= 77 },
       { t: "wagon", x: 10, y: 31, w: 2, h: 1, when: g => cut(g, "c2s3") },
     ],
     exits: [{ x: 10, y: 39, to: "plain", tx: 20, ty: 1, dir: 0 }, { x: 11, y: 39, to: "plain", tx: 20, ty: 1, dir: 0 },
-      { x: W - 1, y: 15, to: "akamugi", tx: 2, ty: 8, dir: 2 }, { x: W - 1, y: 16, to: "akamugi", tx: 2, ty: 8, dir: 2 }],
+      { x: W - 1, y: 15, to: "akamugi", tx: 2, ty: 8, dir: 2 }, { x: W - 1, y: 16, to: "akamugi", tx: 2, ty: 8, dir: 2 },
+      ...(sNow >= 77 ? [{ x: W - 1, y: 7, to: "yakatagai", tx: 1, ty: 9, dir: 2 }] : [])],
     npcs: [
       { id: "dario", x: 13, y: 27, mon: "monster_010", face: -1, nm: "ダリオ", talk: "dario", card: () => 1, when: g => S(g) >= 31 },
       { id: "kgate1", x: 9, y: 28, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => S(g) >= 31 && S(g) < 46 },   // 葬列の後、黒外套は東へ去る
@@ -847,6 +856,136 @@ function kakurega() {
     npcs: [], foes: [], chests: [], trigs: [],
   };
 }
+// ---------- 第5章：丘の上の宰相の館（外。夜）。正面は黒外套が固めている。裏の水路から入る ----------
+function yakatagai() {
+  const W = 14, H = 12, g = grid(W, H, ".");
+  fill(g, "T", 0, 0, W, 1); fill(g, "T", W - 1, 0, 1, H); fill(g, "T", 0, H - 1, W, 1); fill(g, "T", 0, 0, 1, 9); fill(g, "T", 0, 10, 1, 2);
+  fill(g, "Q", 4, 1, 1, 6); fill(g, "Q", 12, 1, 1, 6); fill(g, "Q", 4, 6, 9, 1); g[6][8] = "c";   // 高い塀と正門
+  fill(g, "~", 2, 1, 1, 10); g[9][2] = "b";                                                          // 裏の水路
+  fill(g, "=", 3, 2, 1, 8); fill(g, "=", 0, 9, 2, 1); fill(g, "=", 3, 9, 6, 1); fill(g, "=", 8, 7, 1, 2);
+  return {
+    id: "yakatagai", nm: "宰相の館（外）", g, tier: 0, bg: null,
+    objs: [
+      { t: "house", x: 5, y: 1, w: 7, h: 4, roof: "brown", door: 3, noEnter: 1 },
+      { t: "gatePost", x: 7, y: 6, text: ["門に、紋が刻まれている。閉じた門の紋だ。"] }, { t: "gatePost", x: 9, y: 6, text: ["門に、紋が刻まれている。閉じた門の紋だ。"] },
+      { t: "lantern", x: 6, y: 7 }, { t: "lantern", x: 10, y: 7 },
+      { t: "grate", x: 3, y: 1, text: ["水路の格子。下のほうが、錆びて外れかけている。"] },
+    ],
+    exits: [{ x: 0, y: 9, to: "lux", tx: 20, ty: 7, dir: 1 }],
+    npcs: [
+      { id: "kyg1", x: 8, y: 6, mon: "monster_019", face: 1, nm: "黒外套の兵", talk: "kuroYakata", when: g => S(g) < 81 },
+      { id: "kyg2", x: 7, y: 7, mon: "monster_018", face: 1, nm: "黒外套の兵", talk: "kuroYakata", when: g => S(g) < 81 },
+      { id: "kyg3", x: 9, y: 7, mon: "monster_020", face: -1, nm: "黒外套の兵", talk: "kuroYakata", when: g => S(g) < 81 },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 3, y: 2, run: "yakataIn" }],
+  };
+}
+// ---------- 宰相の館（中）：長い廊下。飾りのない壁。左上に書斎、右上に地下への階段 ----------
+function yakata() {
+  const W = 15, H = 22, g = grid(W, H, "w");
+  fill(g, "p", 1, 12, 3, 9); fill(g, "p", 1, 12, 13, 2); fill(g, "p", 11, 2, 3, 12);   // 入り口の廊下・横の廊下・右の廊下
+  fill(g, "p", 1, 1, 7, 6); fill(g, "p", 8, 4, 3, 1);                                   // 書斎（左上）
+  fill(g, "p", 5, 15, 5, 4); fill(g, "p", 4, 16, 1, 1);                                 // 小部屋（下の真ん中）
+  g[H - 1][2] = "D"; g[2][12] = "S";
+  const night = 1;
+  return {
+    id: "yakata", nm: "宰相の館", g, tier: 5, bg: "stone", inside: 1,
+    objs: [
+      ...[1, 2, 3, 5, 6, 7].map(x => ({ t: "ledgers", x, y: 1, text: ["壁いっぱいの帳簿。日付と数字が、細かい字でびっしり並んでいる。"] })),
+      { t: "desk", x: 4, y: 3, text: ["大きな机。小さな額が、伏せて置いてある。"] }, { t: "chair", x: 4, y: 4 },
+      { t: "candleStand", x: 1, y: 5 }, { t: "shelf", x: 7, y: 5, text: ["帳簿の棚。紙の束が、ひもでくくってある。"] },
+      { t: "candleStand", x: 13, y: 12 }, { t: "candleStand", x: 1, y: 13 },
+      { t: "basket", x: 9, y: 15 }, { t: "shelf", x: 5, y: 15, text: ["空の棚。何も置かれていない。"] },
+    ],
+    exits: [{ x: 2, y: H - 1, to: "yakatagai", tx: 3, ty: 3, dir: 0 }],
+    npcs: [
+      { id: "banken", x: 2, y: 13, mon: "monster_079", face: -1, nm: "鉄の番犬", when: g => S(g) === 77 },
+    ],
+    foes: [
+      { id: "yk1", x: 7, y: 13, k: "fuurou", g: ["fuurou", "fuurou", "tetsuken"] },
+      { id: "yk2", x: 12, y: 9, k: "kurohei", g: ["kurohei", "kurohei", "kuroyumi"] },
+      { id: "yk3", x: 7, y: 17, k: "tetsuken", g: ["tetsuken", "fuurou"] },
+      { id: "yk4", x: 12, y: 5, k: "kuroyumi", g: ["kurohei", "kuroyumi", "kuroyumi"] },
+    ],
+    chests: [{ id: "c_yakata1", x: 9, y: 17, gold: 420 }, { id: "c_yakata2", x: 13, y: 3, item: "plate" }],
+    trigs: [
+      { x: 2, y: 16, when: g => S(g) === 77, run: "c5s3" },
+      { x: 1, y: 2, w: 7, h: 4, when: g => S(g) === 78, run: "c5s4" },
+      { x: 12, y: 2, run: "yakataStairs" },
+    ],
+  };
+}
+// ---------- 館の地下の蔵：鎖を巻いた長い箱。三つ首の鉄犬が守る ----------
+function kura() {
+  const W = 11, H = 10, g = grid(W, H, "W"); fill(g, "_", 1, 1, 9, 8); g[H - 1][5] = "S";
+  return {
+    id: "kura", nm: "館の地下の蔵", g, tier: 5, bg: "stone", inside: 1, dark: 1,
+    objs: [
+      { t: "chainBox", x: 4, y: 1, w: 2, h: 1, text: ["鎖を巻いた長い箱。"] },
+      { t: "candleStand", x: 1, y: 1 }, { t: "candleStand", x: 9, y: 1 },
+      { t: "basket", x: 1, y: 7 }, { t: "basket", x: 9, y: 7 },
+    ],
+    exits: [{ x: 5, y: H - 1, to: "yakata", tx: 12, ty: 3, dir: 0 }],
+    npcs: [{ id: "kerbeN", x: 5, y: 3, mon: "m_kerbe", face: 1, big: 1, nm: "三つ首の鉄犬", when: g => S(g) === 79 }],
+    foes: [], chests: [],
+    trigs: [{ x: 1, y: 6, w: 9, h: 1, when: g => S(g) === 79, run: "c5s5" }],
+  };
+}
+// ---------- 王城の謁見の間：空の玉座。玉座の脇に宰相の机 ----------
+function ekken() {
+  const W = 13, H = 14, g = grid(W, H, "w"); fill(g, "p", 1, 1, 11, 12); fill(g, "C", 6, 3, 1, 10); g[H - 1][6] = "D";
+  const during = g => S(g) === 80;
+  return {
+    id: "ekken", nm: "謁見の間", g, tier: 0, bg: null, inside: 1, music: null,
+    objs: [
+      { t: "throne", x: 6, y: 1, text: ["空の玉座。王が病に伏してから、誰も座っていない。"] },
+      { t: "desk", x: 8, y: 2, text: ["宰相の机。きれいに片づいている。"], when: g => S(g) <= 80 },
+      { t: "desk", x: 8, y: 2, text: ["宰相の机。何も置かれていない。"], when: g => S(g) > 80 },
+      ...[3, 6, 9].map(y => ({ t: "column", x: 2, y })), ...[3, 6, 9].map(y => ({ t: "column", x: 10, y })),
+      { t: "candleStand", x: 4, y: 1 }, { t: "candleStand", x: 1, y: 1 }, { t: "candleStand", x: 11, y: 1 },
+    ],
+    exits: [{ x: 6, y: H - 1, to: "lux", tx: 11, ty: 6, dir: 0 }],
+    npcs: [
+      { id: "valdE", x: 8, y: 3, img: "person_123", dir: 0, nm: "ヴァルド", when: during },
+      { id: "sigE", x: 9, y: 4, img: "person_146", dir: 1, nm: "シグ", when: g => during(g) && !g.flags.c5sig },
+      { id: "kuroE1", x: 10, y: 4, mon: "monster_019", face: -1, nm: "黒外套の兵", when: during },
+      { id: "kuroE2", x: 10, y: 7, mon: "monster_020", face: -1, nm: "黒外套の兵", when: during },
+      { id: "oswald", x: 4, y: 4, img: "person_128o", dir: 2, nm: "オズワルド", talk: "oswald" },
+      { id: "teishin1", x: 3, y: 7, img: "person_014k", dir: 2, nm: "廷臣", talk: "tt", tp: "lux", when: g => S(g) === 80 },
+      { id: "teishin2", x: 9, y: 8, img: "person_078t", dir: 1, nm: "廷臣", talk: "tt", tp: "lux", when: g => S(g) === 80 },
+      { id: "teishin3", x: 3, y: 9, img: "person_078t", dir: 2, nm: "年かさの廷臣", talk: "ekkenTeishin", when: g => S(g) > 80 },
+      { id: "kishi1", x: 5, y: 11, img: "person_138k", dir: 3, nm: "騎士", talk: "ekkenKishi" },
+      { id: "kishi2", x: 7, y: 11, img: "person_138k", dir: 3, nm: "騎士", talk: "ekkenKishi" },
+      { id: "edmonE", x: 5, y: 9, img: "person_021", dir: 3, nm: "エドモン", when: g => during(g) && !g.flags.c5edmon },
+    ],
+    foes: [], chests: [], trigs: [],
+  };
+}
+// ---------- 城の回廊（謁見の間を出た所） ----------
+function kairoJ() {
+  const W = 13, H = 6, g = grid(W, H, "w"); fill(g, "p", 1, 1, 11, 4); fill(g, "C", 1, 2, 11, 2);
+  return {
+    id: "kairoJ", nm: "城の回廊", g, tier: 0, bg: null, inside: 1, music: null,
+    objs: [...[2, 5, 8, 11].map(x => ({ t: "column", x, y: 1 })), ...[2, 5, 8, 11].map(x => ({ t: "candleStand", x, y: 4 }))],
+    exits: [], npcs: [], foes: [], chests: [], trigs: [],
+  };
+}
+// ---------- 城の客間（夜） ----------
+function kyakuma() {
+  const W = 9, H = 7, g = grid(W, H, "w"); fill(g, "p", 1, 1, 7, 5); g[H - 1][4] = "D";
+  return {
+    id: "kyakuma", nm: "城の客間", g, tier: 0, bg: null, inside: 1, music: null,
+    objs: [
+      { t: "bed", x: 7, y: 1, w: 1, h: 2 }, { t: "bed", x: 1, y: 3, w: 1, h: 2 },
+      { t: "table", x: 2, y: 1 }, { t: "candleStand", x: 5, y: 1 }, { t: "chair", x: 6, y: 4 },
+    ],
+    exits: [{ x: 4, y: H - 1, to: "lux", tx: 11, ty: 6, dir: 0 }],
+    npcs: [{ id: "jakoK", x: 4, y: 1, img: "person_133", dir: 3, nm: "ジャコ", when: g => cut(g, "c5s8b") }],
+    foes: [], chests: [], trigs: [],
+  };
+}
+
 // ---------- 王都の役場（戸籍の窓口） ----------
 function yakuba() {
   const g = grid(11, 8, "w"); fill(g, "p", 1, 1, 9, 6); g[7][5] = "D";
@@ -1245,10 +1384,11 @@ function junrei() {
     id: "junrei", nm: "巡礼の道", g, tier: 4, bg: "meadow", music: null, pad: "T",
     objs: [
       { t: "offering", x: 10, y: 9, text: ["道ばたの祠。星の形の石が祀ってある。"] }, { t: "sign", x: 10, y: 4, text: ["北　聖都エリュシス"] },
-      { t: "rubble", x: 10, y: 22, text: ["土砂で道がふさがっている。南の山道は、通れない。"] }, { t: "rubble", x: 11, y: 22, text: ["土砂で道がふさがっている。南の山道は、通れない。"] },
-      { t: "sign", x: 12, y: 18, text: ["南　山道（崩れのため通れず）"] }, { t: "boat", x: 0, y: 17, w: 3, h: 1, text: ["商盟の船の小舟。沖の船まで漕いで戻れる。"] },
+      { t: "rubble", x: 10, y: 22, text: ["土砂で道がふさがっている。南の山道は、通れない。"], when: g => S(g) < 75 }, { t: "rubble", x: 11, y: 22, text: ["土砂で道がふさがっている。南の山道は、通れない。"], when: g => S(g) < 75 },
+      { t: "sign", x: 12, y: 18, text: ["南　山道（崩れのため通れず）"], when: g => S(g) < 75 }, { t: "sign", x: 12, y: 18, text: ["南　山道（峠を越えて、中央平原へ）"], when: g => S(g) >= 75 }, { t: "boat", x: 0, y: 17, w: 3, h: 1, text: ["商盟の船の小舟。沖の船まで漕いで戻れる。"] },
     ],
-    exits: [{ x: 0, y: 15, to: "uchiumi", tx: 36, ty: 14, dir: 1 }, { x: 0, y: 16, to: "uchiumi", tx: 36, ty: 14, dir: 1 }, { x: 8, y: 0, to: "seito", tx: 11, ty: 25, dir: 3 }, { x: 9, y: 0, to: "seito", tx: 12, ty: 25, dir: 3 }],
+    exits: [{ x: 0, y: 15, to: "uchiumi", tx: 36, ty: 14, dir: 1 }, { x: 0, y: 16, to: "uchiumi", tx: 36, ty: 14, dir: 1 }, { x: 8, y: 0, to: "seito", tx: 11, ty: 25, dir: 3 }, { x: 9, y: 0, to: "seito", tx: 12, ty: 25, dir: 3 },
+      { x: 10, y: H - 1, to: "yamamichi", tx: 6, ty: 1, dir: 0 }, { x: 11, y: H - 1, to: "yamamichi", tx: 7, ty: 1, dir: 0 }],
     npcs: [
       { id: "junreiM", x: 11, y: 9, img: "person_074w", dir: 1, nm: "巡礼の男", when: g => S(g) <= 68 },
       { id: "junreiF", x: 11, y: 10, img: "person_026w", dir: 1, nm: "巡礼の女", when: g => S(g) <= 68 },
@@ -1259,7 +1399,25 @@ function junrei() {
       { id: "j3", x: 12, y: 12, k: "shirayuri", g: ["shirayuri", "shirayuri"] },
     ],
     chests: [{ id: "c_junrei1", x: 4, y: 20, tool: "onigiri" }, { id: "c_junrei2", x: 15, y: 11, gold: 250 }],
-    trigs: [{ x: 8, y: 9, w: 2, h: 2, when: g => S(g) === 67, run: "c4s6" }],
+    trigs: [{ x: 8, y: 9, w: 2, h: 2, when: g => S(g) === 67, run: "c4s6" }, { x: 10, y: 19, w: 2, h: 2, when: g => S(g) === 75 && !g.flags.c5yama, run: "c5s1a" }],
+  };
+}
+// ---------- 南の山道（第5章で開く）：巡礼の道から峠を越えて、中央平原の西へ ----------
+function yamamichi() {
+  const W = 14, H = 15, g = grid(W, H, "T");
+  fill(g, "R", 1, 1, 4, 8); fill(g, "R", 9, 1, 4, 7); fill(g, "R", 1, 12, 12, 2);
+  fill(g, "=", 6, 0, 2, 12); fill(g, "=", 8, 10, 6, 2); fill(g, ".", 4, 8, 2, 3); fill(g, ".", 8, 8, 2, 2);
+  return {
+    id: "yamamichi", nm: "南の山道", g, tier: 5, bg: "meadow", pad: "T",
+    objs: [
+      { t: "stele", x: 8, y: 8, text: ["峠の道しるべ。", "北　巡礼の道　／　東　中央平原"] },
+      { t: "rubble", x: 5, y: 10, text: ["道の脇に、掘り出したばかりの土砂が積んである。"] },
+    ],
+    exits: [{ x: 6, y: 0, to: "junrei", tx: 10, ty: 24, dir: 3 }, { x: 7, y: 0, to: "junrei", tx: 11, ty: 24, dir: 3 },
+      { x: W - 1, y: 10, to: "plain", tx: 1, ty: 24, dir: 2 }, { x: W - 1, y: 11, to: "plain", tx: 1, ty: 24, dir: 2 }],
+    npcs: [], foes: [],
+    chests: [{ id: "c_yama1", x: 4, y: 8, tool: "onigiri" }],
+    trigs: [],
   };
 }
 // ---------- 聖都エリュシス（S5）：白い石の都。北に大聖堂、西に大書庫、東に宿坊 ----------
@@ -1513,5 +1671,5 @@ function minka() {
 }
 
 root.MINKA_FOLK = MINKA_FOLK;
-root.MAPS = { junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+root.MAPS = { yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);
