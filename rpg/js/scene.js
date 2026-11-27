@@ -345,20 +345,21 @@ function dungeonScene(skin) {
   const scene=document.createElement("canvas");
   scene.width=Math.round(SW*SF);scene.height=Math.round(SH*SF);
   const ctx=scene.getContext("2d");
-  if (["gold","grass","sails","canopy","meadow"].includes(skin)) {
-    const mead=skin==="meadow";
+  if (["gold","grass","sails","canopy","meadow","snow"].includes(skin)) {
+    const mead=skin==="meadow", snow=skin==="snow"; // snow＝雪の原（北方）
     const high=skin==="sails", leaves=skin==="canopy", rand=random(high?14920:leaves?67703:82031);
-    rect(ctx,leaves?"#293e4b":"#334453",0,0,SW,SH);
+    rect(ctx,snow?"#2e3a4b":leaves?"#293e4b":"#334453",0,0,SW,SH);
     for(let y=25;y<161;y+=7) {
-      const color=leaves?["#3b4d53","#455659","#525e5c"]:["#52626b","#627075","#7f786c"];
+      const color=snow?["#3e4b5e","#4a586b","#586679"]:leaves?["#3b4d53","#455659","#525e5c"]:["#52626b","#627075","#7f786c"];
       rect(ctx,color[Math.min(Math.floor(y/60),2)],0,y,SW,7);
     }
-    if(high||!leaves) oval(ctx,high?"#eed5a0":"#c7a47b",156,74,17,17);
+    if(snow) oval(ctx,"#c9d0d8",156,74,15,15); else if(high||!leaves) oval(ctx,high?"#eed5a0":"#c7a47b",156,74,17,17);
     for(let i=0;i<13;i++){
       const x=i*19-20, y=145-Math.floor(rand()*40), w=36+Math.floor(rand()*40);
-      polygon(ctx,leaves?"#2b4447":"#464955",[[x,163],[x+12,y],[x+22,y-6],[x+w,160],[x+w,185],[x,185]]);
+      polygon(ctx,snow?"#5a687a":leaves?"#2b4447":"#464955",[[x,163],[x+12,y],[x+22,y-6],[x+w,160],[x+w,185],[x,185]]);
+      if(snow)polygon(ctx,"#a7b3c1",[[x+8,y+12],[x+12,y],[x+22,y-6],[x+30,y+8],[x+20,y+4]]);
     }
-    const ground=high?"#50404a":leaves?"#455345":mead?"#4a5f3e":"#655542";
+    const ground=snow?"#7f8b9b":high?"#50404a":leaves?"#455345":mead?"#4a5f3e":"#655542";
     polygon(ctx,ground,[[0,162],[49,154],[150,157],[201,171],[201,437],[0,437]]);
     if(leaves) {
       for(const [x,flip] of [[-8,1],[166,-1]]) {
@@ -377,6 +378,7 @@ function dungeonScene(skin) {
     } else {
       for(let n=0;n<95;n++){
         const x=Math.floor(rand()*201),y=137+Math.floor(rand()*195);
+        if(snow){rect(ctx,n%3?"#727e8e":"#a3aebb",x,y,2+Math.floor(rand()*6),1);continue;}
         grass(ctx,x,y,mead?(n%4===1?"#6f8a55":"#3f5636"):(n%4===1?"#bc9762":"#85704f"),mead?(n%4===1?"#8aa66a":"#55704a"):(n%4===1?"#e1b479":"#a48857"),3+Math.floor(rand()*9));
       }
       if(skin==="gold")for(const [x,slant] of [[11,1],[186,-1]]){
@@ -387,7 +389,7 @@ function dungeonScene(skin) {
     }
     for(let n=0;n<281;n++){
       const x=Math.floor(rand()*201),y=170+Math.floor(rand()*240);
-      rect(ctx,high?"#87655570":leaves||mead?"#82a06b81":"#c4a36b79",x,y,n%8+1,1);
+      rect(ctx,snow?"#b4bec950":high?"#87655570":leaves||mead?"#82a06b81":"#c4a36b79",x,y,n%8+1,1);
     }
     for(let k=0;k<26;k++){
       const y=184+k*7;

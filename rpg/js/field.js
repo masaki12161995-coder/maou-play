@@ -7,7 +7,7 @@ const IM = window.IMG;
 const cv = document.getElementById("field"), ctx = cv.getContext("2d");
 const TD = 24, TP = TL.T;         // 1マス＝24ドット（絵は48点）
 const STEP = 170;                 // 1歩の時間
-const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D", "S", "Z", "N", "C"]);
+const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D", "S", "Z", "N", "C", "Y", "j", "B"]);
 const LEADER = 0;
 
 let M = null, ground = [], over = null, blocked = null;
@@ -24,7 +24,7 @@ function build(id) {
   M.objs = M.objs.filter(o => !o.when || o.when(G())); M.trigs = M.trigs || [];
   const need = M.inside ? 0 : Math.ceil(Math.max(H, DM.VH || H) / TD) + 1 - M.g.length;
   if (need > 0) {
-    const top = Math.ceil(need / 2), bot = need - top, w = M.g[0].length, rowT = () => Array(w).fill(M.pad || "T");
+    const top = Math.ceil(need / 2), bot = need - top, w = M.g[0].length, rowT = () => Array(w).fill(M.pad || (M.snow ? "A" : "T"));
     M.g = [...Array(top).fill(0).map(rowT), ...M.g, ...Array(bot).fill(0).map(rowT)];
     for (const list of [M.objs, M.exits, M.npcs, M.foes, M.chests, M.trigs]) for (const o of list) o.y += top;
     M.padTop = top; M.padBot = bot;
@@ -75,7 +75,7 @@ function paint(frame) {
     ({ ".": () => TL.grass(x, tx, ty), "=": () => TL.dirt(x, tx, ty, nb), c: () => TL.cobble(x, tx, ty, nb), T: () => TL.treeBase(x, tx, ty, nb),
        "~": () => TL.water(x, tx, ty, nb, frame), b: () => TL.bridge(x, tx, ty, nb, frame), s: () => TL.stones(x, tx, ty, nb, frame), R: () => TL.rockWall(x, tx, ty, nb),
        f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x),
-       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), K: () => TL.storm(x, tx, ty), N: () => TL.starFloor(x), C: () => TL.carpet(x, tx, ty, nb), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty), Z: () => TL.sand(x, tx, ty), U: () => TL.sandRock(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
+       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), K: () => TL.storm(x, tx, ty), N: () => TL.starFloor(x), C: () => TL.carpet(x, tx, ty, nb), Y: () => TL.snow(x, tx, ty), j: () => TL.snowPath(x, tx, ty, nb), A: () => TL.snowTreeBase(x, tx, ty), I: () => TL.iceWall(x, tx, ty, nb), B: () => TL.iceBridge(x), G: () => TL.chasm(x, tx, ty), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty), Z: () => TL.sand(x, tx, ty), U: () => TL.sandRock(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
     x.restore();
   }
   for (const o of M.objs) {
@@ -92,19 +92,20 @@ function paint(frame) {
 }
 // 地図の外を埋める森（木を4×4に並べた絵のくり返し。地図の格子とそろえる）
 let forest = null;
-function forestPat() {
-  if (forest) return forest;
+const forests = {};
+function forestPat(sn) { // 地図の外をうめる森（雪の地図では雪をかぶった森）
+  const key = sn ? "A" : "T"; if (forests[key]) return forests[key];
   const n = 6, c = document.createElement("canvas"); c.width = n * TP; c.height = n * TP;
-  const x = c.getContext("2d"), nb = () => "T";
-  for (let ty = 0; ty < n; ty++) for (let tx = 0; tx < n; tx++) { x.save(); x.translate(tx * TP, ty * TP); TL.treeBase(x, tx, ty, nb); x.restore(); }
-  for (let ty = -1; ty < n; ty++) for (let tx = 0; tx < n; tx++) { x.save(); x.translate(tx * TP, ty * TP + TP / 2); TL.treeTop(x, tx, ty); x.restore(); }
+  const x = c.getContext("2d"), nb = () => key;
+  for (let ty = 0; ty < n; ty++) for (let tx = 0; tx < n; tx++) { x.save(); x.translate(tx * TP, ty * TP); (sn ? TL.snowTreeBase : TL.treeBase)(x, tx, ty, nb); x.restore(); }
+  for (let ty = -1; ty < n; ty++) for (let tx = 0; tx < n; tx++) { x.save(); x.translate(tx * TP, ty * TP + TP / 2); (sn ? TL.snowTreeTop : TL.treeTop)(x, tx, ty); x.restore(); }
   const t = document.createElement("canvas"); t.width = 4 * TP; t.height = 4 * TP; t.getContext("2d").drawImage(c, TP, TP, 4 * TP, 4 * TP, 0, 0, 4 * TP, 4 * TP);
-  forest = ctx.createPattern(t, "repeat"); forest.setTransform(new DOMMatrix().scale(0.5)); return forest;
+  const pat = ctx.createPattern(t, "repeat"); pat.setTransform(new DOMMatrix().scale(0.5)); return (forests[key] = pat);
 }
 function paintOver() { // 木の葉（上の層）
   const c = document.createElement("canvas"); c.width = M.w * TP; c.height = (M.h + 1) * TP;
   const x = c.getContext("2d");
-  for (let ty = 0; ty < M.h; ty++) for (let tx = 0; tx < M.w; tx++) if (M.g[ty][tx] === "T") { x.save(); x.translate(tx * TP, ty * TP); x.translate(0, -TP / 2 + TP); TL.treeTop(x, tx, ty); x.restore(); }
+  for (let ty = 0; ty < M.h; ty++) for (let tx = 0; tx < M.w; tx++) { const ch = M.g[ty][tx]; if (ch === "T" || ch === "A") { x.save(); x.translate(tx * TP, ty * TP); x.translate(0, -TP / 2 + TP); (ch === "A" ? TL.snowTreeTop : TL.treeTop)(x, tx, ty); x.restore(); } }
   return c;
 }
 
@@ -448,7 +449,7 @@ function draw(now) {
   cam.x = Math.round(cam.x * 2) / 2; cam.y = Math.round(cam.y * 2) / 2;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#0b0d14"; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.setTransform(4, 0, 0, 4, -cam.x * 4, -cam.y * 4);
-  if (!M.inside && (mw < VW || mh < VH)) { ctx.fillStyle = forestPat(); ctx.fillRect(cam.x, cam.y, VW, VH); } // 地図より画面が広い所は、森でうめる
+  if (!M.inside && (mw < VW || mh < VH)) { ctx.fillStyle = forestPat(M.snow); ctx.fillRect(cam.x, cam.y, VW, VH); } // 地図より画面が広い所は、森でうめる
   const gc = ground[ground.length > 1 ? Math.floor(now / 700) % 2 : 0];
   ctx.drawImage(gc, 0, 0, gc.width / 2, gc.height / 2);
   // 人・宝箱・敵を奥から

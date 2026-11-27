@@ -184,6 +184,21 @@ const SKILLS = {
   k_hibana:  { nm: "火花の息", bp: 0, rank: "C", tg: "row", at: ["熱"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
   k_kiba:    { nm: "鉄の顎", bp: 0, rank: "C", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   sankubi:   { nm: "三つ首噛み", bp: 7, rank: "C", tg: "rand", hits: 3, at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  // 北方（第5章：凍て野・氷壁の峠）
+  yukikeri:  { nm: "雪けり", bp: 3, rank: "D", tg: "row", at: ["冷"], dist: "近", dir: "直接", kind: "攻撃" },
+  shimokiba: { nm: "霜の牙", bp: 5, rank: "C", tg: "one", at: ["冷"], stun: 15, dist: "近", dir: "直接", kind: "攻撃" },
+  yukidama:  { nm: "大雪玉", bp: 6, rank: "D", tg: "all", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
+  kogoete:   { nm: "凍える手", bp: 4, rank: "D", tg: "one", at: ["冷"], magic: 1, stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
+  tsurarafu: { nm: "つらら落とし", bp: 5, rank: "E", tg: "rand", hits: 3, at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
+  kumabarai: { nm: "熊払い", bp: 7, rank: "C", tg: "row", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  hy_iki:    { nm: "凍てつく息", bp: 0, rank: "C", tg: "row", at: ["冷"], magic: 1, stun: 30, dist: "遠", dir: "間接", kind: "攻撃" },
+  hy_fubuki: { nm: "地吹雪", bp: 0, rank: "D", tg: "all", at: ["冷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  hy_fushi:  { nm: "節噛み", bp: 0, rank: "C", tg: "one", hits: 2, at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  hyougaS:   { nm: "氷河の節", bp: 8, rank: "B", tg: "col", at: ["冷"], magic: 1, stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  // 寄り道の仲間トビー（鉄門砦の新兵）：槍。目がいい
+  t_tooku:   { nm: "遠目の一突き", bp: 3, rank: "D", tg: "one", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
+  t_furue:   { nm: "震え突き", bp: 5, rank: "E", tg: "rand", hits: 3, at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  t_mae:     { nm: "前を見ろ", bp: 9, rank: "B", tg: "one", at: ["突"], stun: 1, dist: "近", dir: "直接", kind: "攻撃" },
 };
 
 // ---------- パッシブ ----------
@@ -300,6 +315,12 @@ const MATS = {
   haguruma: { nm: "鉄の歯車", icon: "mat_010", fam: "金属", rare: "緑" },
   furou:    { nm: "封蝋のかけら", icon: "mat_rou", fam: "液体・粉", rare: "白" },
   jouhen:   { nm: "鉄犬の錠前", icon: "mat_073", fam: "金属", rare: "紫" },
+  yukige:   { nm: "雪うさぎの毛", icon: "mat_006", fam: "皮・鱗・甲羅", rare: "白" },
+  shimokiba:{ nm: "霜狼の牙", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
+  yukikessho:{ nm: "雪の結晶", icon: "mat_026", fam: "石・結晶", rare: "緑" },
+  tsurara:  { nm: "水晶のつらら", icon: "mat_035", fam: "石・結晶", rare: "青" },
+  kumage:   { nm: "白熊の毛皮", icon: "mat_038", fam: "皮・鱗・甲羅", rare: "青" },
+  hyougafushi:{ nm: "氷河ムカデの節", icon: "mat_043", fam: "石・結晶", rare: "紫" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
 const TOOLS = {
@@ -319,6 +340,9 @@ const TOOLS = {
   medal: { nm: "金の蠍のメダル", icon: "mat_073", ds: "金の蠍亭の遊びに使うメダル", key: 1 },
   albaKey: { nm: "聖剣アルバ", icon: "eq_sword_04", ds: "白い鞘の剣。勇者アスターに返す約束の品。だれにも装備できない", key: 1 },
   tsuko: { nm: "鉄門の通行証", icon: "mat_072", ds: "騎士団長の印のある通行証。北の鉄門砦を通れる", key: 1 },
+  tobyLetter: { nm: "トビーの手紙", icon: "mat_021", ds: "鉄門砦の新兵トビーから預かった手紙。風車の里ミルナの母ネルへ", key: 1 },
+  nelReply: { nm: "母の返事", icon: "mat_021", ds: "ネルがトビーに書いた、短い返事", key: 1 },
+  nelScarf: { nm: "ネルの襟巻き", icon: "mat_006", ds: "手編みの毛糸の襟巻き。トビーに渡す", key: 1 },
 };
 const FOODS = Object.keys(TOOLS).filter(k => TOOLS[k].food); // 弱いものから先に食べる
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
@@ -375,6 +399,13 @@ const HEARTS = {
   tetsuken: { nm: "鉄の番犬の心", col: "緑", mul: { str: 108, vit: 110, dex: 104, agi: 104, int: 88, wil: 100, lov: 96, cha: 98 }, sk: "tetsukiba", up: ["vit", "str"] },
   fuurou:   { nm: "封蝋コウモリの心", col: "白", mul: { str: 94, vit: 96, dex: 104, agi: 110, int: 110, wil: 102, lov: 100, cha: 98 }, sk: "fuuin", up: ["int", "agi"] },
   kerbe:    { nm: "ケルベの心", col: "金", mul: { str: 116, vit: 116, dex: 104, agi: 104, int: 92, wil: 108, lov: 100, cha: 102 }, sk: "sankubi", up: ["str", "vit"], ps: "standfast" },
+  yukiusagi:{ nm: "ユキウサギ兵の心", col: "白", mul: { str: 96, vit: 94, dex: 106, agi: 112, int: 98, wil: 100, lov: 102, cha: 100 }, sk: "yukikeri", up: ["agi", "dex"] },
+  shimofuri:{ nm: "シモフリ狼の心", col: "緑", mul: { str: 110, vit: 100, dex: 104, agi: 108, int: 90, wil: 98, lov: 96, cha: 98 }, sk: "shimokiba", up: ["str", "agi"] },
+  yukidaruma:{ nm: "雪だるま親方の心", col: "緑", mul: { str: 104, vit: 114, dex: 92, agi: 88, int: 100, wil: 110, lov: 104, cha: 102 }, sk: "yukidama", up: ["vit", "wil"] },
+  kogoe:    { nm: "凍えた兵の心", col: "白", mul: { str: 104, vit: 104, dex: 100, agi: 96, int: 104, wil: 100, lov: 92, cha: 96 }, sk: "kogoete", up: ["int", "vit"] },
+  tsurara:  { nm: "ツララ蜘蛛の心", col: "緑", mul: { str: 98, vit: 98, dex: 112, agi: 108, int: 104, wil: 98, lov: 96, cha: 100 }, sk: "tsurarafu", up: ["dex", "int"] },
+  shirokuma:{ nm: "白熊武者の心", col: "青", mul: { str: 116, vit: 114, dex: 100, agi: 94, int: 90, wil: 106, lov: 100, cha: 102 }, sk: "kumabarai", up: ["str", "vit"] },
+  hyouga:   { nm: "氷河ムカデの心", col: "金", mul: { str: 106, vit: 112, dex: 104, agi: 100, int: 116, wil: 114, lov: 102, cha: 104 }, sk: "hyougaS", up: ["int", "wil"], ps: "focus" },
 };
 
 // ---------- 仲間（物語の順。0＝主人公） ----------
@@ -432,6 +463,10 @@ const HEROES = [
   { id: "mifa", nm: "ミーファ", img: "person_011", wt: "staff", rare: "S", hp: 170, hpCap: 990, lp: 7, st: { str: 9, vit: 14, dex: 14, agi: 17, int: 27, wil: 28, lov: 29, cha: 21 },
     cap: { str: 66, vit: 88, dex: 88, agi: 100, int: 124, wil: 126, lov: 130, cha: 110 }, up: ["lov", "wil"],
     res: { 陽: 20 }, sk: ["m_hoshibi", "m_inori", "m_hoshifuri"], ps: ["healer", "sunway", "focus"], gear: { weapon: "starstaff", armor: "cloak", sub: null, acc: null } },
+  // 寄り道の仲間トビー（鉄門砦の新兵。第5章の間だけ。頼みごとを済ませると加わる）：槍。目がいい
+  { id: "toby", nm: "トビー", img: "person_080", wt: "spear", rare: "A", side: 1, hp: 220, hpCap: 1050, lp: 8, st: { str: 22, vit: 18, dex: 28, agi: 26, int: 10, wil: 14, lov: 16, cha: 15 },
+    cap: { str: 104, vit: 92, dex: 122, agi: 118, int: 60, wil: 84, lov: 96, cha: 90 }, up: ["dex", "agi"],
+    res: { 冷: 10 }, sk: ["t_tooku", "t_furue", "t_mae"], ps: ["spearway", "focus", "quickdraw"], gear: { weapon: "ironspear", armor: "tunic", sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -561,6 +596,20 @@ const FOES = {
               res: { 陽: -50, 熱: -20, 斬: 20, 突: 20, 打: 20 }, plan: { 2: "k_kudaku", 5: "k_kudaku", 8: "k_kudaku", 11: "k_kudaku" }, every: { n: 3, sk: "k_kiba" }, stunRes: 1, gold: 80 },
   kerbeR:   { mat: "jouhen", nm: "ケルベ・右の首", img: "m_kerbe", twin: "E", wt: "fang", pow: 12, hp: 220, boss: 1, st: { str: 27, vit: 26, dex: 18, agi: 22, int: 10, wil: 20, lov: 0, cha: 16 },
               res: { 斬: -40, 突: 30, 打: 20, 雷: 20 }, plan: { 3: "k_hoeru", 6: "k_hoeru", 9: "k_hoeru", 12: "k_hoeru" }, every: { n: 2, sk: "k_kiba" }, stunRes: 1, gold: 80 },
+  // 凍て野（第5章・強さ6）
+  yukiusagi:{ mat: "yukige", nm: "ユキウサギ兵", img: "m_yukiusagi", wt: "fang", pow: 11, hp: 170, st: { str: 26, vit: 18, dex: 26, agi: 38, int: 8, wil: 16, lov: 0, cha: 14 }, res: { 冷: 40, 熱: -30 }, every: { n: 2, sk: "yukikeri" }, gold: 24, heart: "yukiusagi" },
+  shimofuri:{ mat: "shimokiba", nm: "シモフリ狼", img: "monster_054", wt: "fang", pow: 13, hp: 220, st: { str: 34, vit: 22, dex: 22, agi: 32, int: 8, wil: 18, lov: 0, cha: 12 }, res: { 冷: 40, 熱: -40 }, every: { n: 2, sk: "shimokiba" }, gold: 28, heart: "shimofuri" },
+  yukidaruma:{ mat: "yukikessho", nm: "雪だるま親方", img: "monster_098", wt: "club", pow: 12, hp: 300, st: { str: 28, vit: 34, dex: 12, agi: 12, int: 20, wil: 26, lov: 0, cha: 16 }, res: { 冷: 60, 熱: -50, 打: 20 }, every: { n: 3, sk: "yukidama" }, gold: 30, heart: "yukidaruma" },
+  kogoe:    { mat: "tetsu", nm: "凍えた兵", img: "monster_039", wt: "sword", pow: 12, hp: 240, mag: 12, st: { str: 30, vit: 24, dex: 18, agi: 16, int: 22, wil: 14, lov: 0, cha: 8 }, res: { 冷: 50, 陽: -40, 熱: -20 }, every: { n: 2, sk: "kogoete" }, gold: 26, heart: "kogoe" },
+  // 氷壁の峠（強さ7）
+  tsurara:  { mat: "tsurara", nm: "ツララ蜘蛛", img: "m_tsurara", wt: "fang", pow: 12, hp: 200, st: { str: 25, vit: 20, dex: 32, agi: 30, int: 16, wil: 16, lov: 0, cha: 10 }, res: { 冷: 50, 熱: -40, 打: -20 }, every: { n: 2, sk: "tsurarafu" }, gold: 30, heart: "tsurara" },
+  shirokuma:{ mat: "kumage", nm: "白熊武者", img: "monster_052", wt: "fang", pow: 14, hp: 320, st: { str: 36, vit: 32, dex: 16, agi: 14, int: 8, wil: 22, lov: 0, cha: 16 }, res: { 冷: 50, 熱: -30, 打: 10 }, every: { n: 3, sk: "kumabarai" }, gold: 40, heart: "shirokuma" },
+  // 先遣隊の兵（人間。心は落とさない）
+  senken:   { nm: "先遣隊の兵", img: "monster_070", human: 1, wt: "sword", pow: 12, hp: 220, st: { str: 31, vit: 28, dex: 20, agi: 18, int: 8, wil: 16, lov: 0, cha: 12 }, res: { 冷: 20 }, every: { n: 3, sk: "gale" }, gold: 30 },
+  senkenS:  { nm: "先遣隊の槍兵", img: "monster_010", human: 1, wt: "spear", pow: 12, hp: 210, st: { str: 30, vit: 24, dex: 24, agi: 20, int: 8, wil: 14, lov: 0, cha: 12 }, res: { 冷: 20 }, every: { n: 3, sk: "aim" }, gold: 30 },
+  // 峠の頂のボス：氷河ムカデ（節ごとに凍らせてくる。熱が効く）
+  hyouga:   { mat: "hyougafushi", book: "book3", nm: "氷河ムカデ", img: "m_hyouga", wt: "fang", pow: 12, hp: 540, boss: 1, mag: 12, st: { str: 33, vit: 30, dex: 20, agi: 18, int: 26, wil: 26, lov: 0, cha: 20 },
+              res: { 冷: 60, 熱: -50, 斬: 20, 突: 20 }, plan: { 1: "hy_iki", 3: "hy_fubuki", 5: "hy_iki", 6: "hy_fushi", 8: "hy_fubuki" }, every: { n: 2, sk: "hy_fushi" }, rageFrom: 9, rage: "hy_fubuki", stunRes: 1, gold: 200 },
 };
 const WAVES = [];
 

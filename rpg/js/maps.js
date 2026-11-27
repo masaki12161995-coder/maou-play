@@ -624,7 +624,7 @@ function milna() {
       // 町の人（段階2から。台詞は TOWNTALK）
       { id: "hanna", x: 6, y: 4, img: "person_020", dir: 0, nm: "ハンナ", talk: "hanna", when: g => !(g.roster || []).includes(12) },
       { id: "yado", x: 14, y: 14, img: "person_014y", dir: 0, nm: "宿の主人", talk: "milnaInn" },
-      { id: "neru", x: 3, y: 13, img: "person_026n", dir: 1, nm: "ネル", talk: "tt", tp: "milna" },
+      { id: "neru", x: 3, y: 13, img: "person_026n", dir: 1, nm: "ネル", talk: "nel", tp: "milna" },
       { id: "fusha", x: 12, y: 9, img: "person_072", dir: 0, nm: "風車番", talk: "tt", tp: "milna" },
       { id: "sentaku", x: 15, y: 7, img: "person_070s", dir: 2, nm: "洗濯の女", talk: "tt", tp: "milna" },
       { id: "konako", x: 8, y: 13, img: "person_022k", dir: 0, nm: "粉まみれの子", talk: "tt", tp: "milna" },
@@ -856,6 +856,183 @@ function kakurega() {
     npcs: [], foes: [], chests: [], trigs: [],
   };
 }
+// ======================================================================
+// 第5章その2：北方（鉄門砦・凍て野・遠征軍の野営地・廃坑の町ドゥーガ・氷壁の峠・峠の頂）
+// ======================================================================
+const sNow = () => (window.GS && GS.G ? GS.G.flags.s || 0 : 0);
+// ---------- 鉄門砦：山の切れ目をふさぐ鉄の門。内側に砦の町 ----------
+function tetsumon() {
+  const W = 18, H = 18, g = grid(W, H, "Y"), open = sNow() >= 84;
+  fill(g, "A", 0, 0, 1, H); fill(g, "A", W - 1, 0, 1, H); fill(g, "Q", 1, 0, 16, 2); fill(g, "c", 7, 0, 4, 2);
+  fill(g, "c", 8, 2, 2, H - 2); fill(g, "c", 2, 9, 14, 1);
+  return {
+    id: "tetsumon", nm: "鉄門砦", g, tier: 0, bg: null, music: "town", snow: 1,
+    objs: [
+      { t: "ironGate", x: 7, y: 0, w: 4, h: 2, open, walk: open ? 1 : 0 },
+      { t: "house", x: 2, y: 2, w: 4, h: 3, roof: "blue", door: 2, nm: "兵舎" },
+      { t: "house", x: 12, y: 3, w: 4, h: 3, roof: "red", door: 2, kind: "inn", nm: "砦の宿" },
+      { t: "house", x: 12, y: 14, w: 4, h: 2, roof: "brown", door: 1, nm: "鍛冶場" },
+      { t: "tent", x: 12, y: 10, w: 2, h: 2, text: ["負傷兵の天幕。うめき声が聞こえる。"] },
+      { t: "watchtower", x: 2, y: 11, w: 2, h: 3, text: ["見張り台。上から、ずっと遠くまで見えそうだ。"] },
+      { t: "banner", x: 6, y: 2 }, { t: "banner", x: 11, y: 2 }, { t: "fireSnow", x: 6, y: 7 },
+      { t: "wagon", x: 4, y: 7, w: 2, h: 1 },
+      { t: "sign", x: 10, y: 15, text: ["鉄門砦。この先、北の戦線。"] },
+    ],
+    exits: [{ x: 8, y: H - 1, to: "akamugi", tx: 14, ty: 1, dir: 0 }, { x: 9, y: H - 1, to: "akamugi", tx: 14, ty: 1, dir: 0 },
+      ...(open ? [{ x: 8, y: 0, to: "iteno", tx: 12, ty: 22, dir: 3 }, { x: 9, y: 0, to: "iteno", tx: 13, ty: 22, dir: 3 }] : [])],
+    npcs: [
+      { id: "monei", x: 7, y: 2, img: "person_138c", dir: 0, nm: "砦の門衛", talk: "tt", tp: "toride" },
+      { id: "wakahei", x: 10, y: 8, img: "person_138f", dir: 1, nm: "若い兵", talk: "tt", tp: "toride" },
+      { id: "fushou", x: 14, y: 11, img: "person_138w", dir: 1, nm: "負傷兵", talk: "tt", tp: "toride" },
+      { id: "bolts", x: 7, y: 7, img: "person_099h", dir: 1, nm: "ボルツ", talk: "bolts", card: () => 1 },
+      { id: "kaji", x: 11, y: 15, img: "person_026s", dir: 2, nm: "砦の鍛冶", talk: "tt", tp: "toride" },
+      { id: "totoT", x: 12, y: 2, img: "person_100", dir: 1, nm: "トト", talk: "totoT", card: () => 1, when: g => S(g) >= 83 },
+      { id: "toby", x: 4, y: 14, img: "person_080", dir: 3, nm: "トビー", talk: "toby", when: g => S(g) >= 83 && S(g) < 90 && !g.roster.includes(16) },
+    ],
+    foes: [], chests: [],
+    trigs: [
+      { x: 8, y: 15, w: 2, h: 1, when: g => S(g) === 82, run: "c5s9a" },
+      { x: 8, y: 2, w: 2, h: 1, when: g => S(g) === 83, run: "c5s9b" },
+    ],
+  };
+}
+// ---------- 凍て野：雪の原。中ほどに焼け落ちた小さな里 ----------
+function iteno() {
+  const W = 26, H = 24, g = grid(W, H, "Y");
+  fill(g, "A", 0, 0, W, 1); fill(g, "A", 0, H - 1, W, 1); fill(g, "A", 0, 0, 1, H); fill(g, "A", W - 1, 0, 1, H);
+  fill(g, "j", 12, 12, 2, 12); fill(g, "j", 0, 6, 13, 1); fill(g, "j", 12, 6, 1, 7); fill(g, "j", 13, 12, 13, 1); fill(g, "j", 18, 0, 2, 13); fill(g, "j", 10, 16, 2, 1);
+  for (const [x, y, w, h] of [[2, 9, 3, 2], [16, 3, 1, 2], [21, 4, 3, 3], [3, 20, 4, 2], [16, 18, 3, 2], [22, 15, 2, 4], [7, 2, 2, 2]]) fill(g, "A", x, y, w, h);
+  for (const [x, y] of [[5, 3], [14, 9], [23, 9], [9, 21], [20, 21], [15, 15]]) g[y][x] = "I";
+  return {
+    id: "iteno", nm: "凍て野", g, tier: 6, bg: "snow", snow: 1,
+    objs: [
+      { t: "burntPost", x: 5, y: 15 }, { t: "burntPost", x: 8, y: 14 }, { t: "burntPost", x: 9, y: 18 }, { t: "burntPost", x: 4, y: 17 },
+      { t: "brokenStone", x: 7, y: 16, text: ["割られた還り石。真ん中から、二つに割れている。"] },
+      ...[[6, 17], [8, 16], [6, 15], [7, 18]].map(([x, y]) => ({ t: "wisp", x, y, when: g => S(g) < 85 })),
+      { t: "sign", x: 14, y: 20, text: ["北　氷壁の峠　／　西　遠征軍の野営地　／　東　廃坑の町ドゥーガ"] },
+    ],
+    exits: [{ x: 12, y: H - 1, to: "tetsumon", tx: 8, ty: 1, dir: 0 }, { x: 13, y: H - 1, to: "tetsumon", tx: 9, ty: 1, dir: 0 },
+      { x: 0, y: 6, to: "camp", tx: 16, ty: 7, dir: 1 }, { x: W - 1, y: 12, to: "duga", tx: 1, ty: 9, dir: 2 },
+      { x: 18, y: 0, to: "touge", tx: 6, ty: 22, dir: 3 }, { x: 19, y: 0, to: "touge", tx: 7, ty: 22, dir: 3 }],
+    npcs: [],
+    foes: [
+      { id: "it1", x: 13, y: 18, k: "yukiusagi", g: ["yukiusagi", "yukiusagi", "yukiusagi"] },
+      { id: "it2", x: 6, y: 6, k: "shimofuri", g: ["shimofuri", "shimofuri"] },
+      { id: "it3", x: 20, y: 12, k: "kogoe", g: ["kogoe", "kogoe", "shimofuri"] },
+      { id: "it4", x: 18, y: 6, k: "yukidaruma", g: ["shimofuri", "yukidaruma", "shimofuri"] },
+      { id: "it5", x: 22, y: 20, k: "yukiusagi", g: ["yukiusagi", "yukidaruma", "yukiusagi"] },
+      { id: "it6", x: 3, y: 13, k: "kogoe", g: ["kogoe", "yukiusagi"] },
+    ],
+    chests: [{ id: "c_iteno1", x: 2, y: 2, gold: 360 }, { id: "c_iteno2", x: 23, y: 21, item: "chain" }],
+    trigs: [{ x: 4, y: 14, w: 7, h: 5, when: g => S(g) === 84, run: "c5s10" }],
+  };
+}
+// ---------- 遠征軍の野営地：雪原の中の天幕の群れ。王国の旗、かがり火 ----------
+function camp() {
+  const W = 18, H = 14, g = grid(W, H, "Y");
+  fill(g, "A", 0, 0, W, 1); fill(g, "A", 0, H - 1, W, 1); fill(g, "A", 0, 0, 1, H); fill(g, "A", W - 1, 0, 1, 7); fill(g, "A", W - 1, 8, 1, 6);
+  fill(g, "j", 2, 7, 16, 1); fill(g, "j", 8, 4, 1, 3); fill(g, "j", 13, 4, 1, 3);
+  const scene = g2 => S(g2) === 85;
+  return {
+    id: "camp", nm: "遠征軍の野営地", g, tier: 0, bg: null, music: "town", snow: 1,
+    objs: [
+      { t: "tent", x: 7, y: 2, w: 2, h: 2, text: ["勇者一行の天幕。"] }, { t: "tent", x: 12, y: 2, w: 2, h: 2, text: ["先遣隊の天幕。"] },
+      { t: "tent", x: 3, y: 2, w: 2, h: 2 }, { t: "tent", x: 3, y: 9, w: 2, h: 2, text: ["祈りの天幕。"] }, { t: "tent", x: 12, y: 9, w: 2, h: 2, text: ["兵舎の天幕。中から、賽を振る音がする。"] },
+      { t: "banner", x: 6, y: 5 }, { t: "banner", x: 10, y: 5 }, { t: "fireSnow", x: 9, y: 9 }, { t: "fireSnow", x: 15, y: 4 },
+      { t: "wagon", x: 6, y: 11, w: 2, h: 1 },
+    ],
+    exits: [{ x: W - 1, y: 7, to: "iteno", tx: 1, ty: 6, dir: 2 }],
+    npcs: [
+      { id: "asterC", x: 8, y: 5, img: "person_013", dir: 0, nm: "アスター", talk: "asterCamp", when: g => S(g) >= 85 && S(g) < 88 },
+      { id: "elma", x: 7, y: 5, img: "person_089", dir: 0, nm: "エルマ", talk: "elma", card: g => S(g) >= 86, when: g => S(g) >= 85 && !(S(g) >= 86 && S(g) < 88) },
+      { id: "rokka", x: 9, y: 5, img: "person_015", dir: 0, nm: "ロッカ", talk: "tt", tp: "toride", when: g => S(g) >= 85 && !(S(g) >= 86 && S(g) < 88) },
+      { id: "gerdC", x: 13, y: 5, img: "person_088", dir: 0, nm: "ゲルト", talk: "tt", tp: "toride", when: g => (S(g) === 85 && g.flags.c5gerd) || S(g) >= 88 },
+      { id: "souryo", x: 5, y: 10, img: "person_076", dir: 1, nm: "従軍の僧", talk: "tt", tp: "toride" },
+      { id: "mihari", x: 15, y: 8, img: "person_138f", dir: 1, nm: "見張りの兵", talk: "tt", tp: "toride" },
+      { id: "chinhei", x: 14, y: 10, img: "person_138f", dir: 1, nm: "兵舎の兵", talk: "campChin" },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 14, y: 7, w: 3, h: 1, when: scene, run: "c5s11" }],
+  };
+}
+// ---------- 廃坑の町ドゥーガ：崖にへばりつく町。人と半鬼が一緒に暮らす ----------
+function duga() {
+  const W = 20, H = 16, g = grid(W, H, "Y");
+  fill(g, "I", 0, 0, W, 2); fill(g, "I", W - 1, 0, 1, H); fill(g, "I", 0, H - 1, W, 1); fill(g, "I", 0, 0, 1, 9); fill(g, "I", 0, 11, 1, 5);
+  fill(g, "I", 13, 2, 6, 1);
+  fill(g, "j", 0, 9, 18, 2); fill(g, "j", 15, 4, 2, 5); fill(g, "j", 5, 4, 1, 5); fill(g, "j", 10, 4, 1, 5); fill(g, "j", 5, 11, 1, 1); fill(g, "j", 11, 11, 1, 1); fill(g, "j", 16, 11, 1, 1);
+  return {
+    id: "duga", nm: "廃坑の町ドゥーガ", g, tier: 0, bg: null, music: "town", snow: 1,
+    objs: [
+      { t: "gatePost", x: 2, y: 8 }, { t: "gatePost", x: 2, y: 11 },
+      { t: "mine", x: 15, y: 2, w: 2, h: 2 },
+      { t: "house", x: 4, y: 2, w: 3, h: 2, roof: "brown", door: 1 }, { t: "house", x: 9, y: 2, w: 3, h: 2, roof: "green", door: 1 },
+      { t: "house", x: 4, y: 12, w: 3, h: 2, roof: "red", door: 1, nm: "ニィの家" }, { t: "house", x: 10, y: 12, w: 3, h: 2, roof: "brown", door: 1, nm: "町の酒場" },
+      { t: "house", x: 15, y: 12, w: 3, h: 2, roof: "blue", door: 1, kind: "inn", nm: "ドゥーガの宿" },
+      { t: "woodpile", x: 8, y: 6 }, { t: "woodpile", x: 9, y: 6 }, { t: "fireSnow", x: 13, y: 7 },
+      { t: "sign", x: 3, y: 7, text: ["ドゥーガ"] },
+    ],
+    exits: [{ x: 0, y: 9, to: "iteno", tx: 24, ty: 12, dir: 1 }, { x: 0, y: 10, to: "iteno", tx: 24, ty: 12, dir: 1 }],
+    npcs: [
+      { id: "dag", x: 14, y: 5, img: "person_071d", dir: 0, nm: "ダグ", talk: "tt", tp: "duga" },
+      { id: "nii", x: 9, y: 8, img: "person_073n", dir: 0, nm: "ニィ", talk: "nii", card: g => S(g) >= 87 },
+      { id: "niiHaha", x: 6, y: 11, img: "person_101d", dir: 0, nm: "ニィの母", talk: "tt", tp: "duga" },
+      { id: "makiH", x: 7, y: 7, img: "person_014d", dir: 2, nm: "薪割りの男", talk: "tt", tp: "duga" },
+      { id: "makiO", x: 10, y: 7, img: "person_068h", dir: 1, nm: "角のこぶの大男", talk: "tt", tp: "duga" },
+      { id: "sakaba", x: 12, y: 11, img: "person_019", dir: 0, nm: "酒場の主", talk: "tt", tp: "duga" },
+      { id: "koban", x: 17, y: 5, img: "person_130h", dir: 1, nm: "坑道の番", talk: "tt", tp: "duga" },
+      // 場面13：夜明けの門
+      { id: "gerdD", x: 1, y: 9, img: "person_088", dir: 2, nm: "ゲルト", when: g => cut(g, "c5s13") },
+      { id: "senD1", x: 1, y: 10, mon: "monster_070", face: 1, nm: "先遣隊の兵", when: g => cut(g, "c5s13") && !g.flags.c5back },
+      { id: "senD2", x: 1, y: 8, mon: "monster_010", face: 1, nm: "先遣隊の槍兵", when: g => cut(g, "c5s13") && !g.flags.c5back },
+      { id: "asterD", x: 2, y: 10, img: "person_013", dir: 1, nm: "アスター", when: g => cut(g, "c5s13") && g.flags.c5aster },
+      { id: "elmaD", x: 1, y: 11, img: "person_089", dir: 2, nm: "エルマ", when: g => cut(g, "c5s13") && g.flags.c5aster },
+      { id: "rokkaD", x: 3, y: 11, img: "person_015", dir: 3, nm: "ロッカ", when: g => cut(g, "c5s13") && g.flags.c5aster },
+    ],
+    foes: [], chests: [{ id: "c_duga1", x: 18, y: 7, tool: "onigiri" }],
+    trigs: [
+      { x: 1, y: 9, w: 3, h: 2, when: g => S(g) === 86, run: "c5s12" },
+      { x: 15, y: 4, w: 2, h: 1, run: "dugaMine" },
+    ],
+  };
+}
+// ---------- 氷壁の峠：青白い氷の壁にはさまれた峠道。中ほどの裂け目から水が流れ出す ----------
+function touge() {
+  const W = 14, H = 24, g = grid(W, H, "I");
+  fill(g, "Y", 6, 19, 2, 5); fill(g, "Y", 3, 18, 5, 2); fill(g, "Y", 3, 12, 2, 7); fill(g, "Y", 3, 11, 8, 2); fill(g, "Y", 9, 4, 2, 8); fill(g, "Y", 5, 3, 6, 2); fill(g, "Y", 5, 0, 2, 4);
+  fill(g, "Y", 5, 14, 3, 2); fill(g, "Y", 11, 6, 1, 3);
+  fill(g, "~", 12, 10, 1, 14); g[11][11] = "~";
+  return {
+    id: "touge", nm: "氷壁の峠", g, tier: 6, bg: "snow", snow: 1,
+    objs: [{ t: "stele", x: 10, y: 3, text: ["凍りついた道しるべ。「この先、峠の頂」"] }],
+    exits: [{ x: 6, y: H - 1, to: "iteno", tx: 18, ty: 1, dir: 0 }, { x: 7, y: H - 1, to: "iteno", tx: 19, ty: 1, dir: 0 },
+      { x: 5, y: 0, to: "itadaki", tx: 6, ty: 12, dir: 3 }, { x: 6, y: 0, to: "itadaki", tx: 7, ty: 12, dir: 3 }],
+    npcs: [],
+    foes: [
+      { id: "tg1", x: 5, y: 18, k: "tsurara", g: ["tsurara", "tsurara"] },
+      { id: "tg2", x: 3, y: 14, k: "shirokuma", g: ["shirokuma", "tsurara"] },
+      { id: "tg3", x: 7, y: 11, k: "tsurara", g: ["tsurara", "shirokuma", "tsurara"] },
+      { id: "tg4", x: 9, y: 6, k: "shirokuma", g: ["shirokuma", "shirokuma"] },
+    ],
+    chests: [{ id: "c_touge1", x: 6, y: 15, gold: 500 }, { id: "c_touge2", x: 11, y: 7, item: "sagestaff" }],
+    trigs: [{ x: 9, y: 11, w: 2, h: 2, when: g => S(g) === 88, run: "c5s14" }],
+  };
+}
+// ---------- 峠の頂：氷の橋が谷をまたぐ。その手前に氷河ムカデ ----------
+function itadaki() {
+  const W = 14, H = 14, g = grid(W, H, "Y");
+  fill(g, "A", 0, 0, 1, H); fill(g, "A", W - 1, 0, 1, H); fill(g, "I", 1, 7, 5, 2); fill(g, "I", 7, 7, 6, 2); // 橋のたもとは1マスだけ（氷河ムカデがふさぐ） fill(g, "I", 1, 12, 4, 2); fill(g, "I", 9, 12, 4, 2);
+  fill(g, "G", 1, 2, 12, 5); fill(g, "B", 6, 2, 2, 5);
+  return {
+    id: "itadaki", nm: "峠の頂", g, tier: 6, bg: "snow", snow: 1,
+    objs: [{ t: "sign", x: 9, y: 9, text: ["氷の橋。谷の底を、細い川が流れている。"] }],
+    exits: [{ x: 6, y: H - 1, to: "touge", tx: 5, ty: 1, dir: 0 }, { x: 7, y: H - 1, to: "touge", tx: 6, ty: 1, dir: 0 }],
+    npcs: [{ id: "hyougaN", x: 6, y: 7, mon: "m_hyouga", face: 1, big: 1, nm: "氷河ムカデ", talk: "hyougaN", when: g => S(g) < 90 }],
+    foes: [], chests: [],
+    trigs: [{ x: 1, y: 9, w: 12, h: 1, when: g => S(g) === 89, run: "c5s15" }, { x: 1, y: 0, w: 12, h: 1, when: g => S(g) >= 90, run: "kagenoharaShut" }],
+  };
+}
+
 // ---------- 第5章：丘の上の宰相の館（外。夜）。正面は黒外套が固めている。裏の水路から入る ----------
 function yakatagai() {
   const W = 14, H = 12, g = grid(W, H, ".");
@@ -1050,7 +1227,8 @@ function akamugi() {
   fill(g, ".", 16, 4, 6, 3); fill(g, ".", 17, 8, 6, 3); fill(g, "=", 17, 7, 6, 1);   // 関所の前の空き地（並ぶ荷車・関守）
   fill(g, "Q", 23, 0, 1, H); g[7][23] = "=";                              // 関所の石垣（門だけ通れる）
   fill(g, ".", 24, 0, 2, H); fill(g, "=", 24, 7, 2, 1);
-  const open = window.GS && GS.G && (GS.G.flags.s || 0) >= 47;
+  const open = window.GS && GS.G && (GS.G.flags.s || 0) >= 47, north = window.GS && GS.G && (GS.G.flags.s || 0) >= 82;
+  if (north) fill(g, "=", 14, 0, 1, 7);                                    // 北の道：鉄門砦へ（第5章、通行証を得てから）
   return {
     id: "akamugi", nm: "赤麦の丘", g, tier: 3, bg: "meadow", afterWin: "akaWin",
     objs: [
@@ -1058,8 +1236,9 @@ function akamugi() {
       { t: "wagon", x: 17, y: 5, w: 2, h: 1, when: g => S(g) < 47 }, { t: "wagon", x: 19, y: 5, w: 2, h: 1, army: 0, when: g => S(g) < 47 },  // 追い返されて並ぶ荷車の列
       { t: "sign", x: 21, y: 8, text: ["東の関所　この先、金砂街道"] },
       { t: "sign", x: 1, y: 7, text: ["西　王都ルクスベル"] },
+      { t: "sign", x: 15, y: 2, text: ["北　鉄門砦"], when: g => S(g) >= 82 },
     ],
-    exits: [{ x: 0, y: 8, to: "lux", tx: 20, ty: 15, dir: 1 }, { x: 25, y: 7, to: "hoshimi", tx: 1, ty: 9, dir: 2 }],
+    exits: [{ x: 0, y: 8, to: "lux", tx: 20, ty: 15, dir: 1 }, { x: 25, y: 7, to: "hoshimi", tx: 1, ty: 9, dir: 2 }, ...(north ? [{ x: 14, y: 0, to: "tetsumon", tx: 8, ty: 16, dir: 3 }] : [])],
     npcs: [
       { id: "sekimori", x: 22, y: 8, img: "person_136", dir: 3, nm: "関守", talk: "sekimori" },
       { id: "gyoA", x: 18, y: 6, img: "person_075", dir: 0, nm: "行商人", talk: "gyoA", when: g => S(g) < 47 },
@@ -1671,5 +1850,5 @@ function minka() {
 }
 
 root.MINKA_FOLK = MINKA_FOLK;
-root.MAPS = { yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+root.MAPS = { tetsumon, iteno, camp, duga, touge, itadaki, yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);
