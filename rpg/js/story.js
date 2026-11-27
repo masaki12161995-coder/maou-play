@@ -789,9 +789,7 @@ T.c1s2 = async () => {
 リゼット：まずは宿。それから橋を見ましょう。`);
   setS(17); G().home = { map: "harune", x: 2, y: 14 };
 };
-T.gateman = () => talk(S() >= 17 ? `
-門番：大橋が落ちたんだ。三日前にな。
-門番：宿は「かわうそ亭」だが、空きがあるかどうか。` : `門番：旅の人か。悪いが、先へは行けんよ。`);
+T.gateman = () => S() >= 17 ? townTalk("harune", "門番", 0) : talk(`門番：旅の人か。悪いが、先へは行けんよ。`);
 T.akindo = () => talk(`商人：魚が腐るんだよ、こっちは！`);
 T.heishi = () => talk(`兵士：兵糧が届かにゃ、前線が飢えるんだ！`);
 // 町の戸口と、東の道（物語の順に開く）
@@ -894,9 +892,8 @@ T.toto = async () => {
 };
 T.bela = async () => {
   if (S() < 18) return;
-  if (!F().cardsOk) return talk(`ベラ：土間の大部屋なら、雑魚寝で入れるよ。`);
-  const c = await UI.choose("ベラ", "土間の大部屋なら、雑魚寝で入れるよ。", ["札勝負をする", "やめる"]);
-  if (c === 0) await UI.cards("duel", 1);
+  if (!F().cardsOk) return townTalk("harune", "ベラ", 0);
+  await talkThenCards("harune", "ベラ", 1);
 };
 T.innBed = async () => {
   if (S() < 18) return;
@@ -948,16 +945,10 @@ T.mori = async () => {
 モーリス：番人を置くのは、宿場頭の役目のうち。`);
     return sys("賞金の銀貨三百枚（300 G）を受け取った。");
   }
-  return talk(S() >= 26 ? `
-モーリス：橋は昔から、宿場の預かりでございます。
-モーリス：番人を置くのは、宿場頭の役目のうち。` : `
-モーリス：巨人を何とかした者に、銀貨三百枚。
-モーリス：…まだ誰も、名乗り出ませんが。`);
+  return townTalk("harune", "モーリス", 0);
 };
-T.dakka = () => talk(`ダッカ：討伐隊を呼んだ。十日もすれば着く。`);
-T.gido = () => talk(`
-ギド：橋げたに寄ると、丘の塔から石が飛んでくる。
-ギド：うちの若いのが二人、腰を抜かした。`);
+T.dakka = () => townTalk("harune", "ダッカ", 0);
+T.gido = () => townTalk("harune", "ギド", 0);
 T.yaji = () => talk(`商人：十日！？魚どころか干物まで腐るぞ！`);
 
 // ---------- 場面5　落ちた大橋 ----------
@@ -1247,11 +1238,8 @@ T.c1s10 = async () => {
   await A.fadeOut(); scene(""); setS(26); A.enter("ohashi", 6, 13, 1); A.fadeIn();
   await sys("宿場頭から、賞金を受け取れるようになった。（問屋場で話す）");
 };
-T.eastEnd = async () => { await UI.say("", ["この先は、第2章で。"]); A.enter("ohashi", 16, A.pos().y - A.map().padTop, 1); };
-T.garmBridge = async () => {
-  const c = await UI.choose("ガルム", "…決まりは、決まり。…覚えた。", ["札勝負をする", "やめる"]);
-  if (c === 0) await UI.cards("duel", 2);
-};
+T.eastEnd = async () => { await UI.say("", ["この先は、第2章で。"]); A.enter("ohashi", 20, A.pos().y - A.map().padTop, 1); };
+T.garmBridge = () => talkThenCards("harune", "ガルム", 2);
 
 // ---------- 場面11　夜の酒場 ----------
 T.c1s11 = async () => {
@@ -1424,8 +1412,8 @@ async function toll(to, x, y, dir) {
   await A.fadeOut(); A.enter(to, x, y, dir); A.fadeIn();
   return true;
 }
-T.tollEast = async () => { const y = A.pos().y - A.map().padTop; if (!(await toll("plain", 1, 14, 2))) A.enter("ohashi", 16, y, 1); };
-T.tollWest = async () => { if (!(await toll("ohashi", 16, 13, 1))) A.enter("plain", 1, 14, 2); };
+T.tollEast = async () => { const y = A.pos().y - A.map().padTop; if (!(await toll("plain", 1, 14, 2))) A.enter("ohashi", 20, y, 1); };
+T.tollWest = async () => { if (!(await toll("ohashi", 20, 13, 1))) A.enter("plain", 1, 14, 2); };
 T.eastShut = async () => { await UI.say("", ["東の関所は閉まっている。"]); A.enter("plain", 38, 14, 1); };
 T.luxShut = async () => {
   await talk(`ブラム：見ろ。先回りされてる。`);
@@ -1480,11 +1468,7 @@ T.c2s2 = async () => {
 立て札：東の関所、当分のあいだ通行を禁ず。宰相ヴァルド`);
 };
 T.morto = async () => {
-  if (S() !== 30) {
-    const c = await UI.choose("モルト", S() < 30 ? "東へ粉が売れんでな。風車だけが回っとるよ。" : "助かったよ。…あんた、いい咳をするねえ。", ["札勝負をする", "やめる"]);
-    if (c === 0) await UI.cards("duel", 4);
-    return;
-  }
+  if (S() !== 30) return talkThenCards("milna", "モルト", 4);
   if (!F().morto) {
     F().morto = 1;
     await talk(`
@@ -1538,7 +1522,7 @@ T.c2s3 = async () => {
   G().home = { map: "lux", x: 11, y: 25 };
 };
 T.dario = async () => {
-  const c = await UI.choose("ダリオ", "毎日ご苦労なこった。娘一人に大げさな。", ["札勝負をする", "やめる"]);
+  const c = await UI.choose("ダリオ", "毎日ご苦労なこった。娘一人に大げさな。", ["札勝負をする", "やめる"]); // ダリオは町の会話の表にいない（第2章の台本の人）
   if (c === 0) await UI.cards("duel", 5);
 };
 
@@ -1581,8 +1565,7 @@ T.c2s4 = async () => {
 };
 T.niko = async () => {
   if (S() < 32) return;
-  const c = await UI.choose("ニコ", "お客さん、札は好き？一勝負どう？", ["札勝負をする", "やめる"]);
-  if (c === 0) await UI.cards("duel", 3);
+  await talkThenCards("lux", "ニコ", 3);
 };
 T.kyaku = () => talk(`酒場の客：印がなけりゃ東へは行けん。印は城の記録の間だ。`);
 T.totoL = async () => {
@@ -1892,8 +1875,8 @@ T.kakureDoor = async () => { await A.fadeOut(); A.enter("kakurega", 4, 5, 3); A.
 
 // ---------- 場面13　王都の役場 ----------
 T.yakubaDoor = async () => {
-  if (S() !== 43) return UI.say("", ["王都の役場。戸籍の窓口がある。"]);
-  await move("yakuba", 5, 7, 3, "", "");
+  if (S() !== 43) { await A.fadeOut(); A.enter("yakuba", 5, 6, 3); A.fadeIn(); return; }
+  await move("yakuba", 5, 7, 3, "c2s13", "");
   await talk(`
 〔王都の役場、戸籍の窓口。朝。黒い布をかぶったリゼットがすすり泣いている。ムクがその手を引いている。カイとブラムは外で待つ。〕
 書記：死亡のお届けですな。亡くなった方のお名前は。
@@ -1911,7 +1894,7 @@ T.yakubaDoor = async () => {
 書記：葬列は東の星見の丘まで。関でこれをお見せなさい。`);
   give("shibou", 1); SND.se("get");
   await sys("「死亡届の控え」を手に入れた。");
-  await move("lux", 16, 13, 0);
+  await move("lux", 16, 13, 0, "");
   await talk(`
 〔役場の外。〕
 ムク：カイ兄、しんじゃった…。
@@ -2023,8 +2006,10 @@ T.bookMan = async () => {
 // ==================== 町の人の会話（TOWNTALK。物語の段階で切り替わる） ====================
 // 1回目は吹き出しを全部、2回目からは最後の1つだけ
 const STAGE_KEY = v => v === 0 ? "0a" : v === 0.5 ? "0b" : String(v);
+// 町ごとの切りかわり（物語担当の「仕組み担当への連絡」のとおり）。ハルネと大橋は、橋がつながった夜明けから段階2
+const PLACE_STAGE = { harune: g => (g.flags.s < 28 ? 1 : 2) };
 async function townTalk(place, who, n) {
-  const key = STAGE_KEY(root.townStage(G())), list = ((TOWNTALK[place] || {})[key] || []).filter(b => b.who === who);
+  const key = STAGE_KEY((PLACE_STAGE[place] || root.townStage)(G())), list = ((TOWNTALK[place] || {})[key] || []).filter(b => b.who === who || b.who.split("（")[0] === who);
   const blk = list[n || 0] || list[0];
   if (!blk) return false;
   const f = F(); f.tk = f.tk || {}; const id = `${place}:${key}:${who}:${n || 0}`;
@@ -2032,6 +2017,19 @@ async function townTalk(place, who, n) {
   f.tk[id] = 1;
   return key;
 }
+// 町の人（台詞は TOWNTALK だけ）：地図の npc に tp（町）と、要るときは tw（見分けの印つきの名前）を書く
+T.tt = n => townTalk(n.tp, n.tw || n.nm, 0);
+// 札勝負のできる人：町の台詞のあとで勝負を聞く
+async function talkThenCards(place, who, k) {
+  await townTalk(place, who, 0);
+  if (await UI.choose(who, "", ["札勝負をする", "やめる"]) === 0) await UI.cards("duel", k);
+}
+// ミルナの宿：主人と話してから泊まる
+T.milnaInn = async () => {
+  await townTalk("milna", "宿の主人", 0);
+  if (await UI.choose("", "", ["泊まる", "やめる"]) !== 0) return;
+  await A.fadeOut(); rest(); await wait(400); A.fadeIn(); DM.toast("心と体が休まった", 300);
+};
 T.town = async n => {
   const key = await townTalk("toruka", n.nm, n.n);
   if (n.nm === "ドナ" && key && key !== "0a") { // 村長の弁当：段階ごとに1つ

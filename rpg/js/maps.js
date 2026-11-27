@@ -355,7 +355,7 @@ function harune() {
     id: "harune", nm: "宿場町ハルネ", g, tier: 0, bg: null, music: "town",
     objs: [
       { t: "gatePost", x: 1, y: 11, w: 1, h: 2 }, { t: "gatePost", x: 1, y: 16, w: 1, h: 2 },
-      { t: "wagon", x: 3, y: 14, w: 2, h: 1, army: 1 }, { t: "wagon", x: 6, y: 14, w: 2, h: 1, army: 1 }, { t: "wagon", x: 4, y: 16, w: 2, h: 1 }, { t: "wagon", x: 12, y: 12, w: 2, h: 1 }, { t: "wagon", x: 15, y: 16, w: 2, h: 1, army: 1 },
+      { t: "wagon", x: 3, y: 14, w: 2, h: 1, army: 1 }, { t: "wagon", x: 6, y: 14, w: 2, h: 1, army: 1 }, { t: "wagon", x: 4, y: 16, w: 2, h: 1, when: g => S(g) < 28 }, { t: "wagon", x: 12, y: 12, w: 2, h: 1, when: g => S(g) < 28 }, { t: "wagon", x: 15, y: 16, w: 2, h: 1, army: 1 },
       { t: "house", x: 3, y: 5, w: 5, h: 3, roof: "brown", door: 2, chimney: 1 },   // かわうそ亭
       { t: "sign", x: 8, y: 8, text: ["宿　かわうそ亭"] },
       { t: "house", x: 12, y: 5, w: 5, h: 3, roof: "blue", door: 2 },               // 問屋場
@@ -370,8 +370,12 @@ function harune() {
     exits: [{ x: 0, y: 14, to: "road1", tx: 44, ty: 13, dir: 1 }],
     npcs: [
       { id: "gate", x: 2, y: 13, img: "person_014", dir: 1, nm: "門番", talk: "gateman" },
-      { id: "akindo", x: 5, y: 13, img: "person_075", dir: 2, nm: "商人", talk: "akindo" },
-      { id: "hei", x: 8, y: 13, mon: "monster_010", face: 1, nm: "兵士", talk: "heishi" },
+      { id: "akindo", x: 5, y: 13, img: "person_075", dir: 2, nm: "商人", talk: "akindo", when: g => S(g) < 28 },   // 足止めの客（橋が直ると発つ）
+      { id: "hei", x: 8, y: 13, mon: "monster_010", face: 1, nm: "兵士", talk: "heishi", when: g => S(g) < 28 },
+      // 町の人（段階1から）。ダッカとギドは場面4の後は問屋場の前に
+      { id: "dakkaO", x: 12, y: 10, mon: "monster_010", face: 1, nm: "ダッカ", talk: "dakka", when: g => S(g) >= 19 && !g.flags.cut },
+      { id: "gidoO", x: 16, y: 10, img: "person_030", dir: 1, nm: "ギド", talk: "gido", when: g => S(g) >= 19 && !g.flags.cut },
+      { id: "shukuko", x: 14, y: 3, img: "person_022", dir: 0, nm: "宿場の子", talk: "tt", tp: "harune", when: g => S(g) >= 17 && !g.flags.cut },
       { id: "poruka", x: 6, y: 23, img: "person_029", dir: 0, nm: "ポルカ", talk: "poruka", when: g => !(g.roster || []).includes(8) },
     ],
     foes: [], chests: [],
@@ -400,6 +404,7 @@ function kawauso() {
       { id: "bela", x: 5, y: 1, img: "person_070", dir: 0, nm: "ベラ", talk: "bela" },
       { id: "toto", x: 2, y: 7, img: "person_100", dir: 2, nm: "トト", talk: "toto", when: g => g.flags.cut !== "c1s12" },
       { id: "teo", x: 8, y: 7, img: "person_001", dir: 1, nm: "テオ", talk: "teo", when: g => !(g.roster || []).includes(4) },
+      { id: "umeba", x: 2, y: 8, img: "person_101", dir: 2, nm: "ウメ婆", talk: "tt", tp: "harune", when: g => S(g) >= 18 && !g.flags.cut },
       { id: "liseN", x: 7, y: 5, img: "person_002", dir: 1, nm: "リゼット", when: g => cut(g, "c1s6") || cut(g, "c1s11") },
       { id: "bramN", x: 7, y: 6, img: "person_005", dir: 1, nm: "ブラム", when: g => cut(g, "c1s11") },
       { id: "nomi1", x: 3, y: 4, img: "person_075", dir: 2, nm: "商人", talk: "nomi1", when: g => S(g) === 27 && !g.flags.cut },
@@ -424,9 +429,9 @@ function toiya() {
     exits: [{ x: 4, y: 7, to: "harune", tx: 14, ty: 9, dir: 0 }],
     npcs: [
       { id: "mori", x: 4, y: 1, img: "person_099", dir: 0, nm: "モーリス", talk: "mori" },
-      { id: "dakka", x: 3, y: 3, mon: "monster_010", face: 1, nm: "ダッカ", talk: "dakka" },
-      { id: "gido", x: 6, y: 3, img: "person_030", dir: 1, nm: "ギド", talk: "gido" },
-      { id: "yaji", x: 2, y: 5, img: "person_075", dir: 3, nm: "商人", talk: "yaji" },
+      { id: "dakka", x: 3, y: 3, mon: "monster_010", face: 1, nm: "ダッカ", talk: "dakka", when: g => S(g) < 19 },
+      { id: "gido", x: 6, y: 3, img: "person_030", dir: 1, nm: "ギド", talk: "gido", when: g => S(g) < 19 },
+      { id: "yaji", x: 2, y: 5, img: "person_075", dir: 3, nm: "商人", talk: "yaji", when: g => S(g) < 28 },
     ],
     foes: [], chests: [],
     trigs: [],
@@ -435,13 +440,14 @@ function toiya() {
 
 // ---------- ガルム大橋の西のたもと（W5の東の端）：深い谷。橋の真ん中が無い。北の丘に古い塔 ----------
 function ohashi() {
-  const W = 18, H = 27, g = grid(W, H, ".");
+  const W = 22, H = 27, g = grid(W, H, ".");
   fill(g, "T", 0, 0, W, 4); fill(g, "T", 0, H - 5, W, 5); fill(g, "T", 0, 4, 2, 7); fill(g, "T", 0, 16, 2, 6);
   fill(g, "c", 0, 12, 11, 3);                           // 町からの道
   fill(g, "V", 11, 4, 7, H - 9);                        // 谷
+  fill(g, "T", 18, 16, 4, 6); g[5][21] = "T";           // 東のたもと（茶屋のある側）
   const fixed = window.GS && GS.G && GS.G.flags.s >= 28;  // 第1章の終わり（夜明け）からは、橋がつながっている
-  if (fixed) fill(g, "c", 11, 12, 7, 3);
-  else { fill(g, "c", 11, 12, 3, 3); fill(g, "E", 14, 12, 1, 3); fill(g, "c", 17, 12, 1, 3); } // 橋（真ん中が抜けている）
+  if (fixed) fill(g, "c", 11, 12, 11, 3);
+  else { fill(g, "c", 11, 12, 3, 3); fill(g, "E", 14, 12, 1, 3); fill(g, "c", 17, 12, 5, 3); } // 橋（真ん中が抜けている）
   for (const [x, y] of [[12, 17], [14, 18], [15, 16], [13, 20], [16, 19], [15, 9], [13, 8]]) g[y][x] = "X"; // 谷底に散らばる石
   fill(g, "=", 5, 6, 1, 6);                             // 北の丘への小道
   for (const [x, y] of [[3, 9], [8, 8], [9, 17], [4, 18], [7, 20]]) g[y][x] = "T";
@@ -452,6 +458,7 @@ function ohashi() {
       { t: "plaque", x: 10, y: 11, text: ["ガルム大橋。建国の年、これを架く。", "名の由来は伝わっていない。"] },
       { t: "bigStone", x: 9, y: 15, text: ["切り口がない。割れたのではないらしい。"], when: g => S(g) >= 20 },
       { t: "sign", x: 4, y: 11, text: ["北　古い見張り塔"] },
+      { t: "house", x: 18, y: 7, w: 3, h: 3, roof: "red", door: 1 },                 // 東のたもとの茶屋
     ],
     exits: [{ x: 0, y: 13, to: "harune", tx: 17, ty: 14, dir: 1 }],
     npcs: [
@@ -470,6 +477,9 @@ function ohashi() {
       { id: "kb3", x: 4, y: 13, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
       // 橋が直った後、西のたもとに旅の機械いじり
       { id: "nat", x: 8, y: 15, img: "person_094", dir: 3, nm: "ナット", talk: "nat", when: g => !(g.roster || []).includes(10) && S(g) >= 28 && !g.flags.cut },
+      // 町の人（段階2から）
+      { id: "chaya", x: 20, y: 10, img: "person_089", dir: 0, nm: "茶屋の娘", talk: "tt", tp: "harune", when: g => S(g) >= 28 && !g.flags.cut },
+      { id: "tabi", x: 14, y: 14, img: "person_075", dir: 1, nm: "旅人", talk: "tt", tp: "harune", tw: "旅人（荷を背負った若い商人）", when: g => S(g) >= 28 && !g.flags.cut },
     ],
     foes: [], chests: [],
     trigs: [
@@ -477,7 +487,7 @@ function ohashi() {
       { x: 5, y: 6, when: g => S(g) === 20, run: "towerLater" },
       { x: 5, y: 6, when: g => S(g) >= 21, run: "towerIn" },
       { x: 7, y: 12, w: 1, h: 3, when: g => S(g) === 25, run: "c1s10" },
-      { x: 17, y: 12, w: 1, h: 3, when: g => S(g) >= 28, run: "tollEast" },
+      { x: 21, y: 12, w: 1, h: 3, when: g => S(g) >= 28, run: "tollEast" },
     ],
   };
 }
@@ -581,6 +591,7 @@ function milna() {
   fill(g, "T", 0, H - 2, W, 2); fill(g, "T", 0, 0, 1, H); fill(g, "T", W - 1, 0, 1, H); fill(g, "T", 0, 0, 7, 2); fill(g, "T", 10, 0, 8, 2);
   fill(g, "=", 8, 0, 1, 12); fill(g, "c", 5, 11, 8, 4);
   for (const [x, y, w, h] of [[2, 16, 5, 3], [11, 16, 5, 3]]) fill(g, "h", x, y, w, h);
+  fill(g, "~", 16, 2, 1, 18);                                   // 東の小川
   return {
     id: "milna", nm: "風車の里ミルナ", g, tier: 0, bg: null, music: "town",
     objs: [
@@ -589,10 +600,19 @@ function milna() {
       { t: "sign", x: 9, y: 10, text: ["東の関所、当分のあいだ通行を禁ず。宰相ヴァルド"] },
       { t: "wagon", x: 9, y: 12, w: 2, h: 1, when: g => S(g) <= 30 },
       { t: "kaeri", x: 4, y: 14, talk: "kaeri" },
+      { t: "house", x: 1, y: 11, w: 3, h: 2, roof: "green", door: 1 },                // ネルの家（粉屋の隣）
+      { t: "house", x: 13, y: 11, w: 3, h: 2, roof: "blue", door: 1 },               // 宿
+      { t: "sign", x: 12, y: 13, text: ["宿"] },
     ],
     exits: [{ x: 8, y: 0, to: "plain", tx: 31, ty: 28, dir: 3 }],
     npcs: [
-      { id: "morto", x: 11, y: 12, img: "person_019k", dir: 1, nm: "モルト", talk: "morto" },
+      { id: "morto", x: 6, y: 11, img: "person_019k", dir: 0, nm: "モルト", talk: "morto" },
+      // 町の人（段階2から。台詞は TOWNTALK）
+      { id: "yado", x: 14, y: 14, img: "person_008", dir: 0, nm: "宿の主人", talk: "milnaInn" },
+      { id: "neru", x: 3, y: 13, img: "person_066", dir: 1, nm: "ネル", talk: "tt", tp: "milna" },
+      { id: "fusha", x: 12, y: 9, img: "person_072", dir: 0, nm: "風車番", talk: "tt", tp: "milna" },
+      { id: "sentaku", x: 15, y: 7, img: "person_070s", dir: 2, nm: "洗濯の女", talk: "tt", tp: "milna" },
+      { id: "konako", x: 8, y: 13, img: "person_052", dir: 0, nm: "粉まみれの子", talk: "tt", tp: "milna" },
     ],
     foes: [], chests: [],
     trigs: [{ x: 8, y: 2, when: g => S(g) === 30 && !g.flags.milna, run: "c2s2" }],
@@ -621,7 +641,8 @@ function lux() {
       { t: "house", x: 16, y: 2, w: 4, h: 3, roof: "brown", door: 1 },                // 礼拝堂の裏の空き家（隠れ家）
       { t: "house", x: 14, y: 19, w: 5, h: 3, roof: "green", door: 2, chimney: 1 },
       { t: "house", x: 3, y: 19, w: 5, h: 3, roof: "blue", door: 2 },
-      { t: "well", x: 13, y: 15 },
+      { t: "fountain", x: 13, y: 15 },
+      { t: "stele", x: 6, y: 17, text: ["五年前の、国境の戦で亡くなった人たちの碑。", "名前が、びっしりと刻まれている。"] },
       { t: "sign", x: 9, y: 17, text: ["魔王討伐の軍資金にご協力を"] },
       { t: "sign", x: 12, y: 24, text: ["魔王討伐の軍資金にご協力を"] },
       { t: "kaeri", x: 18, y: 16, talk: "kaeri" },
@@ -633,6 +654,12 @@ function lux() {
       { id: "kgate1", x: 9, y: 28, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => S(g) >= 31 },
       { id: "kgate2", x: 12, y: 28, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => S(g) >= 31 },
       { id: "mortoG", x: 12, y: 31, img: "person_019k", dir: 3, nm: "モルト", when: g => cut(g, "c2s3") },
+      // 町の人（段階2から。台詞は TOWNTALK）
+      { id: "monouri", x: 9, y: 21, img: "person_075m", dir: 2, nm: "物売り", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
+      { id: "mofuku", x: 7, y: 17, img: "person_076", dir: 1, nm: "喪服の婦人", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
+      { id: "eihei", x: 12, y: 5, img: "person_080", dir: 0, nm: "城門の衛兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
+      { id: "oodori", x: 14, y: 16, img: "person_073", dir: 1, nm: "大通りの子", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
+      { id: "kkado", x: 12, y: 14, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
     ],
     foes: [], chests: [],
     trigs: [
@@ -790,17 +817,18 @@ function kakurega() {
 // ---------- 王都の役場（戸籍の窓口） ----------
 function yakuba() {
   const g = grid(11, 8, "w"); fill(g, "p", 1, 1, 9, 6); g[7][5] = "D";
+  const sc = !!(window.GS && GS.G && GS.G.flags.cut === "c2s13");   // 場面13：主人公（と仲間）は外で待つ
   return {
-    id: "yakuba", nm: "王都の役場", g, tier: 0, bg: null, inside: 1, noFollow: 1, noLeader: 1,
+    id: "yakuba", nm: "王都の役場", g, tier: 0, bg: null, inside: 1, noFollow: sc ? 1 : 0, noLeader: sc ? 1 : 0,
     objs: [
       ...[3, 4, 5, 6, 7].map(x => ({ t: "counter", x, y: 3 })),
       { t: "shelf", x: 1, y: 1 }, { t: "scroll", x: 2, y: 1 }, { t: "scroll", x: 8, y: 1 }, { t: "shelf", x: 9, y: 1 }, { t: "desk", x: 7, y: 1 },
     ],
-    exits: [],
+    exits: [{ x: 5, y: 7, to: "lux", tx: 16, ty: 13, dir: 0 }],
     npcs: [
-      { id: "shoki", x: 5, y: 2, img: "person_127", dir: 0, nm: "書記" },
-      { id: "liseY", x: 5, y: 4, img: "person_002", dir: 3, nm: "リゼット" },
-      { id: "mukuY", x: 4, y: 5, img: "person_058h", dir: 3, nm: "ムク" },
+      { id: "shoki", x: 5, y: 2, img: "person_127", dir: 0, nm: "書記", talk: "tt", tp: "lux" },
+      { id: "liseY", x: 5, y: 4, img: "person_002", dir: 3, nm: "リゼット", when: g => cut(g, "c2s13") },
+      { id: "mukuY", x: 4, y: 5, img: "person_058h", dir: 3, nm: "ムク", when: g => cut(g, "c2s13") },
     ],
     foes: [], chests: [], trigs: [],
   };
