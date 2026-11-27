@@ -33,7 +33,7 @@ let st = null, fast = false, autoMode = "normal", autoOn = false, support = true
 try { const a = JSON.parse(localStorage.getItem("rpgAuto") || "{}"); if (a.mode) autoMode = a.mode; autoOn = !!a.on; fast = !!a.fast; } catch (e) {}
 const keepAuto = () => { try { localStorage.setItem("rpgAuto", JSON.stringify({ mode: autoMode, on: autoOn, fast })); } catch (e) {} };
 let last = 0, busy = false, pose = {}, fx = {}, scene = null, ended = false, cmdIdx = 0;
-const SCENES = { road: () => makeScene(), grass: () => dungeonScene("grass"), meadow: () => dungeonScene("meadow"), canopy: () => dungeonScene("canopy"), gold: () => dungeonScene("gold"), stone: () => dungeonScene("stone"), beach: () => dungeonScene("gold"), sea: () => dungeonScene("sails"), snow: () => dungeonScene("snow") }; // beach＝入り江（砂地）、sea＝船の上（帆柱）
+const SCENES = { road: () => makeScene(), grass: () => dungeonScene("grass"), meadow: () => dungeonScene("meadow"), canopy: () => dungeonScene("canopy"), gold: () => dungeonScene("gold"), stone: () => dungeonScene("stone"), beach: () => dungeonScene("gold"), sea: () => dungeonScene("sails"), snow: () => dungeonScene("snow"), shade: () => dungeonScene("shade") }; // beach＝入り江（砂地）、sea＝船の上（帆柱）
 const d = DM.d, px = DM.px, div = DM.div, spriteBox = DM.spriteBox, icon = DM.icon;
 DM.onFit.push(() => { if (active && st && !ended) buildHud(); });
 

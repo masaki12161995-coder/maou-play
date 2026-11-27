@@ -509,6 +509,56 @@ function kingBed(c) { // 天蓋つきの寝台（横2×縦2マス）。人は頭
   for (let i = 0; i < 3; i++) R(c, "#6a2228", 14, 58 + i * 11, 68, 2);
 }
 function portrait(c) { R(c, "#7a5a2c", 8, 4, 32, 36); R(c, "#c9a24a", 10, 6, 28, 32); R(c, "#3a3446", 12, 8, 24, 28); blob(c, "#7a4a2a", 24, 20, 9, 11); blob(c, "#e8c8a8", 24, 21, 5, 6); R(c, "#d8b850", 16, 12, 3, 8); R(c, "#d8b850", 18, 10, 2, 3); R(c, "#4a6a8a", 16, 30, 16, 6); } // 王妃の肖像（栗色の髪、麦の穂の髪飾り）
+// ---------- 第6章：常闇領（影の原・空座城・四氏族の里） ----------
+const SHADE = ["#2c2a3c", "#332f45", "#3a364e", "#433e58"];
+function shade(c, x, y) { // 影の原の地面（歩ける）。昼でも薄暗い草地
+  R(c, SHADE[1], 0, 0, T, T); const r = rng(hash(x, y, 61) * 1e9);
+  for (let i = 0; i < 60; i++) R(c, SHADE[(r() * 4) | 0], (r() * T) | 0, (r() * T) | 0, 2, 2);
+  for (let i = 0; i < 6; i++) { const gx = (r() * 44) | 0, gy = (r() * 42) | 0; R(c, "#262336", gx, gy + 2, 2, 4); R(c, "#4b4563", gx + 2, gy, 2, 4); }
+  if (hash(x, y, 62) < 0.12) { const fx = 8 + ((r() * 30) | 0), fy = 10 + ((r() * 28) | 0); R(c, "#2a6a78", fx, fy + 2, 2, 3); R(c, "#6fd6e6", fx - 1, fy, 4, 2); } // 小さな光る茸
+}
+function shadePath(c, x, y, nb) { // 影の原の道（歩ける）
+  R(c, "#4a4256", 0, 0, T, T); const r = rng(hash(x, y, 63) * 1e9);
+  for (let i = 0; i < 50; i++) R(c, ["#423a4e", "#544b62", "#3c3548"][(r() * 3) | 0], (r() * T) | 0, (r() * T) | 0, 2 + ((r() * 3) | 0), 2);
+  fringe(c, x, y, nb, ch => "LOP".includes(ch), SHADE);
+}
+function shadeTreeBase(c, x, y) { shade(c, x, y); R(c, "#1c1a26", 12, 38, 24, 5); R(c, "#14121c", 20, 24, 8, 16); }
+function shadeTreeTop(c, x, y) { // 影絵のような木（黒い切り絵の形）
+  const r = rng(hash(x, y, 64) * 1e9), cx = 24 + ((r() * 4) | 0) - 2;
+  blob(c, "#14121c", cx, 30, 20, 18); blob(c, "#1b1826", cx - 3, 24, 15, 13); blob(c, "#14121c", cx + 6, 16, 8, 7);
+  for (let i = 0; i < 4; i++) { const bx = cx - 16 + ((r() * 32) | 0); R(c, "#14121c", bx, 6 + ((r() * 12) | 0), 2, 10); }
+  if (r() < 0.35) { R(c, "#6fd6e6", cx - 6 + ((r() * 12) | 0), 32 + ((r() * 8) | 0), 2, 2); }
+}
+function shadeRock(c, x, y) { // 黒い岩（通れない）
+  shade(c, x, y); const r = rng(hash(x, y, 65) * 1e9);
+  const rocks = [[14 + r() * 6, 30 + r() * 4, 14, 11], [32 + r() * 6, 32 + r() * 4, 13, 10], [24 + r() * 4, 18 + r() * 4, 15, 12]];
+  for (const [cx, cy, rx, ry] of rocks) { blob(c, "#14121a", cx, cy + 3, rx, ry); blob(c, "#2e2a38", cx, cy, rx, ry); blob(c, "#433d50", cx - 3, cy - 3, rx * 0.6, ry * 0.55); R(c, "#5a536a", cx - rx * 0.5, cy - ry * 0.7, 6, 2); }
+}
+function glowShroom(c) { shade(c, 0, 0); for (const [x, y, s] of [[14, 30, 6], [30, 24, 9], [24, 38, 5]]) { R(c, "#2a6a78", x - 1, y, 3, s); blob(c, "#3fa6b8", x, y, s, s * 0.6); blob(c, "#8fe6f0", x - 2, y - 2, s * 0.45, s * 0.3); blob(c, "#6fd6e640", x, y, s + 5, s + 3); } } // 青く光る茸
+function furTent(c) { // 骨と毛皮の天幕（横2マス×縦2マス）
+  shade(c, 0, 0); shade(c, 1, 0); shade(c, 0, 1); shade(c, 1, 1);
+  c.fillStyle = "#2a1d14"; c.beginPath(); c.moveTo(6, 90); c.lineTo(48, 22); c.lineTo(90, 90); c.fill();
+  c.fillStyle = "#6e5238"; c.beginPath(); c.moveTo(10, 88); c.lineTo(48, 26); c.lineTo(86, 88); c.fill();
+  c.fillStyle = "#8a6a48"; c.beginPath(); c.moveTo(16, 88); c.lineTo(48, 30); c.lineTo(50, 88); c.fill();
+  c.fillStyle = "#1a1210"; c.beginPath(); c.moveTo(40, 88); c.lineTo(48, 60); c.lineTo(56, 88); c.fill();
+  for (const [x1, y1, x2, y2] of [[40, 16, 48, 30], [56, 16, 48, 30]]) { c.strokeStyle = "#d8d0bc"; c.lineWidth = 3; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+  R(c, "#a3815a", 24, 60, 14, 3); R(c, "#a3815a", 58, 64, 14, 3);
+}
+function nest(c) { shade(c, 0, 0); blob(c, "#2a1d14", 24, 34, 20, 9); blob(c, "#6e5238", 24, 30, 19, 8); blob(c, "#8a6a48", 24, 27, 15, 5); for (let i = 0; i < 8; i++) R(c, "#a3815a", 8 + i * 4, 24 + (i % 3) * 3, 6, 1); blob(c, "#3a2a1e", 24, 27, 9, 3); } // 枝で編んだ巣
+function blackThrone(c) { // 黒い石の玉座。厚い埃
+  stoneDark(c, 0, 0); R(c, "#0e0c12", 8, 44, 32, 3);
+  R(c, "#1c1a24", 10, 0, 28, 40); R(c, "#2e2a38", 12, 2, 24, 36); R(c, "#3a3448", 15, 5, 18, 26); R(c, "#7a7484", 12, 2, 24, 3);
+  R(c, "#1c1a24", 6, 26, 36, 6); R(c, "#7a7484", 6, 26, 36, 2); R(c, "#3a3448", 12, 31, 24, 7); R(c, "#8e8898", 12, 31, 24, 2); R(c, "#16141c", 8, 32, 4, 14); R(c, "#16141c", 36, 32, 4, 14);
+  for (let i = 0; i < 12; i++) R(c, "#8e889860", 13 + (i * 7) % 22, 6 + (i * 5) % 24, 2, 1);
+}
+function stoneDark(c, x, y) { // 空座城の黒い石の床（歩ける）
+  R(c, "#2a2733", 0, 0, T, T); const r = rng(hash(x, y, 66) * 1e9);
+  for (let row = 0; row < 3; row++) { const off = (row + y) % 2 ? 12 : 0; for (let i = -1; i < 3; i++) { const bx = i * 24 + off; R(c, ["#33303d", "#2f2c39", "#383443"][(r() * 3) | 0], bx + 1, row * 16 + 1, 22, 14); R(c, "#423e4e", bx + 1, row * 16 + 1, 22, 1); } }
+  for (let i = 0; i < 6; i++) R(c, "#8e889840", (r() * 46) | 0, (r() * 46) | 0, 2, 1); // 厚い埃
+}
+function _floorDark(c) { R(c, "#26232e", 0, 0, T, T); for (let i = 0; i < 6; i++) R(c, i % 2 ? "#2c2934" : "#221f2a", 0, i * 8, T, 8); R(c, "#1a1820", 0, 47, T, 1); }
+function tornBanner(c) { R(c, "#2a2632", 0, 0, T, T); R(c, "#4d3727", 22, 0, 3, 40); R(c, "#4a2030", 14, 4, 20, 26); R(c, "#5e2a3c", 14, 4, 20, 3); R(c, "#2a2632", 20, 18, 6, 14); R(c, "#2a2632", 14, 26, 5, 6); R(c, "#7a6a3a", 21, 10, 6, 5); } // 破れた旗
+function windStone(c) { shade(c, 0, 0); R(c, "#1c1a24", 12, 4, 24, 42); R(c, "#4a4458", 14, 6, 20, 38); for (let i = 0; i < 4; i++) R(c, "#cfd6e6", 16 + i * 4, 10 + i * 8, 10, 1); } // 風の刻みのある石柱
 // ---------- 第5章：北方（雪の原・氷の峠・砦・野営地） ----------
 const SNOW = ["#b4bfcc", "#c0cad6", "#ccd5df", "#d9e0e8"];
 function snow(c, x, y) { // 雪の原（歩ける）。夕方の青みのある白
@@ -631,5 +681,5 @@ function cage(c) { // 水の中の鉄の檻（2×2マス）
   R(c, "#3d3a44", 6, 12, 84, 6); R(c, "#3d3a44", 6, 84, 84, 6);
 }
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage, itae, starFloor, carpet, throne, chainBox, grate, ledgers, snow, snowPath, snowTreeBase, snowTreeTop, iceWall, tent, banner, ironGate, ironGateOpen, burntPost, brokenStone, wisp, iceBridge, chasm, watchtower, fireSnow };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage, itae, starFloor, carpet, throne, chainBox, grate, ledgers, snow, snowPath, snowTreeBase, snowTreeTop, iceWall, tent, banner, ironGate, ironGateOpen, burntPost, brokenStone, wisp, iceBridge, chasm, watchtower, fireSnow, shade, shadePath, shadeTreeBase, shadeTreeTop, shadeRock, glowShroom, furTent, nest, blackThrone, tornBanner, windStone, stoneDark };
 })(window);

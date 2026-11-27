@@ -199,6 +199,22 @@ const SKILLS = {
   t_tooku:   { nm: "遠目の一突き", bp: 3, rank: "D", tg: "one", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
   t_furue:   { nm: "震え突き", bp: 5, rank: "E", tg: "rand", hits: 3, at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   t_mae:     { nm: "前を見ろ", bp: 9, rank: "B", tg: "one", at: ["突"], stun: 1, dist: "近", dir: "直接", kind: "攻撃" },
+  // 常闇領（第6章）
+  kagenui:   { nm: "影縫い", bp: 4, rank: "D", tg: "one", at: ["陰"], magic: 1, stun: 25, dist: "遠", dir: "間接", kind: "攻撃" },
+  hikarihoushi:{ nm: "光る胞子", bp: 4, rank: "E", tg: "all", at: ["陽"], magic: 1, stun: 10, dist: "遠", dir: "間接", kind: "攻撃" },
+  kagezuno:  { nm: "影の角", bp: 5, rank: "C", tg: "col", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  yamibikari:{ nm: "闇の明かり", bp: 4, rank: "E", tg: "rand", hits: 3, at: ["陰"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  kibasaki:  { nm: "牙裂き", bp: 5, rank: "D", tg: "one", hits: 2, at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  tooboe:    { nm: "月への遠吠え", bp: 5, rank: "E", tg: "all", at: ["打"], stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  kazakiri:  { nm: "風切り矢", bp: 5, rank: "D", tg: "row", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
+  raiun:     { nm: "雷雲", bp: 6, rank: "D", tg: "all", at: ["雷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  // 牙の長フェルガ：とにかく速く、手数が多い
+  f_ranga:   { nm: "乱れ牙", bp: 0, rank: "E", tg: "one", hits: 4, at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  f_tsuki:   { nm: "月咬み", bp: 0, rank: "C", tg: "row", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  f_futa:    { nm: "双斧の舞", bp: 0, rank: "D", tg: "rand", hits: 5, at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  // 翼の長シュリ：空から弓で撃ってくる
+  s_yasame:  { nm: "矢の雨", bp: 0, rank: "D", tg: "all", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
+  s_kazanari:{ nm: "風鳴り射ち", bp: 0, rank: "B", tg: "one", at: ["突"], stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
 };
 
 // ---------- パッシブ ----------
@@ -321,6 +337,11 @@ const MATS = {
   tsurara:  { nm: "水晶のつらら", icon: "mat_035", fam: "石・結晶", rare: "青" },
   kumage:   { nm: "白熊の毛皮", icon: "mat_038", fam: "皮・鱗・甲羅", rare: "青" },
   hyougafushi:{ nm: "氷河ムカデの節", icon: "mat_043", fam: "石・結晶", rare: "紫" },
+  kagekessho:{ nm: "影の結晶", icon: "mat_032", fam: "石・結晶", rare: "緑" },
+  kurotsume:{ nm: "黒い爪", icon: "mat_030", fam: "骨・牙・爪", rare: "緑" },
+  kurokiba: { nm: "月夜の牙", icon: "mat_085", fam: "骨・牙・爪", rare: "青" },
+  yamibane: { nm: "紫の夜羽", icon: "mat_063", fam: "羽", rare: "緑" },
+  shiroba:  { nm: "白と金の羽根", icon: "mat_050", fam: "羽", rare: "青" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
 const TOOLS = {
@@ -343,6 +364,8 @@ const TOOLS = {
   tobyLetter: { nm: "トビーの手紙", icon: "mat_021", ds: "鉄門砦の新兵トビーから預かった手紙。風車の里ミルナの母ネルへ", key: 1 },
   nelReply: { nm: "母の返事", icon: "mat_021", ds: "ネルがトビーに書いた、短い返事", key: 1 },
   nelScarf: { nm: "ネルの襟巻き", icon: "mat_006", ds: "手編みの毛糸の襟巻き。トビーに渡す", key: 1 },
+  chikaiKiba: { nm: "牙の誓い", icon: "mat_085", ds: "牙の長フェルガの誓い。手の甲に、牙の形の印", key: 1 },
+  chikaiTsubasa: { nm: "翼の誓い", icon: "mat_050", ds: "翼の長シュリの誓い。手の甲に、翼の形の印", key: 1 },
 };
 const FOODS = Object.keys(TOOLS).filter(k => TOOLS[k].food); // 弱いものから先に食べる
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
@@ -406,6 +429,14 @@ const HEARTS = {
   tsurara:  { nm: "ツララ蜘蛛の心", col: "緑", mul: { str: 98, vit: 98, dex: 112, agi: 108, int: 104, wil: 98, lov: 96, cha: 100 }, sk: "tsurarafu", up: ["dex", "int"] },
   shirokuma:{ nm: "白熊武者の心", col: "青", mul: { str: 116, vit: 114, dex: 100, agi: 94, int: 90, wil: 106, lov: 100, cha: 102 }, sk: "kumabarai", up: ["str", "vit"] },
   hyouga:   { nm: "氷河ムカデの心", col: "金", mul: { str: 106, vit: 112, dex: 104, agi: 100, int: 116, wil: 114, lov: 102, cha: 104 }, sk: "hyougaS", up: ["int", "wil"], ps: "focus" },
+  kageboushi:{ nm: "カゲボウシの心", col: "緑", mul: { str: 92, vit: 96, dex: 104, agi: 108, int: 114, wil: 104, lov: 98, cha: 100 }, sk: "kagenui", up: ["int", "agi"] },
+  yakou:    { nm: "夜光キノコの心", col: "白", mul: { str: 94, vit: 104, dex: 98, agi: 94, int: 106, wil: 108, lov: 108, cha: 100 }, sk: "hikarihoushi", up: ["lov", "wil"] },
+  kagee:    { nm: "影絵の鹿の心", col: "青", mul: { str: 110, vit: 100, dex: 108, agi: 114, int: 96, wil: 100, lov: 98, cha: 104 }, sk: "kagezuno", up: ["agi", "str"] },
+  yamibotaru:{ nm: "闇ボタルの心", col: "白", mul: { str: 92, vit: 92, dex: 108, agi: 112, int: 108, wil: 100, lov: 100, cha: 100 }, sk: "yamibikari", up: ["agi", "int"] },
+  kibasen:  { nm: "キバ戦士の心", col: "緑", mul: { str: 112, vit: 104, dex: 102, agi: 108, int: 88, wil: 100, lov: 96, cha: 100 }, sk: "kibasaki", up: ["str", "agi"] },
+  tsukihoe: { nm: "月吠え狼の心", col: "青", mul: { str: 108, vit: 104, dex: 100, agi: 112, int: 96, wil: 108, lov: 100, cha: 102 }, sk: "tooboe", up: ["agi", "wil"] },
+  takahei:  { nm: "風切り鷹兵の心", col: "緑", mul: { str: 96, vit: 96, dex: 114, agi: 110, int: 100, wil: 100, lov: 98, cha: 102 }, sk: "kazakiri", up: ["dex", "agi"] },
+  raichou:  { nm: "雷鳥の心", col: "青", mul: { str: 94, vit: 98, dex: 104, agi: 108, int: 116, wil: 104, lov: 100, cha: 104 }, sk: "raiun", up: ["int", "dex"] },
 };
 
 // ---------- 仲間（物語の順。0＝主人公） ----------
@@ -607,6 +638,23 @@ const FOES = {
   // 先遣隊の兵（人間。心は落とさない）
   senken:   { nm: "先遣隊の兵", img: "monster_070", human: 1, wt: "sword", pow: 12, hp: 220, st: { str: 31, vit: 28, dex: 20, agi: 18, int: 8, wil: 16, lov: 0, cha: 12 }, res: { 冷: 20 }, every: { n: 3, sk: "gale" }, gold: 30 },
   senkenS:  { nm: "先遣隊の槍兵", img: "monster_010", human: 1, wt: "spear", pow: 12, hp: 210, st: { str: 30, vit: 24, dex: 24, agi: 20, int: 8, wil: 14, lov: 0, cha: 12 }, res: { 冷: 20 }, every: { n: 3, sk: "aim" }, gold: 30 },
+  // 影の原（第6章・強さ7）。常闇領の魔物は、戦いの前に名乗る
+  kageboushi:{ mat: "kagekessho", nm: "カゲボウシ", img: "monster_066", wt: "fang", pow: 11, hp: 180, mag: 12, st: { str: 20, vit: 18, dex: 22, agi: 30, int: 32, wil: 24, lov: 0, cha: 14 }, res: { 陰: 50, 陽: -50, 斬: 20 }, every: { n: 2, sk: "kagenui" }, gold: 30, heart: "kageboushi" },
+  yakou:    { mat: "kagekessho", nm: "夜光キノコ", img: "m_yakou", wt: "club", pow: 10, hp: 170, mag: 11, st: { str: 20, vit: 26, dex: 14, agi: 12, int: 26, wil: 28, lov: 0, cha: 12 }, res: { 熱: -40, 陽: 30, 打: 20 }, every: { n: 3, sk: "hikarihoushi" }, gold: 26, heart: "yakou" },
+  kagee:    { mat: "kurotsume", nm: "影絵の鹿", img: "monster_149", wt: "fang", pow: 12, hp: 210, st: { str: 32, vit: 22, dex: 26, agi: 34, int: 14, wil: 18, lov: 0, cha: 16 }, res: { 陰: 40, 陽: -40, 突: 20 }, every: { n: 2, sk: "kagezuno" }, gold: 32, heart: "kagee" },
+  yamibotaru:{ mat: "yamibane", nm: "闇ボタル", img: "monster_064", wt: "fang", pow: 10, hp: 140, mag: 11, st: { str: 18, vit: 14, dex: 30, agi: 40, int: 26, wil: 16, lov: 0, cha: 12 }, res: { 陰: 40, 陽: -40, 熱: -20 }, every: { n: 2, sk: "yamibikari" }, gold: 26, heart: "yamibotaru" },
+  // 月吠えの谷（牙の試練）
+  kibasen:  { mat: "kurotsume", nm: "キバ戦士", img: "m_kibasen", wt: "fang", pow: 12, hp: 190, st: { str: 29, vit: 22, dex: 22, agi: 28, int: 8, wil: 18, lov: 0, cha: 18 }, res: { 冷: 20, 熱: -20 }, every: { n: 2, sk: "kibasaki" }, gold: 34, heart: "kibasen" },
+  tsukihoe: { mat: "kurokiba", nm: "月吠え狼", img: "m_tsukihoe", wt: "fang", pow: 11, hp: 180, st: { str: 27, vit: 22, dex: 22, agi: 36, int: 10, wil: 22, lov: 0, cha: 14 }, res: { 冷: 30, 陰: 20, 熱: -30 }, every: { n: 3, sk: "tooboe" }, gold: 32, heart: "tsukihoe" },
+  // 風切りの断崖（翼の試練）。空を飛ぶ敵には、近い攻めが届きにくい
+  takahei:  { mat: "shiroba", nm: "風切り鷹兵", img: "monster_090", wt: "bow", sky: 1, pow: 11, hp: 160, st: { str: 16, vit: 16, dex: 29, agi: 32, int: 12, wil: 18, lov: 0, cha: 16 }, res: { 雷: -40, 打: -20 }, every: { n: 2, sk: "kazakiri" }, gold: 34, heart: "takahei" },
+  raichou:  { mat: "shiroba", nm: "雷鳥", img: "m_raichou", wt: "fang", sky: 1, pow: 10, hp: 170, mag: 11, st: { str: 20, vit: 18, dex: 24, agi: 30, int: 26, wil: 22, lov: 0, cha: 16 }, res: { 雷: 60, 冷: -40 }, every: { n: 2, sk: "raiun" }, gold: 34, heart: "raichou" },
+  // 牙の長フェルガ（人の姿の継ぐ民。「参った」で終わり、心は渡さない）
+  ferga:    { nm: "牙の長フェルガ", img: "person_086", person: 1, wt: "axe", pow: 12, hp: 460, boss: 1, st: { str: 30, vit: 24, dex: 28, agi: 41, int: 10, wil: 22, lov: 0, cha: 26 },
+              res: { 冷: 20, 熱: -20 }, plan: { 2: "f_tsuki", 4: "f_futa", 7: "f_futa" }, every: { n: 2, sk: "f_ranga" }, rageFrom: 9, rage: "f_futa", stunRes: 1, gold: 0 },
+  // 翼の長シュリ：空から弓で撃つ
+  shuri:    { nm: "翼の長シュリ", img: "m_shuri", wt: "bow", sky: 1, pow: 12, hp: 380, boss: 1, st: { str: 18, vit: 20, dex: 33, agi: 38, int: 16, wil: 24, lov: 0, cha: 28 },
+              res: { 雷: -30, 打: -20, 冷: 10 }, plan: { 2: "s_yasame", 5: "s_yasame", 8: "s_yasame" }, every: { n: 3, sk: "s_kazanari" }, rageFrom: 9, rage: "s_yasame", stunRes: 1, gold: 0 },
   // 峠の頂のボス：氷河ムカデ（節ごとに凍らせてくる。熱が効く）
   hyouga:   { mat: "hyougafushi", book: "book3", nm: "氷河ムカデ", img: "m_hyouga", wt: "fang", pow: 12, hp: 540, boss: 1, mag: 12, st: { str: 33, vit: 30, dex: 20, agi: 18, int: 26, wil: 26, lov: 0, cha: 20 },
               res: { 冷: 60, 熱: -50, 斬: 20, 突: 20 }, plan: { 1: "hy_iki", 3: "hy_fubuki", 5: "hy_iki", 6: "hy_fushi", 8: "hy_fubuki" }, every: { n: 2, sk: "hy_fushi" }, rageFrom: 9, rage: "hy_fubuki", stunRes: 1, gold: 200 },
@@ -779,7 +827,7 @@ function damage(st, a, d, s) {
   statT = Math.max(A, statT);
   const mpow = a.side === 1 ? (a.mag || 6) : Math.max(6, ...at.map(x => (a.mp || {})[x] || 0)); // 術の技の威力：敵は強さに応じて、仲間は武器の術威力
   let v = ((magic ? mpow : a.pow) * 1.5 + RANK[s.rank || "N"]) * statT / 100;
-  const rm = resMul(d, at); v *= rm;
+  let rm = resMul(d, at); if (d.sky && !magic && s.dist !== "遠" && !(a.wt === "bow" && s.rank === "N")) rm *= 0.4; v *= rm; // 空を飛ぶ敵（sky）には、近い攻めが届きにくい
   if (a.side === 0) v *= rankMul(a, s);
   if ((hasP(a, "swordway") || hasP(a, "greatway") || hasP(a, "axeway")) && at.includes("斬")) v *= 1.1;
   if ((hasP(a, "bowway") || hasP(a, "spearway") || hasP(a, "rapierway")) && at.includes("突")) v *= 1.1;
