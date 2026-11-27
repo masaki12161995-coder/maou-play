@@ -38,6 +38,7 @@ function build(id) {
     const w = o.w || (o.t === "mine" ? 2 : 1), h = o.h || (o.t === "mine" ? 2 : 1);
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (blocked[o.y + j]) blocked[o.y + j][o.x + i] = true;
   }
+  if (M.sea) blocked = M.g.map(row => row.map(ch => ch !== "~" && ch !== "b")); // 海：船は水の上と、港の桟橋（船着き場）だけ
   for (const e of M.exits) blocked[e.y][e.x] = false;
   // 地図の端の出口（行けば次の地図へ切りかわる所）に出す矢印。となり合う出口は1つにまとめる
   const y0 = M.padTop, y1 = M.h - 1 - M.padBot, side = e => e.x === 0 ? 1 : e.x === M.w - 1 ? 2 : e.y === y0 ? 3 : e.y === y1 ? 0 : -1;
@@ -74,7 +75,7 @@ function paint(frame) {
     ({ ".": () => TL.grass(x, tx, ty), "=": () => TL.dirt(x, tx, ty, nb), c: () => TL.cobble(x, tx, ty, nb), T: () => TL.treeBase(x, tx, ty, nb),
        "~": () => TL.water(x, tx, ty, nb, frame), b: () => TL.bridge(x, tx, ty, nb, frame), s: () => TL.stones(x, tx, ty, nb, frame), R: () => TL.rockWall(x, tx, ty, nb),
        f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x),
-       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty), Z: () => TL.sand(x, tx, ty), U: () => TL.sandRock(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
+       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), K: () => TL.storm(x, tx, ty), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty), Z: () => TL.sand(x, tx, ty), U: () => TL.sandRock(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
     x.restore();
   }
   for (const o of M.objs) {
@@ -456,6 +457,7 @@ function draw(now) {
   for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.sc || (n.big ? 0.42 : 0.5)) : person(n.img, n.x, n.y, n.d, false, now, n.lift, n) });
   for (const f of fol) { const [x, y] = lerp(f, now); ents.push({ y, f: () => person(f.img || BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); }
   if (G().flags.cut === "soretsu") ents.push({ y: ly, f: () => { ctx.save(); ctx.translate(Math.round(lx * TD * 4) / 4, Math.round((ly * TD + (P.from ? Math.abs(Math.sin(now / 90)) * -0.6 : 0)) * 4) / 4); ctx.scale(0.5, 0.5); TL.coffinCart(ctx); ctx.restore(); } }); // 葬列のあいだ、カイは棺の中（荷車を描く）
+  else if (M.sea) ents.push({ y: ly, f: () => { const bob = Math.sin(now / 420) * 0.6; ctx.save(); ctx.translate(Math.round((lx * TD + TD / 2 - 36) * 4) / 4, Math.round((ly * TD + TD - 64 + bob) * 4) / 4); ctx.scale(0.5, 0.5); TL.ship(ctx, { left: P.dir === 1 }); ctx.restore(); } }); // 海では、一行は船に乗っている
   else if (!M.noLeader) ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) }); // noLeader＝主人公がその場に居ない場面（外で待っている など）
   for (const f of foes) if (f.alive) {
     const k = f.from ? Math.min(1, (now - f.t0) / (STEP * 1.8)) : 1, x = f.from ? f.from.x + (f.x - f.from.x) * k : f.x, y = f.from ? f.from.y + (f.y - f.from.y) * k : f.y;

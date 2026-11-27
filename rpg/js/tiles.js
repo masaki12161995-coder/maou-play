@@ -514,6 +514,38 @@ function candleStand(c) { floor(c, 0, 0); R(c, "#8a6a2a", 22, 16, 4, 26); R(c, "
 function fountain(c) { cobble(c, 0, 0, () => "c"); blob(c, "#5d5966", 24, 26, 20, 15); blob(c, "#8a8594", 24, 25, 18, 13); blob(c, "#3f7fb8", 24, 26, 14, 9); blob(c, "#6fb0e0", 22, 24, 7, 4); R(c, "#8a8594", 21, 8, 6, 18); blob(c, "#bfe4ff", 24, 7, 5, 4); R(c, "#9fd4ff", 23, 10, 2, 10); } // 噴水
 function woodpile(c) { grass(c, 0, 0); for (let r = 0; r < 3; r++) for (let i = 0; i < 4 - (r === 2 ? 1 : 0); i++) { const x = 6 + i * 10 + (r === 2 ? 5 : 0), y = 32 - r * 10; blob(c, "#7a5230", x + 4, y, 5, 5); blob(c, "#e2c08a", x + 4, y, 3.2, 3.2); blob(c, "#b88a52", x + 4, y, 1.2, 1.2); } } // 割った薪の山
 function veiled(c) { floor(c, 0, 0); R(c, "#4f4a55", 10, 28, 28, 16); R(c, "#6d6670", 10, 28, 28, 3); blob(c, "#d8d2c0", 24, 22, 14, 10); R(c, "#d8d2c0", 11, 22, 26, 10); blob(c, "#efe9d8", 22, 17, 8, 5); R(c, "#b8b2a0", 12, 30, 2, 6); R(c, "#b8b2a0", 34, 30, 2, 6); } // 布をかけた台座
+
+function ship(c, o) { // 帆船（横3マス×高さ3マス）。商盟の旗。o.left＝左向き
+  const W = T * 3;
+  c.save(); if (o && o.left) { c.translate(W, 0); c.scale(-1, 1); }
+  blob(c, "#16324a", W / 2, 132, 70, 8);                                                    // 水に落ちる影
+  blob(c, "#2b1c12", W / 2, 118, 66, 16); blob(c, "#5a3d27", W / 2, 114, 63, 13); blob(c, "#7a5434", W / 2, 110, 58, 8);
+  R(c, "#2b1c12", 12, 106, 120, 2); R(c, "#a37a50", 14, 104, 116, 2);                       // 舷の縁
+  R(c, "#3e2a1c", 118, 96, 18, 6); R(c, "#3e2a1c", 8, 100, 14, 4);                          // へさき・とも
+  for (const wx of [34, 58, 82, 106]) R(c, "#2b1c12", wx, 112, 5, 4);                        // 窓
+  R(c, "#4a3220", 70, 14, 5, 96); R(c, "#6e4c30", 70, 14, 2, 96);                           // 帆柱
+  R(c, "#4a3220", 38, 30, 70, 3); R(c, "#4a3220", 44, 76, 58, 3);                           // 帆桁
+  R(c, "#e9e0c8", 40, 33, 66, 43); R(c, "#d2c8ae", 40, 64, 66, 12); R(c, "#f7f1e0", 44, 36, 20, 30); // 帆
+  blob(c, "#c99a2a", 73, 52, 11, 11); blob(c, "#f0c84a", 73, 51, 8, 8); R(c, "#8a6a18", 69, 50, 8, 2); // 商盟の紋（金の円）
+  R(c, "#c99a2a", 75, 8, 18, 9); R(c, "#f0c84a", 75, 8, 18, 3);                             // 旗
+  c.restore();
+}
+function storm(c, tx, ty) { // 嵐の壁：荒れた暗い海と、雨の筋
+  R(c, "#1a2230", 0, 0, T, T); blob(c, "#243248", 24, 30, 22, 10); blob(c, "#2e3e58", 14 + (tx * 7 + ty * 3) % 20, 18, 9, 4);
+  for (let k = 0; k < 4; k++) { const x = (tx * 13 + ty * 7 + k * 11) % T; R(c, "#8fa6c4", x, (k * 12 + ty * 5) % T, 1, 9); }
+  R(c, "#c8d8ec", (tx * 17 + ty * 29) % 40 + 4, (tx * 11) % 30 + 6, 6, 1);
+}
+function winch(c) { // 鎖の巻き上げ機（2×2マス）
+  blob(c, "#1a1410", 48, 84, 40, 8);
+  R(c, "#3e2a1c", 14, 40, 68, 40); R(c, "#6e4c30", 16, 42, 64, 34); R(c, "#8a6440", 16, 42, 64, 4);
+  blob(c, "#4d4a55", 48, 54, 22, 18); blob(c, "#6a6672", 48, 52, 18, 14); blob(c, "#33303a", 48, 54, 6, 6);
+  for (const a of [0, 1, 2, 3]) R(c, "#8a8494", 46 + [0, 18, 0, -18][a], 52 + [-18, 0, 18, 0][a], 4, 4);
+  for (let y = 0; y < 40; y += 6) { R(c, "#55525c", 46, y, 6, 4); R(c, "#7d7986", 47, y, 4, 2); } // 鎖
+}
+function cage(c) { // 水の中の鉄の檻（2×2マス）
+  R(c, "#1f2a36", 8, 18, 80, 70); for (let x = 10; x < 90; x += 10) { R(c, "#55525c", x, 14, 4, 76); R(c, "#8a8494", x, 14, 1, 76); }
+  R(c, "#3d3a44", 6, 12, 84, 6); R(c, "#3d3a44", 6, 84, 84, 6);
+}
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage };
 })(window);
