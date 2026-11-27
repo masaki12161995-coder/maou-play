@@ -384,6 +384,28 @@ function townWall(c, x, y, nb) { // 町を囲む石の壁（上が壁でなけ�
   if (nb(0, -1) !== "Q") { R(c, "#8a8594", 0, 0, T, 4); R(c, "#6e6a78", 0, 4, T, 2); }
   if (nb(0, 1) !== "Q") R(c, "#2a2830", 0, T - 4, T, 4);
 }
+function coffin(c, o) { // 石棺（縦2マス）。wheat＝麦の穂の彫り、open＝蓋がずれている
+  const H = T * 2;
+  caveFloor(c, 0, 0); caveFloor(c, 0, T);
+  R(c, "#2a2830", 6, 6, 36, H - 10); R(c, "#7a7584", 8, 8, 32, H - 16); R(c, "#9a95a4", 8, 8, 32, 4); R(c, "#5d5966", 8, H - 12, 32, 4);
+  if (o && o.wheat) { R(c, "#c9b06a", 23, 20, 2, 50); for (let i = 0; i < 6; i++) { R(c, "#c9b06a", 19, 26 + i * 7, 4, 3); R(c, "#c9b06a", 25, 28 + i * 7, 4, 3); } }
+  else { R(c, "#5d5966", 14, 24, 20, 2); R(c, "#5d5966", 23, 18, 2, 40); }
+  if (o && o.open) { R(c, "#0b0a10", 10, 10, 28, 30); R(c, "#7a7584", 14, 4, 32, 10); }
+}
+function bigCoffin(c) { coffin(c, { open: 1 }); } // 建国王の棺（蓋がわずかにずれ、中は空）
+function mural(c, o) { // 壁画（横w×縦hマス）：剣を持つ人と角のある影。二人の顔は削られ、手が真ん中で重なる
+  const W = (o.w || 3) * T, H = (o.h || 2) * T;
+  R(c, "#3c3944", 0, 0, W, H); R(c, "#8a7a5a", 4, 4, W - 8, H - 8); R(c, "#a6967a", 4, 4, W - 8, 3);
+  R(c, "#4a3a2a", W * 0.22, H * 0.3, 14, H * 0.55); blob(c, "#6b6a7a", W * 0.22 + 7, H * 0.26, 8, 8);   // 剣を持つ人（顔は削れて灰色）
+  R(c, "#c9c4b0", W * 0.22 + 14, H * 0.2, 3, H * 0.45);
+  blob(c, "#2a2230", W * 0.72, H * 0.55, 22, 28); blob(c, "#6b6a7a", W * 0.72, H * 0.26, 10, 9);       // 角のある大きな影
+  R(c, "#2a2230", W * 0.72 - 14, H * 0.12, 4, 12); R(c, "#2a2230", W * 0.72 + 10, H * 0.12, 4, 12);
+  R(c, "#4a3a2a", W * 0.22 + 14, H * 0.55, W * 0.5 - 30, 4); blob(c, "#d8c8a0", W * 0.5, H * 0.56, 5, 4); // 重なる手
+}
+function stele(c) { R(c, "#3c3944", 4, 2, 40, 44); R(c, "#6d6878", 6, 4, 36, 40); for (let i = 0; i < 7; i++) R(c, "#45414e", 10, 8 + i * 5, 28 - (i % 3) * 4, 2); } // 古い字の碑
+function candle(c) { caveFloor(c, 0, 0); R(c, "#3c2a1e", 20, 22, 8, 20); R(c, "#d8d2c0", 21, 14, 6, 10); blob(c, "#5fa8ff", 24, 10, 4, 6); blob(c, "#c8e4ff", 24, 11, 2, 3); } // 青い蝋燭
+function chest2(c) { R(c, "#3c2a1e", 8, 16, 32, 24); R(c, "#6b4d34", 10, 18, 28, 8); R(c, "#2a1d14", 10, 26, 28, 12); } // 開いて空の箱
+function scroll(c) { floor(c, 0, 0); R(c, "#3c2a1e", 2, 2, 44, 44); for (let r = 0; r < 3; r++) for (let i = 0; i < 6; i++) blob(c, i % 2 ? "#d8cfb0" : "#c4b994", 7 + i * 7, 10 + r * 14, 3, 5); } // 巻物の棚
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll };
 })(window);

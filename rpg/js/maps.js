@@ -635,7 +635,7 @@ function lux() {
     foes: [], chests: [],
     trigs: [
       { x: 5, y: 13, run: "sakabaDoor" },
-      { x: 4, y: 5, when: g => S(g) === 33, run: "c2stop" },
+      { x: 4, y: 5, when: g => S(g) >= 33, run: "cryptIn" },
     ],
   };
 }
@@ -661,5 +661,76 @@ function sakaba() {
     trigs: [{ x: 5, y: 7, when: g => S(g) === 31, run: "c2s4" }],
   };
 }
-root.MAPS = { plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+
+// ---------- 王家の地下墓所（C3。強さ3）：古い礼拝堂の床の下。王たちの回廊→壁画の間 ----------
+function crypt1() {
+  const W = 15, H = 30, g = grid(W, H, "W");
+  fill(g, "_", 6, 24, 3, 5); g[29][7] = "_";              // 入口の階段の下
+  fill(g, "_", 2, 12, 11, 12);                            // 王たちの回廊
+  fill(g, "_", 6, 9, 3, 3);
+  fill(g, "_", 2, 2, 11, 7);                              // 壁画の間
+  g[2][7] = "S";
+  return {
+    id: "crypt1", nm: "王家の地下墓所", g, tier: 3, bg: "stone", dark: 1, inside: 1,
+    objs: [
+      ...[13, 16, 19].map(y => ({ t: "coffin", x: 3, y, w: 1, h: 2 })), ...[13, 16].map(y => ({ t: "coffin", x: 11, y, w: 1, h: 2 })),
+      { t: "coffin", x: 11, y: 19, w: 1, h: 2, wheat: 1, text: ["麦の穂の彫りのある、新しい石棺。"] },
+      { t: "candle", x: 5, y: 23 }, { t: "candle", x: 9, y: 23 }, { t: "candle", x: 5, y: 12 }, { t: "candle", x: 9, y: 12 },
+      { t: "mural", x: 4, y: 2, w: 3, h: 2, text: ["剣を持つ人と、角のある大きな影。", "二人の顔だけが、削り取られている。"] },
+      { t: "candle", x: 2, y: 2 }, { t: "candle", x: 12, y: 2 },
+    ],
+    exits: [{ x: 7, y: 29, to: "lux", tx: 4, ty: 6, dir: 0 }, { x: 7, y: 2, to: "crypt2", tx: 7, ty: 17, dir: 3 }],
+    npcs: [],
+    foes: [
+      { id: "cr1", x: 7, y: 17, k: "hakamori", g: ["hakamori", "honeban", "hakamori"] },
+      { id: "cr2", x: 4, y: 21, k: "rousoku", g: ["rousoku", "sekkan", "rousoku"] },
+      { id: "cr3", x: 10, y: 6, k: "honeban", g: ["honeban", "sekkan"] },
+    ],
+    chests: [{ id: "c_crypt1", x: 12, y: 22, item: "knightswd" }, { id: "c_crypt2", x: 2, y: 8, tool: "onigiri" }],
+    trigs: [
+      { x: 7, y: 27, when: g => S(g) === 34, run: "c2s6" },
+      { x: 9, y: 19, w: 2, h: 2, when: g => S(g) === 35, run: "c2s6b" },
+      { x: 2, y: 6, w: 11, h: 1, when: g => S(g) === 36, run: "c2s6c" },
+    ],
+  };
+}
+// ---------- 建国王の間と、奥の階段（石獅子） ----------
+function crypt2() {
+  const W = 15, H = 19, g = grid(W, H, "W");
+  fill(g, "_", 3, 6, 9, 11); g[17][7] = "_"; g[18][7] = "_";
+  fill(g, "_", 6, 2, 3, 4); g[2][7] = "S";
+  return {
+    id: "crypt2", nm: "建国王の間", g, tier: 3, bg: "stone", dark: 1, inside: 1,
+    objs: [
+      { t: "bigCoffin", x: 7, y: 10, w: 1, h: 2, talk: "kenkoku" },
+      { t: "stele", x: 3, y: 6, talk: "hibun" }, { t: "stele", x: 4, y: 6, talk: "hibun" },
+      { t: "candle", x: 3, y: 15 }, { t: "candle", x: 11, y: 15 }, { t: "candle", x: 11, y: 7 },
+    ],
+    exits: [{ x: 7, y: 18, to: "crypt1", tx: 7, ty: 3, dir: 0 }, { x: 7, y: 2, to: "kiroku", tx: 5, ty: 8, dir: 3 }],
+    npcs: [
+      { id: "shishiN", x: 7, y: 4, mon: "m_shishiL", face: 1, nm: "石獅子", when: g => S(g) <= 38 },
+    ],
+    foes: [], chests: [],
+    trigs: [
+      { x: 7, y: 15, when: g => S(g) === 37, run: "c2s7" },
+      { x: 7, y: 6, when: g => S(g) === 38, run: "c2s8" },
+    ],
+  };
+}
+// ---------- 王城の地下・記録の間 ----------
+function kiroku() {
+  const g = grid(11, 10, "w"); fill(g, "p", 1, 1, 9, 8); g[9][5] = "D";
+  return {
+    id: "kiroku", nm: "記録の間", g, tier: 0, bg: null, inside: 1, dark: 1,
+    objs: [
+      { t: "scroll", x: 1, y: 1 }, { t: "scroll", x: 2, y: 1 }, { t: "scroll", x: 3, y: 1 }, { t: "scroll", x: 7, y: 1 }, { t: "scroll", x: 8, y: 1 }, { t: "scroll", x: 9, y: 1 },
+      { t: "table", x: 5, y: 3 }, { t: "chest2", x: 5, y: 2 },
+      { t: "shelf", x: 9, y: 5, talk: "kakushi" },
+    ],
+    exits: [{ x: 5, y: 9, to: "crypt2", tx: 7, ty: 3, dir: 0 }],
+    npcs: [], foes: [], chests: [],
+    trigs: [{ x: 5, y: 7, when: g => S(g) === 39, run: "c2s9" }],
+  };
+}
+root.MAPS = { crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

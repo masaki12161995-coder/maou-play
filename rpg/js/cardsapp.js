@@ -32,6 +32,10 @@ const WORLD={
   w_kamausagi:{nm:"カマウサギ",r:1,n:[5,4,1,3],src:"img/monster_003.png",sz:[40,45],k:"魔物"},
   w_fusha:{nm:"フウシャ虫",r:2,n:[3,6,2,5],src:"img/monster_082.png",sz:[35,35],k:"魔物"},
   w_doro:{nm:"ドロ人形",r:2,n:[6,2,6,2],src:"img/monster_031.png",sz:[72,70],k:"魔物"},
+  w_hakamori:{nm:"ハカモリ鴉",r:1,n:[4,4,2,3],src:"img/monster_037.png",sz:[31,30],k:"魔物"},
+  w_rousoku:{nm:"ロウソク霊",r:2,n:[2,5,5,4],src:"img/monster_007.png",sz:[22,35],k:"魔物"},
+  w_sekkan:{nm:"石棺ヤドカリ",r:2,n:[6,2,3,5],src:"img/m_sekkan.png",sz:[41,30],k:"魔物"},
+  w_shishi:{nm:"双頭の石獅子",r:4,n:[7,6,6,6],src:"img/m_shishiL.png",sz:[49,45],k:"魔物"},
   w_honeban:{nm:"ホネ番兵",r:2,n:[5,5,3,3],src:"img/monster_035.png",sz:[43,70],k:"魔物"},
   w_rizeria:{nm:"王女リゼリア",r:4,n:[6,8,5,6],src:"img/c_rizeria.png",sz:[31,64],k:"人物"},
   w_kai:{nm:"渡し守",r:3,n:[6,5,4,6],src:"img/c_kai.png",sz:[35,59],k:"人物"},
@@ -52,7 +56,7 @@ OPPS.length=0; OPPS.push(
   {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_bram","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_ookami","w_hane","w_donguri","w_nat","w_toraji","w_komari"]},
   {nm:"看板娘ニコ",who:"070n",cap:12,depth:2,sig:"w_rizeria",pool:["w_rizeria","w_mugiwara","w_mugiwara","w_kamausagi","w_kamausagi","w_fusha","w_doro","w_kakashi","w_ookami","w_hane","w_seri","w_karin"]},
   {nm:"粉屋のモルト",who:"019k",cap:11,depth:2,sig:"w_fusha",pool:["w_fusha","w_fusha","w_mugiwara","w_mugiwara","w_mugiwara","w_kamausagi","w_doro","w_koromochi","w_hane","w_kakashi","w_poruka","w_nat"]},
-  {nm:"門番ダリオ",who:"g10",cap:12,depth:2,sig:"w_honeban",pool:["w_honeban","w_doro","w_doro","w_kamausagi","w_fusha","w_mugiwara","w_tsuta","w_ishikoro","w_ookami","w_kakashi","w_teo","w_rinka"]});
+  {nm:"門番ダリオ",who:"g10",cap:12,depth:2,sig:"w_honeban",pool:["w_honeban","w_shishi","w_doro","w_doro","w_kamausagi","w_fusha","w_mugiwara","w_hakamori","w_rousoku","w_sekkan","w_ookami","w_teo","w_rinka"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）

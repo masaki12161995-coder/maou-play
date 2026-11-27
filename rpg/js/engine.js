@@ -119,6 +119,15 @@ const SKILLS = {
   sickleear: { nm: "鎌耳", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   windsting: { nm: "風車針", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 50, dist: "遠", dir: "間接", kind: "攻撃" },
   mudslap:   { nm: "泥はたき", bp: 4, rank: "C", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // 王家の地下墓所
+  gravepeck: { nm: "墓つつき", bp: 3, rank: "D", tg: "one", at: ["突", "陰"], dist: "遠", dir: "間接", kind: "攻撃" },
+  oldblade2: { nm: "古式の剣", bp: 4, rank: "C", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  bluefire:  { nm: "青い灯", bp: 4, rank: "D", tg: "col", at: ["熱", "陰"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  lidpinch:  { nm: "蓋ばさみ", bp: 4, rank: "C", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
+  lionclaw:  { nm: "石の爪", bp: 0, rank: "B", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  lionroar:  { nm: "咆哮", bp: 0, rank: "C", tg: "all", at: ["打"], stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  lionfang:  { nm: "石の牙", bp: 0, rank: "A", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  lionbreath:{ nm: "灰の息", bp: 0, rank: "C", tg: "row", at: ["陰"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
   wolfbite:  { nm: "かみ裂き", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   dragontail:{ nm: "竜の尾", bp: 0, rank: "A", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
 };
@@ -197,6 +206,10 @@ const MATS = {
   oreha:   { nm: "錆びた折れ刃", icon: "mat_012", fam: "金属", rare: "緑" },
   ishi:    { nm: "祠の石くれ", icon: "mat_078", fam: "石・結晶", rare: "紫" },
   kinoko:  { nm: "光るきのこ", icon: "mat_100", fam: "植物", rare: "白" },
+  karasu:  { nm: "鴉の羽根", icon: "mat_108", fam: "羽", rare: "緑" },
+  hone:    { nm: "小さな骨", icon: "mat_115", fam: "骨・牙・爪", rare: "白" },
+  rou:     { nm: "青い蝋", icon: "mat_rou", fam: "液体・粉", rare: "白" },
+  sekkan:  { nm: "石棺のかけら", icon: "mat_009", fam: "石・結晶", rare: "白" },
   mugi:    { nm: "麦わら", icon: "mat_024", fam: "植物", rare: "白" },
   usage:   { nm: "兎の毛皮", icon: "mat_006", fam: "皮・鱗・甲羅", rare: "白" },
   doro:    { nm: "泥の塊", icon: "mat_023", fam: "液体・粉", rare: "緑" },
@@ -239,6 +252,11 @@ const HEARTS = {
   kamausagi:{ nm: "カマウサギの心", col: "白", mul: { str: 104, vit: 92, dex: 104, agi: 112, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "sickleear", up: ["agi", "str"] },
   fusha:    { nm: "フウシャ虫の心", col: "白", mul: { str: 94, vit: 94, dex: 110, agi: 108, int: 100, wil: 98, lov: 100, cha: 100 }, sk: "windsting", up: ["dex", "agi"] },
   doro:     { nm: "ドロ人形の心", col: "緑", mul: { str: 110, vit: 114, dex: 92, agi: 86, int: 94, wil: 104, lov: 100, cha: 96 }, sk: "mudslap", up: ["vit", "str"] },
+  hakamori: { nm: "ハカモリ鴉の心", col: "白", mul: { str: 96, vit: 92, dex: 108, agi: 114, int: 100, wil: 96, lov: 100, cha: 100 }, sk: "gravepeck", up: ["agi", "dex"] },
+  honeban:  { nm: "ホネ番兵の心", col: "白", mul: { str: 108, vit: 104, dex: 104, agi: 94, int: 90, wil: 100, lov: 96, cha: 100 }, sk: "oldblade2", up: ["str", "dex"] },
+  rousoku:  { nm: "ロウソク霊の心", col: "白", mul: { str: 90, vit: 92, dex: 98, agi: 104, int: 114, wil: 108, lov: 100, cha: 100 }, sk: "bluefire", up: ["int", "wil"] },
+  sekkan:   { nm: "石棺ヤドカリの心", col: "白", mul: { str: 104, vit: 116, dex: 96, agi: 86, int: 94, wil: 104, lov: 100, cha: 100 }, sk: "lidpinch", up: ["vit", "wil"] },
+  shishi:   { nm: "石獅子の心", col: "青", mul: { str: 112, vit: 114, dex: 100, agi: 98, int: 96, wil: 110, lov: 100, cha: 104 }, sk: "lionclaw", up: ["str", "vit"], ps: "standfast" },
   ookami:   { nm: "モリオオカミの心", col: "白", mul: { str: 106, vit: 96, dex: 100, agi: 110, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "wolfbite", up: ["agi", "str"] },
   nushi:    { nm: "ヌシガエルの心", col: "緑", mul: { str: 106, vit: 114, dex: 92, agi: 86, int: 102, wil: 112, lov: 105, cha: 102 }, sk: "bigyawn", up: ["vit", "wil"] },
   kokemusha:{ nm: "コケ武者の心", col: "緑", mul: { str: 114, vit: 110, dex: 100, agi: 90, int: 88, wil: 100, lov: 95, cha: 98 }, sk: "mosscut", up: ["str", "vit"] },
@@ -328,6 +346,16 @@ const FOES = {
   kamausagi:{ mat: "usage", nm: "カマウサギ", img: "monster_003", wt: "claw", pow: 10, hp: 85, st: { str: 30, vit: 11, dex: 18, agi: 26, int: 6, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 冷: 20 }, every: { n: 2, sk: "sickleear" }, gold: 11, heart: "kamausagi" },
   fusha:    { mat: "hane", nm: "フウシャ虫", img: "monster_082", wt: "fang", pow: 9, hp: 80, st: { str: 27, vit: 10, dex: 22, agi: 24, int: 8, wil: 10, lov: 0, cha: 10 }, res: { 熱: -40, 雷: -30, 打: -20, 斬: 10 }, every: { n: 3, sk: "windsting" }, gold: 12, heart: "fusha" },
   doro:     { mat: "doro", nm: "ドロ人形", img: "monster_031", wt: "fist", pow: 12, hp: 170, st: { str: 32, vit: 20, dex: 10, agi: 8, int: 6, wil: 14, lov: 0, cha: 9 }, res: { 打: 30, 斬: 10, 冷: -30, 雷: -30 }, every: { n: 3, sk: "mudslap" }, gold: 16, heart: "doro" },
+  // 王家の地下墓所（強さ3）
+  hakamori: { mat: "karasu", nm: "ハカモリ鴉", img: "monster_037", wt: "fang", pow: 10, hp: 85, st: { str: 30, vit: 11, dex: 22, agi: 28, int: 10, wil: 10, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 陰: 30 }, every: { n: 2, sk: "gravepeck" }, gold: 13, heart: "hakamori" },
+  honeban:  { mat: "hone", nm: "ホネ番兵", img: "monster_035", wt: "sword", pow: 12, hp: 160, st: { str: 34, vit: 18, dex: 18, agi: 12, int: 6, wil: 12, lov: 0, cha: 10 }, res: { 突: 40, 斬: 20, 打: -30, 陽: -60, 陰: 50 }, every: { n: 3, sk: "oldblade2" }, gold: 15, heart: "honeban" },
+  rousoku:  { mat: "rou", nm: "ロウソク霊", img: "monster_007", wt: "fang", pow: 9, hp: 75, st: { str: 20, vit: 10, dex: 14, agi: 20, int: 26, wil: 18, lov: 0, cha: 12 }, mag: 11, res: { 斬: 30, 突: 30, 冷: -60, 熱: 60, 陽: -30 }, every: { n: 2, sk: "bluefire" }, gold: 14, heart: "rousoku" },
+  sekkan:   { mat: "sekkan", nm: "石棺ヤドカリ", img: "m_sekkan", wt: "claw", pow: 11, hp: 175, st: { str: 31, vit: 26, dex: 12, agi: 8, int: 6, wil: 16, lov: 0, cha: 9 }, res: { 斬: 40, 突: 30, 打: -30, 雷: -40 }, every: { n: 3, sk: "lidpinch" }, gold: 16, heart: "sekkan" },
+  // 双頭の石獅子：二つの頭が別々に動く。片方が倒れると、残った頭は荒れる（lone）
+  shishiL:  { mat: "sekkan", book: "book1", nm: "石獅子・右の頭", img: "m_shishiL", wt: "claw", pow: 12, hp: 400, boss: 1, st: { str: 28, vit: 22, dex: 16, agi: 14, int: 10, wil: 18, lov: 0, cha: 14 },
+              res: { 斬: 30, 突: 20, 打: -20, 雷: -30 }, plan: { 3: "lionroar" }, every: { n: 2, sk: "lionclaw" }, lone: "lionroar", stunRes: 1, gold: 60 },
+  shishiR:  { mat: "hone", nm: "石獅子・左の頭", img: "m_shishiR", wt: "fang", pow: 12, hp: 400, boss: 1, mag: 12, st: { str: 27, vit: 22, dex: 16, agi: 16, int: 22, wil: 18, lov: 0, cha: 14 },
+              res: { 斬: 30, 突: 20, 打: -20, 冷: -30 }, plan: { 2: "lionbreath", 5: "lionbreath" }, every: { n: 3, sk: "lionfang" }, lone: "lionfang", stunRes: 1, gold: 60 },
   // 一本杉の拳法娘（腕試し）
   rinka:    { nm: "リンカ", img: "person_004", person: 1, human: 1, wt: "fist", pow: 11, hp: 680, boss: 1, st: { str: 33, vit: 20, dex: 18, agi: 30, int: 8, wil: 16, lov: 0, cha: 16 },
               res: {}, plan: { 2: "r_senpu", 4: "r_hyaku", 6: "r_senpu" }, every: { n: 2, sk: "r_shotei" }, rageFrom: 8, rage: "r_hyaku", gold: 0 },
@@ -431,7 +459,7 @@ function newBattle(wave, seed, lo, roster) {
     for (const k of STATS) fst[k] = Math.round(M.st[k] * m);
     if (W.atk) fst.str = Math.round(fst.str * W.atk); // 物語の戦いで、相手が張り切っているとき（腕力だけ上げる）
     const hp = Math.round(M.hp * Math.pow(m, 2.2)), pow = Math.round(M.pow * m); // 体力は能力値より速く増える（こちらの攻撃も、能力×武器×技で掛け算に伸びるため）
-    const u = base({ ...M, pow, mag: Math.round(6 * m), st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
+    const u = base({ ...M, pow, mag: Math.round((M.mag || 6) * m), st: fst, key: f.k, id: "f" + i, side: 1, slot: i, c: f.big ? -1 : f.c, r: f.big ? -1 : f.r, big: !!f.big, max: hp, hp, lp: 1, hate: 1, sk: [], ps: [], bp: 0 });
     if (f.wait) { u.down = true; u.hp = 0; u.wait = true; } // まだ出てきていない（呼ばれると出てくる）
     return u;
   });
@@ -556,6 +584,7 @@ function foeChoose(st, u) {
   else if (u.rageFrom && st.turn >= u.rageFrom) s = SKILLS[u.rage];
   else if (u.every && st.turn % u.every.n === 0) s = SKILLS[u.every.sk];
   else if (u.every2 && st.turn % u.every2.n === 0) s = SKILLS[u.every2.sk];
+  if (u.lone && !st.foes.some(f => f !== u && f.boss && !f.down)) s = SKILLS[u.lone]; // 相方が倒れたら、残った方は荒れる
   if (s.tg === "summon" && !st.foes.some(f => f.down && f !== u && !f.boss)) s = SKILLS.attack; // 呼べる子がいなければ、ふつうに攻める
   return s;
 }
