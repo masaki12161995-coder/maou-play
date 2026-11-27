@@ -332,7 +332,7 @@ function gearView(L, redraw, h, m) {
     const y = ey + i * 36, row = A(L, div("frame slotrow" + (slotSel === sl ? " on" : ""), ""), 12, y, 277, 34);
     T(row, 8, 0, 46, 32, SLOT_NM[sl], 9.5, "label");
     if (sl === "heart") {
-      if (m.heart) { A(row, heartIcon(m.heart, 24), 54, 4, 24, 24); T(row, 84, 2, 188, 16, `${hNm(m.heart)}`, 10.5, "name"); T(row, 84, 17, 188, 14, heartSummary(m.heart), 8.5, "dim2"); }
+      if (m.heart) { A(row, heartIcon(m.heart, 24), 54, 4, 24, 24); T(row, 84, 2, 120, 16, `${hNm(m.heart)}`, 10.5, "name"); fitT(T(row, 204, 2, 68, 16, `<span class="pstag">技 ${BT.SKILLS[BT.heart(m.heart).sk].nm}</span>`, 9, "right")); fitT(T(row, 84, 17, 188, 14, heartMul(m.heart), 8.5, "")); } // 今の心も、候補と同じく能力の％で
       else T(row, 58, 0, 210, 32, "なし", 10, "dim");
     } else {
       const it = m.gear[sl];

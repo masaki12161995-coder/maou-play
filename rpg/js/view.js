@@ -73,6 +73,12 @@ function drawTwin(tw, t) {
   ctx.restore();
   tw.forEach(u => { if (!u.down) { const b = foeBox(u), bw = Math.min(30, Math.max(16, Math.floor(b.w * 0.7))); hpBar(b.x - Math.floor(bw / 2), b.y + 2, bw, u.hp / u.max); } });
 }
+// 横に寝た姿：目を閉じたコマ（5段目の右）を90度まわして、地面（y）に横たえる。dir＝1は頭が右、-1は頭が左
+function lying(img, x, y, fw, fh, dir) {
+  ctx.save(); ctx.translate(Math.round(x * 4) / 4, Math.round((y - fw * 0.34) * 4) / 4); ctx.rotate(dir * Math.PI / 2);
+  ctx.drawImage(img, 2 * SHEET.fw, 4 * SHEET.fh, SHEET.fw, SHEET.fh, -fw / 2, -fh / 2, fw, fh);
+  ctx.restore();
+}
 function where(u) {
   if (u.side === 1) { const b = foeBox(u); return { x: b.x, y: b.top + b.h * 0.45 }; }
   const p = heroPos(u); return { x: p.x, y: p.y - 20 };
@@ -250,7 +256,8 @@ function draw(t) {
       ctx.save();
       if (u.down) ctx.globalAlpha = u.human ? Math.max(0.5, (f.fade - t) / 500) : Math.max(0, (f.fade - t) / 500);
       ctx.fillStyle = "#0006"; ctx.fillRect(b.x - Math.floor(b.w * 0.35), b.y - 1, Math.floor(b.w * 0.7), 1.5);
-      if (u.person) { // 人間の敵：ふだんは右向きの立ち姿。動くときは構えのコマ（左向きの絵）を裏返して右向きに
+      if (u.person && u.down) lying(img, b.x + ox, b.y, b.w, b.h, -1); // 倒れた人間の敵も、横に寝かせる
+      else if (u.person) { // 人間の敵：ふだんは右向きの立ち姿。動くときは構えのコマ（左向きの絵）を裏返して右向きに
         const ps = pose[u.id], act = ps && ps.until > t, col = act ? (ps.kind === "magic" ? 0 : 1) : 1, row = act ? 4 : 2;
         if (act) { ctx.translate(Math.round((b.left + ox + b.w) * 4) / 4, Math.round(b.top * 4) / 4); ctx.scale(-1, 1); }
         else ctx.translate(Math.round((b.left + ox) * 4) / 4, Math.round(b.top * 4) / 4);
@@ -275,8 +282,11 @@ function draw(t) {
       const fw = SHEET.fw * Q, fh = SHEET.fh * Q;
       ctx.fillStyle = "#0007"; ctx.fillRect(p.x - 6, p.y - 1, 12, 1.5);
       ctx.save(); if (u.down) ctx.globalAlpha = 0.8;
-      ctx.drawImage(img, col * SHEET.fw, row * SHEET.fh, SHEET.fw, SHEET.fh, p.x - fw / 2 + ox, p.y - fh, fw, fh);
-      if (f.flash > t) { ctx.globalAlpha = 0.6; ctx.drawImage(whiteCell(img, col, row), p.x - fw / 2 + ox, p.y - fh, fw, fh); }
+      if (u.down) lying(img, p.x + ox, p.y, fw, fh, 1); // 倒れた仲間：目を閉じたコマを横に寝かせる（敵に背を向けず、後ろへ倒れた向き）
+      else {
+        ctx.drawImage(img, col * SHEET.fw, row * SHEET.fh, SHEET.fw, SHEET.fh, p.x - fw / 2 + ox, p.y - fh, fw, fh);
+        if (f.flash > t) { ctx.globalAlpha = 0.6; ctx.drawImage(whiteCell(img, col, row), p.x - fw / 2 + ox, p.y - fh, fw, fh); }
+      }
       ctx.restore();
       hpBar(p.x - 8, p.y + 2, 16, u.hp / u.max);
       hpText(p.x, p.y + 5, u);
