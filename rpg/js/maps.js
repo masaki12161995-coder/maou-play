@@ -485,7 +485,7 @@ function ohashi() {
       // 橋が直った後、西のたもとに旅の機械いじり
       { id: "nat", x: 8, y: 15, img: "person_094", dir: 3, nm: "ナット", talk: "nat", when: g => !(g.roster || []).includes(10) && S(g) >= 28 && !g.flags.cut },
       // 町の人（段階2から）
-      { id: "chaya", x: 20, y: 10, img: "person_089", dir: 0, nm: "茶屋の娘", talk: "tt", tp: "harune", when: g => S(g) >= 28 && !g.flags.cut },
+      { id: "chaya", x: 20, y: 10, img: "person_076c", dir: 0, nm: "茶屋の娘", talk: "tt", tp: "harune", when: g => S(g) >= 28 && !g.flags.cut },
       { id: "tabi", x: 14, y: 14, img: "person_075", dir: 1, nm: "旅人", talk: "tt", tp: "harune", tw: "旅人（荷を背負った若い商人）", when: g => S(g) >= 28 && !g.flags.cut },
     ],
     foes: [], chests: [],
@@ -618,11 +618,11 @@ function milna() {
       { id: "morto", x: 6, y: 11, img: "person_019k", dir: 0, nm: "モルト", talk: "morto", card: g => S(g) !== 30 },
       // 町の人（段階2から。台詞は TOWNTALK）
       { id: "hanna", x: 6, y: 4, img: "person_020", dir: 0, nm: "ハンナ", talk: "hanna", when: g => !(g.roster || []).includes(12) },
-      { id: "yado", x: 14, y: 14, img: "person_008", dir: 0, nm: "宿の主人", talk: "milnaInn" },
-      { id: "neru", x: 3, y: 13, img: "person_066", dir: 1, nm: "ネル", talk: "tt", tp: "milna" },
+      { id: "yado", x: 14, y: 14, img: "person_014y", dir: 0, nm: "宿の主人", talk: "milnaInn" },
+      { id: "neru", x: 3, y: 13, img: "person_026n", dir: 1, nm: "ネル", talk: "tt", tp: "milna" },
       { id: "fusha", x: 12, y: 9, img: "person_072", dir: 0, nm: "風車番", talk: "tt", tp: "milna" },
       { id: "sentaku", x: 15, y: 7, img: "person_070s", dir: 2, nm: "洗濯の女", talk: "tt", tp: "milna" },
-      { id: "konako", x: 8, y: 13, img: "person_052", dir: 0, nm: "粉まみれの子", talk: "tt", tp: "milna" },
+      { id: "konako", x: 8, y: 13, img: "person_022k", dir: 0, nm: "粉まみれの子", talk: "tt", tp: "milna" },
     ],
     foes: [], chests: [],
     trigs: [{ x: 8, y: 2, when: g => S(g) === 30 && !g.flags.milna, run: "c2s2" }],
@@ -678,7 +678,7 @@ function lux() {
       { id: "tomon", x: W - 2, y: 14, img: "person_080e", dir: 1, nm: "東門の門番", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       // 場面16の一：朝の大通りを行く葬列（荷車は14,15）
       ...[["jako16", 16, 15, "person_133", 2], ["lise16", 13, 15, "person_002", 2], ["muku16", 16, 16, "person_058h", 2], ["bram16", 15, 16, "person_005", 2], ["naki16a", 12, 15, "person_074k", 2], ["naki16b", 12, 16, "person_076", 2], ["naki16c", 13, 16, "person_074k", 2],
-        ["machiW", 17, 14, "person_066", 0], ["machiM", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16a") })),
+        ["machiW", 17, 14, "person_026n", 0], ["machiM", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16a") })),
       // 場面16の二：東門（荷車は17,15）
       ...[["jako16b", 19, 15, "person_133", 2], ["lise16b", 16, 15, "person_002", 2], ["muku16b", 16, 16, "person_058h", 2], ["bram16b", 17, 16, "person_005", 2], ["naki16d", 15, 15, "person_074k", 2], ["naki16e", 15, 16, "person_076", 2], ["naki16f", 14, 15, "person_074k", 2],
         ["tomon16", 19, 14, "person_080e", 0], ["machiM2", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16b") })),
