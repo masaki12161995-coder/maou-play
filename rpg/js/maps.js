@@ -365,7 +365,7 @@ function harune() {
       { t: "sign", x: 8, y: 8, text: ["宿　かわうそ亭"] },
       { t: "house", x: 12, y: 5, w: 5, h: 3, roof: "blue", door: 2 },               // 問屋場
       { t: "sign", x: 11, y: 8, text: ["ハルネ問屋場"] },
-      { t: "house", x: 4, y: 20, w: 4, h: 3, roof: "green", door: 1 },              // 貸本屋
+      { t: "house", x: 4, y: 20, w: 4, h: 3, roof: "green", door: 1, kind: "books", nm: "貸本屋" },              // 貸本屋
       { t: "sign", x: 8, y: 23, text: ["貸本"] },
       { t: "house", x: 12, y: 20, w: 4, h: 3, roof: "red", door: 1, chimney: 1 },
       { t: "well", x: 9, y: 11 },
@@ -464,7 +464,7 @@ function ohashi() {
       { t: "plaque", x: 10, y: 11, text: ["ガルム大橋。建国の年、これを架く。", "名の由来は伝わっていない。"] },
       { t: "bigStone", x: 9, y: 15, text: ["切り口がない。割れたのではないらしい。"], when: g => S(g) >= 20 },
       { t: "sign", x: 4, y: 11, text: ["北　古い見張り塔"] },
-      { t: "house", x: 18, y: 7, w: 3, h: 3, roof: "red", door: 1 },                 // 東のたもとの茶屋
+      { t: "house", x: 18, y: 7, w: 3, h: 3, roof: "red", door: 1, kind: "tea", nm: "たもとの茶屋" },                 // 東のたもとの茶屋
     ],
     exits: [{ x: 0, y: 13, to: "harune", tx: 17, ty: 14, dir: 1 }],
     npcs: [
@@ -610,7 +610,7 @@ function milna() {
       { t: "house", x: 1, y: 11, w: 3, h: 2, roof: "green", door: 1 },                // ネルの家（粉屋の隣）
       { t: "house", x: 4, y: 2, w: 3, h: 2, roof: "red", door: 1 },                  // 里の外れの木こり小屋
       { t: "woodpile", x: 7, y: 3 }, { t: "woodpile", x: 7, y: 2 },
-      { t: "house", x: 13, y: 11, w: 3, h: 2, roof: "blue", door: 1 },               // 宿
+      { t: "house", x: 13, y: 11, w: 3, h: 2, roof: "blue", door: 1, kind: "inn", nm: "ミルナの宿" },               // 宿
       { t: "sign", x: 12, y: 13, text: ["宿"] },
     ],
     exits: [{ x: 8, y: 0, to: "plain", tx: 31, ty: 28, dir: 3 }],
@@ -967,7 +967,7 @@ function kinsa() {
   return {
     id: "kinsa", nm: "金砂街道", g, tier: 4, bg: "gold", music: null, pad: "U",
     objs: [
-      { t: "house", x: 8, y: 1, w: 5, h: 3, roof: "sand", door: 2, sign: "宿" },      // 隊商宿
+      { t: "house", x: 8, y: 1, w: 5, h: 3, roof: "sand", door: 2, sign: "宿", kind: "inn", nm: "隊商宿" },      // 隊商宿
       { t: "wagon", x: 3, y: 4, w: 2, h: 1 },
       { t: "cactus", x: 3, y: 11 }, { t: "cactus", x: 12, y: 10 }, { t: "cactus", x: 19, y: 5 }, { t: "cactus", x: 23, y: 12 }, { t: "palm", x: 13, y: 2, h: 2 },
       { t: "sign", x: 1, y: 8, text: ["西　東の関所・星見の丘"] }, { t: "sign", x: 24, y: 8, text: ["東　金砂の都ザハラ"] },
@@ -1092,5 +1092,47 @@ function zinn() { // ザハラの宿
     foes: [], chests: [], trigs: [],
   };
 }
-root.MAPS = { kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+
+// ---------- ふつうの家（物語の出来事のない家は、どれも入れる）----------
+// 戸口に入ると、field.js が flags.minka に「どの町の・どの家か」を書いてから、ここへ来る。
+// 家ごとの形と住人は、家の場所から決まる（何度入っても同じ家）。台詞は story.js の MINKA_TALK
+const MINKA_FOLK = { w: "person_026h", o: "person_071h", g: "person_070h", m: "person_074h", c: "person_022h", inn: "person_014h", books: "person_099h", tea: "person_070t" };
+function minka() {
+  const d = (root.GS && GS.G && GS.G.flags.minka) || { from: "village", x: 5, y: 8, rx: 5, ry: 9, kind: "home", seed: 1, big: 0 };
+  const big = d.big || d.kind !== "home", W = big ? 9 : 7, H = big ? 7 : 6, g = grid(W, H, "w"); fill(g, "p", 1, 1, W - 2, H - 2);
+  const dx = Math.floor(W / 2); g[H - 1][dx] = "D";
+  const flip = d.seed % 2 === 1, X = x => flip ? W - 1 - x : x; // 家ごとに左右を入れかえる
+  const objs = [], npcs = [], who = (k, x, y, dir, nm) => npcs.push({ id: "mk" + npcs.length, x: X(x), y, img: MINKA_FOLK[k], dir, nm, talk: "minkaTalk", role: k });
+  const find = (t, x, y) => objs.push({ t, x: X(x), y, talk: "minkaFind" });
+  if (d.kind === "inn") {
+    [3, 4, 5].forEach(x => objs.push({ t: "counter", x: X(x), y: 2 })); objs.push({ t: "shelf", x: X(1), y: 1 });
+    objs.push({ t: "futon", x: X(7), y: 3, w: 1, h: 2 }, { t: "futon", x: X(6), y: 3, w: 1, h: 2 }); find("basket", 1, 5);
+    who("inn", 4, 1, 0, "宿の者");
+  } else if (d.kind === "books") {
+    [1, 2, 6, 7].forEach(x => objs.push({ t: "shelf", x: X(x), y: 1, text: ["古い本がぎっしり並んでいる。背の字は、かすれて読めない。"] }));
+    objs.push({ t: "table", x: X(4), y: 3 }); objs.push({ t: "shelf", x: X(1), y: 4, text: ["貸し出し中の札が、いくつも下がっている。"] }); find("basket", 7, 5);
+    who("books", 4, 2, 0, "貸本屋");
+  } else if (d.kind === "tea") {
+    [3, 4, 5].forEach(x => objs.push({ t: "counter", x: X(x), y: 2 })); objs.push({ t: "hearth", x: X(1), y: 0 });
+    objs.push({ t: "table", x: X(2), y: 4 }, { t: "table", x: X(6), y: 4 }); find("shelf", 7, 1);
+    who("tea", 4, 1, 0, "茶屋の娘");
+  } else {
+    const roles = ["w", "o", "g", "m"], r = roles[((d.idx || 0) + [...d.from].reduce((a, c) => a + c.charCodeAt(0), 0)) % 4], nm = { w: "おかみさん", o: "じいさん", g: "娘", m: "亭主" }[r];
+    objs.push(d.chimney ? { t: "hearth", x: X(1), y: 0 } : { t: "shelf", x: X(1), y: 1 });
+    objs.push({ t: "bed", x: X(W - 2), y: 1, w: 1, h: 2 });
+    objs.push({ t: "table", x: X(2), y: H - 3 }, { t: "chair", x: X(3), y: H - 3 });
+    find(d.seed % 3 === 0 ? "basket" : "shelf", d.seed % 3 === 0 ? 1 : W - 3, d.seed % 3 === 0 ? H - 2 : 1);
+    if (big) objs.push({ t: "shelf", x: X(W - 2), y: 4 });
+    who(r, dx, 2, 0, nm);
+    if (big && (d.idx || 0) % 2 === 0) who("c", W - 3, H - 2, 1, "子ども");
+  }
+  return {
+    id: "minka", nm: d.nm || "民家", g, tier: 0, bg: null, inside: 1, music: "town",
+    objs, npcs, foes: [], chests: [], trigs: [],
+    exits: [{ x: dx, y: H - 1, to: d.from, tx: d.rx, ty: d.ry, dir: 0 }],
+  };
+}
+
+root.MINKA_FOLK = MINKA_FOLK;
+root.MAPS = { minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

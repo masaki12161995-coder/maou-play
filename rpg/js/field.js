@@ -27,8 +27,8 @@ function build(id) {
     const top = Math.ceil(need / 2), bot = need - top, w = M.g[0].length, rowT = () => Array(w).fill(M.pad || "T");
     M.g = [...Array(top).fill(0).map(rowT), ...M.g, ...Array(bot).fill(0).map(rowT)];
     for (const list of [M.objs, M.exits, M.npcs, M.foes, M.chests, M.trigs]) for (const o of list) o.y += top;
-    M.padTop = top;
-  } else M.padTop = 0;
+    M.padTop = top; M.padBot = bot;
+  } else { M.padTop = 0; M.padBot = 0; }
   M.h = M.g.length; M.w = M.g[0].length;
   // 置き物の下が木のマスだと、木の葉が置き物の上にかぶさってしまう。置き物の下は草にしておく
   for (const o of M.objs) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) if (M.g[o.y + j] && M.g[o.y + j][o.x + i] === "T") M.g[o.y + j][o.x + i] = ".";
@@ -39,6 +39,19 @@ function build(id) {
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (blocked[o.y + j]) blocked[o.y + j][o.x + i] = true;
   }
   for (const e of M.exits) blocked[e.y][e.x] = false;
+  // 地図の端の出口（行けば次の地図へ切りかわる所）に出す矢印。となり合う出口は1つにまとめる
+  const y0 = M.padTop, y1 = M.h - 1 - M.padBot, side = e => e.x === 0 ? 1 : e.x === M.w - 1 ? 2 : e.y === y0 ? 3 : e.y === y1 ? 0 : -1;
+  M.arrows = [];
+  for (const e of M.exits) { const d = side(e); if (d < 0) continue;
+    const a = M.arrows.find(a => a.dir === d && a.to === e.to && a.tiles.some(t => Math.abs(t.x - e.x) + Math.abs(t.y - e.y) === 1));
+    if (a) a.tiles.push(e); else M.arrows.push({ dir: d, to: e.to, tiles: [e] }); }
+  // 出来事のない家（戸口に仕掛けも出口もない家）は、どれも入れる：戸口の前のマスに「ふつうの家」へ入る仕掛けを足す
+  if (!M.inside) for (const o of M.objs) if (o.t === "house" && !o.noEnter) {
+    const x = o.x + (o.door || 0), y = o.y + o.h;
+    if (M.trigs.some(t => x >= t.x && x < t.x + (t.w || 1) && y >= t.y && y < t.y + (t.h || 1)) || M.exits.some(e => e.x === x && (e.y === y || e.y === y - 1))) continue;
+    const back = [[x, y + 1], [x - 1, y], [x + 1, y]].find(([bx, by]) => blocked[by] && blocked[by][bx] === false) || [x, y + 1]; // 出てきたときに立つマス（戸口の前の仕掛けに乗らない所）
+    M.trigs.push({ x, y, run: "minka", house: o, map: M.id, idx: M.trigs.filter(t => t.run === "minka").length, rx: back[0], ry: back[1] - M.padTop, dy: y - M.padTop, when: g => !g.flags.cut });
+  }
   const hasWater = M.g.some(r => r.includes("~") || r.includes("b") || r.includes("s") || r.includes("m"));
   ground = [paint(0)]; if (hasWater) ground.push(paint(1));
   over = paintOver();
@@ -138,7 +151,10 @@ function hudBuild() {
   const mb = px(div("px frame fhud fbtn", "≡"), rx - 30, top, 30, 26); mb.style.fontSize = d(16);
   mb.onclick = async e => { e.stopPropagation(); if (busy) return; busy = true; route = null; await UI.menu(); busy = false; hudBuild(); };
   hud.appendChild(mb);
-  hudEls = { nm };
+  // いまの目的：場所の名前の下に1行で（メニューの「いまの目的」と同じ文）。長いときは字を小さくして収める
+  const goal = G().flags.cut ? "" : UI.goalText();
+  if (goal) { const gl = px(div("px fhud goalline", `<i>▶</i>${goal}`), lx, top + 30, rx - lx, 16); gl.style.fontSize = d(9); gl.style.setProperty("--gw", d(rx - lx)); hud.appendChild(gl); UI.fitT(gl); }
+  hudEls = { nm, s: G().flags.s, cut: G().flags.cut };
 }
 DM.onFit.push(() => { if (active) hudBuild(); });
 
@@ -416,6 +432,7 @@ const TINT = { dusk: "rgba(190,90,40,0.26)", night: "rgba(14,18,60,0.52)", dawn:
 function draw(now) {
   requestAnimationFrame(draw);
   if (!active || !M) return;
+  if (hudEls.s !== G().flags.s || hudEls.cut !== G().flags.cut) hudBuild(); // 目的が変わったら、左上の目的も書きかえる
   // 歩きの区切り
   for (const o of [P, ...fol, ...foes]) if (o.from && now - o.t0 >= STEP * (o === P || fol.includes(o) ? 1 : 1.8)) { o.from = null; if (o === P) { arrived(); if (!route && talkTarget && !P.from) { const t = talkTarget; talkTarget = null; interact(t.tx, t.ty); } } }
   if (!P.from && !busy && drag && drag.dir !== null) stepTo(drag.dir);
@@ -456,6 +473,7 @@ function draw(now) {
     cardMark(n.x * TD + TD / 2, top - 2 + Math.sin(now / 420) * 0.8);
   }
   ctx.drawImage(over, 0, -TD, over.width / 2, over.height / 2);
+  if (!G().flags.cut) exitArrows(now);
   // 坑道は暗い（自分のまわりだけ明るい）
   if (M.dark) {
     const cx = lx * TD + TD / 2, cy = ly * TD + TD / 2, gr = ctx.createRadialGradient(cx, cy, 40, cx, cy, 210);
@@ -466,6 +484,21 @@ function draw(now) {
   // 暗転
   const fv = fade + (fadeTo - fade) * 0.25; fade = Math.abs(fv - fadeTo) < 0.01 ? fadeTo : fv;
   if (fade > 0) { ctx.fillStyle = `rgba(5,4,10,${fade})`; ctx.fillRect(cam.x, cam.y, DM.VW, DM.VH); }
+}
+// 出口の矢印：ゆっくり点滅しながら、外へ向かって少し動く。人が立ちふさいでいる所や、通れない仕掛けがある所には出さない
+function exitArrows(now) {
+  const k = 0.5 + 0.5 * Math.sin(now / 320);
+  for (const a of M.arrows) {
+    const [vx, vy] = DIRV[a.dir];
+    if (a.tiles.some(t => npcs.some(n => (n.x === t.x && n.y === t.y) || (n.x === t.x - vx && n.y === t.y - vy)) ||
+        M.trigs.some(r => r.run !== "minka" && (!r.when || r.when(G())) && [[t.x, t.y], [t.x - vx, t.y - vy]].some(([x, y]) => x >= r.x && x < r.x + (r.w || 1) && y >= r.y && y < r.y + (r.h || 1))))) continue;
+    const cx = a.tiles.reduce((s, t) => s + t.x, 0) / a.tiles.length * TD + TD / 2 + vx * (2 + k * 2);
+    const cy = a.tiles.reduce((s, t) => s + t.y, 0) / a.tiles.length * TD + TD / 2 + vy * (2 + k * 2);
+    ctx.save(); ctx.translate(Math.round(cx * 4) / 4, Math.round(cy * 4) / 4); ctx.rotate(Math.atan2(vy, vx)); ctx.scale(1.25, 1.25); ctx.globalAlpha = 0.45 + 0.55 * k;
+    ctx.fillStyle = "#1a1208"; ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-3.5, -6.5); ctx.lineTo(-3.5, 6.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#ffe9a8"; ctx.beginPath(); ctx.moveTo(4.5, 0); ctx.lineTo(-2.5, -4.8); ctx.lineTo(-2.5, 4.8); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
 }
 function fadeOut() { fadeTo = 1; return new Promise(r => setTimeout(r, 320)); }
 function fadeIn() { fade = 1; fadeTo = 0; }

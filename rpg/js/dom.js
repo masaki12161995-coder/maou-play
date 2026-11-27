@@ -11,7 +11,12 @@ const M = { W, H, DPR, K: 2, stage, hud, onFit: [] };
 const probe = document.createElement("div"); probe.id = "safeprobe"; document.body.appendChild(probe);
 M.fit = () => {
   const c = getComputedStyle(probe), n = k => parseFloat(c[k]) || 0;
-  const sl = n("paddingLeft"), sr = n("paddingRight"), st = n("paddingTop"), sb = n("paddingBottom");
+  let sl = n("paddingLeft"), sr = n("paddingRight"), st = n("paddingTop"), sb = n("paddingBottom");
+  // iPhoneのホーム画面から開いたとき、起動の直後は切り欠きの高さが0と返ることがある。そのときは機種の大きさから決めた値を使い、
+  // 本当の値が届いたら（下の見張りで）すぐ置きかえる
+  const ios = /iPhone/.test(navigator.userAgent), full = navigator.standalone || matchMedia("(display-mode: standalone)").matches, sh = Math.max(screen.width, screen.height);
+  if (ios && full && innerHeight > innerWidth && sh >= 812) { if (st < 20) st = sh >= 874 ? 62 : sh >= 852 ? 59 : 47; if (sb < 10) sb = 34; }
+  M.safeKey = [c.paddingTop, c.paddingBottom, c.paddingLeft, c.paddingRight].join();
   const vw = innerWidth, vh = innerHeight, aw = vw - sl - sr, ah = vh - st - sb;
   const K = Math.min(aw / W, ah / H), bw = W * K, bh = H * K, bx = sl + (aw - bw) / 2, by = st + (ah - bh) / 2;
   M.K = K; M.safePx = { t: st, b: sb, l: sl, r: sr };
@@ -23,6 +28,11 @@ M.fit = () => {
   if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; cv.getContext("2d").imageSmoothingEnabled = false; }
   M.onFit.forEach(f => f());
 };
+// 切り欠き・ホームバーの大きさが後から変わったら（起動の直後や、向きを変えたとき）、合わせ直す
+setInterval(() => { const c = getComputedStyle(probe); if ([c.paddingTop, c.paddingBottom, c.paddingLeft, c.paddingRight].join() !== M.safeKey) M.fit(); }, 500);
+["orientationchange", "pageshow"].forEach(e => addEventListener(e, () => setTimeout(() => M.fit(), 60)));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) setTimeout(() => M.fit(), 60); });
+if (window.visualViewport) visualViewport.addEventListener("resize", () => M.fit());
 // 画面ぜんぶにかぶせる幕（戦いに入るときの光など）。文字の枠ではなく、画面の端から端まで
 M.screenLayer = cls => { const e = M.div(cls, ""); e.style.cssText = "position:absolute;inset:0;z-index:5"; stage.appendChild(e); return e; };
 // 枠の中に描いた絵（背景）を、枠の外へのばす：左右は端の帯を裏返して、上下は端の1列を引きのばす

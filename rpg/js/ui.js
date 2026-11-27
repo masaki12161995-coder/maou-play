@@ -714,5 +714,5 @@ function slot(o) {
     draw();
   });
 }
-root.UI = { say, choose, result, menu, shop, cards, chinchiro, slot, clear: clearLayer };
+root.UI = { say, choose, result, menu, shop, cards, chinchiro, slot, clear: clearLayer, goalText: () => GOALS[GS.G.flags.s || 0] || "", fitT };
 })(window);

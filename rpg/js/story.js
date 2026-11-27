@@ -2627,6 +2627,70 @@ async function townTalk(place, who, n, as) {
 }
 // 町の人（台詞は TOWNTALK だけ）：地図の npc に tp（町）と、要るときは tw（見分けの印つきの名前）を書く
 T.tt = n => townTalk(n.tp, n.tw || n.nm, 0);
+
+// ---------- ふつうの家（maps.js の minka）----------
+// 町ごとの住人の台詞。物語の中身にはふれない、暮らしの話だけ（どの段階で入っても合うように）
+const MINKA_TOWN = { village: "toruka", harune: "harune", milna: "milna", lux: "lux", ohashi: "ohashi", kinsa: "kinsa" };
+const MINKA_TALK = {
+  toruka: {
+    w: ["おや、カイ。用があるなら、勝手口から入っておいでと言ったろう。", "鍋がふいてるんだ。またおいで。"],
+    o: ["わしの若いころはな、川はもっと広かった。", "…いや、川は変わらん。わしが縮んだんじゃな。"],
+    g: ["カイ、舟の具合はどう？　父さんが、棹の先を見てあげるって。", "わたし？　今日は豆のさや取り。指が緑色になっちゃった。"],
+    m: ["朝から豆畑で、腰が痛くてかなわん。", "カイ、あんたの舟がなけりゃ、この村は干上がる。ほんとうさ。"],
+    c: ["カイ兄ちゃん、いま、かくれんぼしてるの。しーっ。", "母ちゃんには、ここに居るって言わないでね。"],
+  },
+  harune: {
+    w: ["宿場は、旅の人が来ないと一日が長いのよ。", "お茶でもと言いたいけど、茶葉を切らしててね。"],
+    o: ["わしは馬子を四十年やった。", "この街道の石なら、ひとつ残らず踏んどるよ。"],
+    g: ["旅の人？　宿ならかわうそ亭よ。", "うちは宿じゃないの。よく間違われるけど。"],
+    m: ["いま、荷車の車輪を直してるところだ。", "宿場じゃ、車輪の音が止まったら、商いも止まるのさ。"],
+    c: ["旅の人の靴って、いろんな色の土がついてるね。", "どこから来たか、当てっこしてるんだ。"],
+  },
+  milna: {
+    w: ["粉が舞うから、戸はすぐ閉めとくれ。", "うちのパンは、里でいちばん…だと思ってるよ。"],
+    o: ["風の向きが変わると、ひざが痛む。", "風車より、わしのひざのほうが天気に詳しいぞ。"],
+    g: ["風車の羽の音、ここまで聞こえるでしょ。", "子守歌みたいなものよ。あれがないと眠れないの。"],
+    m: ["粉袋は重いぞ。持ってみるか？　…冗談だ。", "わしが腰を痛めたら、里じゅうのパンが止まるからな。"],
+    c: ["粉まみれで帰ると、母ちゃんに叱られるんだ。", "だから、外ではたいてから入るの。"],
+  },
+  lux: {
+    w: ["王都は広いけど、裏通りの家はどこもこの狭さよ。", "大通りの人たちは、こっちの道を知らないの。"],
+    o: ["わしは城の石垣を積んだ石工じゃった。", "王都の石には、ひとつずつ、わしらの手の跡がついとる。"],
+    g: ["表の通りは、いつも人でいっぱい。", "この窓からは、屋根と空しか見えないの。わたしは、それが好き。"],
+    m: ["王都で暮らすには、何をするにも銭がかかる。", "水を汲むにも、並んで半日だ。"],
+    c: ["大きくなったら、お城の門番になるんだ。", "門番って、立ってるだけでいいんでしょ？"],
+  },
+};
+const MINKA_SHOP = {
+  inn: ["いらっしゃい。休んでいくかい？　寝床なら空いてるよ。"],
+  books: ["本は貸すだけ。売りはしないよ。", "字が読めるなら一冊どうだい。…旅の荷物になるか。"],
+  tea: ["いらっしゃい。橋を渡ってきたの？　ずいぶん歩いたでしょう。", "お茶は表の縁台でどうぞ。ここは仕込みの場所なの。"],
+};
+T.minka = async t => {
+  const o = t.house;
+  if (F().time === "night" || (t.map === "village" && (S() === 11 || S() === 12))) { await sys("戸に、かんぬきが掛かっている。"); return; }
+  const seed = [...(t.map + ":" + t.x + "," + t.dy)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+  F().minka = { from: t.map, x: t.x, y: t.dy, rx: t.rx, ry: t.ry, kind: o.kind || "home", nm: o.nm || A.map().nm + "の家", seed, idx: t.idx || 0, big: o.w >= 4 ? 1 : 0, chimney: o.chimney ? 1 : 0, town: MINKA_TOWN[t.map] || "" };
+  await A.fadeOut();
+  const m = MAPS.minka(); A.enter("minka", m.exits[0].x, m.exits[0].y - 1, 3); A.fadeIn(); await wait(300);
+};
+T.minkaTalk = async n => {
+  const d = F().minka || {};
+  if (n.role === "inn") {
+    await UI.say(n.nm, MINKA_SHOP.inn);
+    if (await UI.choose("", "", ["泊まる", "やめる"]) !== 0) return;
+    await A.fadeOut(); SND.se("rest"); GS.restAll(); G().home = { map: d.from, x: d.rx, y: d.ry }; await wait(400); A.fadeIn(); DM.toast("心と体が休まった", 300); return;
+  }
+  if (MINKA_SHOP[n.role]) { await UI.say(n.nm, MINKA_SHOP[n.role]); return; }
+  const lines = (MINKA_TALK[d.town] || MINKA_TALK.harune)[n.role];
+  await UI.say(n.nm, lines);
+};
+T.minkaFind = async o => {
+  const d = F().minka || {}, id = `mk:${d.from}:${d.x},${d.y}`, what = o.t === "basket" ? "かご" : "棚";
+  if (G().chests[id]) { await sys(`${what}の中は、もう空っぽだ。`); return; }
+  G().chests[id] = 1; const k = d.seed % 2 ? "onigiri" : "hoshiniku"; give(k, 1); SND.se("get");
+  await sys(`${what}の奥に、${BT.TOOLS[k].nm}がひとつ入っていた。`, `${BT.TOOLS[k].nm}を手に入れた！`);
+};
 // 札勝負のできる人：町の台詞のあとで勝負を聞く
 async function talkThenCards(place, who, k, as) {
   await townTalk(place, who, 0, as);

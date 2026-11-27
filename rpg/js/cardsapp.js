@@ -370,7 +370,12 @@ function chin(){
 let P=null; // 支度中の状態
 function prep(k){
   const o=OPPS[k], st=S.op[k];
-  const stage=rpgStage(), opDeck=oppDeck(st.pool.filter(c=>(LATE[c]||0)<=stage),o.cap,o.sig);
+  const stage=rpgStage(), ok=c=>(LATE[c]||0)<=stage;
+  // 相手の持ち札が5枚より少ないと、相手の番で止まってしまう。足りなければ補充し、それでも足りなければ弱い札を足す（「もう一勝負」から来ても同じ）
+  if(st.pool.filter(ok).length<5){ restock(); save(); }
+  const low=o.pool.filter(c=>ok(c)&&CARDS[c].r<=2).sort((a,b)=>CARDS[a].r-CARDS[b].r);
+  for(let i=0;st.pool.filter(ok).length<5&&low.length;i++){ st.pool.push(low[i%low.length]); save(); }
+  const opDeck=oppDeck(st.pool.filter(ok),o.cap,o.sig);
   let glow=null; // ごくまれに、伏せ札の中に光る札がまじる
   if(Math.random()<0.04){ const idx=opDeck.findIndex(x=>x!==o.sig); if(idx>=0){ opDeck[idx]=GLOWS[Math.floor(Math.random()*GLOWS.length)]; glow=idx; } }
   let mine=(S.last[k]||[]).slice();
@@ -538,7 +543,7 @@ function aiTurn(){
   setTimeout(()=>{ const [hi,cell]=aiMove(M.G,OPPS[M.k].depth); const ev=[]; play(M.G,1,hi,cell,ev,true); animate(ev,()=>{ M.busy=false; endOrNext(0); }); },450);
 }
 function endOrNext(nextSide){
-  if(M.G.b.every(x=>x)){ setTimeout(result,500); return; }
+  if(M.G.b.every(x=>x)||!M.G.h[nextSide].some(x=>x)){ setTimeout(result,500); return; } // 置ける札がない側の番になったら、そこで終わる（止まらないように）
   M.turn=nextSide; drawMatch(); if(nextSide===1) setTimeout(aiTurn,500);
 }
 function result(){

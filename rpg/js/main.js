@@ -11,6 +11,7 @@ DM.fit();
 const imgs = new Set([...BT.HEROES.map(h => h.img), ...Object.values(BT.FOES).map(f => f.img), ...Object.values(BT.GEAR).map(g => g.icon), ...Object.values(BT.MATS).map(g => g.icon), ...Object.values(BT.TOOLS).map(g => g.icon)]);
 for (const id of Object.keys(MAPS)) MAPS[id]().npcs.forEach(n => imgs.add(n.img || n.mon));
 ["person_058h", "person_002w"].forEach(k => imgs.add(k)); // 物語の途中で替わる絵（帽子のムク、粉をかぶったリゼット）
+Object.values(MINKA_FOLK).forEach(k => imgs.add(k)); // ふつうの家の住人
 // 絵がそろったらタイトルを出す。「はじめから」なら記録（札の記録も）を消して始める
 const hasSave = GS.valid();
 GS.load();
