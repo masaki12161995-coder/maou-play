@@ -54,8 +54,10 @@ function draw(now) {
   if (!on) return;
   requestAnimationFrame(draw);
   const t = (now - t00) / 1000;
-  ctx.setTransform(4, 0, 0, 4, 0, 0); ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(bg, 0, 0);
+  const ox = Math.round(DM.OX * 4), oy = Math.round(DM.OY * 4);
+  ctx.setTransform(4, 0, 0, 4, ox, oy); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(bg, 0, 0); DM.bleed(ctx, document.getElementById("field")); // 枠の外（画面の端まで）は、絵をのばしてうめる
+  ctx.setTransform(4, 0, 0, 4, ox, oy);
   // 水面のきらめき（横の細い線が、ゆっくり流れる）
   for (let i = 0; i < 46; i++) {
     const y = HOR + 4 + ((i * 37) % (H - HOR - 44)), w = 4 + (i * 13) % 14, sp = 3 + (i % 5);

@@ -12,10 +12,16 @@
 <title>千の心と空の玉座</title>
 <style>
 html,body{margin:0;height:100%;background:#0b0d14;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-body{box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);display:flex;align-items:center;justify-content:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;color:#f3e4c8}
-#stage{position:relative;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;color:#f3e4c8}
+#stage{position:fixed;left:0;top:0;overflow:hidden}
+#safeprobe{position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #field{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
-#hud{position:absolute;inset:0}
+#hud{position:absolute}
+/* 画面いっぱいの暗い幕は、遊ぶ枠の外（画面の端まで）にも広げる */
+.veil{box-shadow:0 0 0 200vmax #0b0d14d8}
+.veil.solid{box-shadow:0 0 0 200vmax #0e0f17}
+.endcard{box-shadow:0 0 0 200vmax #07060c}
+.battleflash{box-shadow:0 0 0 200vmax #fff}
 .px{position:absolute}
 .frame{background:#1b1a26;border:2px solid #8a6a4a;box-shadow:0 0 0 1px #000,inset 0 0 0 1px #3a3040;border-radius:4px}
 .face{background-repeat:no-repeat;image-rendering:pixelated}
@@ -312,19 +318,19 @@ body{box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/dom.js?v=74"></script>
-<script src="js/sound.js?v=74"></script>
-<script src="js/engine.js?v=74"></script>
-<script src="js/scene.js?v=74"></script>
-<script src="js/tiles.js?v=74"></script>
-<script src="js/game.js?v=74"></script>
-<script src="js/maps.js?v=74"></script>
-<script src="js/view.js?v=74"></script>
-<script src="js/ui.js?v=74"></script>
-<script src="js/field.js?v=74"></script>
-<script src="js/towntalk.js?v=74"></script>
-<script src="js/story.js?v=74"></script>
-<script src="js/title.js?v=74"></script>
-<script src="js/main.js?v=74"></script>
+<script src="js/dom.js?v=76"></script>
+<script src="js/sound.js?v=76"></script>
+<script src="js/engine.js?v=76"></script>
+<script src="js/scene.js?v=76"></script>
+<script src="js/tiles.js?v=76"></script>
+<script src="js/game.js?v=76"></script>
+<script src="js/maps.js?v=76"></script>
+<script src="js/view.js?v=76"></script>
+<script src="js/ui.js?v=76"></script>
+<script src="js/field.js?v=76"></script>
+<script src="js/towntalk.js?v=76"></script>
+<script src="js/story.js?v=76"></script>
+<script src="js/title.js?v=76"></script>
+<script src="js/main.js?v=76"></script>
 </body>
 </html>

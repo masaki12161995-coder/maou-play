@@ -5,14 +5,37 @@ const W = 301, H = 655;
 const DPR = window.devicePixelRatio || 2;
 const stage = document.getElementById("stage"), hud = document.getElementById("hud");
 const M = { W, H, DPR, K: 2, stage, hud, onFit: [] };
-// ホーム画面から開いたときは画面の端まで使えるので、切り欠きやホームバーの所（safe-area）をよけた広さに合わせる
-const inset = () => { const c = getComputedStyle(document.body), n = k => parseFloat(c[k]) || 0; return { x: n("paddingLeft") + n("paddingRight"), y: n("paddingTop") + n("paddingBottom") }; };
+// 画面の作り：絵（地図・戦いの背景・タイトル）は画面の端から端まで描く。
+// 文字やボタン（hud）は、301×655 の枠を、切り欠きやホームバー（safe-area）をよけた所の真ん中に置く。
+//  VW・VH＝画面ぜんぶの広さ、OX・OY＝枠の左上（どちらも枠の点の単位）。SL・ST・SR・SB＝さわれる所の端（枠の点の単位）
+const probe = document.createElement("div"); probe.id = "safeprobe"; document.body.appendChild(probe);
 M.fit = () => {
-  const p = inset(), aw = innerWidth - p.x, ah = innerHeight - p.y;
-  const w = Math.min(aw, ah * W / H);
-  M.K = w / W;
-  stage.style.width = w + "px"; stage.style.height = (w * H / W) + "px";
+  const c = getComputedStyle(probe), n = k => parseFloat(c[k]) || 0;
+  const sl = n("paddingLeft"), sr = n("paddingRight"), st = n("paddingTop"), sb = n("paddingBottom");
+  const vw = innerWidth, vh = innerHeight, aw = vw - sl - sr, ah = vh - st - sb;
+  const K = Math.min(aw / W, ah / H), bw = W * K, bh = H * K, bx = sl + (aw - bw) / 2, by = st + (ah - bh) / 2;
+  M.K = K;
+  stage.style.width = vw + "px"; stage.style.height = vh + "px";
+  hud.style.left = bx + "px"; hud.style.top = by + "px"; hud.style.width = bw + "px"; hud.style.height = bh + "px";
+  M.VW = vw / K; M.VH = vh / K; M.OX = bx / K; M.OY = by / K;
+  M.SL = (sl - bx) / K; M.ST = (st - by) / K; M.SR = (vw - sr - bx) / K; M.SB = (vh - sb - by) / K;
+  const cv = document.getElementById("field"), cw = Math.round(M.VW * 4), ch = Math.round(M.VH * 4);
+  if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; cv.getContext("2d").imageSmoothingEnabled = false; }
   M.onFit.forEach(f => f());
+};
+// 枠の中に描いた絵（背景）を、枠の外へのばす：左右は端の帯を裏返して、上下は端の1列を引きのばす
+M.bleed = (ctx, cv, keepTop) => { // keepTop：枠の上にも本物の絵が描いてあるときは、上はのばさない
+  const bx = Math.round(M.OX * 4), by = Math.round(M.OY * 4), bw = Math.round(W * 4), bh = Math.round(H * 4);
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+  const y0 = keepTop ? 0 : by, hh = by + bh - y0;   // 上にも絵があるときは、上の端から裏返す
+  if (bx > 0) {
+    ctx.save(); ctx.translate(bx, 0); ctx.scale(-1, 1); ctx.drawImage(cv, bx, y0, bx, hh, 0, y0, bx, hh); ctx.restore();
+    const rx = bx + bw, rw = cv.width - rx;
+    if (rw > 0) { ctx.save(); ctx.translate(rx + rw, 0); ctx.scale(-1, 1); ctx.drawImage(cv, rx - rw, y0, rw, hh, 0, y0, rw, hh); ctx.restore(); }
+  }
+  if (by > 0 && !keepTop) ctx.drawImage(cv, 0, by, cv.width, 1, 0, 0, cv.width, by);
+  const bot = by + bh; if (bot < cv.height) ctx.drawImage(cv, 0, bot - 1, cv.width, 1, 0, bot, cv.width, cv.height - bot);
+  ctx.restore();
 };
 M.d = v => v * M.K + "px";
 M.px = (el, x, y, w, h) => { el.style.left = M.d(x); el.style.top = M.d(y); if (w !== undefined) el.style.width = M.d(w); if (h !== undefined) el.style.height = M.d(h); return el; };

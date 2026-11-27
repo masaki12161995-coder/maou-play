@@ -22,7 +22,7 @@ function build(id) {
   M = MAPS[id]();
   // 地図が画面より低いときは、上下に木を足して黒い余白をなくす
   M.objs = M.objs.filter(o => !o.when || o.when(G())); M.trigs = M.trigs || [];
-  const need = M.inside ? 0 : Math.ceil(H / TD) + 1 - M.g.length;
+  const need = M.inside ? 0 : Math.ceil(Math.max(H, DM.VH || H) / TD) + 1 - M.g.length;
   if (need > 0) {
     const top = Math.ceil(need / 2), bot = need - top, w = M.g[0].length, rowT = () => Array(w).fill("T");
     M.g = [...Array(top).fill(0).map(rowT), ...M.g, ...Array(bot).fill(0).map(rowT)];
@@ -75,6 +75,17 @@ function paint(frame) {
   }
   return c;
 }
+// 地図の外を埋める森（木を4×4に並べた絵のくり返し。地図の格子とそろえる）
+let forest = null;
+function forestPat() {
+  if (forest) return forest;
+  const n = 6, c = document.createElement("canvas"); c.width = n * TP; c.height = n * TP;
+  const x = c.getContext("2d"), nb = () => "T";
+  for (let ty = 0; ty < n; ty++) for (let tx = 0; tx < n; tx++) { x.save(); x.translate(tx * TP, ty * TP); TL.treeBase(x, tx, ty, nb); x.restore(); }
+  for (let ty = -1; ty < n; ty++) for (let tx = 0; tx < n; tx++) { x.save(); x.translate(tx * TP, ty * TP + TP / 2); TL.treeTop(x, tx, ty); x.restore(); }
+  const t = document.createElement("canvas"); t.width = 4 * TP; t.height = 4 * TP; t.getContext("2d").drawImage(c, TP, TP, 4 * TP, 4 * TP, 0, 0, 4 * TP, 4 * TP);
+  forest = ctx.createPattern(t, "repeat"); forest.setTransform(new DOMMatrix().scale(0.5)); return forest;
+}
 function paintOver() { // 木の葉（上の層）
   const c = document.createElement("canvas"); c.width = M.w * TP; c.height = (M.h + 1) * TP;
   const x = c.getContext("2d");
@@ -120,8 +131,10 @@ let hudEls = {};
 function hudBuild() {
   if (!active) return;
   [...hud.querySelectorAll(".fhud")].forEach(e => e.remove());
-  const nm = px(div("px frame fhud place", `<b>${M.nm}</b><span>${G().gold.toLocaleString()} G</span>`), 8, 46, 150, 24); nm.style.fontSize = d(10); hud.appendChild(nm);
-  const mb = px(div("px frame fhud fbtn", "≡"), 263, 46, 30, 26); mb.style.fontSize = d(16);
+  // 左上と右上：さわれる所の端から同じだけ離して置く（画面の端にそろえる）
+  const m = 8, top = Math.max(0, DM.ST) + m, lx = Math.max(-DM.OX, DM.SL) + m, rx = Math.min(DM.VW - DM.OX, DM.SR) - m;
+  const nm = px(div("px frame fhud place", `<b>${M.nm}</b><span>${G().gold.toLocaleString()} G</span>`), lx, top, 150, 26); nm.style.fontSize = d(10); hud.appendChild(nm);
+  const mb = px(div("px frame fhud fbtn", "≡"), rx - 30, top, 30, 26); mb.style.fontSize = d(16);
   mb.onclick = async e => { e.stopPropagation(); if (busy) return; busy = true; route = null; await UI.menu(); busy = false; hudBuild(); };
   hud.appendChild(mb);
   hudEls = { nm };
@@ -400,12 +413,14 @@ function draw(now) {
   if (!busy) foeTick(now);
   for (const f of foes) if (f.from && now - f.t0 >= STEP * 1.8) f.from = null;
   const [lx, ly] = lerp(P, now);
-  const mw = M.w * TD, mh = M.h * TD;
-  cam.x = mw <= W ? (mw - W) / 2 : Math.max(0, Math.min(mw - W, lx * TD + TD / 2 - W / 2));
-  cam.y = mh <= H ? (mh - H) / 2 : Math.max(0, Math.min(mh - H, ly * TD + TD / 2 - H / 2 + 20));
+  // 画面ぜんぶ（VW×VH）を描く。主人公は文字の枠の真ん中に来るようにする
+  const mw = M.w * TD, mh = M.h * TD, VW = DM.VW, VH = DM.VH, cx0 = DM.OX + W / 2, cy0 = DM.OY + H / 2;
+  cam.x = mw <= VW ? (mw - VW) / 2 : Math.max(0, Math.min(mw - VW, lx * TD + TD / 2 - cx0));
+  cam.y = mh <= VH ? (mh - VH) / 2 : Math.max(0, Math.min(mh - VH, ly * TD + TD / 2 - cy0 + 20));
   cam.x = Math.round(cam.x * 2) / 2; cam.y = Math.round(cam.y * 2) / 2;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#0b0d14"; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.setTransform(4, 0, 0, 4, -cam.x * 4, -cam.y * 4);
+  if (!M.inside && (mw < VW || mh < VH)) { ctx.fillStyle = forestPat(); ctx.fillRect(cam.x, cam.y, VW, VH); } // 地図より画面が広い所は、森でうめる
   const gc = ground[ground.length > 1 ? Math.floor(now / 700) % 2 : 0];
   ctx.drawImage(gc, 0, 0, gc.width / 2, gc.height / 2);
   // 人・宝箱・敵を奥から
@@ -430,12 +445,12 @@ function draw(now) {
   if (M.dark) {
     const cx = lx * TD + TD / 2, cy = ly * TD + TD / 2, gr = ctx.createRadialGradient(cx, cy, 40, cx, cy, 210);
     gr.addColorStop(0, "#0000"); gr.addColorStop(1, "#05030ab8");
-    ctx.fillStyle = gr; ctx.fillRect(cam.x, cam.y, W, H);
+    ctx.fillStyle = gr; ctx.fillRect(cam.x, cam.y, DM.VW, DM.VH);
   }
-  const tint = TINT[G().flags.time]; if (tint) { ctx.fillStyle = tint; ctx.fillRect(cam.x, cam.y, W, H); }
+  const tint = TINT[G().flags.time]; if (tint) { ctx.fillStyle = tint; ctx.fillRect(cam.x, cam.y, DM.VW, DM.VH); }
   // 暗転
   const fv = fade + (fadeTo - fade) * 0.25; fade = Math.abs(fv - fadeTo) < 0.01 ? fadeTo : fv;
-  if (fade > 0) { ctx.fillStyle = `rgba(5,4,10,${fade})`; ctx.fillRect(cam.x, cam.y, W, H); }
+  if (fade > 0) { ctx.fillStyle = `rgba(5,4,10,${fade})`; ctx.fillRect(cam.x, cam.y, DM.VW, DM.VH); }
 }
 function fadeOut() { fadeTo = 1; return new Promise(r => setTimeout(r, 320)); }
 function fadeIn() { fade = 1; fadeTo = 0; }

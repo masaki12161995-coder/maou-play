@@ -199,17 +199,20 @@ function draw(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, cv.width, cv.height);
   // 背景は上にずらし、地平線を一番上の人の足より上に持ってくる（空に浮いて見えないように）。空いた下は地面の帯をもう一度描く
-  if (scene) { // 背景の1点＝canvasの2点
+  const ox = Math.round(DM.OX * 4), oy = Math.round(DM.OY * 4); // 文字の枠の左上（canvasの点）
+  if (scene) { // 背景の1点＝canvasの2点。枠の中に描いてから、画面の端までのばす
     const up = SCENE_UP * 2, strip = up + 2;
+    ctx.setTransform(1, 0, 0, 1, ox, oy);
     ctx.drawImage(scene, 0, -up * 2, scene.width * 2, scene.height * 2);
-    ctx.drawImage(scene, 0, scene.height - strip, scene.width, strip, 0, cv.height - strip * 2, scene.width * 2, strip * 2);
+    ctx.drawImage(scene, 0, scene.height - strip, scene.width, strip, 0, H * 4 - strip * 2, scene.width * 2, strip * 2);
+    DM.bleed(ctx, cv, oy <= up * 2); // 背景は上にずらして描くので、枠の上にも絵がある
   }
   const qx = quake > t ? Math.round(Math.sin(t / 14) * 1.5 * 4) : 0; // 大きく当たったときの揺れ
-  ctx.setTransform(4, 0, 0, 4, qx, 0); // ここから先はドットの座標で描く
+  ctx.setTransform(4, 0, 0, 4, qx + ox, oy); // ここから先はドットの座標で描く（枠の左上が 0,0）
   if (DEV && st) devGrid();
   if (st) drawEfx(t); // 範囲の光は人の後ろに
   if (st) {
-    ctx.fillStyle = "#000a"; ctx.fillRect(0, 44, W, 52); // 上の帯の下地
+    ctx.fillStyle = "#000a"; ctx.fillRect(-DM.OX, 44, DM.VW, 52); // 上の帯の下地（画面の端まで）
     for (const u of st.foes) { // 敵（右向きにして描く）
       const b = foeBox(u), img = IM[u.img], f = fx[u.id] || {};
       if (u.down && !(f.fade > t) && !u.human) continue; // 人間は、倒れてもそこに残る
