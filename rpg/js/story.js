@@ -2127,7 +2127,7 @@ T.gonzo = async () => {
   const c = await UI.choose("ゴンゾ", "", ["チンチロをする", "札勝負をする", "やめる"]);
   if (c === 0) {
     const ch = F().chin = F().chin || { w: 0, l: 0 };
-    await UI.chinchiro({ who: "ゴンゾ", img: "person_045", rec: ch });
+    await UI.chinchiro({ who: "ゴンゾ", img: "person_135", rec: ch });
     if (ch.w - ch.l >= 5 && !F().gonzoCard) {
       F().gonzoCard = 1; giftCard("w_gonzo"); SND.se("get");
       await talk(`

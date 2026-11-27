@@ -675,20 +675,20 @@ function lux() {
       // 東門：葬列の前は黒外套がふさいでいる。門番はいつも
       { id: "kuroE1", x: W - 1, y: 15, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "kuroEast", when: g => S(g) < 46 && !g.flags.cut },
       { id: "kuroE2", x: W - 1, y: 16, mon: "monster_020", face: -1, nm: "黒外套の兵", talk: "kuroEast", when: g => S(g) < 46 && !g.flags.cut },
-      { id: "tomon", x: W - 2, y: 14, img: "person_080e", dir: 1, nm: "東門の門番", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
+      { id: "tomon", x: W - 2, y: 14, img: "person_138", dir: 1, nm: "東門の門番", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       // 場面16の一：朝の大通りを行く葬列（荷車は14,15）
       ...[["jako16", 16, 15, "person_133", 2], ["lise16", 13, 15, "person_002", 2], ["muku16", 16, 16, "person_058h", 2], ["bram16", 15, 16, "person_005", 2], ["naki16a", 12, 15, "person_074k", 2], ["naki16b", 12, 16, "person_076", 2], ["naki16c", 13, 16, "person_074k", 2],
         ["machiW", 17, 14, "person_026n", 0], ["machiM", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16a") })),
       // 場面16の二：東門（荷車は17,15）
       ...[["jako16b", 19, 15, "person_133", 2], ["lise16b", 16, 15, "person_002", 2], ["muku16b", 16, 16, "person_058h", 2], ["bram16b", 17, 16, "person_005", 2], ["naki16d", 15, 15, "person_074k", 2], ["naki16e", 15, 16, "person_076", 2], ["naki16f", 14, 15, "person_074k", 2],
-        ["tomon16", 19, 14, "person_080e", 0], ["machiM2", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16b") })),
+        ["tomon16", 19, 14, "person_138", 0], ["machiM2", 18, 17, "person_014", 3]].map(([id, x, y, img, dir]) => ({ id, x, y, img, dir, nm: "", when: g => cut(g, "c2s16b") })),
       ...[[W - 1, 15, "monster_019"], [W - 1, 16, "monster_020"], [W - 2, 13, "monster_021"], [W - 2, 18, "monster_019"]].map(([x, y, mon], i) => ({ id: "kuro16" + i, x, y, mon, face: -1, nm: "", when: g => cut(g, "c2s16b") })),
       { id: "sig16", x: W - 2, y: 16, img: "person_010", dir: 1, nm: "", when: g => cut(g, "c2s16b") && !!g.flags.sigHand && !!g.flags.sig16 },
       { id: "mortoG", x: 12, y: 31, img: "person_019k", dir: 3, nm: "モルト", when: g => cut(g, "c2s3") },
       // 町の人（段階2から。台詞は TOWNTALK）
       { id: "monouri", x: 9, y: 21, img: "person_075m", dir: 2, nm: "物売り", talk: "monouri", when: g => S(g) >= 31 && !g.flags.cut },
       { id: "mofuku", x: 7, y: 17, img: "person_076", dir: 1, nm: "喪服の婦人", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
-      { id: "eihei", x: 12, y: 5, img: "person_080", dir: 0, nm: "城門の衛兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
+      { id: "eihei", x: 12, y: 5, img: "person_138c", dir: 0, nm: "城門の衛兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       { id: "oodori", x: 14, y: 16, img: "person_073", dir: 1, nm: "大通りの子", talk: "tt", tp: "lux", when: g => S(g) >= 31 && !g.flags.cut },
       { id: "shiroL", x: 14, y: 14, img: "person_131", dir: 1, nm: "白い犬", talk: "shiro", town: "lux", when: g => S(g) >= 31 && !g.flags.cut && !((g.flags.shiro || {}).lux) },
       { id: "kkado", x: 12, y: 14, mon: "monster_019", face: -1, nm: "黒外套の兵", talk: "tt", tp: "lux", when: g => S(g) >= 31 && S(g) < 46 && !g.flags.cut },
@@ -882,7 +882,7 @@ function tsuya() {
     ],
     exits: [{ x: 5, y: 8, to: "lux", tx: 5, ty: 23, dir: 0 }],
     npcs: [
-      { id: "gonzo", x: 8, y: 1, img: "person_045", dir: 0, nm: "ゴンゾ", talk: "gonzo", card: g => S(g) >= 45, when: g => !night },
+      { id: "gonzo", x: 8, y: 1, img: "person_135", dir: 0, nm: "ゴンゾ", talk: "gonzo", card: g => S(g) >= 45, when: g => !night },
       { id: "jakoT", x: 5, y: 3, img: "person_133", dir: 0, nm: "ジャコ", talk: "jakoT", when: g => (S(g) === 44 || S(g) === 45) && !night },
       { id: "nakiA", x: 4, y: 4, img: "person_074k", dir: 2, nm: "泣き屋", talk: "nakiya", when: g => !night },
       { id: "nakiB", x: 6, y: 4, img: "person_076", dir: 1, nm: "泣き屋", talk: "nakiya", when: g => !night },
@@ -922,7 +922,7 @@ function akamugi() {
     ],
     exits: [{ x: 0, y: 8, to: "lux", tx: 20, ty: 15, dir: 1 }, { x: 25, y: 7, to: "hoshimi", tx: 1, ty: 9, dir: 2 }],
     npcs: [
-      { id: "sekimori", x: 22, y: 8, img: "person_088", dir: 3, nm: "関守", talk: "sekimori" },
+      { id: "sekimori", x: 22, y: 8, img: "person_136", dir: 3, nm: "関守", talk: "sekimori" },
       { id: "gyoA", x: 18, y: 6, img: "person_075", dir: 0, nm: "行商人", talk: "gyoA", when: g => S(g) < 47 },
     ],
     foes: [
@@ -1014,8 +1014,8 @@ function zahara() {
     ],
     exits: [{ x: 0, y: 15, to: "kinsa", tx: 24, ty: 9, dir: 1 }, { x: 0, y: 16, to: "kinsa", tx: 24, ty: 9, dir: 1 }],
     npcs: [
-      { id: "shokanban", x: 14, y: 7, img: "person_080z", dir: 0, nm: "商館の番人", talk: "tt", tp: "zahara" },
-      { id: "tobakuban", x: 21, y: 22, img: "person_080r", dir: 0, nm: "賭場の番人", talk: "tt", tp: "zahara" },
+      { id: "shokanban", x: 14, y: 7, img: "person_139", dir: 0, nm: "商館の番人", talk: "tt", tp: "zahara" },
+      { id: "tobakuban", x: 21, y: 22, img: "person_140", dir: 0, nm: "賭場の番人", talk: "tt", tp: "zahara" },
       { id: "seriN", x: 19, y: 12, img: "person_014", dir: 0, nm: "競り人", talk: "tt", tp: "zahara" },
       { id: "mizuuri", x: 12, y: 13, img: "person_070w", dir: 0, nm: "水売りの娘", talk: "tt", tp: "zahara" },
       { id: "ryogae", x: 23, y: 14, img: "person_078z", dir: 0, nm: "両替商", talk: "tt", tp: "zahara" },
@@ -1078,7 +1078,7 @@ function arena() { // 闘技場の受付
     id: "arena", nm: "ザハラの闘技場", g, tier: 4, bg: "gold", inside: 1, music: "town",
     objs: [...[3, 4, 5, 6, 7].map(x => ({ t: "counter", x, y: 3 })), { t: "shelf", x: 1, y: 1 }, { t: "desk", x: 8, y: 1 }, { t: "candleStand", x: 1, y: 5 }, { t: "candleStand", x: 9, y: 5 }],
     exits: [{ x: 5, y: 7, to: "zahara", tx: 5, ty: 23, dir: 0 }],
-    npcs: [{ id: "gina", x: 5, y: 2, img: "person_066g", dir: 0, nm: "ジーナ", talk: "gina", card: () => 1 }],
+    npcs: [{ id: "gina", x: 5, y: 2, img: "person_137", dir: 0, nm: "ジーナ", talk: "gina", card: () => 1 }],
     foes: [], chests: [], trigs: [],
   };
 }
