@@ -798,7 +798,7 @@ function yakuba() {
     ],
     exits: [],
     npcs: [
-      { id: "shoki", x: 5, y: 2, img: "person_008", dir: 0, nm: "書記" },
+      { id: "shoki", x: 5, y: 2, img: "person_127", dir: 0, nm: "書記" },
       { id: "liseY", x: 5, y: 4, img: "person_002", dir: 3, nm: "リゼット" },
       { id: "mukuY", x: 4, y: 5, img: "person_058h", dir: 3, nm: "ムク" },
     ],

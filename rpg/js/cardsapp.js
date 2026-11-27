@@ -41,7 +41,7 @@ const WORLD={
   w_sig:{nm:"黒外套の隊長",r:3,n:[7,4,6,4],src:"img/c_sig.png",sz:[35,58],k:"人物"},
   w_vald:{nm:"宰相",r:4,n:[5,7,6,7],src:"img/c_vald.png",sz:[33,59],k:"人物"},
   w_edmon:{nm:"慈王",r:4,n:[4,8,7,6],src:"img/c_edmon.png",sz:[41,58],k:"人物"},
-  w_shoki:{nm:"役場の書記",r:1,n:[2,4,3,5],src:"img/c_shoki.png",sz:[32,58],k:"人物"},
+  w_shoki:{nm:"役場の書記",r:1,n:[2,4,3,5],src:"img/c_shoki.png",sz:[33,59],k:"人物"},
   w_kai:{nm:"渡し守",r:3,n:[6,5,4,6],src:"img/c_kai.png",sz:[35,59],k:"人物"},
   w_muku:{nm:"麦わら帽の子",r:3,n:[5,6,6,4],src:"img/c_muku.png",sz:[41,60],k:"人物"},
 };
