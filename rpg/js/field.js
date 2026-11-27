@@ -7,7 +7,7 @@ const IM = window.IMG;
 const cv = document.getElementById("field"), ctx = cv.getContext("2d");
 const TD = 24, TP = TL.T;         // 1マス＝24ドット（絵は48点）
 const STEP = 170;                 // 1歩の時間
-const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D", "S"]);
+const WALK = new Set([".", "=", "c", "b", "s", "_", "r", "p", "D", "S", "Z"]);
 const LEADER = 0;
 
 let M = null, ground = [], over = null, blocked = null;
@@ -24,7 +24,7 @@ function build(id) {
   M.objs = M.objs.filter(o => !o.when || o.when(G())); M.trigs = M.trigs || [];
   const need = M.inside ? 0 : Math.ceil(Math.max(H, DM.VH || H) / TD) + 1 - M.g.length;
   if (need > 0) {
-    const top = Math.ceil(need / 2), bot = need - top, w = M.g[0].length, rowT = () => Array(w).fill("T");
+    const top = Math.ceil(need / 2), bot = need - top, w = M.g[0].length, rowT = () => Array(w).fill(M.pad || "T");
     M.g = [...Array(top).fill(0).map(rowT), ...M.g, ...Array(bot).fill(0).map(rowT)];
     for (const list of [M.objs, M.exits, M.npcs, M.foes, M.chests, M.trigs]) for (const o of list) o.y += top;
     M.padTop = top;
@@ -61,7 +61,7 @@ function paint(frame) {
     ({ ".": () => TL.grass(x, tx, ty), "=": () => TL.dirt(x, tx, ty, nb), c: () => TL.cobble(x, tx, ty, nb), T: () => TL.treeBase(x, tx, ty, nb),
        "~": () => TL.water(x, tx, ty, nb, frame), b: () => TL.bridge(x, tx, ty, nb, frame), s: () => TL.stones(x, tx, ty, nb, frame), R: () => TL.rockWall(x, tx, ty, nb),
        f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x),
-       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
+       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty), Z: () => TL.sand(x, tx, ty), U: () => TL.sandRock(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
     x.restore();
   }
   for (const o of M.objs) {
@@ -442,7 +442,7 @@ function draw(now) {
   for (const f of foes) if (f.alive) {
     const k = f.from ? Math.min(1, (now - f.t0) / (STEP * 1.8)) : 1, x = f.from ? f.from.x + (f.x - f.from.x) * k : f.x, y = f.from ? f.from.y + (f.y - f.from.y) * k : f.y;
     ents.push({ y, f: () => {
-      const img = IM[BT.FOES[f.def.k].img], s = f.def.boss ? 0.42 : 0.5, w = img.naturalWidth * s, h = img.naturalHeight * s;
+      const img = IM[BT.FOES[f.def.k].img], s = BT.FOES[f.def.k].fsc || (f.def.boss ? 0.42 : 0.5), w = img.naturalWidth * s, h = img.naturalHeight * s;
       const bob = Math.round(Math.sin(now / 260 + f.hx) * 1.5 * 2) / 2, cx = x * TD + TD / 2, by = y * TD + TD - 2;
       ctx.fillStyle = "#0007"; ctx.fillRect(cx - w * 0.3, by - 1, w * 0.6, 2);
       ctx.save(); ctx.translate(Math.round((cx + (f.face < 0 ? w / 2 : -w / 2)) * 4) / 4, Math.round((by - h + 0) * 4) / 4); ctx.scale(f.face < 0 ? -1 : 1, 1);

@@ -128,6 +128,8 @@ const SKILLS = {
   sickleear: { nm: "鎌耳", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   windsting: { nm: "風車針", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 50, dist: "遠", dir: "間接", kind: "攻撃" },
   mugikami:  { nm: "麦穂噛み", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 45, dist: "近", dir: "直接", kind: "攻撃" },
+  sunakaki:  { nm: "砂かき", bp: 4, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  hasami:    { nm: "大ばさみ", bp: 4, rank: "C", tg: "one", at: ["斬"], hits: 2, dist: "近", dir: "直接", kind: "攻撃" },
   // ジャコ（弓）：賽の目のように散らばる矢、泣き声で怯ませる矢、逃げ際の一矢
   j_sai:     { nm: "賽の目撃ち", bp: 5, rank: "E", tg: "rand", hits: 3, at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
   j_naki:    { nm: "泣き矢", bp: 4, rank: "D", tg: "col", at: ["突"], stun: 30, dist: "遠", dir: "間接", kind: "攻撃" },
@@ -239,6 +241,8 @@ const MATS = {
   kiba:    { nm: "狼の牙", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
   ryurin:  { nm: "苔竜の鱗", icon: "mat_077", fam: "皮・鱗・甲羅", rare: "紫" },
   akauroko: { nm: "赤麦蛇の鱗", icon: "mat_008", fam: "皮・鱗・甲羅", rare: "白" },
+  tsume:    { nm: "白い大爪", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
+  kokaku:   { nm: "蠍の甲殻", icon: "mat_008", fam: "皮・鱗・甲羅", rare: "緑" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
 const TOOLS = {
@@ -255,6 +259,7 @@ const TOOLS = {
   tsuno: { nm: "焦げた角飾り", icon: "mat_062", ds: "川の簗に引っかかっていた", key: 1 },
   shibou: { nm: "死亡届の控え", icon: "mat_021", ds: "王都の役場で受け取った、届けの控え", key: 1 },
   hakamairi: { nm: "墓参りの札", icon: "mat_072", ds: "関守に見せれば、墓参りの者として東の関所を通れる", key: 1 },
+  medal: { nm: "金の蠍のメダル", icon: "mat_073", ds: "金の蠍亭の遊びに使うメダル", key: 1 },
 };
 const FOODS = Object.keys(TOOLS).filter(k => TOOLS[k].food); // 弱いものから先に食べる
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
@@ -278,6 +283,8 @@ const HEARTS = {
   honeban:  { nm: "ホネ番兵の心", col: "白", mul: { str: 108, vit: 104, dex: 104, agi: 94, int: 90, wil: 100, lov: 96, cha: 100 }, sk: "oldblade2", up: ["str", "dex"] },
   rousoku:  { nm: "ロウソク霊の心", col: "白", mul: { str: 90, vit: 92, dex: 98, agi: 104, int: 114, wil: 108, lov: 100, cha: 100 }, sk: "bluefire", up: ["int", "wil"] },
   akamugi:  { nm: "アカムギ蛇の心", col: "白", mul: { str: 98, vit: 94, dex: 108, agi: 110, int: 98, wil: 96, lov: 100, cha: 100 }, sk: "mugikami", up: ["agi", "dex"] },
+  sunamogu: { nm: "スナモグリの心", col: "緑", mul: { str: 112, vit: 112, dex: 90, agi: 86, int: 92, wil: 100, lov: 100, cha: 96 }, sk: "sunakaki", up: ["str", "vit"] },
+  sasori:   { nm: "サソリ武者の心", col: "緑", mul: { str: 110, vit: 106, dex: 104, agi: 96, int: 90, wil: 96, lov: 96, cha: 100 }, sk: "hasami", up: ["str", "dex"] },
   sekkan:   { nm: "石棺ヤドカリの心", col: "白", mul: { str: 104, vit: 116, dex: 96, agi: 86, int: 94, wil: 104, lov: 100, cha: 100 }, sk: "lidpinch", up: ["vit", "wil"] },
   shishi:   { nm: "石獅子の心", col: "青", mul: { str: 112, vit: 114, dex: 100, agi: 98, int: 96, wil: 110, lov: 100, cha: 104 }, sk: "lionclaw", up: ["str", "vit"], ps: "standfast" },
   ookami:   { nm: "モリオオカミの心", col: "白", mul: { str: 106, vit: 96, dex: 100, agi: 110, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "wolfbite", up: ["agi", "str"] },
@@ -385,6 +392,8 @@ const FOES = {
   honeban:  { mat: "hone", nm: "ホネ番兵", img: "monster_035", wt: "sword", pow: 12, hp: 160, st: { str: 34, vit: 18, dex: 18, agi: 12, int: 6, wil: 12, lov: 0, cha: 10 }, res: { 突: 40, 斬: 20, 打: -30, 陽: -60, 陰: 50 }, every: { n: 3, sk: "oldblade2" }, gold: 15, heart: "honeban" },
   rousoku:  { mat: "rou", nm: "ロウソク霊", img: "monster_007", wt: "fang", pow: 9, hp: 75, st: { str: 20, vit: 10, dex: 14, agi: 20, int: 26, wil: 18, lov: 0, cha: 12 }, mag: 11, res: { 斬: 30, 突: 30, 冷: -60, 熱: 60, 陽: -30 }, every: { n: 2, sk: "bluefire" }, gold: 14, heart: "rousoku" },
   akamugi:  { mat: "akauroko", nm: "アカムギ蛇", img: "m_akamugi", wt: "fang", pow: 11, hp: 120, st: { str: 31, vit: 13, dex: 20, agi: 24, int: 7, wil: 10, lov: 0, cha: 10 }, res: { 斬: -20, 冷: -40, 熱: 20 }, every: { n: 2, sk: "mugikami" }, gold: 15, heart: "akamugi" },
+  sunamogu: { mat: "tsume", nm: "スナモグリ", img: "m_sunamogu", fsc: 0.3, wt: "claw", pow: 13, hp: 260, st: { str: 36, vit: 24, dex: 12, agi: 9, int: 6, wil: 14, lov: 0, cha: 8 }, res: { 打: 20, 斬: 10, 冷: -40, 雷: -30 }, every: { n: 3, sk: "sunakaki" }, gold: 24, heart: "sunamogu" },
+  sasori:   { mat: "kokaku", nm: "サソリ武者", img: "monster_046", wt: "axe", pow: 13, hp: 190, st: { str: 35, vit: 22, dex: 20, agi: 16, int: 6, wil: 12, lov: 0, cha: 10 }, res: { 斬: 30, 突: 10, 打: -20, 冷: -30 }, every: { n: 2, sk: "hasami" }, gold: 22, heart: "sasori" },
   sekkan:   { mat: "sekkan", nm: "石棺ヤドカリ", img: "m_sekkan", wt: "claw", pow: 11, hp: 175, st: { str: 31, vit: 26, dex: 12, agi: 8, int: 6, wil: 16, lov: 0, cha: 9 }, res: { 斬: 40, 突: 30, 打: -30, 雷: -40 }, every: { n: 3, sk: "lidpinch" }, gold: 16, heart: "sekkan" },
   // 双頭の石獅子：二つの頭が別々に動く。片方が倒れると、残った頭は荒れる（lone）
   shishiL:  { mat: "sekkan", book: "book1", nm: "石獅子・右の頭", img: "m_shishiL", wt: "claw", pow: 12, hp: 400, boss: 1, st: { str: 28, vit: 22, dex: 16, agi: 14, int: 10, wil: 18, lov: 0, cha: 14 },

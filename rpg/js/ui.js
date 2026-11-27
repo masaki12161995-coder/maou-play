@@ -444,7 +444,7 @@ function bag(L, redraw) {
 }
 // 目的：いま向かう所。続きから遊ぶときに迷わないように
 const GOALS = { 1: "桟橋で待つホップ夫婦を、中州の畑まで渡す", 2: "川下の簗場で、ヤン爺の様子を見る", 3: "桟橋へ戻って、ひと休みする", 4: "森の小道を、奥へ進む", 5: "森の小道を、奥へ進む", 6: "森の小道を、奥へ進む",
-  7: "森の奥の、婆の庵へ", 8: "庵から、沼への道を進む", 9: "ヌシの沼で、月夜草を採る", 10: "森の岸へ戻る", 11: "森の岸から、舟で村へ戻る", 12: "濡れた網を、渡し小屋へ運ぶ", 14: "西街道を東へ。宿場町ハルネをめざす", 15: "西街道を東へ。宿場町ハルネをめざす", 16: "西街道を東へ。宿場町ハルネをめざす", 17: "宿「かわうそ亭」へ", 18: "問屋場で、話を聞く", 19: "東の道から、落ちた大橋を見に行く", 20: "宿「かわうそ亭」に戻って休む", 21: "大橋の北の丘の、古い見張り塔へ", 22: "塔を登る", 23: "塔を登る", 24: "塔のてっぺんへ", 25: "塔を下りて、大橋のたもとへ", 26: "宿「かわうそ亭」へ戻る", 27: "かわうそ亭の寝床で休む", 28: "大橋を渡って、東の平原へ", 29: "北の王都をめざす", 30: "南の風車の里ミルナで、粉の荷車を探す", 31: "王都の酒場に入って、話を聞く", 32: "酒場を出る", 33: "北の古い礼拝堂へ", 34: "地下墓所の奥へ", 35: "地下墓所の奥へ", 36: "地下墓所の奥へ", 37: "建国王の間へ", 38: "奥の階段を上る", 39: "記録の間で、通行の印を探す", 40: "記録の間の隠し戸の先へ", 41: "部屋を出る", 42: "部屋を出る", 43: "王都の役場へ", 44: "裏通りの奥の、黒い提灯の通夜小屋へ", 45: "通夜小屋の棺で、夜を明かす", 46: "葬列のまま、赤麦の丘を東の関所へ", 47: "星見の丘から、金砂街道を東へ（この先は、次の更新で）" };
+  7: "森の奥の、婆の庵へ", 8: "庵から、沼への道を進む", 9: "ヌシの沼で、月夜草を採る", 10: "森の岸へ戻る", 11: "森の岸から、舟で村へ戻る", 12: "濡れた網を、渡し小屋へ運ぶ", 14: "西街道を東へ。宿場町ハルネをめざす", 15: "西街道を東へ。宿場町ハルネをめざす", 16: "西街道を東へ。宿場町ハルネをめざす", 17: "宿「かわうそ亭」へ", 18: "問屋場で、話を聞く", 19: "東の道から、落ちた大橋を見に行く", 20: "宿「かわうそ亭」に戻って休む", 21: "大橋の北の丘の、古い見張り塔へ", 22: "塔を登る", 23: "塔を登る", 24: "塔のてっぺんへ", 25: "塔を下りて、大橋のたもとへ", 26: "宿「かわうそ亭」へ戻る", 27: "かわうそ亭の寝床で休む", 28: "大橋を渡って、東の平原へ", 29: "北の王都をめざす", 30: "南の風車の里ミルナで、粉の荷車を探す", 31: "王都の酒場に入って、話を聞く", 32: "酒場を出る", 33: "北の古い礼拝堂へ", 34: "地下墓所の奥へ", 35: "地下墓所の奥へ", 36: "地下墓所の奥へ", 37: "建国王の間へ", 38: "奥の階段を上る", 39: "記録の間で、通行の印を探す", 40: "記録の間の隠し戸の先へ", 41: "部屋を出る", 42: "部屋を出る", 43: "王都の役場へ", 44: "裏通りの奥の、黒い提灯の通夜小屋へ", 45: "通夜小屋の棺で、夜を明かす", 46: "葬列のまま、赤麦の丘を東の関所へ", 47: "星見の丘から、金砂街道を東へ", 48: "金砂街道を東へ。金砂の都ザハラをめざす", 49: "金砂街道を東へ。金砂の都ザハラをめざす", 50: "ザハラの商館で、大頭取マルゴに会う", 51: "ザハラの商館で、大頭取マルゴに会う", 52: "ザハラの宿で休み、明日の朝、涸れ谷へ（この先は、次の更新で）" };
 function goal(L) {
   const G = GS.G, s = G.flags.s || 0;
   T(L, 14, 84, 200, 14, "いまの目的", 9, "label");
@@ -589,7 +589,7 @@ function chinchiro(o) {
       bowl.classList.toggle("go", st === "player");
       left.textContent = st === "player" ? `あと${3 - tries}回` : "";
       chips.innerHTML = "";
-      if (!o.story && st === "idle") [10, 50, 100].forEach((v, i) => {
+      if (!o.story && st === "idle") (o.bets || [10, 50, 100]).forEach((v, i) => {
         const ok = G.gold >= v, b = A(chips, div("frame btn chip" + (ok ? "" : " off"), `${v}<small> G 賭ける</small>`), i * 93, 0, 89, 32); b.style.fontSize = d(11);
         if (ok) b.onclick = () => start(v);
       });
@@ -633,5 +633,71 @@ function chinchiro(o) {
     if (o.story) start(0);
   });
 }
-root.UI = { say, choose, result, menu, shop, cards, chinchiro, clear: clearLayer };
+// ---------- スロット（絵合わせ。金の蠍亭） ----------
+//  メダル3枚で1回。o.free＝メダルを使わずに回せる回数（初めての説明のとき）
+const SL_SYM = [["7", 2], ["蠍", 3], ["金", 5], ["賽", 6], ["雫", 9]];
+const SL_PAY3 = { "7": 600, "蠍": 200, "金": 80, "賽": 40, "雫": 20 }, SL_PAY77 = 12, SL_BET = 3;
+function slSym(k) {
+  const e = div("slsym", "");
+  if (k === "7") e.innerHTML = '<span class="sl7">7</span>';
+  else if (k === "蠍") { const im = document.createElement("img"); im.src = "img/monster_046.png"; im.className = "slimg"; e.appendChild(im); }
+  else if (k === "金") e.innerHTML = '<span class="slcoin">G</span>';
+  else if (k === "賽") { const dd = dieEl(5); dd.classList.add("sldie"); e.appendChild(dd); }
+  else e.innerHTML = '<span class="sldrop"></span>';
+  return e;
+}
+function slPick() { let r = Math.random() * 25; for (const [k, w] of SL_SYM) if ((r -= w) < 0) return k; return "雫"; }
+function slot(o) {
+  return new Promise(res => {
+    const G = GS.G; let free = o.free || 0, busy = false, last = ["7", "蠍", "金"];
+    const L = newLayer("veil solid slot");
+    T(L, 14, 12, 160, 26, "絵合わせ", 13, "name");
+    const md = T(L, 120, 12, 132, 26, "", 11, "num2 right");
+    const x = A(L, div("frame btn chip", "×"), 261, 12, 28, 28); x.style.fontSize = d(14); x.onclick = () => { if (busy) return; clearLayer(); GS.save(); res(); };
+    const mac = A(L, div("slmac", ""), 12, 48, 277, 170);
+    const reels = [0, 1, 2].map(i => { const r = A(mac, div("slreel", ""), 14 + i * 82, 16, 76, 112); r.appendChild(slSym(last[i])); return r; });
+    const lever = A(mac, div("sllever", ""), 262, 20, 10, 90);
+    const cost = T(mac, 14, 136, 249, 22, "", 10, "dim2 center");
+    const mt = T(L, 12, 226, 277, 26, "", 13, "gold center");
+    const buy = A(L, div("", ""), 12, 258, 277, 32);
+    const tb = A(L, div("frame rbox", ""), 12, 300, 277, 8 + 6 * 21);
+    [["7　7　7", SL_PAY3["7"]], ["蠍　蠍　蠍", SL_PAY3["蠍"]], ["金貨　金貨　金貨", SL_PAY3["金"]], ["賽　賽　賽", SL_PAY3["賽"]], ["雫　雫　雫", SL_PAY3["雫"]], ["7　7　（左から2つ）", SL_PAY77]].forEach(([a, v], i) => { T(tb, 10, 4 + i * 21, 180, 20, a, 9.5, "label"); T(tb, 190, 4 + i * 21, 77, 20, `${v}<small> 枚</small>`, 10, "num2 right"); });
+    const have = () => G.tools.medal || 0;
+    const draw = () => {
+      md.innerHTML = `メダル ${have().toLocaleString()}<small> 枚</small>`;
+      cost.textContent = free ? `あと${free}回、メダルなしで回せる` : `1回　メダル${SL_BET}枚`;
+      buy.innerHTML = "";
+      [[10, 100], [50, 500]].forEach(([n, g], i) => {
+        const ok = G.gold >= g, b = A(buy, div("frame btn chip" + (ok ? "" : " off"), `メダル${n}枚<small>　${g} G</small>`), i * 140, 0, 137, 30); b.style.fontSize = d(10);
+        if (ok) b.onclick = () => { if (busy) return; G.gold -= g; G.tools.medal = have() + n; SND.se("coin"); GS.save(); draw(); };
+      });
+    };
+    const spin = () => {
+      if (busy) return;
+      if (!free && have() < SL_BET) { SND.se("cancel"); mt.textContent = "メダルが足りない"; return; }
+      busy = true; if (free) free--; else G.tools.medal = have() - SL_BET;
+      mt.textContent = ""; draw(); SND.se("swing"); lever.classList.add("pull"); setTimeout(() => lever.classList.remove("pull"), 260);
+      const out = [slPick(), slPick(), slPick()]; let t = 0;
+      const iv = setInterval(() => {
+        t++;
+        reels.forEach((r, i) => {
+          if (t < 8 + i * 6) { r.innerHTML = ""; r.appendChild(slSym(SL_SYM[(t + i * 2) % 5][0])); }
+          else if (t === 8 + i * 6) { r.innerHTML = ""; r.appendChild(slSym(out[i])); SND.se("tap"); r.animate([{ transform: "translateY(-6%)" }, { transform: "none" }], { duration: 140 }); }
+        });
+        if (t >= 20) { clearInterval(iv); last = out; finish(out); }
+      }, 70);
+    };
+    const finish = (o3) => {
+      let win = 0;
+      if (o3[0] === o3[1] && o3[1] === o3[2]) win = SL_PAY3[o3[0]];
+      else if (o3[0] === "7" && o3[1] === "7") win = SL_PAY77;
+      G.tools.medal = have() + win; busy = false; GS.save(); draw();
+      if (win) { mt.textContent = `${win}枚！`; SND.se(win >= 200 ? "win" : "get"); mac.animate([{ filter: "brightness(1.5)" }, { filter: "none" }], { duration: 450, iterations: win >= 200 ? 4 : 1 }); }
+      if (o.onWin && win) o.onWin(o3, win);
+    };
+    mac.onclick = spin;
+    draw();
+  });
+}
+root.UI = { say, choose, result, menu, shop, cards, chinchiro, slot, clear: clearLayer };
 })(window);

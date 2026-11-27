@@ -322,23 +322,34 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 @keyframes bowlgo{0%,100%{box-shadow:0 0 0 5px #8a6a4a,0 0 0 7px #000,0 10px 20px #000a,inset 0 12px 30px #000c}50%{box-shadow:0 0 0 5px #d9b070,0 0 0 7px #000,0 0 22px #ffd88a88,inset 0 12px 30px #000c}}
 .die{box-sizing:border-box;background:#fbf6ea;border-radius:18%;box-shadow:0 2px 0 #a99a80,0 0 0 1px #0006 inset;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
 .die .pip{border-radius:50%;background:#222;width:78%;height:78%;margin:auto}.die .pip.one{background:#d23;width:100%;height:100%}
+.slmac{position:absolute;box-sizing:border-box;border-radius:8px;background:linear-gradient(#5a1e24,#2a0e12);box-shadow:0 0 0 3px #c9a24a,0 0 0 5px #000,0 8px 18px #000a;cursor:pointer}
+.slreel{position:absolute;box-sizing:border-box;background:linear-gradient(#f6ecd6,#d8c8a6);border:3px solid #5a3d2a;border-radius:6px;overflow:hidden;box-shadow:0 0 0 2px #000 inset;display:flex;align-items:center;justify-content:center}
+.slsym{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.sl7{font-family:"Avenir Next",system-ui;font-weight:900;font-size:300%;color:#ffd35a;text-shadow:0 3px 0 #8a4b10,0 0 10px #ffb347}
+.slimg{width:80%;image-rendering:pixelated}
+.slcoin{display:flex;align-items:center;justify-content:center;width:62%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff2b0,#e8b93c 55%,#a8761a);box-shadow:0 0 0 2px #7a5210;color:#7a5210;font-weight:900;font-size:180%;font-family:"Avenir Next",system-ui}
+.sldie{width:56%;aspect-ratio:1;position:static}
+.sldrop{width:44%;aspect-ratio:1;background:radial-gradient(circle at 35% 35%,#d8f0ff,#4aa0e0 60%,#1e5a90);border-radius:0 50% 50% 50%;transform:rotate(45deg);box-shadow:0 0 0 2px #1e3a5a}
+.sllever{position:absolute;border-radius:4px;background:linear-gradient(90deg,#8a6a30,#d8b448,#8a6a30);transform-origin:50% 100%;transition:transform .12s}
+.sllever::before{content:"";position:absolute;left:-60%;top:-14%;width:220%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff9a9a,#d23 60%,#7a0a14)}
+.sllever.pull{transform:scaleY(.55)}
 </style>
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/dom.js?v=83"></script>
-<script src="js/sound.js?v=83"></script>
-<script src="js/engine.js?v=83"></script>
-<script src="js/scene.js?v=83"></script>
-<script src="js/tiles.js?v=83"></script>
-<script src="js/game.js?v=83"></script>
-<script src="js/maps.js?v=83"></script>
-<script src="js/view.js?v=83"></script>
-<script src="js/ui.js?v=83"></script>
-<script src="js/field.js?v=83"></script>
-<script src="js/towntalk.js?v=83"></script>
-<script src="js/story.js?v=83"></script>
-<script src="js/title.js?v=83"></script>
-<script src="js/main.js?v=83"></script>
+<script src="js/dom.js?v=85"></script>
+<script src="js/sound.js?v=85"></script>
+<script src="js/engine.js?v=85"></script>
+<script src="js/scene.js?v=85"></script>
+<script src="js/tiles.js?v=85"></script>
+<script src="js/game.js?v=85"></script>
+<script src="js/maps.js?v=85"></script>
+<script src="js/view.js?v=85"></script>
+<script src="js/ui.js?v=85"></script>
+<script src="js/field.js?v=85"></script>
+<script src="js/towntalk.js?v=85"></script>
+<script src="js/story.js?v=85"></script>
+<script src="js/title.js?v=85"></script>
+<script src="js/main.js?v=85"></script>
 </body>
 </html>
