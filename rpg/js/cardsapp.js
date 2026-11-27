@@ -11,6 +11,7 @@ const WORLD={
   w_kawauso:{nm:"カワウソ盗",r:1,n:[5,5,2,1],src:"img/monster_011.png",sz:[19,20],k:"魔物"},
   w_mizugumo:{nm:"ミズグモ",r:1,n:[2,5,4,2],src:"img/m_mizugumo.png",sz:[57,40],k:"魔物"},
   w_donguri:{nm:"ドングリ兵",r:1,n:[4,2,3,4],src:"img/m_donguri.png",sz:[28,30],k:"魔物"},
+  w_fukuro:{nm:"見張りのフクロウ",r:1,n:[3,4,2,4],src:"img/monster_112.png",sz:[22,30],k:"魔物"},
   w_hane:{nm:"ハネネズミ",r:1,n:[5,2,5,1],src:"img/m_hanenezumi.png",sz:[55,29],k:"魔物"},
   w_kakashi:{nm:"カカシ番",r:2,n:[2,6,5,3],src:"img/monster_088.png",sz:[65,70],k:"魔物"},
   w_ookami:{nm:"モリオオカミ",r:2,n:[6,4,2,4],src:"img/m_ookami.png",sz:[56,45],k:"魔物"},
@@ -56,7 +57,7 @@ const artSrc=c=>c.src||`../cards/img/c/${c.im}.png`;
 START.length=0; ["w_kai","w_muku","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_mizugumo","w_mizugumo","w_donguri","w_donguri"].forEach(c=>START.push(c));
 // 相手：0＝札売りのトト（看板はヌシガエル）、1＝かわうそ亭の女将ベラ
 OPPS.length=0; OPPS.push(
-  {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_mizugumo","w_hane","w_ishikoro","w_kakashi","w_ookami","w_teo","w_poruka","w_rinka"]},
+  {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_mizugumo","w_hane","w_ishikoro","w_kakashi","w_ookami","w_teo","w_poruka","w_rinka","w_fukuro"]},
   {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_kawauso",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_ishikoro","w_tsuta","w_koromochi","w_seri","w_karin"]},
   {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_bram","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_ookami","w_hane","w_donguri","w_nat","w_toraji","w_komari"]},
   {nm:"看板娘ニコ",who:"070n",cap:12,depth:2,sig:"w_rizeria",pool:["w_rizeria","w_edmon","w_shoki","w_mugiwara","w_mugiwara","w_kamausagi","w_kamausagi","w_fusha","w_doro","w_kakashi","w_ookami","w_hane","w_seri","w_karin"]},
@@ -69,7 +70,7 @@ const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], 
 const LATE={w_edmon:41,w_vald:41,w_shoki:44};
 function rpgStage(){ try{ return JSON.parse(localStorage.getItem("rpgPlay1")).flags.s||0; }catch(e){ return 0; } }
 // 後から足した札（相手の持ち札に、記録が作られた後で加えるもの）
-const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna"];
+const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro"];
 function rpgGold(add){ try{ const t=JSON.parse(localStorage.getItem("rpgPlay1")); if(add){ t.gold+=add; localStorage.setItem("rpgPlay1",JSON.stringify(t)); } return t.gold; }catch(e){ return 0; } }
 function goldTag(){ return `<span style="color:var(--text)">${rpgGold().toLocaleString()} G</span>`; }
 

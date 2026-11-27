@@ -216,6 +216,9 @@ function forest() {
       { id: "owl", x: 10, y: 14, img: "person_054", dir: 0, nm: "夜番", talk: "owl" },
       { id: "da", x: 13, y: 12, mon: "m_donguri", face: -1, nm: "ドングリ兵", talk: "dongu" },
       { id: "db", x: 7, y: 16, mon: "m_donguri", face: 1, nm: "ドングリ兵", talk: "dongu" },
+      // 森の婆の庵の前：見張りのフクロウと、切り株のドングリ兵（序章の三体のうちの一体。町の人の会話）
+      { id: "fukuro", x: 17, y: 12, mon: "monster_112", face: 1, nm: "見張りのフクロウ", talk: "tt", tp: "hermit", when: g => S(g) >= 7 && !g.flags.cut },
+      { id: "dongI", x: 21, y: 13, mon: "m_donguri", face: -1, nm: "ドングリ兵", talk: "tt", tp: "hermit", when: g => S(g) >= 7 && !g.flags.cut },
       { id: "north", x: 14, y: 17, img: "person_040", dir: 1, nm: "北の子", talk: "north" },
       { id: "mukuC", x: 13, y: 17, img: "person_058", dir: 2, nm: "ムク", talk: "mukuC", when: g => S(g) <= 7 },
       // 場面9：沼への道をふさぐ狼の群れ
@@ -268,6 +271,8 @@ function hermit() {
     npcs: [
       { id: "nene", x: 3, y: 2, img: "person_041", dir: 0, nm: "ネネ", talk: "nene", when: g => !["s11c", "s11d", "s11e"].includes(g.flags.cut) },
       { id: "mukuIn", x: 4, y: 5, img: "person_058", dir: 3, nm: "ムク", when: g => cut(g, "s8") },
+      // 町の人の会話（森の婆の庵）：土間のコロモチ。戦わない継ぐ民
+      { id: "koroI", x: 1, y: 5, mon: "m_koromochi", face: 1, nm: "庵のコロモチ", talk: "tt", tp: "hermit", when: g => !g.flags.cut },
     ],
     foes: [], chests: [], trigs: [{ x: 3, y: 5, when: g => S(g) === 7, run: "s8" }],
   };
