@@ -120,9 +120,9 @@ function result(r) {
       const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 22 * DM.K); A(row, fc, 3, 2, undefined, undefined);
       T(row, 30, 0, 52, 26, g.nm, 10, "name");
       let chips = g.ups.map(u => `<span class="upchip">${u.k === "hp" ? "HP" : BT.ST_NM[u.k]}<b>+${u.v}</b></span>`).join("");
-      if (!two && ranks.length) chips += `<span class="upchip rk">技ランク<b>↑${ranks.length}</b></span>`;
+      if (!two && ranks.length) chips += `<span class="upchip rk">Rank<b>↑${ranks.length}</b></span>`;
       const c = A(row, div("chips", chips || (ranks.length ? "" : '<span class="dim">変わりなし</span>')), 84, 0, 190, 26); c.style.fontSize = d(8.5);
-      if (tall) { const c2 = A(row, div("chips", ranks.map(u => `<span class="upchip rk">${u.nm}<b>R${u.v}</b></span>`).join("")), 30, 25, 245, 18); c2.style.fontSize = d(7.6); }
+      if (tall) { const c2 = A(row, div("chips", ranks.map(u => `<span class="upchip rk">${u.nm}<b><small>Rank </small>${u.v}</b></span>`).join("")), 30, 25, 245, 18); c2.style.fontSize = d(7.6); }
       y += tall ? 48 : 31;
     });
     const nx = T(L, 0, Math.min(612, y + 4), W, 14, "▼", 9, "center gold blink");
@@ -141,14 +141,16 @@ function menu() {
       const tabs = [["party", "仲間"], ["form", "編成"], ["bag", "持ち物"], ["goal", "目的"], ["book", "札帳"]].filter(([k]) => k !== "book" || GS.G.flags.cards); // 札帳は、札を手に入れてから
       const tw = Math.floor(246 / tabs.length);
       tabs.forEach(([k, nm], i) => {
-        const b = A(L, div("frame btn chip" + (tab === k ? " sel" : ""), nm), 12 + i * tw, 46, tw - 3, 28); b.style.fontSize = d(tabs.length > 4 ? 10 : 11);
+        const b = A(L, div("frame btn chip" + (tab === k ? " sel" : ""), nm), 12 + i * tw, 12, tw - 3, 28); b.style.fontSize = d(tabs.length > 4 ? 10 : 11);
         b.onclick = () => { if (k === "book") { cards("book").then(draw); return; } tab = k; slotSel = null; fsel = -1; bsel = null; pickItem = null; skillSel = null; draw(); };
       });
-      const x = A(L, div("frame btn chip", "×"), 261, 46, 28, 28); x.style.fontSize = d(14); x.onclick = close;
+      const x = A(L, div("frame btn chip", "×"), 261, 12, 28, 28); x.style.fontSize = d(14); x.onclick = close;
+      // 見出しを上の空きへ上げた分、持ち物・目的・編成も同じだけ上げる（中の並びはそのまま）
+      const C = tab === "party" ? L : A(L, div("shift", ""), 0, -34, W, H);
       if (tab === "party") member(L, draw);
-      else if (tab === "bag") bag(L, draw);
-      else if (tab === "goal") goal(L);
-      else formation(L, draw);
+      else if (tab === "bag") bag(C, draw);
+      else if (tab === "goal") goal(C);
+      else formation(C, draw);
     };
     draw();
   });
@@ -173,7 +175,7 @@ function heartSummary(k) {
   const ups = h.up.map(s => STAT_SHORT[s]).join("・");
   return `技：${BT.SKILLS[h.sk].nm}　${ups}が伸びやすい`;
 }
-// 技の1行（2段）。上の段＝属性・名前・技ランク・BP。下の段＝威力・範囲・近遠・効果（入りきらない効果は「…」。全部は押して出る説明に）
+// 技の1行（2段）。上の段＝属性・名前・Rank（技ランク。名前の長さに関係なく決まった列にそろえる）・BP。下の段＝威力・範囲・近遠・効果（入りきらない効果は「…」。全部は押して出る説明に）
 //  本家（ロマサガRS）の技一覧と同じく、一覧は要点だけ。細かい効果は押して見る
 const SK_H = 32;
 function skillRow(parent, k, y, tag, m, onTap) {
@@ -182,8 +184,8 @@ function skillRow(parent, k, y, tag, m, onTap) {
   const bp = BT.cost(m, s), sr = (m && m.sr && m.sr[k]) || 1, fxs = BT.fxText(s);
   const L1 = d(10), L2 = d(23);
   row.innerHTML = `<span style="left:${d(6)};top:${d(5)};width:${d(24)};display:flex;flex-direction:column;gap:${d(1)};transform:none">${at.map(a => DM.icon(a, 10)).join("")}</span>` +
-    `<span class="sn" style="left:${d(32)};top:${L1};font-size:${d(10.5)}">${s.nm}${sr > 1 ? `<i class="srk" style="font-size:${d(7.5)}">R${sr}</i>` : ""}${tag ? `<i class="tagh" style="font-size:${d(7.5)}">${tag}</i>` : ""}</span>` +
-    `<span class="bp${bp < s.bp ? " cut" : ""}" style="right:${d(8)};top:${L1};font-size:${d(10)}">${bp ? "BP" + bp : ""}</span>` +
+    `<span class="sn" style="left:${d(32)};top:${L1};font-size:${d(10.5)}">${s.nm}${tag ? `<i class="tagh" style="font-size:${d(7.5)}">${tag}</i>` : ""}</span>` +
+    `<span class="srk2" style="left:${d(196)};top:${L1};font-size:${d(8)}">Rank<b style="font-size:${d(10.5)};margin-left:${d(3)}">${sr}</b></span>` + `<span class="bp${bp < s.bp ? " cut" : ""}" style="right:${d(8)};top:${L1};font-size:${d(10)}">${bp ? "BP" + bp : ""}</span>` +
     (rank ? `<span class="rk" style="left:${d(32)};top:${L2};font-size:${d(8)}">威力<b style="font-size:${d(9.5)}">${rank}</b></span>` : `<span class="rk kind" style="left:${d(32)};top:${L2};font-size:${d(8.5)}">${s.kind}</span>`) +
     `<span class="rg" style="left:${d(74)};top:${L2};font-size:${d(8.5)}">${BT.RANGE_NM[s.tg]}</span>` +
     (s.dist ? `<span class="ds ${s.dist === "近" ? "near" : "far"}" style="left:${d(112)};top:${L2};font-size:${d(7.5)};width:${d(12)};height:${d(12)};line-height:${d(12)}">${s.dist}</span>` : "") +
@@ -210,7 +212,7 @@ function skillDetail(L, k, hi, m, isHeart, redraw) {
   T(box, 10, 26, 257, 15, line, 9, "dim2");
   fx.forEach((t, i) => T(box, 10, fy + i * 14, 257, 14, t, 8.5, ""));
   // 技ランク（使って勝つと上がる）
-  T(box, 10, ry, 60, 16, "技ランク", 8.5, "label");
+  T(box, 10, ry, 60, 16, "Rank", 8.5, "label");
   T(box, 62, ry, 30, 16, `${sr}`, 11, "num2");
   T(box, 92, ry, 175, 16, s.kind === "攻撃" || s.heal ? `${s.heal ? "回復量" : "威力"} ＋${((sr - 1) * 0.5).toFixed(1)}%` : "", 8.5, "dim2");
   // 覚醒（秘伝書で、使うBPを減らす）
@@ -251,45 +253,47 @@ function faceStrip(parent, x, y, w, list, o, redraw) {
 const roster = () => [...GS.fighters(), ...GS.bench()]; // 戦う5人が先、控えがあと
 const pgWho = { n: 0 }, pgPick = { n: 0 }, pgBench = { n: 0 }, pgBag = { n: 0 }, pgCand = { n: 0 };
 // 仲間：上の顔を押すと人が替わる。下は「能力・技」と「装備」を切り替える
+
+// 能力8つ：4列×2段。名前のすぐ下に置き、「技」「装備」のどちらでも同じ場所に出る（王道RPGの装備画面と同じく、付け替えながら見比べられる）
+function statBlock(L, y, h, m) {
+  const S = BT.heroStats(BT.resolveHero(who, m)).st, heart = m.heart && BT.HEARTS[m.heart];
+  BT.STATS.forEach((k, i) => {
+    const cw = 68, x = 12 + (i % 4) * 69.7, yy = y + Math.floor(i / 4) * 30, box = A(L, div("frame sbox", ""), x, yy, cw, 28);
+    T(box, 5, 1, 40, 12, STAT_SHORT[k], 8, "label");
+    const up = (h.up.includes(k) ? '<span class="upm">↑</span>' : "") + (heart && heart.up.includes(k) ? '<span class="upm2">↑</span>' : "");
+    T(box, 44, 1, 21, 12, up, 8, "right");
+    T(box, 5, 12, 28, 15, `${S[k]}`, 12, "num2");
+    const pc = heart ? heart.mul[k] : 100; // 心の倍率（上がれば青、下がれば赤）
+    if (pc !== 100) T(box, 32, 13, 33, 14, `${pc}%`, 7.5, "num2 right " + (pc > 100 ? "pcup" : "pcdn"));
+  });
+}
 function member(L, redraw) {
   const list = roster();
   if (!list.includes(who)) { who = list[0]; pgWho.n = 0; }
-  faceStrip(L, 12, 80, 280, list, { sel: who, pg: pgWho, lp: 1, pick: hi => { who = hi; slotSel = null; skillSel = null; redraw(); } }, redraw);
+  faceStrip(L, 12, 46, 280, list, { sel: who, pg: pgWho, lp: 1, pick: hi => { who = hi; slotSel = null; skillSel = null; redraw(); } }, redraw);
   const h = BT.HEROES[who], m = GS.G.party[who];
-  T(L, 12, 128, 170, 20, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 13, "name");
-  T(L, 12, 148, 170, 14, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.HEARTS[m.heart].nm : ""}`, 8.5, "dim2");
-  T(L, 180, 128, 30, 20, "HP", 9.5, "k");
-  T(L, 204, 128, 85, 20, `${m.hp}`, 13, "num2");
-  T(L, 180, 148, 30, 14, "LP", 9.5, "k");
-  A(L, div("lpips", Array.from({ length: h.lp }, (_, i) => `<i class="${i < m.lp ? "on" : ""}"></i>`).join("")), 204, 151, 85, 8);
-  [["stat", "能力・技"], ["gear", "装備"]].forEach(([k, nm], i) => {
-    const b = A(L, div("frame btn chip" + (view === k ? " sel" : ""), nm), 12 + i * 140, 168, 137, 24); b.style.fontSize = d(10.5);
+  T(L, 12, 94, 170, 20, `${h.nm}<span class="rare r${h.rare}">${h.rare}</span>`, 13, "name");
+  T(L, 12, 114, 170, 14, `${BT.WTYPE[h.wt].nm}${m.heart ? "・" + BT.HEARTS[m.heart].nm : ""}`, 8.5, "dim2");
+  T(L, 180, 94, 30, 20, "HP", 9.5, "k");
+  T(L, 204, 94, 85, 20, `${m.hp}`, 13, "num2");
+  T(L, 180, 114, 30, 14, "LP", 9.5, "k");
+  A(L, div("lpips", Array.from({ length: h.lp }, (_, i) => `<i class="${i < m.lp ? "on" : ""}"></i>`).join("")), 204, 117, 85, 8);
+  statBlock(L, 134, h, m);
+  [["stat", "技"], ["gear", "装備"]].forEach(([k, nm], i) => {
+    const b = A(L, div("frame btn chip" + (view === k ? " sel" : ""), nm), 12 + i * 140, 198, 137, 24); b.style.fontSize = d(10.5);
     b.onclick = () => { view = k; slotSel = null; skillSel = null; redraw(); };
   });
   view === "stat" ? statView(L, h, m, redraw) : gearView(L, redraw, h, m);
 }
 function statView(L, h, m, redraw) {
-  const S = BT.heroStats(BT.resolveHero(who, m)), heart = m.heart && BT.HEARTS[m.heart];
-  // 能力値：装備と心を入れた値。心を付けていると、その倍率を右に（上がれば青、下がれば赤。本家と同じ色）。↑は上がりやすい（緑＝本人・紫＝心）
-  BT.STATS.forEach((k, i) => {
-    const x = 12 + (i % 2) * 140, y = 200 + Math.floor(i / 2) * 25, box = A(L, div("frame sbox", ""), x, y, 137, 23);
-    T(box, 6, 0, 46, 21, BT.ST_NM[k], 9.5, "label");
-    T(box, 50, 0, 32, 21, `${S.st[k]}`, 12, "num2 right");
-    const pc = heart ? heart.mul[k] : 100; // 心の倍率をかっこで。100%（変わらない）は横棒
-    T(box, 78, 0, 38, 21, pc === 100 ? "(—)" : `(${pc}%)`, 8, "num2 right " + (pc > 100 ? "pcup" : pc < 100 ? "pcdn" : "zero"));
-    const up = (h.up.includes(k) ? '<span class="upm">↑</span>' : "") + (heart && heart.up.includes(k) ? '<span class="upm2">↑</span>' : "");
-    T(box, 119, 0, 17, 21, up, 9, "");
-  });
-  // 技（通常攻撃＋本人の3つ＋心の技）
-  T(L, 14, 304, 100, 14, "技", 9, "label");
-  // 通常攻撃はいつでも使えるので、ここには出さない（本家のスタイルの技一覧と同じ。武器の種類は名前の下に出ている）
-  const nsk = h.sk.length + (heart ? 1 : 0), box = A(L, div("frame rbox", ""), 12, 320, 277, 4 + nsk * SK_H);
+  const heart = m.heart && BT.HEARTS[m.heart], Y = 230;
+  T(L, 14, Y, 100, 14, "技", 9, "label");
+  const nsk = h.sk.length + (heart ? 1 : 0), box = A(L, div("frame rbox", ""), 12, Y + 16, 277, 4 + nsk * SK_H);
   const tapSk = k => { skillSel = skillSel === k ? null : k; redraw(); };
   h.sk.forEach((k, i) => skillRow(box, k, 2 + i * SK_H, "", m, tapSk));
   if (heart) skillRow(box, heart.sk, 2 + h.sk.length * SK_H, "心", m, tapSk);
   if (skillSel && ![...h.sk, heart && heart.sk].includes(skillSel)) skillSel = null;
-  // パッシブ（本人の3つ＋装備に付いているもの）
-  const py = 320 + 4 + nsk * SK_H + 8;
+  const py = Y + 16 + 4 + nsk * SK_H + 8;
   T(L, 14, py, 100, 14, "パッシブ", 9, "label");
   const ps = [...h.ps.map(k => [k, ""]), ...Object.values(m.gear).filter(it => it && BT.GEAR[it.id].ps).map(it => [BT.GEAR[it.id].ps, "装備"])];
   const pb = A(L, div("frame rbox", ""), 12, py + 16, 277, 6 + ps.length * 21);
@@ -300,17 +304,16 @@ function statView(L, h, m, redraw) {
   });
   if (skillSel) skillDetail(L, skillSel, who, m, !!heart && heart.sk === skillSel, redraw);
 }
-
-function statDiff(hi, m, slot, item) { // 付け替えたら能力値がどう変わるか
-  const a = BT.heroStats(BT.resolveHero(hi, m)).st;
-  const m2 = { ...m, gear: { ...m.gear } };
+// 付け替えた後の値（変わるものだけ）。上の能力の欄の今の値と見比べる
+function afterVals(hi, m, slot, item) {
+  const a = BT.heroStats(BT.resolveHero(hi, m)).st, m2 = { ...m, gear: { ...m.gear } };
   if (slot === "heart") m2.heart = item; else m2.gear[slot] = item;
   const b = BT.heroStats(BT.resolveHero(hi, m2)).st, out = [];
-  for (const k of BT.STATS) if (b[k] !== a[k]) out.push(`<span class="${b[k] > a[k] ? "pcup" : "pcdn"}">${STAT_SHORT[k]}${b[k] > a[k] ? "+" : ""}${b[k] - a[k]}</span>`);
+  for (const k of BT.STATS) if (b[k] !== a[k]) out.push(`<span class="dim2">${STAT_SHORT[k]}</span><span class="${b[k] > a[k] ? "pcup" : "pcdn"}">${b[k]}${b[k] > a[k] ? "↑" : "↓"}</span>`);
   return out.join(" ") || '<span class="dim">変わらない</span>';
 }
 function gearView(L, redraw, h, m) {
-  const slots = ["weapon", "armor", "sub", "acc", "heart"], ey = 200;
+  const slots = ["weapon", "armor", "sub", "acc", "heart"], ey = 230;
   slots.forEach((sl, i) => {
     const y = ey + i * 36, row = A(L, div("frame slotrow" + (slotSel === sl ? " on" : ""), ""), 12, y, 277, 34);
     T(row, 8, 0, 46, 32, SLOT_NM[sl], 9.5, "label");
@@ -325,18 +328,21 @@ function gearView(L, redraw, h, m) {
     row.onclick = () => { slotSel = slotSel === sl ? null : sl; pgCand.n = 0; redraw(); };
   });
   if (!slotSel) return;
-  const G = GS.G, sl = slotSel, list = [];
+  const G = GS.G, sl = slotSel, list = [], fmt = afterVals;
   if (sl === "heart") {
-    if (m.heart) list.push({ nm: "外す", diff: statDiff(who, m, "heart", null), act: () => { G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; m.heart = null; } });
-    Object.keys(G.hearts).filter(k => G.hearts[k] > 0 && k !== m.heart).forEach(k => list.push({ heart: k, html: `<span class="heartnm">${BT.HEARTS[k].nm}</span><small> ×${G.hearts[k]}</small>`, diff: statDiff(who, m, "heart", k), act: () => { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[k]--; m.heart = k; } }));
+    if (m.heart) list.push({ key: "x", v: null, nm: "外す", diff: fmt(who, m, "heart", null), act: () => { G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; m.heart = null; } });
+    Object.keys(G.hearts).filter(k => G.hearts[k] > 0 && k !== m.heart).forEach(k => list.push({ key: k, v: k, heart: k, html: `<span class="heartnm">${BT.HEARTS[k].nm}</span><small> ×${G.hearts[k]}</small>`, diff: fmt(who, m, "heart", k), act: () => { if (m.heart) G.hearts[m.heart] = (G.hearts[m.heart] || 0) + 1; G.hearts[k]--; m.heart = k; } }));
   } else {
-    if (sl !== "weapon" && m.gear[sl]) list.push({ nm: "外す", diff: statDiff(who, m, sl, null), act: () => { G.bag.push(m.gear[sl]); m.gear[sl] = null; } });
+    if (sl !== "weapon" && m.gear[sl]) list.push({ key: "x", v: null, nm: "外す", diff: fmt(who, m, sl, null), act: () => { G.bag.push(m.gear[sl]); m.gear[sl] = null; } });
+    // 同じ物（名前も付いた力も同じ）は1行にまとめて「×数」
+    const sig = it => JSON.stringify([it.id, it.el || "", it.b || {}]), seen = {};
     G.bag.filter(it => { const g = BT.GEAR[it.id]; return g.slot === sl && (sl !== "weapon" || g.wt === h.wt); }).forEach(it => {
-      const g = BT.GEAR[it.id];
-      list.push({ icon: g.icon, html: `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`, main: mainVal(it, m.gear[sl]), ps: g.ps, diff: statDiff(who, m, sl, it), act: () => { G.bag.splice(G.bag.indexOf(it), 1); if (m.gear[sl]) G.bag.push(m.gear[sl]); m.gear[sl] = it; } });
+      const s = sig(it); if (seen[s]) { seen[s].n++; seen[s].html = seen[s].base + `<small class="dim2"> ×${seen[s].n}</small>`; return; }
+      const g = BT.GEAR[it.id], base = `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(it)}</span>`;
+      const c = { key: s, v: it, n: 1, base, icon: g.icon, html: base, main: mainVal(it, m.gear[sl]), ps: g.ps, diff: fmt(who, m, sl, it), act: () => { G.bag.splice(G.bag.indexOf(it), 1); if (m.gear[sl]) G.bag.push(m.gear[sl]); m.gear[sl] = it; } };
+      seen[s] = c; list.push(c);
     });
   }
-  // 候補：6つまでは全部。それより多いときは5つずつ、下の◀▶でめくる
   const per = list.length > 6 ? 5 : 6, pages = Math.max(1, Math.ceil(list.length / per));
   pgCand.n = Math.max(0, Math.min(pages - 1, pgCand.n));
   const y0 = ey + 5 * 36 + 4, shown = list.slice(pgCand.n * per, pgCand.n * per + per);
@@ -347,8 +353,7 @@ function gearView(L, redraw, h, m) {
     if (c.icon) A(r, DM.iconImg(c.icon, 22 * DM.K), 8, 5, undefined, undefined);
     if (c.heart) A(r, heartIcon(c.heart, 22), 8, 5, 22, 22);
     T(r, 38, 1, c.ps ? 178 : 230, 17, c.nm ? `<b>${c.nm}</b>` : c.html, 10.5, "name");
-    if (c.ps) T(r, 214, 1, 56, 17, `<span class="pstag">${BT.PASSIVES[c.ps].nm}</span>`, 9, "right");   // 付いているパッシブ
-    // 下の段：武器は威力、防具は守り（今の装備との差）を決まった位置に。その右に能力値の変わり方
+    if (c.ps) T(r, 214, 1, 56, 17, `<span class="pstag">${BT.PASSIVES[c.ps].nm}</span>`, 9, "right");
     if (c.main) { T(r, 38, 17, 64, 15, c.main, 8.5, ""); T(r, 104, 17, 166, 15, c.diff, 8.5, ""); }
     else T(r, 38, 17, 230, 15, c.diff, 8.5, "");
     r.onclick = () => { c.act(); slotSel = null; pgCand.n = 0; GS.save(); redraw(); };
@@ -382,7 +387,10 @@ function bag(L, redraw) {
     const b = A(L, div("frame btn chip" + (bagTab === k ? " sel" : ""), `${nm}<small class="cnt">${n[k]}</small>`), 12 + i * 70, 80, 67, 24); b.style.fontSize = d(10);
     b.onclick = () => { bagTab = k; pickItem = null; pgBag.n = 0; redraw(); };
   });
-  if (bagTab === "gear") G.bag.slice().sort((a, b) => order[BT.GEAR[a.id].slot] - order[BT.GEAR[b.id].slot] || BT.GEAR[a.id].nm.localeCompare(BT.GEAR[b.id].nm)).forEach(it => rows.push({ it }));
+  if (bagTab === "gear") { // 同じ物（名前も付いた力も同じ）は1行にまとめて「×数」。装備の候補と同じ
+    const seen = {}, sig = it => JSON.stringify([it.id, it.el || "", it.b || {}]);
+    G.bag.slice().sort((a, b) => order[BT.GEAR[a.id].slot] - order[BT.GEAR[b.id].slot] || BT.GEAR[a.id].nm.localeCompare(BT.GEAR[b.id].nm)).forEach(it => { const s = sig(it); if (seen[s]) { seen[s].n++; return; } seen[s] = { it, n: 1 }; rows.push(seen[s]); });
+  }
   else if (bagTab === "heart") Object.keys(G.hearts).filter(k => G.hearts[k] > 0).forEach(k => rows.push({ h: k }));
   else if (bagTab === "mat") Object.keys(BT.MATS).filter(k => G.mats[k] > 0).forEach(k => rows.push({ m: k }));
   else Object.keys(BT.TOOLS).filter(k => G.tools[k] > 0).forEach(k => rows.push({ t: k }));
@@ -410,7 +418,7 @@ function bag(L, redraw) {
     if (r.it) {
       const g = BT.GEAR[r.it.id];
       A(row, DM.iconImg(g.icon, 24 * DM.K), 6, 5, undefined, undefined);
-      T(row, 36, 2, 160, 17, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(r.it)}</span>`, 10.5, "name");
+      T(row, 36, 2, 160, 17, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(r.it)}</span>${r.n > 1 ? `<small class="dim2"> ×${r.n}</small>` : ""}`, 10.5, "name");
       T(row, 36, 18, 236, 15, itemSummary(r.it), 8.5, "dim2");
       T(row, 196, 2, 76, 17, g.slot === "weapon" ? BT.WTYPE[g.wt].nm : SLOT_NM[g.slot], 8.5, "dim right");
     } else {
