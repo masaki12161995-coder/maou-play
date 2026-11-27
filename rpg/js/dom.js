@@ -5,8 +5,11 @@ const W = 301, H = 655;
 const DPR = window.devicePixelRatio || 2;
 const stage = document.getElementById("stage"), hud = document.getElementById("hud");
 const M = { W, H, DPR, K: 2, stage, hud, onFit: [] };
+// ホーム画面から開いたときは画面の端まで使えるので、切り欠きやホームバーの所（safe-area）をよけた広さに合わせる
+const inset = () => { const c = getComputedStyle(document.body), n = k => parseFloat(c[k]) || 0; return { x: n("paddingLeft") + n("paddingRight"), y: n("paddingTop") + n("paddingBottom") }; };
 M.fit = () => {
-  const w = Math.min(innerWidth, innerHeight * W / H);
+  const p = inset(), aw = innerWidth - p.x, ah = innerHeight - p.y;
+  const w = Math.min(aw, ah * W / H);
   M.K = w / W;
   stage.style.width = w + "px"; stage.style.height = (w * H / W) + "px";
   M.onFit.forEach(f => f());

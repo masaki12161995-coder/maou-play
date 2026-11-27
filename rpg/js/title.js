@@ -78,6 +78,25 @@ function draw(now) {
   }
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
 }
+// ---- 記録の引っ越し（文字にして写す／貼りつけて入れる） ----
+const SAVE_KEYS = ["rpgPlay1", "rpgCards1", "rpgSnd"], MARK = "SENSHIN1:";
+async function copyOut() {
+  const o = {}; SAVE_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) o[k] = v; });
+  const code = MARK + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  try { await navigator.clipboard.writeText(code); DM.toast("記録を写しました", 520); }
+  catch (e) { prompt("", code); }
+}
+async function pasteIn() {
+  let t = "";
+  try { t = await navigator.clipboard.readText(); } catch (e) {}
+  if (!t || !t.startsWith(MARK)) t = prompt("", "") || "";
+  t = t.trim(); if (!t.startsWith(MARK)) { if (t) DM.toast("記録として読めませんでした", 520); return false; }
+  let o; try { o = JSON.parse(decodeURIComponent(escape(atob(t.slice(MARK.length))))); } catch (e) { DM.toast("記録として読めませんでした", 520); return false; }
+  if (!o.rpgPlay1) { DM.toast("記録として読めませんでした", 520); return false; }
+  if (localStorage.getItem("rpgPlay1") && await UI.choose("", "今の記録と入れかえますか？", ["入れかえる", "やめる"]) !== 0) return false;
+  SAVE_KEYS.forEach(k => { if (o[k] !== undefined) localStorage.setItem(k, o[k]); });
+  return true;
+}
 // 出す。押されたほう（"new"＝はじめから／"cont"＝つづきから）を返す
 function show(hasSave) {
   return new Promise(res => {
@@ -98,6 +117,16 @@ function show(hasSave) {
       };
       if (hasSave) { btn("つづきから", 432, "cont", true); btn("はじめから", 478, "new", false); }
       else btn("はじめから", 452, "new", true);
+      // 記録をうつす：Safariとホーム画面のアプリでは記録が別々なので、文字にして写し、もう片方で貼りつける
+      const mv = px(div("ttlsub", "記録をうつす"), 98, 560, 105, 26); mv.style.fontSize = d(10.5); mv.style.lineHeight = d(26); L.appendChild(mv);
+      mv.onclick = async () => {
+        [...L.querySelectorAll(".ttlbtn,.ttlsub")].forEach(e => e.style.visibility = "hidden");
+        const a = await UI.choose("", "", hasSave ? ["この記録を写す", "写した記録を入れる", "やめる"] : ["写した記録を入れる", "やめる"]);
+        const pick = hasSave ? a : (a === 0 ? 1 : 2);
+        if (pick === 0) await copyOut();
+        else if (pick === 1 && await pasteIn()) return location.reload();
+        build();
+      };
     };
     build();
     DM.onFit.push(() => { if (on && !document.querySelector(".uilayer")) build(); });

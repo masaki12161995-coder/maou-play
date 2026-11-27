@@ -5,10 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>新しいRPG（前半の試作）</title>
+<meta name="apple-mobile-web-app-title" content="千の心と空の玉座">
+<meta name="theme-color" content="#0b0d14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/app_icon_180.png">
+<title>千の心と空の玉座</title>
 <style>
 html,body{margin:0;height:100%;background:#0b0d14;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-body{display:flex;align-items:center;justify-content:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;color:#f3e4c8}
+body{box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);display:flex;align-items:center;justify-content:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif;color:#f3e4c8}
 #stage{position:relative;overflow:hidden}
 #field{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
 #hud{position:absolute;inset:0}
@@ -303,23 +307,24 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .pcup,.t.pcup{color:#5ab0ff;font-weight:800}.pcdn,.t.pcdn{color:#ff6a5a;font-weight:800}
 .prow.on{border-color:#ffd88a;background:#2a2418}
 .pickbar{box-sizing:border-box;background:#15141e}
+.ttlsub{position:absolute;text-align:center;color:#c9b48e;border-bottom:1px solid #6a5a44;letter-spacing:.1em}
 </style>
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/dom.js?v=72"></script>
-<script src="js/sound.js?v=72"></script>
-<script src="js/engine.js?v=72"></script>
-<script src="js/scene.js?v=72"></script>
-<script src="js/tiles.js?v=72"></script>
-<script src="js/game.js?v=72"></script>
-<script src="js/maps.js?v=72"></script>
-<script src="js/view.js?v=72"></script>
-<script src="js/ui.js?v=72"></script>
-<script src="js/field.js?v=72"></script>
-<script src="js/towntalk.js?v=72"></script>
-<script src="js/story.js?v=72"></script>
-<script src="js/title.js?v=72"></script>
-<script src="js/main.js?v=72"></script>
+<script src="js/dom.js?v=74"></script>
+<script src="js/sound.js?v=74"></script>
+<script src="js/engine.js?v=74"></script>
+<script src="js/scene.js?v=74"></script>
+<script src="js/tiles.js?v=74"></script>
+<script src="js/game.js?v=74"></script>
+<script src="js/maps.js?v=74"></script>
+<script src="js/view.js?v=74"></script>
+<script src="js/ui.js?v=74"></script>
+<script src="js/field.js?v=74"></script>
+<script src="js/towntalk.js?v=74"></script>
+<script src="js/story.js?v=74"></script>
+<script src="js/title.js?v=74"></script>
+<script src="js/main.js?v=74"></script>
 </body>
 </html>

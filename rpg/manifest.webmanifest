@@ -1,0 +1,16 @@
+{
+  "name": "千の心と空の玉座",
+  "short_name": "千の心と空の玉座",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0d14",
+  "theme_color": "#0b0d14",
+  "icons": [
+    { "src": "img/app_icon_192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/app_icon_512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/app_icon_512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
