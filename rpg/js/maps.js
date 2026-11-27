@@ -477,7 +477,7 @@ function ohashi() {
       { x: 5, y: 6, when: g => S(g) === 20, run: "towerLater" },
       { x: 5, y: 6, when: g => S(g) >= 21, run: "towerIn" },
       { x: 7, y: 12, w: 1, h: 3, when: g => S(g) === 25, run: "c1s10" },
-      { x: 17, y: 12, w: 1, h: 3, when: g => S(g) >= 28, run: "eastEnd" },
+      { x: 17, y: 12, w: 1, h: 3, when: g => S(g) >= 28, run: "tollEast" },
     ],
   };
 }
@@ -533,5 +533,133 @@ function towerTop() {
   };
 }
 
-root.MAPS = { hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+
+// ==================== 第2章 ====================
+// ---------- 中央平原（C1。強さ2〜3）：西に大橋、北に王都、南東に風車の里ミルナ、東は赤麦の丘 ----------
+function plain() {
+  const W = 40, H = 30, g = grid(W, H, ".");
+  fill(g, "T", 0, 0, W, 2); fill(g, "T", 0, H - 2, W, 2); fill(g, "T", 0, 0, 1, H);
+  fill(g, "=", 0, 14, W, 1);                 // 東西の街道
+  fill(g, "=", 20, 2, 1, 12);                // 北：王都へ
+  fill(g, "=", 31, 15, 1, 13);               // 南：ミルナへ
+  g[0][20] = "="; g[1][20] = "="; g[28][31] = "="; g[29][31] = "=";
+  for (const [x, y, w, h] of [[3, 4, 7, 5], [24, 4, 8, 6], [5, 17, 9, 6], [17, 18, 8, 7], [34, 18, 5, 5]]) fill(g, "h", x, y, w, h); // 麦と牧草
+  for (const [x, y] of [[12, 3], [13, 9], [2, 11], [15, 16], [27, 17], [36, 9], [38, 4], [11, 25], [26, 26], [2, 23]]) g[y][x] = "T";
+  fill(g, "f", 3, 9, 7, 1); fill(g, "f", 24, 10, 8, 1); fill(g, "f", 5, 16, 9, 1);
+  return {
+    id: "plain", nm: "中央平原", g, tier: 3, bg: "meadow",
+    objs: [
+      { t: "windmill", x: 33, y: 23, w: 2, h: 3 }, { t: "windmill", x: 36, y: 24, w: 2, h: 3 },
+      { t: "kaeri", x: 18, y: 12, talk: "kaeri" },
+      { t: "sign", x: 21, y: 13, text: ["北　王都ルクスベル"] }, { t: "sign", x: 32, y: 15, text: ["南　風車の里ミルナ"] }, { t: "sign", x: 37, y: 13, text: ["東　赤麦の丘・東の関所"] },
+    ],
+    exits: [{ x: 20, y: 0, to: "lux", tx: 11, ty: 38, dir: 3 }, { x: 31, y: 29, to: "milna", tx: 8, ty: 1, dir: 0 }],
+    npcs: [
+      { id: "gyoshoP", x: 12, y: 13, img: "person_075", dir: 1, nm: "行商人", when: g => cut(g, "c2s1") },
+    ],
+    foes: [
+      { id: "p1", x: 8, y: 12, k: "mugiwara", g: ["mugiwara", "mugiwara"] },
+      { id: "p2", x: 15, y: 11, k: "kamausagi", g: ["kamausagi", "kamausagi", "fusha"] },
+      { id: "p3", x: 23, y: 12, k: "fusha", g: ["fusha", "fusha", "mugiwara"] },
+      { id: "p4", x: 27, y: 16, k: "doro", g: ["doro", "kamausagi"] },
+      { id: "p5", x: 33, y: 11, k: "doro", g: ["doro", "mugiwara", "fusha"] },
+      { id: "p6", x: 18, y: 6, k: "kamausagi", g: ["kamausagi", "mugiwara", "kamausagi"] },
+    ],
+    chests: [{ id: "c_plain1", x: 3, y: 3, gold: 120 }, { id: "c_plain2", x: 38, y: 27, item: "longbow" }],
+    trigs: [
+      { x: 1, y: 14, when: g => S(g) === 28, run: "c2s1" },
+      { x: 20, y: 5, w: 1, h: 1, when: g => S(g) === 29, run: "c2s1b" },
+      { x: 20, y: 3, w: 1, h: 1, when: g => S(g) <= 30, run: "luxShut" },
+      { x: 0, y: 14, run: "tollWest" },
+      { x: 39, y: 14, run: "eastShut" },
+    ],
+  };
+}
+// ---------- 風車の里ミルナ（C4） ----------
+function milna() {
+  const W = 18, H = 22, g = grid(W, H, ".");
+  fill(g, "T", 0, H - 2, W, 2); fill(g, "T", 0, 0, 1, H); fill(g, "T", W - 1, 0, 1, H); fill(g, "T", 0, 0, 7, 2); fill(g, "T", 10, 0, 8, 2);
+  fill(g, "=", 8, 0, 1, 12); fill(g, "c", 5, 11, 8, 4);
+  for (const [x, y, w, h] of [[2, 16, 5, 3], [11, 16, 5, 3]]) fill(g, "h", x, y, w, h);
+  return {
+    id: "milna", nm: "風車の里ミルナ", g, tier: 0, bg: null, music: "town",
+    objs: [
+      { t: "windmill", x: 2, y: 3, w: 2, h: 3 }, { t: "windmill", x: 13, y: 3, w: 2, h: 3 }, { t: "windmill", x: 13, y: 8, w: 2, h: 3 },
+      { t: "house", x: 3, y: 8, w: 4, h: 3, roof: "brown", door: 2, chimney: 1 },
+      { t: "sign", x: 9, y: 10, text: ["東の関所、当分のあいだ通行を禁ず。宰相ヴァルド"] },
+      { t: "wagon", x: 9, y: 12, w: 2, h: 1, when: g => S(g) <= 30 },
+      { t: "kaeri", x: 4, y: 14, talk: "kaeri" },
+    ],
+    exits: [{ x: 8, y: 0, to: "plain", tx: 31, ty: 28, dir: 3 }],
+    npcs: [
+      { id: "morto", x: 11, y: 12, img: "person_019k", dir: 1, nm: "モルト", talk: "morto" },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 8, y: 2, when: g => S(g) === 30 && !g.flags.milna, run: "c2s2" }],
+  };
+}
+// ---------- 王都ルクスベル（C2）：南に正門、北に城と古い礼拝堂、西に酒場と裏通り ----------
+function lux() {
+  const W = 22, H = 40, g = grid(W, H, ".");
+  fill(g, "Q", 0, 27, W, 2); fill(g, "c", 10, 27, 2, 2);   // 町の壁と正門
+  fill(g, "T", 0, 29, W, 11); fill(g, ".", 7, 29, 8, 9); fill(g, "=", 10, 29, 2, 11);  // 門の外（丘へ下る道）
+  fill(g, "c", 10, 6, 2, 21); fill(g, "c", 1, 15, 20, 2);   // 大通りと横の通り
+  fill(g, "c", 2, 6, 1, 9);                                // 裏通り
+  fill(g, "c", 3, 6, 7, 1);
+  fill(g, "Q", 0, 0, W, 2); fill(g, "Q", 0, 0, 1, 27); fill(g, "Q", W - 1, 0, 1, 27);
+  return {
+    id: "lux", nm: "王都ルクスベル", g, tier: 0, bg: null, music: "town",
+    objs: [
+      { t: "castle", x: 7, y: 1, w: 8, h: 4 },
+      { t: "gatePost", x: 9, y: 26, w: 1, h: 2 }, { t: "gatePost", x: 12, y: 26, w: 1, h: 2 },
+      { t: "house", x: 3, y: 10, w: 5, h: 3, roof: "red", door: 2, chimney: 1 },     // 酒場
+      { t: "sign", x: 8, y: 13, text: ["酒場　白い鳩亭"] },
+      { t: "house", x: 3, y: 2, w: 4, h: 3, roof: "blue", door: 1 },                 // 古い礼拝堂
+      { t: "sign", x: 7, y: 5, text: ["古い礼拝堂"] },
+      { t: "house", x: 14, y: 9, w: 5, h: 3, roof: "brown", door: 2 },
+      { t: "house", x: 14, y: 19, w: 5, h: 3, roof: "green", door: 2, chimney: 1 },
+      { t: "house", x: 3, y: 19, w: 5, h: 3, roof: "blue", door: 2 },
+      { t: "well", x: 13, y: 15 },
+      { t: "sign", x: 9, y: 17, text: ["魔王討伐の軍資金にご協力を"] },
+      { t: "sign", x: 12, y: 24, text: ["魔王討伐の軍資金にご協力を"] },
+      { t: "kaeri", x: 18, y: 16, talk: "kaeri" },
+      { t: "wagon", x: 10, y: 31, w: 2, h: 1, when: g => cut(g, "c2s3") },
+    ],
+    exits: [{ x: 10, y: 39, to: "plain", tx: 20, ty: 1, dir: 0 }, { x: 11, y: 39, to: "plain", tx: 20, ty: 1, dir: 0 }],
+    npcs: [
+      { id: "dario", x: 13, y: 27, mon: "monster_010", face: -1, nm: "ダリオ", talk: "dario", when: g => S(g) >= 31 },
+      { id: "kgate1", x: 9, y: 28, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => S(g) >= 31 && S(g) <= 40 },
+      { id: "kgate2", x: 12, y: 28, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => S(g) >= 31 && S(g) <= 40 },
+      { id: "mortoG", x: 12, y: 31, img: "person_019k", dir: 3, nm: "モルト", when: g => cut(g, "c2s3") },
+    ],
+    foes: [], chests: [],
+    trigs: [
+      { x: 5, y: 13, run: "sakabaDoor" },
+      { x: 4, y: 5, when: g => S(g) === 33, run: "c2stop" },
+    ],
+  };
+}
+// ---------- 王都の酒場「白い鳩亭」 ----------
+function sakaba() {
+  const g = grid(11, 9, "w"); fill(g, "p", 1, 1, 9, 7); g[8][5] = "D";
+  return {
+    id: "sakaba", nm: "白い鳩亭", g, tier: 0, bg: null, inside: 1, music: "town",
+    objs: [
+      { t: "counter", x: 3, y: 2 }, { t: "counter", x: 4, y: 2 }, { t: "counter", x: 5, y: 2 }, { t: "counter", x: 6, y: 2 },
+      { t: "hearth", x: 8, y: 0 }, { t: "shelf", x: 2, y: 1 },
+      { t: "table", x: 3, y: 5 }, { t: "table", x: 7, y: 5 },
+    ],
+    exits: [{ x: 5, y: 8, to: "lux", tx: 5, ty: 14, dir: 0 }],
+    exitRun: g => S(g) === 32 ? "c2s5" : null,
+    npcs: [
+      { id: "niko", x: 5, y: 1, img: "person_070n", dir: 0, nm: "ニコ", talk: "niko" },
+      { id: "kyaku1", x: 2, y: 5, img: "person_074", dir: 2, nm: "酒場の客", talk: "kyaku" },
+      { id: "kyaku2", x: 4, y: 6, img: "person_071", dir: 3, nm: "酒場の客", talk: "kyaku" },
+      { id: "totoL", x: 8, y: 6, img: "person_100", dir: 1, nm: "トト", talk: "totoL" },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 5, y: 7, when: g => S(g) === 31, run: "c2s4" }],
+  };
+}
+root.MAPS = { plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

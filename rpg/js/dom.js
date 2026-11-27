@@ -40,6 +40,7 @@ M.toast = (text, y) => {
   hud.appendChild(e); setTimeout(() => e.remove(), 1400);
 };
 root.DM = M;
-root.IMG = {};
+// 絵の表。読み込んでいない絵を使おうとしたら、その場で読み込み始める（描けるようになるまでは何も描かない。止まらない）
+root.IMG = new Proxy({}, { get(t, k) { if (typeof k === "string" && !(k in t) && /^[a-z][a-z0-9_]*$/.test(k)) M.load(k); return t[k]; } });
 M.load = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(i); i.src = "img/" + src + ".png"; root.IMG[src] = i; });
 })(window);

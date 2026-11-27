@@ -358,6 +358,32 @@ function stairs(c) { // 塔の階段（歩いて乗ると、上か下の階へ�
 function campfire(c) { caveFloor(c, 0, 0); blob(c, "#2a2420", 24, 30, 15, 8); R(c, "#4d3727", 12, 28, 24, 4); R(c, "#6b4d34", 16, 24, 4, 10); blob(c, "#b8552b", 24, 24, 5, 6); blob(c, "#e8a23a", 24, 22, 3, 4); } // 消えかけた焚き火
 function bell(c) { caveFloor(c, 0, 0); R(c, "#4d3727", 8, 4, 4, 38); R(c, "#4d3727", 36, 4, 4, 38); R(c, "#6b4d34", 8, 4, 32, 4); blob(c, "#5a4a2c", 24, 22, 10, 11); blob(c, "#7b6a3a", 22, 20, 7, 8); R(c, "#3a3220", 14, 30, 20, 3); blob(c, "#3a3220", 24, 35, 2, 2); } // 錆びた鐘
 function desk(c) { caveFloor(c, 0, 0); R(c, "#3c2a1e", 6, 16, 36, 22); R(c, "#6b4d34", 6, 14, 36, 6); R(c, "#d8d2c0", 16, 9, 16, 9); R(c, "#8a8474", 24, 9, 1, 9); } // 机と日誌
+function windmill(c) { // 風車（横2×縦3マス）
+  const W = T * 2;
+  blob(c, "#2a3a26", W / 2, 140, 30, 5);
+  R(c, "#8a7a62", 30, 60, 36, 80); R(c, "#a6967a", 32, 60, 10, 80); R(c, "#6e5f48", 60, 60, 6, 80);
+  R(c, "#7b4a32", 26, 50, 44, 12); R(c, "#93583a", 28, 46, 40, 6); R(c, "#3c2a1e", 42, 112, 12, 28);
+  c.save(); c.translate(48, 52); c.strokeStyle = "#3c2a1e"; c.lineWidth = 3;
+  for (let i = 0; i < 4; i++) { c.rotate(Math.PI / 2); c.fillStyle = "#d9cfb6"; c.fillRect(2, -4, 40, 8); c.strokeRect(2, -4, 40, 8); c.fillStyle = "#3c2a1e"; c.fillRect(2, -1, 40, 2); }
+  c.restore(); blob(c, "#3c2a1e", 48, 52, 4, 4);
+}
+function castle(c, o) { // 丘の上の白い城（横w×縦hマス）
+  const W = (o.w || 6) * T, H = (o.h || 4) * T;
+  R(c, "#cfd3da", W * 0.15, H * 0.35, W * 0.7, H * 0.65); R(c, "#e6e9ee", W * 0.15, H * 0.35, W * 0.7, 6);
+  for (const [x, w, top] of [[0.02, 0.18, 0.12], [0.8, 0.18, 0.12], [0.4, 0.2, 0]]) {
+    R(c, "#b9bec7", W * x, H * top, W * w, H * (1 - top)); R(c, "#e6e9ee", W * x, H * top, W * w, 5);
+    R(c, "#3f5e8a", W * x - 4, H * top - 14, W * w + 8, 16); R(c, "#5577aa", W * x - 4, H * top - 14, W * w + 8, 4);
+    R(c, "#2a3340", W * (x + w / 2) - 5, H * (top + 0.2), 10, 16);
+  }
+  R(c, "#2a3340", W / 2 - 14, H - 40, 28, 40); R(c, "#7a6a50", W / 2 - 12, H - 38, 24, 38);
+  for (let i = 0; i < 10; i++) R(c, "#b9bec7", W * 0.15 + i * W * 0.07, H * 0.3, W * 0.04, 10);
+}
+function townWall(c, x, y, nb) { // 町を囲む石の壁（上が壁でなければ、上の縁を明るく）
+  R(c, "#5d5966", 0, 0, T, T);
+  for (let r = 0; r < 4; r++) { const off = r % 2 ? 12 : 0; R(c, "#3c3944", 0, r * 12 + 11, T, 1); for (let i = -1; i < 3; i++) R(c, "#3c3944", off + i * 24, r * 12, 1, 12); }
+  if (nb(0, -1) !== "Q") { R(c, "#8a8594", 0, 0, T, 4); R(c, "#6e6a78", 0, 4, T, 2); }
+  if (nb(0, 1) !== "Q") R(c, "#2a2830", 0, T - 4, T, 4);
+}
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall };
 })(window);

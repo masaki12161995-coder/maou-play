@@ -28,6 +28,12 @@ const WORLD={
   w_komari:{nm:"森のいたずらっ子",r:2,n:[5,2,4,5],src:"img/c_komari.png",sz:[37,49],k:"人物"},
   w_nat:{nm:"旅の機械いじり",r:2,n:[3,3,5,5],src:"img/c_nat.png",sz:[41,58],k:"人物"},
   w_karin:{nm:"鐘つき見習い",r:2,n:[4,4,4,4],src:"img/c_karin.png",sz:[39,59],k:"人物"},
+  w_mugiwara:{nm:"ムギワラ坊",r:1,n:[4,3,3,3],src:"img/m_mugiwara.png",sz:[38,45],k:"魔物"},
+  w_kamausagi:{nm:"カマウサギ",r:1,n:[5,4,1,3],src:"img/monster_003.png",sz:[40,45],k:"魔物"},
+  w_fusha:{nm:"フウシャ虫",r:2,n:[3,6,2,5],src:"img/monster_082.png",sz:[35,35],k:"魔物"},
+  w_doro:{nm:"ドロ人形",r:2,n:[6,2,6,2],src:"img/monster_031.png",sz:[72,70],k:"魔物"},
+  w_honeban:{nm:"ホネ番兵",r:2,n:[5,5,3,3],src:"img/monster_035.png",sz:[43,70],k:"魔物"},
+  w_rizeria:{nm:"王女リゼリア",r:4,n:[6,8,5,6],src:"img/c_rizeria.png",sz:[31,64],k:"人物"},
   w_kai:{nm:"渡し守",r:3,n:[6,5,4,6],src:"img/c_kai.png",sz:[35,59],k:"人物"},
   w_muku:{nm:"麦わら帽の子",r:3,n:[5,6,6,4],src:"img/c_muku.png",sz:[41,60],k:"人物"},
 };
@@ -42,8 +48,11 @@ START.length=0; ["w_kai","w_muku","w_koromochi","w_koromochi","w_kawauso","w_kaw
 // 相手：0＝札売りのトト（看板はヌシガエル）、1＝かわうそ亭の女将ベラ
 OPPS.length=0; OPPS.push(
   {nm:"札売りのトト",who:"100",cap:9,depth:1,sig:"w_nushi",pool:["w_nushi","w_koromochi","w_koromochi","w_kawauso","w_kawauso","w_donguri","w_mizugumo","w_hane","w_ishikoro","w_kakashi","w_ookami","w_teo","w_poruka","w_rinka"]},
-  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_oya",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_ishikoro","w_tsuta","w_koromochi","w_seri","w_karin"]},
-  {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_bram","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_ookami","w_hane","w_donguri","w_nat","w_toraji","w_komari"]});
+  {nm:"女将ベラ",who:"070",cap:10,depth:2,sig:"w_kawauso",pool:["w_oya","w_kakashi","w_kakashi","w_ookami","w_ookami","w_hane","w_hane","w_mizugumo","w_ishikoro","w_tsuta","w_koromochi","w_seri","w_karin"]},
+  {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_bram","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_ookami","w_hane","w_donguri","w_nat","w_toraji","w_komari"]},
+  {nm:"看板娘ニコ",who:"070n",cap:12,depth:2,sig:"w_rizeria",pool:["w_rizeria","w_mugiwara","w_mugiwara","w_kamausagi","w_kamausagi","w_fusha","w_doro","w_kakashi","w_ookami","w_hane","w_seri","w_karin"]},
+  {nm:"粉屋のモルト",who:"019k",cap:11,depth:2,sig:"w_fusha",pool:["w_fusha","w_fusha","w_mugiwara","w_mugiwara","w_mugiwara","w_kamausagi","w_doro","w_koromochi","w_hane","w_kakashi","w_poruka","w_nat"]},
+  {nm:"門番ダリオ",who:"g10",cap:12,depth:2,sig:"w_honeban",pool:["w_honeban","w_doro","w_doro","w_kamausagi","w_fusha","w_mugiwara","w_tsuta","w_ishikoro","w_ookami","w_kakashi","w_teo","w_rinka"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）
@@ -96,6 +105,7 @@ function cardEl(cid,owner,w,h,o={}){
 function backEl(w,h){ const d=el("div","card back"); d.style.width=w+"px"; d.style.height=h+"px"; d.innerHTML='<div class="bk"></div>'; return d; }
 function who(id,box){ // 人物の正面の立ち姿（2倍、上半身で切る）。"g"＝橋番のガルム（魔物の絵の顔）
   const d=document.createElement("div"); d.className="sprite";
+  if(id==="g10"){ d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background:url(img/monster_010.png) no-repeat;background-size:${box[0]*1.7}px auto;background-position:45% 4%;image-rendering:pixelated`; return d; }
   if(id==="g"){ d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background:url(img/monster_063.png) no-repeat;background-size:${box[0]*1.6}px auto;background-position:30% 6%;image-rendering:pixelated`; return d; }
   d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background-image:url(img/person_${id}.png);background-size:288px 600px;background-position:${-(96)+(box[0]-96)/2}px ${box[1]>=120?0:-4}px`;
   return d;

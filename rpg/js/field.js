@@ -60,7 +60,7 @@ function paint(frame) {
     ({ ".": () => TL.grass(x, tx, ty), "=": () => TL.dirt(x, tx, ty, nb), c: () => TL.cobble(x, tx, ty, nb), T: () => TL.treeBase(x, tx, ty, nb),
        "~": () => TL.water(x, tx, ty, nb, frame), b: () => TL.bridge(x, tx, ty, nb, frame), s: () => TL.stones(x, tx, ty, nb, frame), R: () => TL.rockWall(x, tx, ty, nb),
        f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x),
-       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x) }[ch] || (() => TL.grass(x, tx, ty)))();
+       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), Q: () => TL.townWall(x, tx, ty, nb) }[ch] || (() => TL.grass(x, tx, ty)))();
     x.restore();
   }
   for (const o of M.objs) {
@@ -109,7 +109,10 @@ async function start() {
 async function run(name, arg) {
   if (!TALK[name]) return;
   const was = busy, held = GS.hold; busy = true; GS.hold = true; route = null; drag = null; talkTarget = null;
+  const from = M && M.id + ":" + P.x + "," + P.y;
   try { await TALK[name](arg || {}); } finally { busy = was; GS.hold = held; if (!held) GS.save(); if (active) hudBuild(); }
+  // 出来事の中で別の所へ移ったときは、着いた所の仕掛けも確かめる（同じ所に居るままなら、くり返さない）
+  if (!was && active && M && M.id + ":" + P.x + "," + P.y !== from) checkTrig();
 }
 
 // ---------- 上の飾り ----------
@@ -169,8 +172,10 @@ function touchFoe() {
   return false;
 }
 async function travel(ex) {
+  const after = M.exitRun ? M.exitRun(G()) : null; // その地図を出たときに起きる出来事
   busy = true; drag = null; await fadeOut();
   enter(ex.to, ex.tx, ex.ty, ex.dir); busy = false; fadeIn(); checkTrig();
+  if (after) run(after);
 }
 // 道を探す（幅優先）。目的のマスに立てなければ、その隣まで
 function findPath(tx, ty, adjacent) {

@@ -114,6 +114,11 @@ const SKILLS = {
   vinewhip:  { nm: "蔦しばり", bp: 4, rank: "C", tg: "one", at: ["斬"], stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
   stonethrow:{ nm: "石投げ", bp: 0, rank: "B", tg: "one", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
   bridgequake:{ nm: "地ならし", bp: 0, rank: "C", tg: "all", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
+  // 中央平原
+  strawroll: { nm: "わら転がし", bp: 3, rank: "D", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  sickleear: { nm: "鎌耳", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  windsting: { nm: "風車針", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 50, dist: "遠", dir: "間接", kind: "攻撃" },
+  mudslap:   { nm: "泥はたき", bp: 4, rank: "C", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
   wolfbite:  { nm: "かみ裂き", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   dragontail:{ nm: "竜の尾", bp: 0, rank: "A", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
 };
@@ -192,6 +197,9 @@ const MATS = {
   oreha:   { nm: "錆びた折れ刃", icon: "mat_012", fam: "金属", rare: "緑" },
   ishi:    { nm: "祠の石くれ", icon: "mat_078", fam: "石・結晶", rare: "紫" },
   kinoko:  { nm: "光るきのこ", icon: "mat_100", fam: "植物", rare: "白" },
+  mugi:    { nm: "麦わら", icon: "mat_024", fam: "植物", rare: "白" },
+  usage:   { nm: "兎の毛皮", icon: "mat_006", fam: "皮・鱗・甲羅", rare: "白" },
+  doro:    { nm: "泥の塊", icon: "mat_023", fam: "液体・粉", rare: "緑" },
   tetsu:   { nm: "鉄くず", icon: "mat_010", fam: "金属", rare: "白" },
   hane:    { nm: "灰色の羽耳", icon: "mat_015", fam: "羽", rare: "白" },
   wara:    { nm: "かかしの布きれ", icon: "mat_013", fam: "布・紙", rare: "白" },
@@ -227,6 +235,10 @@ const HEARTS = {
   kakashi:  { nm: "カカシ番の心", col: "白", mul: { str: 108, vit: 106, dex: 98, agi: 88, int: 96, wil: 104, lov: 100, cha: 96 }, sk: "sickle", up: ["str", "vit"] },
   ishikoro: { nm: "イシコロ小僧の心", col: "白", mul: { str: 104, vit: 110, dex: 100, agi: 92, int: 94, wil: 100, lov: 100, cha: 100 }, sk: "pebble", up: ["vit", "dex"] },
   tsutayoroi:{ nm: "ツタ鎧の心", col: "緑", mul: { str: 108, vit: 112, dex: 96, agi: 90, int: 96, wil: 104, lov: 100, cha: 96 }, sk: "vinewhip", up: ["vit", "str"] },
+  mugiwara: { nm: "ムギワラ坊の心", col: "白", mul: { str: 102, vit: 104, dex: 100, agi: 98, int: 96, wil: 100, lov: 104, cha: 100 }, sk: "strawroll", up: ["vit", "lov"] },
+  kamausagi:{ nm: "カマウサギの心", col: "白", mul: { str: 104, vit: 92, dex: 104, agi: 112, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "sickleear", up: ["agi", "str"] },
+  fusha:    { nm: "フウシャ虫の心", col: "白", mul: { str: 94, vit: 94, dex: 110, agi: 108, int: 100, wil: 98, lov: 100, cha: 100 }, sk: "windsting", up: ["dex", "agi"] },
+  doro:     { nm: "ドロ人形の心", col: "緑", mul: { str: 110, vit: 114, dex: 92, agi: 86, int: 94, wil: 104, lov: 100, cha: 96 }, sk: "mudslap", up: ["vit", "str"] },
   ookami:   { nm: "モリオオカミの心", col: "白", mul: { str: 106, vit: 96, dex: 100, agi: 110, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "wolfbite", up: ["agi", "str"] },
   nushi:    { nm: "ヌシガエルの心", col: "緑", mul: { str: 106, vit: 114, dex: 92, agi: 86, int: 102, wil: 112, lov: 105, cha: 102 }, sk: "bigyawn", up: ["vit", "wil"] },
   kokemusha:{ nm: "コケ武者の心", col: "緑", mul: { str: 114, vit: 110, dex: 100, agi: 90, int: 88, wil: 100, lov: 95, cha: 98 }, sk: "mosscut", up: ["str", "vit"] },
@@ -311,6 +323,11 @@ const FOES = {
   // 西街道
   hanenezumi:{ mat: "hane", nm: "ハネネズミ", img: "m_hanenezumi", wt: "fang", pow: 9, hp: 70, st: { str: 26, vit: 9, dex: 18, agi: 27, int: 8, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 打: 20 }, every: { n: 3, sk: "wingslap" }, gold: 8, heart: "hanenezumi" },
   kakashi:  { mat: "tetsu", nm: "カカシ番", img: "monster_088", wt: "claw", pow: 11, hp: 130, st: { str: 31, vit: 15, dex: 12, agi: 9, int: 5, wil: 12, lov: 0, cha: 9 }, res: { 熱: -60, 斬: -20, 突: 30, 打: 20 }, every: { n: 3, sk: "sickle" }, gold: 12, heart: "kakashi" },
+  // 中央平原（強さ2〜3）
+  mugiwara: { mat: "mugi", nm: "ムギワラ坊", img: "m_mugiwara", wt: "club", pow: 10, hp: 105, st: { str: 30, vit: 15, dex: 15, agi: 14, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 熱: -50, 斬: -20, 打: 10 }, every: { n: 3, sk: "strawroll" }, gold: 12, heart: "mugiwara" },
+  kamausagi:{ mat: "usage", nm: "カマウサギ", img: "monster_003", wt: "claw", pow: 10, hp: 85, st: { str: 30, vit: 11, dex: 18, agi: 26, int: 6, wil: 9, lov: 0, cha: 10 }, res: { 突: -30, 冷: 20 }, every: { n: 2, sk: "sickleear" }, gold: 11, heart: "kamausagi" },
+  fusha:    { mat: "hane", nm: "フウシャ虫", img: "monster_082", wt: "fang", pow: 9, hp: 80, st: { str: 27, vit: 10, dex: 22, agi: 24, int: 8, wil: 10, lov: 0, cha: 10 }, res: { 熱: -40, 雷: -30, 打: -20, 斬: 10 }, every: { n: 3, sk: "windsting" }, gold: 12, heart: "fusha" },
+  doro:     { mat: "doro", nm: "ドロ人形", img: "monster_031", wt: "fist", pow: 12, hp: 170, st: { str: 32, vit: 20, dex: 10, agi: 8, int: 6, wil: 14, lov: 0, cha: 9 }, res: { 打: 30, 斬: 10, 冷: -30, 雷: -30 }, every: { n: 3, sk: "mudslap" }, gold: 16, heart: "doro" },
   // 一本杉の拳法娘（腕試し）
   rinka:    { nm: "リンカ", img: "person_004", person: 1, human: 1, wt: "fist", pow: 11, hp: 680, boss: 1, st: { str: 33, vit: 20, dex: 18, agi: 30, int: 8, wil: 16, lov: 0, cha: 16 },
               res: {}, plan: { 2: "r_senpu", 4: "r_hyaku", 6: "r_senpu" }, every: { n: 2, sk: "r_shotei" }, rageFrom: 8, rage: "r_hyaku", gold: 0 },
