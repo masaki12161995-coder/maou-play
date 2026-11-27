@@ -78,61 +78,75 @@ function result(r) {
       T(L, 0, 300, W, 20, r.time ? "戦いを切り上げた" : "最後に休んだ所へ戻る", 11, "center dim");
       L.onclick = () => { clearLayer(); res(); }; return;
     }
-    T(L, 0, 48, W, 34, "勝利", 26, "gold center");
-    if (r.turns) T(L, 200, 58, 89, 18, `${r.turns}ターン`, 9.5, "dim right");
-    let y = 90;
-    const money = A(L, div("frame rbox", ""), 12, y, 277, 28);
-    T(money, 10, 0, 60, 26, "お金", 9.5, "label");
-    T(money, 70, 0, 100, 26, `+${r.gold.toLocaleString()} G`, 13, "num2 gold");
-    T(money, 150, 0, 118, 26, `持っている ${GS.G.gold.toLocaleString()} G`, 9, "dim right");
-    y += 36;
-    T(L, 14, y, 200, 14, "手に入れた物", 9, "label"); y += 16;
-    const cnt = {}; (r.mats || []).forEach(k => { cnt[k] = (cnt[k] || 0) + 1; }); // 同じ素材はまとめて×いくつ
-    const drops = [...r.hearts.map(h => ({ h })), ...(r.tools || []).map(t => ({ t })), ...r.items.map(it => ({ it })), ...Object.keys(cnt).map(m => ({ m, n: cnt[m] }))];
-    if (!drops.length) { T(L, 14, y, 260, 24, "なし", 10, "dim"); y += 26; }
-    drops.forEach((dp, i) => {
-      const x = 12 + (i % 2) * 140, yy = y + Math.floor(i / 2) * 32, t = A(L, div("frame dtile", ""), x, yy, 137, 29);
-      if (dp.h) { A(t, heartIcon(dp.h, 23), 3, 2, 23, 23); T(t, 30, 0, 104, 27, `${hNm(dp.h)}`, 9.5, ""); }
-      else if (dp.t) { A(t, DM.iconImg(BT.TOOLS[dp.t].icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span class="toolnm">${BT.TOOLS[dp.t].nm}</span>`, 9.5, "name"); }
-      else if (dp.m) { const mt = BT.MATS[dp.m]; A(t, DM.iconImg(mt.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `${mt.nm}${dp.n > 1 ? `<small> ×${dp.n}</small>` : ""}`, 9.5, "name"); }
-      else { const g = BT.GEAR[dp.it.id]; A(t, DM.iconImg(g.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span style="color:${DM.RANKCOL[g.rank]}">${GS.itemName(dp.it)}</span>`, 9.5, "name"); }
+    // 勝利の画面（ロマサガRS風）：上に勝利とお金、まん中に5人が舞台に並び、下の数字は与ダメージなど。
+    // 能力が上がった人には UP の印。人を押すと、下の欄に「前 → 今」の能力と、宿している心の％が出る。いちばん下に手に入れた物
+    T(L, 12, 8, 120, 34, "勝利", 24, "gold");
+    if (r.turns) T(L, 70, 18, 60, 18, `${r.turns}ターン`, 9, "dim");
+    T(L, 150, 10, 139, 18, `+${r.gold.toLocaleString()} G`, 14, "num2 gold right");
+    T(L, 150, 28, 139, 14, `持っている ${GS.G.gold.toLocaleString()} G`, 8.5, "dim right");
+    const n = r.growth.length, sw = 277 / Math.max(5, n), sx0 = 12 + (277 - sw * n) / 2, sy = 50;
+    const stage = A(L, div("rstage", ""), 12, sy, 277, 146);
+    const cols = [["dealt", "与ダメージ", "#e8a23a"], ["taken", "被ダメージ", "#d8573a"], ["healed", "回復", "#5fc26a"]];
+    const mvp = r.growth.reduce((b, g) => (g.dealt || 0) > (b.dealt || 0) ? g : b, r.growth[0]);
+    let sel = r.growth.find(g => (g.ups || []).length || (g.ranks || []).length) || null, key = "dealt";
+    const slots = r.growth.map((g, i) => {
+      const x = sx0 + i * sw - 12, s = A(stage, div("rslot", ""), x, 0, sw, 146);
+      const body = DM.spriteBox(IM[g.img], 48, 0, 48, 60, 60 * DM.K); A(s, body, (sw - 48) / 2, 30, 48, 60);
+      if ((g.ups || []).length || (g.ranks || []).length) A(s, div("rup", "UP"), sw / 2 - 13, 16, 26, 13);
+      if (g === mvp && (g.dealt || 0) > 0) A(s, div("rmvp", "MVP"), sw / 2 - 14, 2, 28, 12);
+      T(s, 0, 94, sw, 14, g.nm, 9, "name center");
+      s.onclick = e => { e.stopPropagation(); sel = sel === g ? null : g; paint(); };
+      return s;
     });
-    y += Math.ceil(drops.length / 2) * 32 + 8;
-    // 戦いの記録：まず与えたダメージの多い順に、ゲージつきで並べる。上の札を押すと「被ダメージ」「回復」の順位に切り替わる
-    const cols = [["dealt", "与ダメージ", "#e8a23a"], ["taken", "被ダメージ", "#d8573a"], ["healed", "回復", "#5fc26a"]], n = r.growth.length;
-    const tabEls = cols.map(([k, nm], i) => { const b = A(L, div("frame btn chip", nm), 12 + i * 93, y, 91, 22); b.style.fontSize = d(9.5); b.onclick = e => { e.stopPropagation(); rank(k); }; return b; });
-    const tb = A(L, div("frame rbox", ""), 12, y + 24, 277, 6 + n * 22); tb.onclick = e => e.stopPropagation();
-    const rank = key => {
-      tb.innerHTML = ""; cols.forEach(([k], i) => tabEls[i].classList.toggle("sel", k === key));
-      const col = cols.find(c => c[0] === key)[2], list = r.growth.slice().sort((p, q) => (q[key] || 0) - (p[key] || 0)), max = Math.max(1, ...list.map(g => g[key] || 0));
-      list.forEach((g, j) => {
-        const yy = 3 + j * 22, v = g[key] || 0;
-        T(tb, 4, yy, 12, 20, `${j + 1}`, 8.5, "num2 center " + (j === 0 && v ? "top" : "zero"));
-        const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 18 * DM.K); A(tb, fc, 18, yy + 1, undefined, undefined);
-        T(tb, 40, yy, 54, 20, g.nm, 9.5, "name");
-        const bar = A(tb, div("rbar", `<i style="background:${col}"></i>`), 96, yy + 7, 118, 6);
+    const tabEls = cols.map(([k, nm], i) => { const b = A(L, div("frame btn chip", nm), 12 + i * 93, sy + 150, 91, 22); b.style.fontSize = d(9.5); b.onclick = e => { e.stopPropagation(); key = k; paint(); }; return b; });
+    const det = A(L, div("frame rbox rdet", ""), 12, sy + 178, 277, 168); det.onclick = e => e.stopPropagation();
+    const dropY = sy + 178;
+    const paint = () => {
+      const col = cols.find(c => c[0] === key)[2], max = Math.max(1, ...r.growth.map(g => g[key] || 0));
+      tabEls.forEach((b, i) => b.classList.toggle("sel", cols[i][0] === key));
+      slots.forEach((s, i) => {
+        const g = r.growth[i], v = g[key] || 0;
+        s.classList.toggle("on", g === sel);
+        [...s.querySelectorAll(".rv")].forEach(e => e.remove());
+        const t = T(s, 0, 110, sw, 18, v.toLocaleString(), 11.5, "num2 center rv" + (v ? "" : " zero")); if (v === max && v) t.classList.add("top");
+        const bar = A(s, div("rbar rv", `<i style="background:${col}"></i>`), 6, 132, sw - 12, 5);
         requestAnimationFrame(() => { bar.firstChild.style.width = (v / max * 100) + "%"; });
-        T(tb, 216, yy, 54, 20, v.toLocaleString(), 10.5, "num2 right" + (j === 0 && v ? " top" : v ? "" : " zero"));
+      });
+      det.style.display = sel ? "" : "none"; det.innerHTML = "";
+      drops(sel ? sy + 352 : dropY);
+      if (!sel) return;
+      const g = sel, m = GS.G.party[g.hi], now = BT.heroStats(BT.resolveHero(g.hi, m)).st, up = {}; (g.ups || []).forEach(u => { up[u.k] = u.v; });
+      A(det, DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 22 * DM.K), 8, 5, undefined, undefined);
+      T(det, 36, 4, 90, 22, g.nm, 11, "name");
+      if (m.heart) { A(det, heartIcon(m.heart, 16), 120, 7, 16, 16); fitT(T(det, 140, 4, 130, 22, hNm(m.heart), 9.5, "name")); }
+      if (m.heart) fitT(T(det, 10, 28, 257, 16, heartMul(m.heart), 8.5, ""));
+      const rows = [["hp", "HP", m.hp], ...BT.STATS.map(k => [k, STAT_SHORT[k], now[k]])];
+      rows.forEach(([k, nm, v], i) => { // 左の列にHPと4つ、右の列に4つ
+        const u = up[k], X = 8 + (i < 5 ? 0 : 134), Y = 48 + (i < 5 ? i : i - 4) * 19;
+        T(det, X, Y, 40, 18, nm, 9, "k");
+        if (u) T(det, X + 40, Y, 90, 18, `<span class="dim2">${v - u}</span> <span class="rarr">→</span> <b class="pcup">${v}</b> <small class="pcup">+${u}</small>`, 10, "num2");
+        else T(det, X + 40, Y, 90, 18, `${v}`, 10, "num2 dim2");
+      });
+      const ranks = g.ranks || [];
+      if (ranks.length) { const c = A(det, div("chips", ranks.map(u => `<span class="upchip rk">${u.nm}<b><small>Rank </small>${u.v}</b></span>`).join("")), 8, 145, 261, 18); c.style.fontSize = d(7.8); }
+    };
+    let dropEls = [];
+    const drops = y => {
+      dropEls.forEach(e => e.remove()); dropEls = [];
+      dropEls.push(T(L, 14, y, 200, 14, "手に入れた物", 9, "label")); y += 16;
+      const cnt = {}; (r.mats || []).forEach(k => { cnt[k] = (cnt[k] || 0) + 1; });
+      const ds = [...r.hearts.map(h => ({ h })), ...(r.tools || []).map(t => ({ t })), ...r.items.map(it => ({ it })), ...Object.keys(cnt).map(m => ({ m, n: cnt[m] }))];
+      if (!ds.length) { dropEls.push(T(L, 14, y, 260, 24, "なし", 10, "dim")); return; }
+      ds.forEach((dp, i) => {
+        const x = 12 + (i % 2) * 140, yy = y + Math.floor(i / 2) * 32, t = A(L, div("frame dtile", ""), x, yy, 137, 29); dropEls.push(t);
+        if (dp.h) { A(t, heartIcon(dp.h, 23), 3, 2, 23, 23); T(t, 30, 0, 104, 27, `${hNm(dp.h)}`, 9.5, ""); }
+        else if (dp.t) { A(t, DM.iconImg(BT.TOOLS[dp.t].icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span class="toolnm">${BT.TOOLS[dp.t].nm}</span>`, 9.5, "name"); }
+        else if (dp.m) { const mt = BT.MATS[dp.m]; A(t, DM.iconImg(mt.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `${mt.nm}${dp.n > 1 ? `<small> ×${dp.n}</small>` : ""}`, 9.5, "name"); }
+        else { const gg = BT.GEAR[dp.it.id]; A(t, DM.iconImg(gg.icon, 22 * DM.K), 4, 3, undefined, undefined); T(t, 30, 0, 104, 27, `<span style="color:${DM.RANKCOL[gg.rank]}">${GS.itemName(dp.it)}</span>`, 9.5, "name"); }
       });
     };
-    rank("dealt");
-    y += 24 + 6 + n * 22 + 2;
-    y += 6;
-    T(L, 14, y, 200, 14, "成長", 9, "label"); y += 16;
-    // 成長：1段目に上がった能力、2段目に技ランクが上がった技。入りきらないときは、技ランクを「↑いくつ」にまとめて1段に
-    const nRank = r.growth.filter(g => (g.ranks || []).length).length;
-    const two = y + r.growth.length * 31 + nRank * 17 <= 596;
-    r.growth.forEach(g => {
-      const ranks = g.ranks || [], tall = two && ranks.length > 0;
-      const row = A(L, div("frame grow", ""), 12, y, 277, tall ? 45 : 28);
-      const fc = DM.spriteBox(IM[g.img], DM.FACE[0], DM.FACE[1], DM.FACE[2], DM.FACE[3], 22 * DM.K); A(row, fc, 3, 2, undefined, undefined);
-      T(row, 30, 0, 52, 26, g.nm, 10, "name");
-      let chips = g.ups.map(u => `<span class="upchip">${u.k === "hp" ? "HP" : BT.ST_NM[u.k]}<b>+${u.v}</b></span>`).join("");
-      if (!two && ranks.length) chips += `<span class="upchip rk">Rank<b>↑${ranks.length}</b></span>`;
-      const c = A(row, div("chips", chips || (ranks.length ? "" : '<span class="dim">変わりなし</span>')), 84, 0, 190, 26); c.style.fontSize = d(8.5);
-      if (tall) { const c2 = A(row, div("chips", ranks.map(u => `<span class="upchip rk">${u.nm}<b><small>Rank </small>${u.v}</b></span>`).join("")), 30, 25, 245, 18); c2.style.fontSize = d(7.6); }
-      y += tall ? 48 : 31;
-    });
+    paint();
+    const y = 640;
     const nx = T(L, 0, Math.min(612, y + 4), W, 14, "▼", 9, "center gold blink");
     L.onclick = () => { clearLayer(); res(); };
   });

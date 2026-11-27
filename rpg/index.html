@@ -253,6 +253,14 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .result .label{color:#c9a46c;font-weight:800;letter-spacing:.06em}
 .rbox{box-sizing:border-box;background:#15141e}
 .dtile{box-sizing:border-box;background:#15141e;overflow:hidden}
+.rstage{background:radial-gradient(ellipse 60% 42% at 50% 64%,#3a3048 0%,#1b1824 60%,#100e16 100%);border-radius:6px;box-shadow:inset 0 0 0 1px #3a3346;overflow:hidden}
+.rstage:after{content:"";position:absolute;left:4%;right:4%;top:51%;height:9%;background:radial-gradient(ellipse at center,#6a5a7a66,#0000 70%);pointer-events:none}
+.rslot{cursor:pointer;border-radius:4px}.rslot.on{background:linear-gradient(#ffd86a14,#ffd86a26);box-shadow:inset 0 0 0 1px #c9a24a}
+.rup{background:linear-gradient(#ffe38a,#e0a52a);color:#3a2408;border-radius:7px;font:800 8px/13px "Avenir Next",system-ui,sans-serif;text-align:center;letter-spacing:.5px;box-shadow:0 0 6px #ffd86a99;animation:rupb 1.1s ease-in-out infinite alternate}
+@keyframes rupb{from{transform:translateY(0)}to{transform:translateY(-2px)}}
+.rmvp{color:#ffd86a;font:800 8px/12px "Avenir Next",system-ui,sans-serif;text-align:center;letter-spacing:1px}
+.rarr{color:#8a7a5a}
+
 .hicon{position:absolute;border-radius:50%;background:radial-gradient(circle at 50% 45%,#5a3a7a,#2a1a3a);box-shadow:0 0 0 1px #b07ae8;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .hicon img{image-rendering:pixelated}
 .dmgrow{position:absolute}
@@ -340,19 +348,19 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/dom.js?v=99"></script>
-<script src="js/sound.js?v=99"></script>
-<script src="js/engine.js?v=99"></script>
-<script src="js/scene.js?v=99"></script>
-<script src="js/tiles.js?v=99"></script>
-<script src="js/game.js?v=99"></script>
-<script src="js/maps.js?v=99"></script>
-<script src="js/view.js?v=99"></script>
-<script src="js/ui.js?v=99"></script>
-<script src="js/field.js?v=99"></script>
-<script src="js/towntalk.js?v=99"></script>
-<script src="js/story.js?v=99"></script>
-<script src="js/title.js?v=99"></script>
-<script src="js/main.js?v=99"></script>
+<script src="js/dom.js?v=100"></script>
+<script src="js/sound.js?v=100"></script>
+<script src="js/engine.js?v=100"></script>
+<script src="js/scene.js?v=100"></script>
+<script src="js/tiles.js?v=100"></script>
+<script src="js/game.js?v=100"></script>
+<script src="js/maps.js?v=100"></script>
+<script src="js/view.js?v=100"></script>
+<script src="js/ui.js?v=100"></script>
+<script src="js/field.js?v=100"></script>
+<script src="js/towntalk.js?v=100"></script>
+<script src="js/story.js?v=100"></script>
+<script src="js/title.js?v=100"></script>
+<script src="js/main.js?v=100"></script>
 </body>
 </html>
