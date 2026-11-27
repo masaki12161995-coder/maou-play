@@ -42,7 +42,8 @@ function heroPos(u) { return { x: HERO_X[u.c], y: HERO_Y[u.r] }; }
 function foeBox(u) {
   const img = IM[u.img];
   // 人間の敵は、仲間と同じ人物の絵・同じ大きさ（歩く絵の1コマ）
-  const w = u.person ? SHEET.fw * Q : img.naturalWidth * QM, h = u.person ? SHEET.fh * Q : img.naturalHeight * QM;
+  // ただし魔物の兵を従える隊長などは、魔物と同じ点の細かさ（psc＝1.5で魔物の倍率と同じ）にして、手下より小さく見えないようにする
+  const ps = Q * (u.psc || 1), w = u.person ? SHEET.fw * ps : img.naturalWidth * QM, h = u.person ? SHEET.fh * ps : img.naturalHeight * QM;
   if (u.big) { const y = Math.round((MID_Y + h / 2) * 4) / 4; return { x: BIG.x, y, w, h, left: Math.round((BIG.x - w / 2) * 4) / 4, top: y - h }; }
   const x = FOE_X[u.c], y = FOE_Y[u.r];
   return { x, y, w, h, left: Math.round((x - w / 2) * 4) / 4, top: y - h }; // 点の境目にそろえる

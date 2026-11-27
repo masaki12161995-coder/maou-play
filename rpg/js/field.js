@@ -361,8 +361,12 @@ function goTalk(tx, ty) {
 // ---------- 描く ----------
 let cam = { x: 0, y: 0 };
 function lerp(o, now) { if (!o.from) return [o.x, o.y]; const k = Math.min(1, (now - o.t0) / STEP); return [o.from.x + (o.x - o.from.x) * k, o.from.y + (o.y - o.from.y) * k]; }
-function person(img, x, y, dir, moving, now, lift) {
+function person(img, x, y, dir, moving, now, lift, n) {
   const col = moving ? [0, 1, 2, 1][Math.floor(now / 130) % 4] : 1;
+  if (n && n.head) { // 寝ている人：頭だけを枕の上に（横へずらす量＝ox マス）
+    const hx = (x + (n.ox || 0)) * TD + TD / 2, hy = y * TD + 4;
+    ctx.drawImage(IM[img], col * 48, 0, 48, 26, Math.round((hx - 12) * 4) / 4, Math.round(hy * 4) / 4, 24, 13); return;
+  }
   const px0 = x * TD + TD / 2, py0 = y * TD + TD - 1 - (lift || 0);
   if (!lift) { ctx.fillStyle = "#0006"; ctx.fillRect(px0 - 6, py0 - 1, 12, 2); }
   ctx.drawImage(IM[img], col * 48, dir * 60, 48, 60, Math.round((px0 - 12) * 4) / 4, Math.round((py0 - 30) * 4) / 4, 24, 30);
@@ -395,9 +399,9 @@ function draw(now) {
   // 人・宝箱・敵を奥から
   const ents = [];
   for (const c of chests) ents.push({ y: c.y, f: () => { ctx.save(); ctx.translate(c.x * TD, c.y * TD); ctx.scale(0.5, 0.5); TL.chest(ctx, c.open); ctx.restore(); } });
-  for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.sc || (n.big ? 0.42 : 0.5)) : person(n.img, n.x, n.y, n.d, false, now, n.lift) });
+  for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.sc || (n.big ? 0.42 : 0.5)) : person(n.img, n.x, n.y, n.d, false, now, n.lift, n) });
   for (const f of fol) { const [x, y] = lerp(f, now); ents.push({ y, f: () => person(f.img || BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); }
-  ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) });
+  if (!M.noLeader) ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) }); // noLeader＝主人公がその場に居ない場面（外で待っている など）
   for (const f of foes) if (f.alive) {
     const k = f.from ? Math.min(1, (now - f.t0) / (STEP * 1.8)) : 1, x = f.from ? f.from.x + (f.x - f.from.x) * k : f.x, y = f.from ? f.from.y + (f.y - f.from.y) * k : f.y;
     ents.push({ y, f: () => {

@@ -406,6 +406,19 @@ function stele(c) { R(c, "#3c3944", 4, 2, 40, 44); R(c, "#6d6878", 6, 4, 36, 40)
 function candle(c) { caveFloor(c, 0, 0); R(c, "#3c2a1e", 20, 22, 8, 20); R(c, "#d8d2c0", 21, 14, 6, 10); blob(c, "#5fa8ff", 24, 10, 4, 6); blob(c, "#c8e4ff", 24, 11, 2, 3); } // 青い蝋燭
 function chest2(c) { R(c, "#3c2a1e", 8, 16, 32, 24); R(c, "#6b4d34", 10, 18, 28, 8); R(c, "#2a1d14", 10, 26, 28, 12); } // 開いて空の箱
 function scroll(c) { floor(c, 0, 0); R(c, "#3c2a1e", 2, 2, 44, 44); for (let r = 0; r < 3; r++) for (let i = 0; i < 6; i++) blob(c, i % 2 ? "#d8cfb0" : "#c4b994", 7 + i * 7, 10 + r * 14, 3, 5); } // 巻物の棚
+function kingBed(c) { // 天蓋つきの寝台（横2×縦2マス）。人は頭だけ枕に描く
+  floor(c, 0, 0); floor(c, T, 0); floor(c, 0, T); floor(c, T, T);
+  R(c, "#2a1d14", 4, 2, 6, 92); R(c, "#2a1d14", 86, 2, 6, 92);                       // 天蓋の柱
+  R(c, "#5a1e24", 2, 0, 92, 12); R(c, "#7a2a30", 2, 0, 92, 4); R(c, "#c9a24a", 2, 11, 92, 2); // 天蓋の布
+  R(c, "#3e2a1c", 10, 14, 76, 80); R(c, "#6e4c30", 12, 16, 72, 76);
+  R(c, "#e6dfcc", 18, 18, 60, 22); R(c, "#f4efe0", 20, 20, 56, 14);                   // 枕
+  R(c, "#7a2a30", 14, 40, 68, 52); R(c, "#93363c", 14, 40, 68, 6); R(c, "#c9a24a", 14, 46, 68, 2); // 掛け布
+  for (let i = 0; i < 3; i++) R(c, "#6a2228", 14, 58 + i * 11, 68, 2);
+}
+function portrait(c) { R(c, "#7a5a2c", 8, 4, 32, 36); R(c, "#c9a24a", 10, 6, 28, 32); R(c, "#3a3446", 12, 8, 24, 28); blob(c, "#7a4a2a", 24, 20, 9, 11); blob(c, "#e8c8a8", 24, 21, 5, 6); R(c, "#d8b850", 16, 12, 3, 8); R(c, "#d8b850", 18, 10, 2, 3); R(c, "#4a6a8a", 16, 30, 16, 6); } // 王妃の肖像（栗色の髪、麦の穂の髪飾り）
+function column(c) { cobble(c, 0, 0, () => "c"); R(c, "#2a2830", 12, 40, 26, 6); R(c, "#8a8594", 14, 2, 20, 40); R(c, "#a9a4b2", 16, 2, 6, 40); R(c, "#5d5966", 30, 2, 4, 40); R(c, "#6e6a78", 10, 0, 28, 5); R(c, "#6e6a78", 10, 38, 28, 4); } // 石の柱（回廊）
+function candleStand(c) { floor(c, 0, 0); R(c, "#8a6a2a", 22, 16, 4, 26); R(c, "#c9a24a", 16, 38, 16, 4); R(c, "#efe6cc", 21, 8, 6, 10); blob(c, "#ffb84a", 24, 5, 3, 4); blob(c, "#fff0b0", 24, 6, 1.5, 2); } // 燭台
+function veiled(c) { floor(c, 0, 0); R(c, "#4f4a55", 10, 28, 28, 16); R(c, "#6d6670", 10, 28, 28, 3); blob(c, "#d8d2c0", 24, 22, 14, 10); R(c, "#d8d2c0", 11, 22, 26, 10); blob(c, "#efe9d8", 22, 17, 8, 5); R(c, "#b8b2a0", 12, 30, 2, 6); R(c, "#b8b2a0", 34, 30, 2, 6); } // 布をかけた台座
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand };
 })(window);

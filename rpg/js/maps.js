@@ -616,7 +616,9 @@ function lux() {
       { t: "sign", x: 8, y: 13, text: ["酒場　白い鳩亭"] },
       { t: "house", x: 3, y: 2, w: 4, h: 3, roof: "blue", door: 1 },                 // 古い礼拝堂
       { t: "sign", x: 7, y: 5, text: ["古い礼拝堂"] },
-      { t: "house", x: 14, y: 9, w: 5, h: 3, roof: "brown", door: 2 },
+      { t: "house", x: 14, y: 9, w: 5, h: 3, roof: "brown", door: 2 },                // 役場
+      { t: "sign", x: 13, y: 12, text: ["王都の役場"] },
+      { t: "house", x: 16, y: 2, w: 4, h: 3, roof: "brown", door: 1 },                // 礼拝堂の裏の空き家（隠れ家）
       { t: "house", x: 14, y: 19, w: 5, h: 3, roof: "green", door: 2, chimney: 1 },
       { t: "house", x: 3, y: 19, w: 5, h: 3, roof: "blue", door: 2 },
       { t: "well", x: 13, y: 15 },
@@ -628,14 +630,16 @@ function lux() {
     exits: [{ x: 10, y: 39, to: "plain", tx: 20, ty: 1, dir: 0 }, { x: 11, y: 39, to: "plain", tx: 20, ty: 1, dir: 0 }],
     npcs: [
       { id: "dario", x: 13, y: 27, mon: "monster_010", face: -1, nm: "ダリオ", talk: "dario", when: g => S(g) >= 31 },
-      { id: "kgate1", x: 9, y: 28, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => S(g) >= 31 && S(g) <= 40 },
-      { id: "kgate2", x: 12, y: 28, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => S(g) >= 31 && S(g) <= 40 },
+      { id: "kgate1", x: 9, y: 28, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => S(g) >= 31 },
+      { id: "kgate2", x: 12, y: 28, mon: "monster_020", face: -1, nm: "黒外套の兵", when: g => S(g) >= 31 },
       { id: "mortoG", x: 12, y: 31, img: "person_019k", dir: 3, nm: "モルト", when: g => cut(g, "c2s3") },
     ],
     foes: [], chests: [],
     trigs: [
       { x: 5, y: 13, run: "sakabaDoor" },
       { x: 4, y: 5, when: g => S(g) >= 33, run: "cryptIn" },
+      { x: 17, y: 5, when: g => S(g) >= 43, run: "kakureDoor" },
+      { x: 16, y: 12, run: "yakubaDoor" },
     ],
   };
 }
@@ -732,5 +736,74 @@ function kiroku() {
     trigs: [{ x: 5, y: 7, when: g => S(g) === 39, run: "c2s9" }],
   };
 }
-root.MAPS = { crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+// ---------- 王の寝所（記録の間の隠し戸の先）。隣に小部屋 ----------
+function shinjo() {
+  const g = grid(13, 10, "w"); fill(g, "p", 1, 1, 7, 8); fill(g, "p", 9, 1, 3, 3); g[2][8] = "p"; g[9][4] = "D";
+  return {
+    id: "shinjo", nm: "王の寝所", g, tier: 0, bg: null, inside: 1,
+    objs: [
+      { t: "kingBed", x: 2, y: 1, w: 2, h: 2, text: ["天蓋つきの寝台。王が、静かに眠っている。"] },
+      { t: "portrait", x: 5, y: 0, text: ["王妃の肖像画。栗色の髪に、麦の穂の髪飾り。"] },
+      { t: "candleStand", x: 1, y: 1 }, { t: "candleStand", x: 7, y: 1 },
+      { t: "table", x: 6, y: 5 }, { t: "chair", x: 5, y: 5 },
+      { t: "veiled", x: 10, y: 2, text: ["布をかけた台座。"] },
+    ],
+    exits: [],
+    npcs: [{ id: "edmon", x: 2, y: 1, ox: 0.5, head: 1, img: "person_021", dir: 0, nm: "エドモン" }],
+    foes: [], chests: [],
+    trigs: [{ x: 4, y: 8, when: g => S(g) >= 41, run: "toNiwa" }],
+  };
+}
+// ---------- 城の中庭（月夜） ----------
+function nakaniwa() { // 一行は下（寝所の回廊）から出てくる。出口は上の門
+  const W = 15, H = 14, g = grid(W, H, "c");
+  fill(g, "Q", 0, 0, W, 2); fill(g, "Q", 0, 0, 1, H); fill(g, "Q", W - 1, 0, 1, H); fill(g, "Q", 0, H - 1, W, 1); g[0][7] = "c"; g[1][7] = "c";
+  fill(g, ".", 4, 7, 2, 3); fill(g, ".", 9, 7, 2, 3);
+  return {
+    id: "nakaniwa", nm: "城の中庭", g, tier: 0, bg: null, inside: 1,
+    objs: [
+      ...[3, 6, 9].map(y => ({ t: "column", x: 2, y })), ...[3, 6, 9].map(y => ({ t: "column", x: 12, y })),
+      { t: "gatePost", x: 6, y: 1 }, { t: "gatePost", x: 8, y: 1 },
+    ],
+    exits: [],
+    npcs: [
+      { id: "vald", x: 7, y: 6, img: "person_123", dir: 0, nm: "ヴァルド", when: g => S(g) <= 41 },
+      { id: "vald2", x: 3, y: 6, img: "person_123", dir: 2, nm: "ヴァルド", when: g => S(g) >= 42 },
+      { id: "sigN", x: 7, y: 5, img: "person_010", dir: 0, nm: "シグ" },
+      { id: "kNiwa1", x: 6, y: 4, mon: "monster_018", face: 1, nm: "黒外套の兵", when: g => S(g) <= 41 },
+      { id: "kNiwa2", x: 8, y: 4, mon: "monster_021", face: -1, nm: "黒外套の兵", when: g => S(g) <= 41 },
+      { id: "kNiwa3", x: 7, y: 3, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => S(g) <= 41 },
+    ],
+    foes: [], chests: [], trigs: [],
+  };
+}
+// ---------- 北の礼拝堂の裏の空き家（隠れ家） ----------
+function kakurega() {
+  const g = grid(9, 7, "w"); fill(g, "p", 1, 1, 7, 5); g[6][4] = "D";
+  return {
+    id: "kakurega", nm: "裏通りの隠れ家", g, tier: 0, bg: null, inside: 1,
+    objs: [{ t: "table", x: 3, y: 2 }, { t: "chair", x: 2, y: 2 }, { t: "basket", x: 7, y: 1 }, { t: "basket", x: 1, y: 5 }, { t: "shelf", x: 6, y: 1 }],
+    exits: [{ x: 4, y: 6, to: "lux", tx: 17, ty: 6, dir: 0 }],
+    npcs: [], foes: [], chests: [], trigs: [],
+  };
+}
+// ---------- 王都の役場（戸籍の窓口） ----------
+function yakuba() {
+  const g = grid(11, 8, "w"); fill(g, "p", 1, 1, 9, 6); g[7][5] = "D";
+  return {
+    id: "yakuba", nm: "王都の役場", g, tier: 0, bg: null, inside: 1, noFollow: 1, noLeader: 1,
+    objs: [
+      ...[3, 4, 5, 6, 7].map(x => ({ t: "counter", x, y: 3 })),
+      { t: "shelf", x: 1, y: 1 }, { t: "scroll", x: 2, y: 1 }, { t: "scroll", x: 8, y: 1 }, { t: "shelf", x: 9, y: 1 }, { t: "desk", x: 7, y: 1 },
+    ],
+    exits: [],
+    npcs: [
+      { id: "shoki", x: 5, y: 2, img: "person_008", dir: 0, nm: "書記" },
+      { id: "liseY", x: 5, y: 4, img: "person_002", dir: 3, nm: "リゼット" },
+      { id: "mukuY", x: 4, y: 5, img: "person_058h", dir: 3, nm: "ムク" },
+    ],
+    foes: [], chests: [], trigs: [],
+  };
+}
+root.MAPS = { shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

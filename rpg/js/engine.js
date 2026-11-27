@@ -62,6 +62,7 @@ const SKILLS = {
   // 集める仲間（西境地方）
   r_shotei:  { nm: "掌底", bp: 2, rank: "D", tg: "one", at: ["打"], stun: 25, dist: "近", dir: "直接", kind: "攻撃" },
   r_senpu:   { nm: "旋風脚", bp: 6, rank: "C", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  sig_sandan:{ nm: "三段突き", bp: 9, rank: "C", tg: "one", hits: 3, at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   r_hyaku:   { nm: "百烈拳", bp: 9, rank: "D", tg: "one", hits: 3, at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
   t_neko:    { nm: "猫の一突き", bp: 8, rank: "B", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   s_kage:    { nm: "影縫い", bp: 4, rank: "D", tg: "one", at: ["突"], stun: 40, dist: "遠", dir: "間接", kind: "攻撃" },
@@ -233,6 +234,7 @@ const TOOLS = {
   bento: { nm: "村長の弁当", icon: "tool_bento", ds: "戦いの中で食べると、HPが半分戻る", food: 0.5 },
   // 物語の品（使えない）
   tsuno: { nm: "焦げた角飾り", icon: "mat_062", ds: "川の簗に引っかかっていた", key: 1 },
+  shibou: { nm: "死亡届の控え", icon: "mat_021", ds: "王都の役場で受け取った、届けの控え", key: 1 },
 };
 const FOODS = Object.keys(TOOLS).filter(k => TOOLS[k].food); // 弱いものから先に食べる
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
@@ -359,6 +361,9 @@ const FOES = {
   // 一本杉の拳法娘（腕試し）
   rinka:    { nm: "リンカ", img: "person_004", person: 1, human: 1, wt: "fist", pow: 11, hp: 680, boss: 1, st: { str: 33, vit: 20, dex: 18, agi: 30, int: 8, wil: 16, lov: 0, cha: 16 },
               res: {}, plan: { 2: "r_senpu", 4: "r_hyaku", 6: "r_senpu" }, every: { n: 2, sk: "r_shotei" }, rageFrom: 8, rage: "r_hyaku", gold: 0 },
+  // 黒外套の隊長（人間。心は落とさない）
+  sig:      { nm: "シグ", img: "person_010", person: 1, psc: 1.5, human: 1, wt: "spear", pow: 13, hp: 520, boss: 1, st: { str: 37, vit: 20, dex: 20, agi: 24, int: 8, wil: 20, lov: 0, cha: 18 },
+              res: {}, plan: { 2: "pierce", 4: "sig_sandan", 6: "pierce" }, every: { n: 2, sk: "vitalstab" }, rageFrom: 8, rage: "sig_sandan", stunRes: 1, gold: 0 },
   // 古い見張り塔
   ishikoro: { mat: "koishi", nm: "イシコロ小僧", img: "m_ishikoro", wt: "club", pow: 10, hp: 85, st: { str: 29, vit: 18, dex: 16, agi: 13, int: 6, wil: 10, lov: 0, cha: 10 }, res: { 打: 20, 突: 30, 斬: 20, 冷: -30, 雷: -20 }, every: { n: 2, sk: "pebble" }, gold: 11, heart: "ishikoro" },
   tsutayoroi:{ mat: "tsuta", nm: "ツタ鎧", img: "monster_005", wt: "sword", pow: 12, hp: 150, st: { str: 31, vit: 20, dex: 13, agi: 10, int: 8, wil: 14, lov: 0, cha: 10 }, res: { 熱: -50, 斬: -20, 突: 20, 打: 20, 冷: 20 }, every: { n: 3, sk: "vinewhip" }, gold: 15, heart: "tsutayoroi" },
