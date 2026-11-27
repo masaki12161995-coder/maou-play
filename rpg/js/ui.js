@@ -444,7 +444,7 @@ function bag(L, redraw) {
 }
 // 目的：いま向かう所。続きから遊ぶときに迷わないように
 const GOALS = { 1: "桟橋で待つホップ夫婦を、中州の畑まで渡す", 2: "川下の簗場で、ヤン爺の様子を見る", 3: "桟橋へ戻って、ひと休みする", 4: "森の小道を、奥へ進む", 5: "森の小道を、奥へ進む", 6: "森の小道を、奥へ進む",
-  7: "森の奥の、婆の庵へ", 8: "庵から、沼への道を進む", 9: "ヌシの沼で、月夜草を採る", 10: "森の岸へ戻る", 11: "森の岸から、舟で村へ戻る", 12: "濡れた網を、渡し小屋へ運ぶ", 14: "西街道を東へ。宿場町ハルネをめざす", 15: "西街道を東へ。宿場町ハルネをめざす", 16: "西街道を東へ。宿場町ハルネをめざす", 17: "宿「かわうそ亭」へ", 18: "問屋場で、話を聞く", 19: "東の道から、落ちた大橋を見に行く", 20: "宿「かわうそ亭」に戻って休む", 21: "大橋の北の丘の、古い見張り塔へ", 22: "塔を登る", 23: "塔を登る", 24: "塔のてっぺんへ", 25: "塔を下りて、大橋のたもとへ", 26: "宿「かわうそ亭」へ戻る", 27: "かわうそ亭の寝床で休む", 28: "大橋を渡って、東の平原へ", 29: "北の王都をめざす", 30: "南の風車の里ミルナで、粉の荷車を探す", 31: "王都の酒場に入って、話を聞く", 32: "酒場を出る", 33: "北の古い礼拝堂へ", 34: "地下墓所の奥へ", 35: "地下墓所の奥へ", 36: "地下墓所の奥へ", 37: "建国王の間へ", 38: "奥の階段を上る", 39: "記録の間で、通行の印を探す", 40: "記録の間の隠し戸の先へ", 41: "部屋を出る", 42: "部屋を出る", 43: "王都の役場へ", 44: "裏通りの奥へ（この先は、次の更新で）" };
+  7: "森の奥の、婆の庵へ", 8: "庵から、沼への道を進む", 9: "ヌシの沼で、月夜草を採る", 10: "森の岸へ戻る", 11: "森の岸から、舟で村へ戻る", 12: "濡れた網を、渡し小屋へ運ぶ", 14: "西街道を東へ。宿場町ハルネをめざす", 15: "西街道を東へ。宿場町ハルネをめざす", 16: "西街道を東へ。宿場町ハルネをめざす", 17: "宿「かわうそ亭」へ", 18: "問屋場で、話を聞く", 19: "東の道から、落ちた大橋を見に行く", 20: "宿「かわうそ亭」に戻って休む", 21: "大橋の北の丘の、古い見張り塔へ", 22: "塔を登る", 23: "塔を登る", 24: "塔のてっぺんへ", 25: "塔を下りて、大橋のたもとへ", 26: "宿「かわうそ亭」へ戻る", 27: "かわうそ亭の寝床で休む", 28: "大橋を渡って、東の平原へ", 29: "北の王都をめざす", 30: "南の風車の里ミルナで、粉の荷車を探す", 31: "王都の酒場に入って、話を聞く", 32: "酒場を出る", 33: "北の古い礼拝堂へ", 34: "地下墓所の奥へ", 35: "地下墓所の奥へ", 36: "地下墓所の奥へ", 37: "建国王の間へ", 38: "奥の階段を上る", 39: "記録の間で、通行の印を探す", 40: "記録の間の隠し戸の先へ", 41: "部屋を出る", 42: "部屋を出る", 43: "王都の役場へ", 44: "裏通りの奥の、黒い提灯の通夜小屋へ", 45: "通夜小屋の棺で、夜を明かす", 46: "葬列のまま、赤麦の丘を東の関所へ", 47: "星見の丘から、金砂街道を東へ（この先は、次の更新で）" };
 function goal(L) {
   const G = GS.G, s = G.flags.s || 0;
   T(L, 14, 84, 200, 14, "いまの目的", 9, "label");
@@ -545,5 +545,93 @@ function cards(go, k, practice) {
   });
 }
 
-root.UI = { say, choose, result, menu, shop, cards, clear: clearLayer };
+// ---------- チンチロ（通夜の賽） ----------
+//  親（相手）が先に振り、こちらが振る。3回まで振って役が出なければ「目なし」。
+//  o.story＝物語の一番（賭けなし。決着するまで）。ほかは G を賭ける。o.rec＝勝ち負けを数える所（{w,l}）
+const CH_HANDS = [["ピンゾロ", "1・1・1", "×5"], ["ゾロ目", "同じ目が3つ", "×3"], ["シゴロ", "4・5・6", "×2"], ["目", "2つそろい、残り1つの数", "×1"], ["ヒフミ", "1・2・3", "倍払い"], ["目なし", "3回振って役なし", "負け"]];
+function chHand(dd) {
+  const a = dd.slice().sort((x, y) => x - y);
+  if (a[0] === a[2]) return a[0] === 1 ? { nm: "ピンゾロ", rk: 100, m: 5 } : { nm: `${a[0]}のゾロ目`, rk: 90 + a[0], m: 3 };
+  if (a.join("") === "456") return { nm: "シゴロ", rk: 80, m: 2 };
+  if (a.join("") === "123") return { nm: "ヒフミ", rk: -10, m: 2 };
+  if (a[0] === a[1]) return { nm: `${a[2]}の目`, rk: a[2], m: 1 };
+  if (a[1] === a[2]) return { nm: `${a[0]}の目`, rk: a[0], m: 1 };
+  return null;
+}
+const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+function dieEl(v) { const e = div("die", ""); e.style.padding = d(4); for (let i = 0; i < 9; i++) e.appendChild(div(PIPS[v].includes(i) ? (v === 1 ? "pip one" : "pip") : "", "")); return e; }
+function chinchiro(o) {
+  return new Promise(res => {
+    const G = GS.G, rec = o.rec || {};
+    let st = "idle", bet = 0, dh = null, ph = null, tries = 0, dice = [4, 5, 6], msg = o.story ? "" : "", busy = false;
+    const L = newLayer("veil solid chin");
+    T(L, 14, 12, 160, 26, "チンチロ", 13, "name");
+    const gold = o.story ? null : T(L, 120, 12, 132, 26, "", 11, "num2 right");
+    if (!o.story) { const x = A(L, div("frame btn chip", "×"), 261, 12, 28, 28); x.style.fontSize = d(14); x.onclick = () => { if (busy || st === "dealer" || st === "player") return; clearLayer(); GS.save(); res(); }; }
+    const db = A(L, div("frame", ""), 12, 46, 277, 56); faceAt(db, o.img, 6, 6, 42);
+    T(db, 56, 6, 210, 18, `${o.who}<small class="dim2">　親</small>`, 11, "name");
+    const dt = T(db, 56, 28, 210, 20, "", 10.5, "dim2");
+    const bowl = A(L, div("bowl", ""), 36, 112, 229, 186);
+    const left = T(bowl, 0, 160, 229, 18, "", 9, "dim2 center");
+    const pt = T(L, 12, 306, 277, 22, "", 12, "name center");
+    const mt = T(L, 12, 332, 277, 22, "", 12, "gold center");
+    const chips = A(L, div("", ""), 12, 364, 277, 34);
+    const tb = A(L, div("frame rbox", ""), 12, 410, 277, 8 + CH_HANDS.length * 21);
+    CH_HANDS.forEach(([a, b, c], i) => { T(tb, 10, 4 + i * 21, 70, 20, a, 9.5, "label"); T(tb, 82, 4 + i * 21, 140, 20, b, 8.5, "dim2"); T(tb, 210, 4 + i * 21, 57, 20, c, 10, "num2 right"); });
+    const POS = [[52, 62], [98, 52], [146, 68]];
+    const drawDice = (jit) => { [...bowl.querySelectorAll(".die")].forEach(e => e.remove()); dice.forEach((v, i) => { const e = dieEl(v), [x, y] = POS[i]; A(bowl, e, x + (jit ? (Math.random() * 24 - 12) : 0), y + (jit ? (Math.random() * 30 - 15) : 0), 34, 34); e.style.transform = `rotate(${jit ? (Math.random() * 60 - 30) : (i - 1) * 8}deg)`; }); };
+    const roll = () => new Promise(r => { SND.se("dice"); let t = 0; const iv = setInterval(() => { t++; dice = [1, 2, 3].map(() => 1 + Math.floor(Math.random() * 6)); drawDice(t < 9); if (t >= 9) { clearInterval(iv); SND.se("chin"); setTimeout(r, 260); } }, 62); });
+    const draw = () => {
+      if (gold) gold.innerHTML = `${G.gold.toLocaleString()}<small> G</small>`;
+      dt.innerHTML = dh ? `親の目：<b class="gold">${dh.nm}</b>` : st === "dealer" ? "振っている…" : "";
+      pt.innerHTML = ph ? `こちらの目：${ph.nm}` : "";
+      mt.textContent = msg;
+      bowl.classList.toggle("go", st === "player");
+      left.textContent = st === "player" ? `あと${3 - tries}回` : "";
+      chips.innerHTML = "";
+      if (!o.story && st === "idle") [10, 50, 100].forEach((v, i) => {
+        const ok = G.gold >= v, b = A(chips, div("frame btn chip" + (ok ? "" : " off"), `${v}<small> G 賭ける</small>`), i * 93, 0, 89, 32); b.style.fontSize = d(11);
+        if (ok) b.onclick = () => start(v);
+      });
+      if (o.story && st === "done") { const b = A(chips, div("darr blink", "▼"), 0, 4, 277, 24); b.style.fontSize = d(12); b.style.textAlign = "center"; }
+    };
+    const settle = (v, text) => { // v＞0 こちらの勝ち、v＜0 負け、0 引き分け
+      st = "done"; busy = false;
+      if (o.story) {
+        if (v === 0) { msg = text + "　もう一度"; draw(); setTimeout(() => start(0), 1100); return; }
+        msg = text; draw(); SND.se(v > 0 ? "win" : "cancel");
+        setTimeout(() => { L.onclick = () => { clearLayer(); res(v > 0 ? "win" : "lose"); }; }, 500); return;
+      }
+      const g = v > 0 ? bet * v : v < 0 ? -Math.min(G.gold, bet * -v) : 0;
+      G.gold += g; if (v > 0) rec.w = (rec.w || 0) + 1; else if (v < 0) rec.l = (rec.l || 0) + 1;
+      if (g > 0) SND.se("coin"); GS.save();
+      msg = text + (g ? `（${g > 0 ? "+" : ""}${g} G）` : ""); st = "idle"; draw();
+    };
+    const start = async (v) => {
+      if (busy) return; busy = true; bet = v; dh = null; ph = null; tries = 0; msg = ""; st = "dealer"; draw();
+      await new Promise(r => setTimeout(r, 450));
+      for (;;) { tries++; await roll(); dh = chHand(dice); if (dh || tries >= 3) break; msg = "親は目なし…もう一度"; draw(); await new Promise(r => setTimeout(r, 380)); }
+      dh = dh || { nm: "目なし", rk: 0, m: 1 }; tries = 0; msg = "";
+      if (dh.rk >= 80) return settle(-dh.m, `親の${dh.nm}。こちらの負け`);
+      if (dh.rk < 0) return settle(2, "親のヒフミ。こちらの勝ち");
+      if (dh.rk === 0) return settle(1, "親の目なし。こちらの勝ち");
+      st = "player"; busy = false; msg = "こちらの番"; draw();
+    };
+    bowl.onclick = async () => {
+      if (st !== "player" || busy) return;
+      busy = true; tries++; msg = ""; draw(); await roll();
+      const h = chHand(dice);
+      if (!h && tries < 3) { msg = "目なし…もう一度"; busy = false; draw(); return; }
+      ph = h || { nm: "目なし", rk: 0, m: 1 }; draw();
+      if (ph.rk < 0) return settle(-2, "ヒフミ…倍払い");
+      if (ph.rk === 0) return settle(-dh.m, "目なし。こちらの負け");
+      if (ph.rk > dh.rk) return settle(ph.m, `${ph.nm}！こちらの勝ち`);
+      if (ph.rk === dh.rk) return settle(0, "引き分け");
+      settle(-dh.m, "こちらの負け");
+    };
+    drawDice(false); draw();
+    if (o.story) start(0);
+  });
+}
+root.UI = { say, choose, result, menu, shop, cards, chinchiro, clear: clearLayer };
 })(window);

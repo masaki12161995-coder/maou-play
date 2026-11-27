@@ -85,6 +85,9 @@ const SE = {
   heart: t => { tone(seBus, t, 392, 0.45, { v: 0.06, a: 0.05, wet: 1 }); [784, 1175, 1568].forEach((f, i) => tone(seBus, t + i * 0.055, f, 0.34, { v: 0.12, wet: 1 })); },
   place: t => { tone(seBus, t, 210, 0.08, { type: "triangle", v: 0.26, to: 140 }); noise(seBus, t, 0.05, { f: 700, v: 0.18 }); },
   coin: t => { [1976, 2637].forEach((f, i) => tone(seBus, t + i * 0.07, f, 0.16, { type: "triangle", v: 0.15 })); noise(seBus, t, 0.03, { type: "highpass", f: 6000, v: 0.15 }); }, // お金を払う（店）
+  // チンチロ：賽がどんぶりの中で転がる音と、止まったときの「チン」
+  dice: t => { for (let i = 0; i < 7; i++) { const k = t + i * 0.075 + Math.random() * 0.02; noise(seBus, k, 0.025, { type: "bandpass", f: 2600 + Math.random() * 1800, q: 3, v: 0.32 - i * 0.03 }); tone(seBus, k, 900 + Math.random() * 500, 0.03, { type: "triangle", v: 0.06 }); } },
+  chin: t => { tone(seBus, t, 2637, 0.5, { v: 0.12, r: 0.45, wet: 1 }); tone(seBus, t, 3951, 0.3, { v: 0.05, r: 0.28 }); noise(seBus, t, 0.02, { type: "highpass", f: 5000, v: 0.2 }); },
   rest: t => [392, 494, 587, 784].forEach((f, i) => tone(seBus, t + i * 0.09, f, 0.7, { v: 0.13, a: 0.04 })),
   encounter: t => { noise(seBus, t, 0.4, { type: "bandpass", f: 400, to: 5000, q: 1.5, v: 0.3, a: 0.05 }); tone(seBus, t, 220, 0.4, { type: "sawtooth", v: 0.14, to: 880, lp: 2000 }); },
   win: t => [[523, 0, 0.12], [659, 0.12, 0.12], [784, 0.24, 0.12], [1047, 0.36, 0.5], [784, 0.36, 0.5], [659, 0.36, 0.5]].forEach(([f, dt, d]) => { tone(seBus, t + dt, f, d, { type: "triangle", v: 0.2 }); tone(seBus, t + dt, f, d, { type: "square", v: 0.05, lp: 2400 }); }),

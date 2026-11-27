@@ -34,6 +34,7 @@ function build(id) {
   for (const o of M.objs) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) if (M.g[o.y + j] && M.g[o.y + j][o.x + i] === "T") M.g[o.y + j][o.x + i] = ".";
   blocked = M.g.map(row => row.map(ch => !WALK.has(ch)));
   for (const o of M.objs) {
+    if (o.walk) continue; // 下をくぐれる置き物（関所の門など）
     const w = o.w || (o.t === "mine" ? 2 : 1), h = o.h || (o.t === "mine" ? 2 : 1);
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (blocked[o.y + j]) blocked[o.y + j][o.x + i] = true;
   }
@@ -60,7 +61,7 @@ function paint(frame) {
     ({ ".": () => TL.grass(x, tx, ty), "=": () => TL.dirt(x, tx, ty, nb), c: () => TL.cobble(x, tx, ty, nb), T: () => TL.treeBase(x, tx, ty, nb),
        "~": () => TL.water(x, tx, ty, nb, frame), b: () => TL.bridge(x, tx, ty, nb, frame), s: () => TL.stones(x, tx, ty, nb, frame), R: () => TL.rockWall(x, tx, ty, nb),
        f: () => TL.fence(x, tx, ty, nb), W: () => TL.caveWall(x, tx, ty, nb), _: () => TL.caveFloor(x, tx, ty), r: () => TL.rail(x, tx, ty), x: () => TL.rubble(x),
-       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), Q: () => TL.townWall(x, tx, ty, nb) }[ch] || (() => TL.grass(x, tx, ty)))();
+       p: () => TL.floor(x, tx, ty), w: () => TL.wall(x, tx, ty, nb), " ": () => TL.voidT(x), D: () => TL.door(x, tx, ty), m: () => TL.marsh(x, tx, ty, nb, frame), h: () => TL.crops(x, tx, ty), y: () => TL.herb(x, tx, ty), V: () => TL.canyon(x, tx, ty, nb), X: () => TL.fallen(x, tx, ty, nb), E: () => TL.bridgeEnd(x), S: () => TL.stairs(x), Q: () => TL.townWall(x, tx, ty, nb), H: () => TL.redWheat(x, tx, ty) }[ch] || (() => TL.grass(x, tx, ty)))();
     x.restore();
   }
   for (const o of M.objs) {
@@ -99,14 +100,14 @@ function syncNpcs() { npcs = M.npcs.filter(n => !n.when || n.when(G())).map(n =>
 function syncParty() {
   const ids = M && M.noFollow ? [] : GS.fighters().filter(hi => hi !== LEADER);
   fol = ids.map((hi, i) => fol.find(f => f.hi === hi) || { hi, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
-  const gi = G().flags.guest; // 戦いには出ないが、後ろをついてくる人
-  if (gi && !(M && M.noFollow)) fol.push(fol.find(f => f.img === gi) || { hi: -1, img: gi, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
+  const gi = G().flags.guest; // 戦いには出ないが、後ろをついてくる人（1人なら絵の名前、何人かなら並べる）
+  if (gi && !(M && M.noFollow)) for (const img of [].concat(gi)) fol.push(fol.find(f => f.img === img) || { hi: -1, img, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
 }
 // ---------- 入る・出る ----------
 function enter(id, x, y, dir) { // x,y は足す前の地図の座標
   build(id); y += M.padTop;
   P = { x, y, dir: dir || 0, fx: x, fy: y, from: null, t0: 0 };
-  hist = Array(6).fill(0).map(() => ({ x, y }));
+  hist = Array(9).fill(0).map(() => ({ x, y }));
   fol = []; syncParty();
   const g = G(); g.map = id; g.x = x; g.y = y - M.padTop; g.dir = P.dir; GS.save();
   route = null; grace = performance.now() + 800;
@@ -158,7 +159,7 @@ function stepTo(dir) {
   if (foe) { fight(foe); return false; }
   if (occupied(nx, ny)) return false;
   P.from = { x: P.x, y: P.y }; P.t0 = performance.now(); P.x = nx; P.y = ny;
-  hist.unshift({ x: nx, y: ny }); hist.length = 6;
+  hist.unshift({ x: nx, y: ny }); hist.length = 9;
   fol.forEach((f, i) => { const to = hist[i + 1]; if (to.x !== f.x || to.y !== f.y) { f.from = { x: f.x, y: f.y }; f.t0 = P.t0; f.dir = dirOf(to.x - f.x, to.y - f.y); f.x = to.x; f.y = to.y; } else f.from = null; });
   return true;
 }
@@ -283,6 +284,7 @@ async function fight(f) {
   P.dir = dirOf(f.x - P.x, f.y - P.y);
   const r = await runBattle(makeWave(f.def));
   if (r === "win") { f.alive = false; if (f.def.once) { G().flags["k_" + f.def.once] = 1; GS.save(); } }
+  if (r === "win" && M.afterWin && TALK[M.afterWin]) { try { await TALK[M.afterWin](); } catch (e) { console.error(e); } GS.save(); } // 地図ごとの「戦いの後」の出来事
   busy = false;
   if (r === "lose") toHome();
 }
@@ -387,7 +389,7 @@ function goTalk(tx, ty) {
 let cam = { x: 0, y: 0 };
 function lerp(o, now) { if (!o.from) return [o.x, o.y]; const k = Math.min(1, (now - o.t0) / STEP); return [o.from.x + (o.x - o.from.x) * k, o.from.y + (o.y - o.from.y) * k]; }
 function person(img, x, y, dir, moving, now, lift, n) {
-  const col = moving ? [0, 1, 2, 1][Math.floor(now / 130) % 4] : 1;
+  const col = n && n.col != null ? n.col : moving ? [0, 1, 2, 1][Math.floor(now / 130) % 4] : 1; // col＝決まったコマ（dir 4・col 2 で、目を閉じた姿＝眠っている人）
   if (n && n.head) { // 寝ている人：頭だけを枕の上に（横へずらす量＝ox マス）
     const hx = (x + (n.ox || 0)) * TD + TD / 2, hy = y * TD + 4;
     ctx.drawImage(IM[img], col * 48, 0, 48, 26, Math.round((hx - 12) * 4) / 4, Math.round(hy * 4) / 4, 24, 13); return;
@@ -435,7 +437,8 @@ function draw(now) {
   for (const c of chests) ents.push({ y: c.y, f: () => { ctx.save(); ctx.translate(c.x * TD, c.y * TD); ctx.scale(0.5, 0.5); TL.chest(ctx, c.open); ctx.restore(); } });
   for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.sc || (n.big ? 0.42 : 0.5)) : person(n.img, n.x, n.y, n.d, false, now, n.lift, n) });
   for (const f of fol) { const [x, y] = lerp(f, now); ents.push({ y, f: () => person(f.img || BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); }
-  if (!M.noLeader) ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) }); // noLeader＝主人公がその場に居ない場面（外で待っている など）
+  if (G().flags.cut === "soretsu") ents.push({ y: ly, f: () => { ctx.save(); ctx.translate(Math.round(lx * TD * 4) / 4, Math.round((ly * TD + (P.from ? Math.abs(Math.sin(now / 90)) * -0.6 : 0)) * 4) / 4); ctx.scale(0.5, 0.5); TL.coffinCart(ctx); ctx.restore(); } }); // 葬列のあいだ、カイは棺の中（荷車を描く）
+  else if (!M.noLeader) ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) }); // noLeader＝主人公がその場に居ない場面（外で待っている など）
   for (const f of foes) if (f.alive) {
     const k = f.from ? Math.min(1, (now - f.t0) / (STEP * 1.8)) : 1, x = f.from ? f.from.x + (f.x - f.from.x) * k : f.x, y = f.from ? f.from.y + (f.y - f.from.y) * k : f.y;
     ents.push({ y, f: () => {

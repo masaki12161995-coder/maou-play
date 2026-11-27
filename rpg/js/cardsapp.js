@@ -45,6 +45,13 @@ const WORLD={
   w_edmon:{nm:"慈王",r:4,n:[4,8,7,6],src:"img/c_edmon.png",sz:[41,58],k:"人物"},
   w_shoki:{nm:"役場の書記",r:1,n:[2,4,3,5],src:"img/c_shoki.png",sz:[33,59],k:"人物"},
   w_kai:{nm:"渡し守",r:3,n:[6,5,4,6],src:"img/c_kai.png",sz:[35,59],k:"人物"},
+  w_iei:{nm:"渡し守（遺影）",r:3,n:[5,6,5,5],src:"img/c_iei.png",sz:[34,59],k:"人物"},
+  w_jako:{nm:"泣き屋のジャコ",r:3,n:[6,4,5,6],src:"img/c_jako.png",sz:[30,58],k:"人物"},
+  w_gonzo:{nm:"胴元ゴンゾ",r:3,n:[7,5,4,5],src:"img/c_gonzo.png",sz:[41,59],k:"人物"},
+  w_sekimori:{nm:"東の関守",r:2,n:[3,6,5,2],src:"img/c_sekimori.png",sz:[42,58],k:"人物"},
+  w_tomon:{nm:"東門の門番",r:1,n:[4,4,3,2],src:"img/c_tomon.png",sz:[44,59],k:"人物"},
+  w_nakiya:{nm:"泣き屋",r:1,n:[3,3,4,3],src:"img/c_nakiya.png",sz:[34,58],k:"人物"},
+  w_akamugi:{nm:"アカムギ蛇",r:1,n:[4,2,3,4],src:"img/m_akamugi.png",sz:[32,30],k:"魔物"},
   w_muku:{nm:"麦わら帽の子",r:3,n:[5,6,6,4],src:"img/c_muku.png",sz:[41,60],k:"人物"},
 };
 Object.keys(CARDS).forEach(k=>delete CARDS[k]);
@@ -62,15 +69,17 @@ OPPS.length=0; OPPS.push(
   {nm:"橋番のガルム",who:"g",cap:11,depth:2,sig:"w_garm",pool:["w_garm","w_bram","w_ishikoro","w_ishikoro","w_tsuta","w_tsuta","w_kakashi","w_ookami","w_hane","w_donguri","w_nat","w_toraji","w_komari"]},
   {nm:"看板娘ニコ",who:"070n",cap:12,depth:2,sig:"w_rizeria",pool:["w_rizeria","w_edmon","w_shoki","w_mugiwara","w_mugiwara","w_kamausagi","w_kamausagi","w_fusha","w_doro","w_kakashi","w_ookami","w_hane","w_seri","w_karin"]},
   {nm:"粉屋のモルト",who:"019k",cap:11,depth:2,sig:"w_fusha",pool:["w_fusha","w_hanna","w_fusha","w_mugiwara","w_mugiwara","w_mugiwara","w_kamausagi","w_doro","w_koromochi","w_hane","w_kakashi","w_poruka","w_nat"]},
-  {nm:"門番ダリオ",who:"g10",cap:12,depth:2,sig:"w_honeban",pool:["w_honeban","w_sig","w_vald","w_shishi","w_doro","w_doro","w_kamausagi","w_fusha","w_mugiwara","w_hakamori","w_rousoku","w_sekkan","w_ookami","w_teo","w_rinka"]});
+  {nm:"門番ダリオ",who:"g10",cap:12,depth:2,sig:"w_honeban",pool:["w_honeban","w_sig","w_vald","w_shishi","w_doro","w_doro","w_kamausagi","w_fusha","w_mugiwara","w_hakamori","w_rousoku","w_sekkan","w_ookami","w_teo","w_rinka","w_sekimori","w_tomon","w_akamugi"]},
+  {nm:"胴元ゴンゾ",who:"045",cap:12,depth:2,sig:"w_rousoku",pool:["w_rousoku","w_rousoku","w_jako","w_nakiya","w_nakiya","w_tomon","w_hakamori","w_hakamori","w_honeban","w_sekkan","w_doro","w_akamugi","w_akamugi","w_kakashi","w_ookami"]},
+  {nm:"村長の孫ティム",who:"069",cap:9,depth:1,sig:"w_donguri",pool:["w_donguri","w_donguri","w_koromochi","w_koromochi","w_kawauso","w_mizugumo","w_hane","w_fukuro","w_mugiwara","w_kamausagi","w_ookami"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）
 // 物語で出会うまでは相手の札に出さない人（RPGの進みの数）。出会う前の人物の絵を先に見せないため
-const LATE={w_edmon:41,w_vald:41,w_shoki:44};
+const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46};
 function rpgStage(){ try{ return JSON.parse(localStorage.getItem("rpgPlay1")).flags.s||0; }catch(e){ return 0; } }
 // 後から足した札（相手の持ち札に、記録が作られた後で加えるもの）
-const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro"];
+const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi"];
 function rpgGold(add){ try{ const t=JSON.parse(localStorage.getItem("rpgPlay1")); if(add){ t.gold+=add; localStorage.setItem("rpgPlay1",JSON.stringify(t)); } return t.gold; }catch(e){ return 0; } }
 function goldTag(){ return `<span style="color:var(--text)">${rpgGold().toLocaleString()} G</span>`; }
 
@@ -83,6 +92,8 @@ function load(){ try{ const t=localStorage.getItem(KEY); S=t?JSON.parse(t):fresh
   // 相手ごとに「もう配った札」を覚えておき、後の更新で相手に足した札は、その相手の持ち札へ一度だけ加える
   OPPS.forEach((o,k)=>{ const st=S.op[k]; if(!st.base) st.base=[...new Set(o.pool.filter(c=>!ADDED.includes(c)))];
     [...new Set(o.pool)].forEach(c=>{ if(!st.base.includes(c)){ o.pool.filter(x=>x===c).forEach(()=>st.pool.push(c)); st.base.push(c); } }); });
+  // RPGの出来事でもらった札（rpgCardGift）を手札に入れる
+  try{ const gs=JSON.parse(localStorage.getItem("rpgCardGift")||"[]"); if(gs.length){ gs.forEach(c=>{ if(CARDS[c]) S.col[c]=(S.col[c]||0)+1; }); localStorage.removeItem("rpgCardGift"); save(); } }catch(e){}
   Object.keys(S.col).forEach(k=>{ if(!CARDS[k]) delete S.col[k]; S.seen[k]=1; }); }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function restock(){
@@ -360,9 +371,10 @@ function quickDeck(pool,cap){ // 上限の中で強い5枚（数字の合計の�
   return h;
 }
 function weight(mine){ return rk(mine); }
+const KEEP=["w_iei"]; // 物語でもらった形見の札：相手は狙わない（賭けで失わない）
 function oppPick(){ // 相手は、こちらの手札の一番いい札を狙う
   if(P.loan||PRACTICE) return null;
-  return P.mine.slice().sort(byCard)[0];
+  const c=P.mine.filter(x=>!KEEP.includes(x)); return (c.length?c:P.mine).slice().sort(byCard)[0];
 }
 function miniOrEmpty(cid,owner,lab,cls){
   const box=el("div",""); box.style.cssText="display:flex;flex-direction:column;align-items:center;gap:3px;width:64px";

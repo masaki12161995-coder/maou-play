@@ -317,23 +317,28 @@ body{display:flex;align-items:center;justify-content:center;font-family:"Hiragin
 .ttlsub{position:absolute;text-align:center;color:#c9b48e;border-bottom:1px solid #6a5a44;letter-spacing:.1em}
 .shift{pointer-events:none}.shift>*{pointer-events:auto}
 .srk2{position:absolute;color:#c9a46c;font-weight:800;font-family:"Avenir Next",system-ui,sans-serif;white-space:nowrap}.srk2 b{color:#f3e4c8}
+.bowl{position:absolute;border-radius:50%;background:radial-gradient(ellipse at 50% 42%,#5a3b2a 0%,#3a2418 55%,#1e120c 76%);box-shadow:0 0 0 5px #8a6a4a,0 0 0 7px #000,0 10px 20px #000a,inset 0 12px 30px #000c;cursor:pointer}
+.bowl.go{animation:bowlgo 1.1s ease-in-out infinite}
+@keyframes bowlgo{0%,100%{box-shadow:0 0 0 5px #8a6a4a,0 0 0 7px #000,0 10px 20px #000a,inset 0 12px 30px #000c}50%{box-shadow:0 0 0 5px #d9b070,0 0 0 7px #000,0 0 22px #ffd88a88,inset 0 12px 30px #000c}}
+.die{box-sizing:border-box;background:#fbf6ea;border-radius:18%;box-shadow:0 2px 0 #a99a80,0 0 0 1px #0006 inset;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+.die .pip{border-radius:50%;background:#222;width:78%;height:78%;margin:auto}.die .pip.one{background:#d23;width:100%;height:100%}
 </style>
 </head>
 <body>
 <div id="stage"><canvas id="field" width="1204" height="2620"></canvas><div id="hud"></div></div>
-<script src="js/dom.js?v=81"></script>
-<script src="js/sound.js?v=81"></script>
-<script src="js/engine.js?v=81"></script>
-<script src="js/scene.js?v=81"></script>
-<script src="js/tiles.js?v=81"></script>
-<script src="js/game.js?v=81"></script>
-<script src="js/maps.js?v=81"></script>
-<script src="js/view.js?v=81"></script>
-<script src="js/ui.js?v=81"></script>
-<script src="js/field.js?v=81"></script>
-<script src="js/towntalk.js?v=81"></script>
-<script src="js/story.js?v=81"></script>
-<script src="js/title.js?v=81"></script>
-<script src="js/main.js?v=81"></script>
+<script src="js/dom.js?v=82"></script>
+<script src="js/sound.js?v=82"></script>
+<script src="js/engine.js?v=82"></script>
+<script src="js/scene.js?v=82"></script>
+<script src="js/tiles.js?v=82"></script>
+<script src="js/game.js?v=82"></script>
+<script src="js/maps.js?v=82"></script>
+<script src="js/view.js?v=82"></script>
+<script src="js/ui.js?v=82"></script>
+<script src="js/field.js?v=82"></script>
+<script src="js/towntalk.js?v=82"></script>
+<script src="js/story.js?v=82"></script>
+<script src="js/title.js?v=82"></script>
+<script src="js/main.js?v=82"></script>
 </body>
 </html>

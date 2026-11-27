@@ -15,7 +15,7 @@ for (const id of Object.keys(MAPS)) MAPS[id]().npcs.forEach(n => imgs.add(n.img 
 const hasSave = GS.valid();
 GS.load();
 Promise.all([...imgs].map(DM.load)).then(() => TT.show(hasSave)).then(k => {
-  if (k === "new") { GS.reset(); try { localStorage.removeItem("rpgCards1"); } catch (e) {} }
+  if (k === "new") { GS.reset(); try { localStorage.removeItem("rpgCards1"); localStorage.removeItem("rpgCardGift"); } catch (e) {} }
   ST.apply();
   FD.start();
 });

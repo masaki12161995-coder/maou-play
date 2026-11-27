@@ -81,7 +81,7 @@ function draw(now) {
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
 }
 // ---- 記録の引っ越し（文字にして写す／貼りつけて入れる） ----
-const SAVE_KEYS = ["rpgPlay1", "rpgCards1", "rpgSnd"], MARK = "SENSHIN1:";
+const SAVE_KEYS = ["rpgPlay1", "rpgCards1", "rpgSnd", "rpgCardGift"], MARK = "SENSHIN1:";
 async function copyOut() {
   const o = {}; SAVE_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) o[k] = v; });
   const code = MARK + btoa(unescape(encodeURIComponent(JSON.stringify(o))));

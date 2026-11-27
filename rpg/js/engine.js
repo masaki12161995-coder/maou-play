@@ -127,6 +127,11 @@ const SKILLS = {
   strawroll: { nm: "わら転がし", bp: 3, rank: "D", tg: "row", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
   sickleear: { nm: "鎌耳", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   windsting: { nm: "風車針", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 50, dist: "遠", dir: "間接", kind: "攻撃" },
+  mugikami:  { nm: "麦穂噛み", bp: 3, rank: "D", tg: "one", at: ["突"], poison: 45, dist: "近", dir: "直接", kind: "攻撃" },
+  // ジャコ（弓）：賽の目のように散らばる矢、泣き声で怯ませる矢、逃げ際の一矢
+  j_sai:     { nm: "賽の目撃ち", bp: 5, rank: "E", tg: "rand", hits: 3, at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
+  j_naki:    { nm: "泣き矢", bp: 4, rank: "D", tg: "col", at: ["突"], stun: 30, dist: "遠", dir: "間接", kind: "攻撃" },
+  j_miyage:  { nm: "置き土産", bp: 8, rank: "B", tg: "one", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
   mudslap:   { nm: "泥はたき", bp: 4, rank: "C", tg: "col", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
   // 王家の地下墓所
   gravepeck: { nm: "墓つつき", bp: 3, rank: "D", tg: "one", at: ["突", "陰"], dist: "遠", dir: "間接", kind: "攻撃" },
@@ -178,6 +183,7 @@ const GEAR = {
   oakstaff:  { slot: "weapon", wt: "staff", nm: "樫の杖", rank: "B", pow: 5, mp: { 熱: 12 }, st: { int: 2 }, ps: "w_fire", price: 110, icon: "eq_staff_02" },
   sagestaff: { slot: "weapon", wt: "staff", nm: "賢者の杖", rank: "A", pow: 6, mp: { 熱: 16 }, st: { int: 4, wil: 1 }, ps: "w_fire", price: 450, icon: "eq_staff_03" },
   shortbow:  { slot: "weapon", wt: "bow", nm: "狩人の弓", rank: "B", pow: 11, st: { dex: 2 }, price: 120, icon: "eq_bow_01" },
+  saibow:    { slot: "weapon", wt: "bow", nm: "賽振りの短弓", rank: "B", pow: 13, st: { cha: 2 }, price: 0, icon: "eq_bow_02" },
   longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
   ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
   oldblade:  { slot: "weapon", wt: "sword", nm: "古木の守り刀", rank: "S", pow: 18, st: { str: 3, agi: 2 }, ps: "w_bp", icon: "eq_sword_04" }, // 林の宝箱だけ
@@ -232,6 +238,7 @@ const MATS = {
   tsuta:   { nm: "鎧の蔦", icon: "mat_004", fam: "植物", rare: "白" },
   kiba:    { nm: "狼の牙", icon: "mat_033", fam: "骨・牙・爪", rare: "緑" },
   ryurin:  { nm: "苔竜の鱗", icon: "mat_077", fam: "皮・鱗・甲羅", rare: "紫" },
+  akauroko: { nm: "赤麦蛇の鱗", icon: "mat_008", fam: "皮・鱗・甲羅", rare: "白" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
 const TOOLS = {
@@ -247,6 +254,7 @@ const TOOLS = {
   // 物語の品（使えない）
   tsuno: { nm: "焦げた角飾り", icon: "mat_062", ds: "川の簗に引っかかっていた", key: 1 },
   shibou: { nm: "死亡届の控え", icon: "mat_021", ds: "王都の役場で受け取った、届けの控え", key: 1 },
+  hakamairi: { nm: "墓参りの札", icon: "mat_072", ds: "関守に見せれば、墓参りの者として東の関所を通れる", key: 1 },
 };
 const FOODS = Object.keys(TOOLS).filter(k => TOOLS[k].food); // 弱いものから先に食べる
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
@@ -269,6 +277,7 @@ const HEARTS = {
   hakamori: { nm: "ハカモリ鴉の心", col: "白", mul: { str: 96, vit: 92, dex: 108, agi: 114, int: 100, wil: 96, lov: 100, cha: 100 }, sk: "gravepeck", up: ["agi", "dex"] },
   honeban:  { nm: "ホネ番兵の心", col: "白", mul: { str: 108, vit: 104, dex: 104, agi: 94, int: 90, wil: 100, lov: 96, cha: 100 }, sk: "oldblade2", up: ["str", "dex"] },
   rousoku:  { nm: "ロウソク霊の心", col: "白", mul: { str: 90, vit: 92, dex: 98, agi: 104, int: 114, wil: 108, lov: 100, cha: 100 }, sk: "bluefire", up: ["int", "wil"] },
+  akamugi:  { nm: "アカムギ蛇の心", col: "白", mul: { str: 98, vit: 94, dex: 108, agi: 110, int: 98, wil: 96, lov: 100, cha: 100 }, sk: "mugikami", up: ["agi", "dex"] },
   sekkan:   { nm: "石棺ヤドカリの心", col: "白", mul: { str: 104, vit: 116, dex: 96, agi: 86, int: 94, wil: 104, lov: 100, cha: 100 }, sk: "lidpinch", up: ["vit", "wil"] },
   shishi:   { nm: "石獅子の心", col: "青", mul: { str: 112, vit: 114, dex: 100, agi: 98, int: 96, wil: 110, lov: 100, cha: 104 }, sk: "lionclaw", up: ["str", "vit"], ps: "standfast" },
   ookami:   { nm: "モリオオカミの心", col: "白", mul: { str: 106, vit: 96, dex: 100, agi: 110, int: 92, wil: 96, lov: 100, cha: 100 }, sk: "wolfbite", up: ["agi", "str"] },
@@ -326,6 +335,10 @@ const HEROES = [
   { id: "garm", nm: "ガルム", img: "person_132", wt: "club", rare: "A", side: 1, hp: 300, hpCap: 1400, lp: 12, st: { str: 27, vit: 31, dex: 8, agi: 8, int: 5, wil: 21, lov: 14, cha: 12 },
     cap: { str: 122, vit: 132, dex: 60, agi: 58, int: 40, wil: 104, lov: 86, cha: 80 }, up: ["vit", "str"],
     res: { 斬: 15, 打: 10, 突: 15 }, sk: ["g_ranpan", "g_jinarashi", "g_hashi"], ps: ["clubway", "ironwall", "standfast"], gear: { weapon: "ranpan", armor: null, sub: null, acc: null } },
+  // ---- 物語の仲間（5人目。第2章の終わりの葬列で加わる） ----
+  { id: "jako", nm: "ジャコ", img: "person_007", wt: "bow", rare: "S", hp: 250, hpCap: 1050, lp: 8, st: { str: 17, vit: 18, dex: 30, agi: 28, int: 14, wil: 14, lov: 15, cha: 26 },
+    cap: { str: 84, vit: 92, dex: 126, agi: 122, int: 80, wil: 82, lov: 92, cha: 124 }, up: ["dex", "agi"],
+    res: {}, sk: ["j_sai", "j_naki", "j_miyage"], ps: ["bowway", "quickdraw", "momentum"], gear: { weapon: "saibow", armor: "cloak", sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -371,6 +384,7 @@ const FOES = {
   hakamori: { mat: "karasu", nm: "ハカモリ鴉", img: "monster_037", wt: "fang", pow: 10, hp: 85, st: { str: 30, vit: 11, dex: 22, agi: 28, int: 10, wil: 10, lov: 0, cha: 10 }, res: { 突: -30, 雷: -30, 陰: 30 }, every: { n: 2, sk: "gravepeck" }, gold: 13, heart: "hakamori" },
   honeban:  { mat: "hone", nm: "ホネ番兵", img: "monster_035", wt: "sword", pow: 12, hp: 160, st: { str: 34, vit: 18, dex: 18, agi: 12, int: 6, wil: 12, lov: 0, cha: 10 }, res: { 突: 40, 斬: 20, 打: -30, 陽: -60, 陰: 50 }, every: { n: 3, sk: "oldblade2" }, gold: 15, heart: "honeban" },
   rousoku:  { mat: "rou", nm: "ロウソク霊", img: "monster_007", wt: "fang", pow: 9, hp: 75, st: { str: 20, vit: 10, dex: 14, agi: 20, int: 26, wil: 18, lov: 0, cha: 12 }, mag: 11, res: { 斬: 30, 突: 30, 冷: -60, 熱: 60, 陽: -30 }, every: { n: 2, sk: "bluefire" }, gold: 14, heart: "rousoku" },
+  akamugi:  { mat: "akauroko", nm: "アカムギ蛇", img: "m_akamugi", wt: "fang", pow: 11, hp: 120, st: { str: 31, vit: 13, dex: 20, agi: 24, int: 7, wil: 10, lov: 0, cha: 10 }, res: { 斬: -20, 冷: -40, 熱: 20 }, every: { n: 2, sk: "mugikami" }, gold: 15, heart: "akamugi" },
   sekkan:   { mat: "sekkan", nm: "石棺ヤドカリ", img: "m_sekkan", wt: "claw", pow: 11, hp: 175, st: { str: 31, vit: 26, dex: 12, agi: 8, int: 6, wil: 16, lov: 0, cha: 9 }, res: { 斬: 40, 突: 30, 打: -30, 雷: -40 }, every: { n: 3, sk: "lidpinch" }, gold: 16, heart: "sekkan" },
   // 双頭の石獅子：二つの頭が別々に動く。片方が倒れると、残った頭は荒れる（lone）
   shishiL:  { mat: "sekkan", book: "book1", nm: "石獅子・右の頭", img: "m_shishiL", wt: "claw", pow: 12, hp: 400, boss: 1, st: { str: 28, vit: 22, dex: 16, agi: 14, int: 10, wil: 18, lov: 0, cha: 14 },

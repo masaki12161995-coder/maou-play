@@ -308,9 +308,68 @@ function wagon(c, o) { // 荷車（横2マス）。army＝幌に王国の紋の�
     blob(c, "#b8ad94", W / 2, 18, 36, 14); blob(c, "#d0c6ac", W / 2, 16, 33, 11); R(c, "#b8ad94", 12, 18, W - 24, 9);
     for (const rx of [28, 48, 68]) R(c, "#9a9078", rx, 6, 1, 20);
     R(c, "#2f5873", 42, 9, 12, 12); R(c, "#d7b45a", 46, 11, 4, 8); R(c, "#d7b45a", 44, 13, 8, 3); // 王国の紋
+  } else if (o && o.coffin) { // 黒い布をかけた棺（葬列）
+    R(c, "#14121a", 14, 8, W - 28, 20); R(c, "#2a2632", 16, 8, W - 32, 4); R(c, "#0b0a10", 14, 24, W - 28, 4);
+    R(c, "#d8d2c0", W / 2 - 1, 8, 2, 18); R(c, "#d8d2c0", 16, 15, W - 32, 2); // 白い紐
+    blob(c, "#e8e2f0", W - 22, 10, 4, 3); blob(c, "#f4d8e0", W - 18, 12, 3, 3); // 白い花
   } else {
     for (const [bx, col] of [[14, "#8a6a48"], [34, "#a3815a"], [54, "#7f6849"], [70, "#8a6a48"]]) { R(c, "#3c2a1e", bx - 1, 11, 14, 16); R(c, col, bx, 12, 12, 14); R(c, "#3c2a1e", bx, 18, 12, 1); }
   }
+}
+// ---- 第2章の終わり：通夜小屋・赤麦の丘・東の関所・星見の丘 ----
+function redWheat(c, x, y) { // 赤麦の畑（歩けない）。赤い穂が、すき間なく実っている
+  R(c, "#5a2a1a", 0, 0, T, T);
+  const r = rng(hash(x, y, 31) * 1e9);
+  for (let row = 0; row < 4; row++) for (let i = 0; i < 6; i++) {
+    const sx = i * 8 + ((row % 2) * 4) + ((r() * 3) | 0) - 1, sy = row * 12 + ((r() * 3) | 0) - 2, lean = r() < 0.5 ? 0 : 1;
+    R(c, "#6e3a1e", sx + 2, sy + 7, 1, 8); R(c, "#4a2414", sx + 3, sy + 9, 1, 6);          // 茎
+    R(c, "#9a4024", sx + lean, sy, 4, 8); R(c, "#c4583a", sx + lean, sy, 3, 6); R(c, "#e08a56", sx + lean + 1, sy + 1, 1, 3); // 穂
+    R(c, "#e8b070", sx + lean + 1, sy - 1, 1, 1);                                          // 芒の光
+  }
+}
+function woodCoffin(c) { // 立てかけた木の棺（縦2マス）
+  floor(c, 0, 0); floor(c, 0, T);
+  R(c, "#2a1d14", 9, 4, 30, 88); R(c, "#6e4c30", 11, 6, 26, 84); R(c, "#835c3a", 11, 6, 26, 3); R(c, "#5a3e28", 11, 30, 26, 2);
+  R(c, "#4e3626", 22, 14, 4, 30); R(c, "#4e3626", 16, 22, 16, 4);
+}
+function openCoffin(c) { // 床に置いた棺（縦2マス）。蓋は外して壁ぎわに
+  floor(c, 0, 0); floor(c, 0, T);
+  R(c, "#2a1d14", 7, 8, 34, 82); R(c, "#6e4c30", 9, 10, 30, 78); R(c, "#1a120c", 13, 14, 22, 70); R(c, "#e6dfcc", 15, 16, 18, 8); // 中は暗く、枕だけ白い
+}
+function lantern(c) { // 軒の黒い提灯（弔いの印）。白い字の帯
+  R(c, "#2a1d14", 23, 0, 2, 6); R(c, "#3a2a1e", 17, 5, 14, 3);
+  blob(c, "#0e0c12", 24, 22, 12, 15); blob(c, "#24202c", 21, 19, 5, 9);
+  for (const yy of [11, 17, 23, 29]) R(c, "#3a3446", 13, yy, 22, 1);
+  R(c, "#efe8d8", 20, 15, 8, 13); R(c, "#0e0c12", 23, 17, 2, 9); R(c, "#0e0c12", 21, 20, 6, 2);
+  R(c, "#3a2a1e", 17, 36, 14, 3); blob(c, "#2a3a26", 24, 44, 8, 2);
+}
+function diceBowl(c) { // 賽を振るどんぶり（床に置く）
+  floor(c, 0, 0); blob(c, "#3a2a20", 24, 30, 17, 9); blob(c, "#efe6d4", 24, 27, 16, 9); blob(c, "#6a4a32", 24, 26, 13, 6);
+  for (const [dx, dy] of [[-5, -1], [2, 1], [6, -2]]) { R(c, "#f8f4ea", 24 + dx - 2, 25 + dy, 5, 5); R(c, dx === 2 ? "#c23" : "#222", 24 + dx, 27 + dy, 1, 1); }
+}
+function kanmon(c, o) { // 東の関所の石の門（横3×縦2マス）。open＝格子が上がっている
+  const W = T * 3, H = T * 2;
+  R(c, "#3a3640", 0, 4, 18, H - 4); R(c, "#6d6670", 2, 4, 6, H - 4); R(c, "#3a3640", W - 18, 4, 18, H - 4); R(c, "#6d6670", W - 16, 4, 6, H - 4);
+  R(c, "#4f4a55", 0, 0, W, 16); R(c, "#85808c", 0, 0, W, 3); R(c, "#3a3640", 0, 14, W, 3);
+  R(c, "#0f0c12", 18, 17, W - 36, H - 17);
+  const gy = o && o.open ? 17 - 22 : 17;
+  for (let gx = 22; gx < W - 18; gx += 9) R(c, "#5a5048", gx, Math.max(17, gy), 3, H - 17 - Math.max(0, gy - 17) - (o && o.open ? 64 : 0));
+  if (!(o && o.open)) for (let yy = 30; yy < H; yy += 14) R(c, "#5a5048", 18, yy, W - 36, 3);
+  for (const yy of [40, 64]) { R(c, "#3a3640", 0, yy, 18, 2); R(c, "#3a3640", W - 18, yy, 18, 2); }
+}
+function grave(c) { // 古い墓石
+  grass(c, 0, 0, true); blob(c, "#2a3a26", 24, 42, 14, 3);
+  R(c, "#4f4a55", 14, 14, 20, 28); blob(c, "#4f4a55", 24, 14, 10, 6); R(c, "#7a7380", 16, 14, 4, 26); R(c, "#3a3640", 18, 24, 12, 1); R(c, "#3a3640", 18, 28, 10, 1);
+}
+function newGrave(c) { // 新しい土と木の墓標（カイの空の墓）
+  grass(c, 0, 0, true); blob(c, "#5a4030", 24, 36, 18, 8); blob(c, "#6e5238", 24, 34, 16, 6);
+  R(c, "#3e2c1d", 21, 6, 6, 32); R(c, "#8a6a48", 22, 6, 3, 32); R(c, "#3e2c1d", 14, 12, 20, 5); R(c, "#a3815a", 15, 12, 18, 2);
+}
+function coffinCart(c) { // 葬列の荷車（1マス）。黒い布をかけた棺
+  blob(c, "#2a3a26", 24, 44, 20, 3);
+  R(c, "#14121a", 6, 10, 36, 24); R(c, "#2a2632", 8, 10, 32, 4); R(c, "#d8d2c0", 23, 12, 2, 18); R(c, "#d8d2c0", 15, 18, 18, 2);
+  blob(c, "#e8e2f0", 37, 12, 4, 3); blob(c, "#f4d8e0", 40, 15, 3, 3);
+  for (const wx of [12, 36]) { blob(c, "#2a1d14", wx, 38, 7, 7); blob(c, "#6e5238", wx, 38, 5, 5); blob(c, "#2a1d14", wx, 38, 1, 1); }
 }
 function gatePost(c) { // 町の門の柱（縦2マス）
   R(c, "#3a3640", 12, 4, 24, 88); R(c, "#6d6670", 14, 4, 8, 88); R(c, "#4f4a55", 8, 0, 32, 8); R(c, "#85808c", 8, 0, 32, 2);
@@ -422,5 +481,5 @@ function fountain(c) { cobble(c, 0, 0, () => "c"); blob(c, "#5d5966", 24, 26, 20
 function woodpile(c) { grass(c, 0, 0); for (let r = 0; r < 3; r++) for (let i = 0; i < 4 - (r === 2 ? 1 : 0); i++) { const x = 6 + i * 10 + (r === 2 ? 5 : 0), y = 32 - r * 10; blob(c, "#7a5230", x + 4, y, 5, 5); blob(c, "#e2c08a", x + 4, y, 3.2, 3.2); blob(c, "#b88a52", x + 4, y, 1.2, 1.2); } } // 割った薪の山
 function veiled(c) { floor(c, 0, 0); R(c, "#4f4a55", 10, 28, 28, 16); R(c, "#6d6670", 10, 28, 28, 3); blob(c, "#d8d2c0", 24, 22, 14, 10); R(c, "#d8d2c0", 11, 22, 26, 10); blob(c, "#efe9d8", 22, 17, 8, 5); R(c, "#b8b2a0", 12, 30, 2, 6); R(c, "#b8b2a0", 34, 30, 2, 6); } // 布をかけた台座
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart };
 })(window);
