@@ -90,9 +90,10 @@ function play(G,side,hi,cell,ev,real){
   setc(G,cell,pc); E(ev,G,{t:"put",cell,side,info});
   grows.forEach(t=>{ setc(G,t,grown(G.b[t])); E(ev,G,{t:"grow",cell:t,lv:0}); });
   // 置いたとき
-  for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
-    if(q.includes("awe")&&tc.o!==side){ setc(G,t,{...G.b[t],n:G.b[t].n.map(v=>cl(v-1))}); E(ev,G,{t:"debuff",q:"awe",cell:t,from:cell,lv:1}); }
-    if(q.includes("seal")&&tc.o!==side&&(G.b[t].q||[]).length){ setc(G,t,{...G.b[t],q:[],g:false,w:[],sp:false,rv:false,rb:undefined}); E(ev,G,{t:"seal",q:"seal",cell:t,from:cell,lv:1}); }
+  // 札に書いてある順（左から）に1つずつ働く
+  for(const k of q) for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
+    if(k==="awe"&&tc.o!==side){ setc(G,t,{...G.b[t],n:G.b[t].n.map(v=>cl(v-1))}); E(ev,G,{t:"debuff",q:"awe",cell:t,from:cell,lv:1}); }
+    if(k==="seal"&&tc.o!==side&&(G.b[t].q||[]).length){ setc(G,t,{...G.b[t],q:[],g:false,w:[],sp:false,rv:false,rb:undefined}); E(ev,G,{t:"seal",q:"seal",cell:t,from:cell,lv:1}); }
   }
   let flipped=[];
   // 同数・合計

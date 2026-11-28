@@ -34,7 +34,7 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 .card.fxshake{animation:fxshake .34s ease-in-out}
 @keyframes fxshake{0%,100%{transform:translateY(-7px) scale(1.07)}25%{transform:translateY(-7px) scale(1.07) translateX(-4px)}75%{transform:translateY(-7px) scale(1.07) translateX(4px)}}
 .card.fxglow{box-shadow:0 0 0 2px #ffe08a,0 0 16px 4px #ffcf5a99}
-.fxlab{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);z-index:8;white-space:nowrap;font-size:13px;font-weight:800;color:#2a1a08;background:linear-gradient(#ffe9a8,#f0c050);border:1px solid #7a5418;border-radius:10px;padding:1px 8px;box-shadow:0 2px 6px #0009;animation:fxlab .28s ease-out;pointer-events:none}
+.fxlab{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;white-space:nowrap;font-size:13px;font-weight:800;color:#2a1a08;background:linear-gradient(#ffe9a8,#f0c050);border:1px solid #7a5418;border-radius:10px;padding:1px 8px;box-shadow:0 2px 6px #0009;animation:fxlab .28s ease-out;pointer-events:none}
 @keyframes fxlab{from{transform:translate(-50%,-50%) scale(.3);opacity:0}70%{transform:translate(-50%,-50%) scale(1.15);opacity:1}to{transform:translate(-50%,-50%) scale(1)}}
 .fxcmp{position:absolute;z-index:9;pointer-events:none;font-family:"Avenir Next",system-ui,sans-serif;font-weight:900;font-size:20px;color:#fff;text-shadow:0 0 6px #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;transform:translate(-50%,-50%);animation:fxlab .25s ease-out;white-space:nowrap}
 .fxcmp b{color:#ffe08a}
@@ -77,14 +77,19 @@ window.FX={ css:style, bumpN, run(ev,render,done,pre0){
   const put=ev.find(e=>e.t==="put");
   // 自分で置いた札の、置く前から見えていた上がり方（怒りは手札で、角取り・群れなどは重ねたときに見せている）は、置いたときにもう一度は言わない。相手の札・博打・回転は言う
   const SEEN=["corner","center","edge","lone","pack","early","late","under","rage","kin"];
-  if(put){ const mine=window.FX_ME!==undefined&&put.side===window.FX_ME, shown=(put.info||[]).filter(([k])=>!(mine&&SEEN.includes(k))), bt=bonusText(shown); beats.push({snap:put.snap,wait:bt?750:360,go(bd){ SE("put"); if(bt) setTimeout(()=>QS("up"),120); const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(bt) c.classList.add("fxglow"); } lab(bd,put.cell,bt); if(shown.some(([k])=>k!=="turn")) bump(bd,put.cell,1); }}); }
+  if(put){ const mine=window.FX_ME!==undefined&&put.side===window.FX_ME, pc=put.snap&&put.snap[put.cell], order=pc?(CARDS[pc.cid].q||[]):[];
+    const shown=(put.info||[]).filter(([k])=>!(mine&&SEEN.includes(k))).sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0]));
+    beats.push({snap:put.snap,wait:shown.length?750:360,go(bd){ SE("put"); const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(shown.length) c.classList.add("fxglow"); }
+      if(shown.length){ setTimeout(()=>QS("up"),120); lab(bd,put.cell,bonusText([shown[0]])); if(shown[0][0]!=="turn") bump(bd,put.cell,1); } }});
+    shown.slice(1).forEach(sh=>beats.push({snap:put.snap,wait:700,go(bd){ QS("up"); const c=card(bd,put.cell); if(c) c.classList.add("fxglow"); lab(bd,put.cell,bonusText([sh])); if(sh[0]!=="turn") bump(bd,put.cell,1); }})); }
   // 成長：相手が札を置いたので、こちらの成長の札が育つ
   const gr=ev.filter(e=>e.t==="grow");
   if(gr.length) beats.push({snap:gr[gr.length-1].snap,wait:700,go(bd){ QS("up"); gr.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fxpop"); lab(bd,e.cell,QN("grow")); bump(bd,e.cell,1); }); }});
   // 置いたときのくせ（励まし・威圧・封印）
   const on=ev.filter(e=>e.lv===1&&(e.t==="buff"||e.t==="debuff"||e.t==="seal"));
-  if(on.length) beats.push({snap:on[on.length-1].snap,wait:750,go(bd){ QS(on.some(e=>e.t==="seal")?null:on[0].t==="buff"?"up":"down"); const src=on[0].from; const c=card(bd,src); if(c) c.classList.add("fxglow"); lab(bd,src,QN(on[0].q));
-    on.forEach(e=>{ const t=card(bd,e.cell); if(t) t.classList.add("fxpop"); if(e.t!=="seal") bump(bd,e.cell,e.t==="buff"?1:-1); }); }});
+  [...new Set(on.map(e=>e.q))].forEach(qk=>{ const g=on.filter(e=>e.q===qk);
+    beats.push({snap:g[g.length-1].snap,wait:750,go(bd){ QS(qk==="seal"?null:g[0].t==="buff"?"up":"down"); const src=g[0].from; const c=card(bd,src); if(c) c.classList.add("fxglow"); lab(bd,src,QN(qk));
+      g.forEach(e=>{ const t=card(bd,e.cell); if(t) t.classList.add("fxpop"); if(e.t!=="seal") bump(bd,e.cell,e.t==="buff"?1:-1); }); }}); });
   // 勝負：段ごと（1＝置いた札から、2＝連鎖）。向かい合う2枚が浮く → 比べる数字が光る → 負けた札がひっくり返る
   for(const lv of [1,2,4]){   // 4＝仇討ち（取られた側の仕返し）
     const all=ev.filter(e=>e.lv===lv&&e.t!=="buff"&&e.t!=="debuff"&&e.t!=="seal");
