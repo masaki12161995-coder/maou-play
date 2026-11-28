@@ -252,6 +252,7 @@ function cardEl(cid,owner,w,h,o={}){
   const qn=q.map(k=>QK[k].nm).join("・");
   d.innerHTML=`<div class="face"></div>
    <div class="art"><img src="${artSrc(c)}" style="width:${iw*sc}px;height:${ih*sc}px;top:${top}px"></div>
+   ${c.r>=6?`<div class="holo"><i style="left:18%;top:30%"></i><i style="left:70%;top:22%;animation-delay:.6s"></i><i style="left:30%;top:62%;animation-delay:1.2s"></i><i style="left:78%;top:58%;animation-delay:.3s"></i><i style="left:52%;top:40%;animation-delay:.9s"></i></div>`:""}
    <div class="stars">★${c.r}</div><div class="shield"></div>
    <div class="n" style="font-size:${fs}px;left:0;right:0;top:${Math.round(h*0.03)}px${WL(0)}">${N(nums[0])}</div>
    <div class="n" style="font-size:${fs}px;right:${Math.round(w*0.04)}px;top:${Math.round(h*0.42)}px${WL(1)}">${N(nums[1])}</div>
