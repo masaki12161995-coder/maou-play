@@ -29,9 +29,9 @@ function cardEl(cid,owner,w,h,o={}){
   const c=CARDS[cid], d=document.createElement("div");
   d.className="card "+owner; d.style.width=w+"px"; d.style.height=h+"px";
   const nums=o.n||c.n, q=o.mini?[]:(o.q||c.q||[]), fs=Math.max(11,Math.round(w*0.19));
-  const [iw,ih]=IMG[c.im], bw=w*0.88, bh=h*0.66;
+  const [iw,ih]=IMG[c.im], bw=w*0.96, bh=h*0.76;   // 絵の入る場所（.art と同じ）
   const fr=(typeof SIZE!=="undefined"&&SIZE[c.im])||0, DPR=window.devicePixelRatio||1;   // 魔物：大きさの区分に合わせて枠のこの割合まで大きく（小さい生き物は小さめのまま）。人物：今までどおり
-  const fit=iw<=bw&&ih<=bh, sc=!fit?(iw>bw*1.7&&ih>bh*1.3?0.5:1):fr?Math.max(1,Math.floor(Math.min(bw/iw,bh*fr/ih)*DPR)/DPR):Math.max(1,Math.floor(Math.min(bw/iw,bh/ih)));
+  const fit=iw<=bw&&ih<=bh, sc=!fit?(iw>bw*1.7&&ih>bh*1.3?0.5:1):fr?Math.max(1,Math.round(Math.min(bw/iw,bh*fr/ih)*DPR)/DPR):Math.max(1,Math.floor(Math.min(w*0.88/iw,h*0.66/ih)));   // 人物は今までの大きさのまま
   const top=ih*sc<=bh?(bh-ih*sc)/2:0;
   // はみ出す絵は、顔が枠の中（横は真ん中・縦は上から4割）に来るようにずらす。しっぽなどが切れるのはかまわない
   const fc=!fit&&typeof FACE!=="undefined"&&FACE[c.im], cl=(v,lo)=>Math.min(0,Math.max(lo,v));
