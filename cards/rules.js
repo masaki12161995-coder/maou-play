@@ -29,7 +29,7 @@ function eff(cid,cell,G,side,real){
   if(q.includes("rage")) add+=Math.min(3,(G.lost||[0,0])[side]);
   if(q.includes("kin")&&fam(cid)&&G.b.some(x=>x&&x.o===side&&fam(x.cid)===fam(cid))) add+=2;
   n=n.map(v=>cl(v+add));
-  if(q.includes("gamble")) n=n.map(v=>cl(v+(real?1+Math.floor(Math.random()*4):2)));
+  if(q.includes("gamble")) n=n.map(v=>cl(v+(real?1+Math.floor((typeof RULE_RNG==="function"?RULE_RNG:Math.random)()*4):2))); // 友だち対戦では、両方の端末で同じ目が出るよう、そろえた乱数を使う
   return n;
 }
 // 守護：隣の味方の数だけ＋1
