@@ -320,9 +320,14 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   const tb=el("div","turnbar "+(M.turn===me?"me":"op"),M.turn<0?"":M.turn===me?"こちらの番":"相手の番"); if(M.turn!==me&&M.turn>=0) tb.classList.add("dots3"); s.appendChild(tb);
   const mr=el("div","row"); mr.style.minHeight="96px";
   const canGo=()=>M&&M.G&&!M.busy&&!M.over&&M.turn===me;
-  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):Math.min(3,(G.lost||[0,0])[me])):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ c.querySelectorAll(".n").forEach(x=>x.classList.add("rg")); if(rg>(M.rageSeen||0)){ c.classList.add("fxpop"); SND.se("chain"); setTimeout(()=>SND.se("up"),110); const t=el("div","fxlab","怒り＋"+rg); c.appendChild(t); setTimeout(()=>t.remove(),1100); } } if(canGo()) c.classList.add("ready");
+  if(!bo){ const cur=Math.min(3,(G.lost||[0,0])[me]); if(cur>(M.rageSeen||0)&&!M.rageT){ M.rageT=Date.now(); M.rageFrom=M.rageSeen||0; setTimeout(()=>{ if(M){ M.rageSeen=cur; M.rageT=0; } },1200); } }
+  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):Math.min(3,(G.lost||[0,0])[me])):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ c.querySelectorAll(".n").forEach(x=>x.classList.add("rg")); if(!bo&&M.rageT&&Date.now()-M.rageT<250){   // 怒りで上がった：札が少し浮き、数字が前の数から緑の新しい数へ上がる（すぐ描き直されても、最初の一瞬なら演出をやり直す）
+      const up=rg-M.rageFrom, ns=c.querySelectorAll(".n"); ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg-up)); e.classList.remove("rg"); });
+      c.classList.add("rgup"); SND.se("chain"); const t=el("div","fxlab","怒り＋"+rg); c.appendChild(t);
+      setTimeout(()=>{ ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg)); e.classList.add("rg","rgpop"); }); },260);
+      setTimeout(()=>{ t.remove(); c.classList.remove("rgup"); },1100); } } if(canGo()) c.classList.add("ready");
     dragOrTap(c,cid,canGo,cell=>{ if(canGo()&&!M.G.b[cell]&&M.G.h[me][i]===cid) myPlay(i,cell); }); mr.appendChild(c); });
-  s.appendChild(mr); if(!bo) M.rageSeen=Math.min(3,(G.lost||[0,0])[me]);   // 怒り：手札にあるうちから、上がった数字を見せる
+  s.appendChild(mr);   // 怒り：手札にあるうちから、上がった数字を見せる
   const bt=el("div","score"); bt.appendChild(el("div","lbl",R.cpu?"CPU・"+CPU_LV[R.lv]:"友だち対戦")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,me)}</b>`)); s.appendChild(bt);
 }
 const EVNM={chainx:"連鎖！",combo:"合計！",seal:"封印",curse:"祟り！",spite:"道連れ！",back:"執念で戻った！",grow:"成長",turn:"回転",debuff:"威圧"};

@@ -34,6 +34,10 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .card .art{position:absolute;left:2%;right:2%;top:10%;bottom:14%;overflow:hidden;background:radial-gradient(circle at 50% 60%,#ffffff30,#0000 70%)}
 .card .art img{position:absolute;left:50%;transform:translateX(-50%);image-rendering:pixelated}
 .card .n.rg{color:#7dff8a}
+.card.rgup{animation:rgup .75s ease-out;z-index:5}
+@keyframes rgup{0%{transform:none}30%,60%{transform:translateY(-16px) scale(1.08)}100%{transform:none}}
+.card .n.rgpop{animation:rgpop .45s ease-out}
+@keyframes rgpop{0%{transform:scale(1)}40%{transform:translateY(-3px) scale(1.4)}100%{transform:scale(1)}}
 .card .n.pv{color:#7dff8a!important}
 .pvn{position:absolute;z-index:12;pointer-events:none;text-align:center;font-family:"Avenir Next",system-ui,sans-serif;font-weight:900;font-size:26px;line-height:1;color:#fff;text-shadow:0 0 6px #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;animation:pvn .8s ease-in-out infinite alternate}
 .pvn.up{color:#7dff8a}
@@ -165,7 +169,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <script src="cards-data.js?v=13"></script>
 <script src="rules.js?v=8"></script>
 <script src="sound.js?v=3"></script>
-<script src="fx.js?v=7"></script>
-<script src="online.js?v=23"></script>
+<script src="fx.js?v=8"></script>
+<script src="online.js?v=24"></script>
 </body>
 </html>

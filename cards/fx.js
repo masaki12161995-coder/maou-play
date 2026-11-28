@@ -35,7 +35,7 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 @keyframes fxban{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}75%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
 `; document.head.appendChild(s); }
 const SE=n=>{ try{ if(window.FX_SND) window.FX_SND(n); }catch(_){} };   // 音（友だち対戦のページだけ鳴る。無ければ何もしない）
-const QS=(then)=>{ SE("chain"); if(then) setTimeout(()=>SE(then),110); };   // くせが発動したら、どのくせも同じ音。数字が動くときは、すぐあとに上がる・下がる音
+const QS=(then)=>{ SE("chain"); if(then==="flip") setTimeout(()=>SE(then),110); };   // くせが発動したら、どのくせも同じ音（数字の上がる・下がる音は鳴らさない）   // くせが発動したら、どのくせも同じ音。数字が動くときは、すぐあとに上がる・下がる音
 const card=(bd,i)=>{ const c=bd&&bd.querySelectorAll(".cell")[i]; return c&&c.querySelector(".card"); };
 function lab(bd,i,txt,cls){ const c=bd.querySelectorAll(".cell")[i]; if(!c||!txt) return; const e=document.createElement("div"); e.className="fxlab"+(cls?" "+cls:""); e.textContent=txt; c.appendChild(e); }
 function ban(bd,txt){ if(!txt) return; const e=document.createElement("div"); e.className="fxban"; e.textContent=txt; bd.appendChild(e); }
