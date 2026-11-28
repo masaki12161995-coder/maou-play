@@ -245,7 +245,7 @@ function cardEl(cid,owner,w,h,o={}){
   const c=CARDS[cid], d=document.createElement("div");
   d.className="card "+owner; d.style.width=w+"px"; d.style.height=h+"px";
   const nums=o.n||c.n, q=o.mini?[]:(o.q||c.q||[]), fs=Math.max(11,Math.round(w*0.19));
-  const wl=(o.q||c.q||[]).includes("wall")?nums.map(v=>v===Math.max(...nums)):[], WL=i=>wl[i]?";color:#ffe08a;text-shadow:0 0 4px #ffb020,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000":"";   // 鉄壁が守っている辺の数字は金色
+  const wl=(o.q||c.q||[]).includes("wall")?nums.map(v=>v===Math.max(...nums)):[], WL=()=>"";   // 鉄壁が守っている辺は、数字の下に小さな盾の印（下で付ける）
   const [iw,ih]=IMG[c.im], bw=w*0.96, bh=h*0.76;   // 絵の入る場所（.art と同じ）
   const fr=(typeof SIZE!=="undefined"&&SIZE[c.im])||0, DPR=window.devicePixelRatio||1;   // 魔物：大きさの区分に合わせて枠のこの割合まで大きく（小さい生き物は小さめのまま）。人物：今までどおり
   const fit=iw<=bw&&ih<=bh, sc=!fit?(iw>bw*1.7&&ih>bh*1.3?0.5:1):fr?Math.max(1,Math.round(Math.min(bw/iw,bh*fr/ih)*DPR)/DPR):Math.max(1,Math.floor(Math.min(w*0.88/iw,h*0.66/ih)));   // 人物は今までの大きさのまま
@@ -268,6 +268,7 @@ function cardEl(cid,owner,w,h,o={}){
   d.style.borderColor=RARE[c.r]; d.style.borderWidth=c.r>=5?"3px":"2px"; if(c.r>=6) d.classList.add("r6"); if(c.r===5) d.classList.add("glow");   // ★5はどれも光が流れる（光る札も同じ）
   if(o.shield) d.classList.add("shielded");
   if(o.sealed) d.classList.add("sealed");
+  if(!o.sealed) wl.forEach((on,i)=>{ if(!on) return; const sh=document.createElement("i"); sh.className="wl"+(i===2?" side":""); sh.innerHTML='<svg viewBox="0 0 12 14"><path d="M6 1 11 3v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V3z" fill="#d8e6ff" stroke="#1b2333" stroke-width="1.4"/></svg>'; d.querySelectorAll(".n")[i].appendChild(sh); });
   holdToShow(d,cid);
   if(o.count>1){ const b=document.createElement("div"); b.className="mark t"; b.style.bottom="auto"; b.style.top="-2px"; b.style.left="auto"; b.style.right="-2px"; b.style.transform="none"; b.textContent="×"+o.count; d.appendChild(b); }
   return d;
