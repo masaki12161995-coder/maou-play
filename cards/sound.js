@@ -386,6 +386,31 @@
     effectTone(bus, time, duration * 0.47, pitch * 2.01, level * 0.23, pitch * 2.01, 0.005);
   }
 
+  function effectNumberSlide(bus, time, start, end) {
+    const source = ctx.createOscillator();
+    const envelope = ctx.createGain();
+    source.type = 'triangle';
+    source.frequency.setValueAtTime(start, time);
+    source.frequency.exponentialRampToValueAtTime(start * (end / start) ** 0.28, time + 0.023);
+    source.frequency.exponentialRampToValueAtTime(end, time + 0.081);
+
+    const gain = envelope.gain;
+    gain.setValueAtTime(0, time);
+    gain.linearRampToValueAtTime(0.125, time + 0.010);
+    gain.exponentialRampToValueAtTime(0.085, time + 0.058);
+    gain.exponentialRampToValueAtTime(0.043, time + 0.092);
+    gain.exponentialRampToValueAtTime(0.0001, time + 0.155);
+    source.connect(envelope);
+    envelope.connect(bus);
+    source.onended = () => {
+      source.disconnect();
+      envelope.disconnect();
+    };
+    source.start(time);
+    source.stop(time + 0.155);
+    effectNoise(bus, time, 0.034, 1120, 700, 0.8, 0.058, 0.008);
+  }
+
   const EFFECTS = {
     put(bus, time) {
       effectWood(bus, time, 251, 0.132);
@@ -396,12 +421,10 @@
       effectNoise(bus, time + 0.034, 0.063, 670, 390, 0.7, 0.19);
     },
     up(bus, time) {
-      effectNote(bus, time, 349.23, 0.105, 0.105);
-      effectNote(bus, time + 0.058, 523.25, 0.127, 0.123);
+      effectNumberSlide(bus, time, 339, 638);
     },
     down(bus, time) {
-      effectNote(bus, time, 440, 0.119, 0.105);
-      effectNote(bus, time + 0.059, 293.66, 0.124, 0.126);
+      effectNumberSlide(bus, time, 568, 297);
     },
     miss(bus, time) {
       effectWood(bus, time, 156, 0.047);
