@@ -20,6 +20,7 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 @keyframes ndn{0%{color:#ff6b6b;transform:scale(1.45)}25%{color:#ff6b6b;transform:scale(1)}60%{color:#ff6b6b}100%{color:#fff}}
 .fxar.fxb,.fxar.pva{position:absolute;top:50%;margin:0;transform:translateY(-50%)}.fxar.fxb.up{animation:fxbu .7s ease-out forwards}.fxar.fxb.dn{animation:fxbd .7s ease-out forwards}
 .fxar.k0,.fxar.k2{left:calc(50% + .36em)}.fxar.k1,.fxar.k3{left:50%;top:auto;bottom:92%;margin-left:-.4em}
+.fxar.fxd{position:absolute;top:50%;margin:-.5em 0 0;line-height:1}.fxar.fxd.k1,.fxar.fxd.k3{top:auto;margin:0 0 0 -.4em}
 .fxar.pva{animation:fxpva .5s ease-in-out infinite alternate}
 @keyframes fxbu{0%{opacity:0;transform:translateY(-10%)}20%,65%{opacity:1;transform:translateY(-70%)}100%{opacity:0;transform:translateY(-90%)}}
 @keyframes fxbd{0%{opacity:0;transform:translateY(-90%)}20%,65%{opacity:1;transform:translateY(-30%)}100%{opacity:0;transform:translateY(-10%)}}
@@ -50,9 +51,9 @@ function bumpN(n,k,dir){ if(!n) return; n.classList.remove("nup","ndn"); void n.
   n.querySelectorAll(".fxb").forEach(x=>x.remove()); const a=document.createElement("i"); a.className="fxar fxb k"+k+" "+(dir>0?"up":"dn"); a.textContent=dir>0?"↑":"↓"; n.appendChild(a); }
 function bump(bd,i,dir,ks){ const c=card(bd,i); if(!c) return; const ns=c.querySelectorAll(".n"); (ks||[0,1,2,3]).forEach(k=>bumpN(ns[k],k,dir)); }
 function ban(bd,txt){ if(!txt) return; const e=document.createElement("div"); e.className="fxban"; e.textContent=txt; bd.appendChild(e); }
-// 比べる数字を光らせ、横に矢印（勝つ数字は↑、負ける数字は↓）。右の辺の数字だけ、矢印を左に置く（札からはみ出さないよう）
+// 比べる数字を光らせ、矢印を添える（勝つ数字は↑、負ける数字は↓）。上下の数字は右横、左右の数字は上に置く（数字の位置は動かさない）
 function hit(bd,i,k,cls,ar){ const c=card(bd,i); if(!c||k==null||k<0) return; const n=c.querySelectorAll(".n")[k]; if(!n) return; n.classList.add(cls||"hit");
-  if(!ar||n.querySelector(".fxar")) return; const a=document.createElement("i"); a.className="fxar "+ar; a.textContent=ar==="up"?"↑":ar==="dn"?"↓":ar==="x"?"":"＝"; if(k===1) n.prepend(a); else n.appendChild(a); }
+  if(!ar||n.querySelector(".fxar")) return; const a=document.createElement("i"); a.className="fxar fxd k"+k+" "+ar; a.textContent=ar==="up"?"↑":ar==="dn"?"↓":ar==="x"?"":"＝"; n.appendChild(a); }   // 矢印は数字の外に重ねて置く（数字そのものは動かさない）
 // 2枚のあいだに「7＞5」
 function cmp(bd,a,b,html){ const ca=bd.querySelectorAll(".cell")[a], cb=bd.querySelectorAll(".cell")[b]; if(!ca||!cb) return;
   const r=bd.getBoundingClientRect(), ra=ca.getBoundingClientRect(), rb=cb.getBoundingClientRect();
