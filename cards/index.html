@@ -42,7 +42,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .card.target::after{content:"";position:absolute;inset:0;border:3px solid #ffe08a;border-radius:4px;box-shadow:0 0 10px #ffe08a inset}
 .card.danger::after{content:"";position:absolute;inset:0;border:3px solid #ff5b5b;border-radius:4px;box-shadow:0 0 10px #ff5b5b inset}
 .card.used{opacity:.28}
-.card.r6{animation:rb 2.4s linear infinite}
+.card.r6{border-color:#0000!important;animation:rbg 3s ease-in-out infinite alternate}.card.r6::before{content:"";position:absolute;inset:-3px;border-radius:7px;padding:3px;z-index:2;pointer-events:none;background:conic-gradient(from 0deg,#ff5f5f,#ffb84a,#ffe95a,#5fe08a,#5fd0ff,#6f86ff,#d07bff,#ff5fb0,#ff5f5f);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:rbh 2.4s linear infinite}@keyframes rbh{to{filter:hue-rotate(360deg)}}@keyframes rbg{from{box-shadow:0 0 8px #ff9ad566}to{box-shadow:0 0 12px #7fd4ff88}}
 @keyframes rb{0%{box-shadow:0 0 0 2px #ff5f5f,0 0 10px #ff5f5f}25%{box-shadow:0 0 0 2px #ffd35a,0 0 10px #ffd35a}50%{box-shadow:0 0 0 2px #5fe08a,0 0 10px #5fe08a}75%{box-shadow:0 0 0 2px #5fa8ff,0 0 10px #5fa8ff}100%{box-shadow:0 0 0 2px #d07bff,0 0 10px #d07bff}}
 .card.flip{animation:flip .42s ease}
 @keyframes flip{0%{transform:rotateY(0)}50%{transform:rotateY(90deg) scale(1.06)}100%{transform:rotateY(0)}}
