@@ -93,7 +93,11 @@ window.FX={ css:style, bumpN, run(ev,render,done,pre0){
     const flips=outs.filter(e=>e.t==="flip").map(e=>e.cell), guards=outs.filter(e=>e.t==="guard");
     const head=lv===4?QN("avenge")+"！":lv===2?(all.every(e=>e.tag==="cheer"||(e.t!=="duel"&&e.t!=="miss"))?QN("cheer")+"！":"連鎖！"):duels.some(d=>d.how==="same")?QN("same")+"！":duels.some(d=>d.how==="plus")?QN("plus")+"！":"";
     const s0=(duels[0]||miss[0]).snap;
-    if(head&&duels.length) beats.push({snap:s0,wait:650,go(bd){ SE("chain"); ban(bd,head); }});   // 「連鎖！」などは先に出して、数字に重ならないように
+    // 号令・仇討ち：ほかのくせと同じく、くせを持つ札の上に名前を出す（盤のまん中には出さない）。そのあと、動く味方の札が浮いて勝負する
+    const tagQ=lv===4?"avenge":lv===2&&all.every(e=>e.tag==="cheer"||(e.t!=="duel"&&e.t!=="miss"))?"cheer":null;
+    if(tagQ){ const srcs=tagQ==="cheer"?(put?[put.cell]:[]):[...new Set([...duels,...miss].map(d=>d.from))];
+      beats.push({snap:s0,wait:650,go(bd){ SE("chain"); srcs.forEach(i=>{ const c=card(bd,i); if(c) c.classList.add("fxglow","fxpop"); lab(bd,i,QN(tagQ)); }); }}); }
+    else if(head&&duels.length) beats.push({snap:s0,wait:650,go(bd){ SE("chain"); ban(bd,head); }});   // 「連鎖！」などは先に出して、数字に重ならないように
     beats.push({snap:s0,wait:duels.length?760:560,go(bd){
       // 取れなかった組：こちらの数字を灰色にするだけ（札は浮かせない）
       if(!duels.length) SE("miss");
