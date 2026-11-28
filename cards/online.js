@@ -62,6 +62,7 @@ document.addEventListener("click",e=>{ if(EAT){ EAT=false; e.stopPropagation(); 
 let LASTOWN="nb";
 addEventListener("pointerdown",e=>{ const c=e.target.closest&&e.target.closest(".card"); LASTOWN=c?(c.classList.contains("op")?"op":c.classList.contains("me")?"me":"nb"):"nb"; },true);
 function detail(cid){
+  SND.se("tap");
   const c=CARDS[cid], v=el("div","veil"); v.style.zIndex=40;
   const k=cardEl(cid,LASTOWN,150,196); k.classList.add("pop"); v.appendChild(k);
   v.appendChild(el("div","",`<div style="font-size:20px;font-weight:700;text-align:center">${c.nm}</div><div style="text-align:center;color:${c.r>=6?"#ffe08a":RARE[c.r]};letter-spacing:2px">${"★".repeat(c.r)}</div>`));
@@ -168,10 +169,18 @@ function startGame(){ // 部屋を作った人が、そろえた乱数の種と�
 }
 
 // ---------- 画面：入口 ----------
+// ---------- 音 ----------
+const SND={ bgm:n=>{ try{ window.FUDA_SND&&FUDA_SND.bgm(n); }catch(_){} }, se:n=>{ try{ window.FUDA_SND&&FUDA_SND.se(n); }catch(_){} }, jingle:n=>{ try{ window.FUDA_SND&&FUDA_SND.jingle(n); }catch(_){} } };
+window.FX_SND=SND.se;   // 勝負の演出（fx.js）からも鳴らす
+// 音の入／切（押すたびに切りかわる。切のときは斜線）
+function sndBtn(){ const b=el("button","btn back sndb"); const draw=()=>{ const on=!window.FUDA_SND||FUDA_SND.isOn(); b.innerHTML=`<svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${on?'<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>':'<path d="M16 9l6 6M22 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'}</svg>`; b.style.opacity=on?"1":".6"; };
+  b.onclick=()=>{ if(window.FUDA_SND) FUDA_SND.toggle(); draw(); }; draw(); return b; }
+
 function lobby(){
   if(NET){ try{ post("bye"); }catch(_){} NET.close(); NET=null; } if(R) clearInterval(R.ping); R=null; M=null; keep();
   history.replaceState(null,"",location.pathname+(LOCAL?"?local=1":""));
-  const s=screen(); const box=el("div","lobby");
+  SND.bgm("lobby");
+  const s=screen(); const sb=sndBtn(); sb.style.cssText+="position:absolute;right:12px;top:calc(var(--padt,0px) + 10px)"; s.appendChild(sb); const box=el("div","lobby");
   box.appendChild(el("div","logo","札の卓<small>友だち対戦</small>"));
   const row=el("div","row"); row.style.cssText+="gap:10px;margin-top:6px";
   for(let i=0;i<5;i++){ const b=backEl(46,60); b.style.transform=`rotate(${(i-2)*7}deg) translateY(${Math.abs(i-2)*4}px)`; row.appendChild(b); }
@@ -235,11 +244,11 @@ function beginDeal(seed,first,game){
   R.seed=seed; R.first=first; R.game=game; R.again=[false,false];
   M={game,mine:deal5(),redrawn:false,meReady:false,opReady:false,G:null,turn:-1,sel:null,busy:true,inbox:{},k:0,over:false,log:[]};
   if(R.cpu){ M.cpu=cpuDeal(); M.opReady=true; }
-  keep(); drawDeal();
+  M.fresh=true; SND.bgm("lobby"); SND.se("deal"); keep(); drawDeal();
 }
 function drawDeal(){
   const s=screen();
-  const bar=el("div","bar"); bar.appendChild(el("div","title","手札")); const x=el("button","btn back","✕"); x.onclick=()=>{ if(confirm("卓を離れる？")) lobby(); }; bar.appendChild(x); s.appendChild(bar);
+  const bar=el("div","bar"); bar.appendChild(el("div","title","手札")); const x=el("button","btn back","✕"); x.onclick=()=>{ if(confirm("卓を離れる？")) lobby(); }; const rt=el("div",""); rt.style.cssText="display:flex;gap:8px"; rt.appendChild(sndBtn()); rt.appendChild(x); bar.appendChild(rt); s.appendChild(bar);
   const op=el("div","panel op"); const oh=el("div","phead"); oh.appendChild(el("div","","相手の手札")); oh.appendChild(el("div","",M.opReady?"支度できた":"考えている")); op.appendChild(oh);
   const orow=el("div","row"); for(let i=0;i<5;i++) orow.appendChild(backEl(54,70)); op.appendChild(orow); s.appendChild(op);
   const mid=el("div","vsmid"); mid.style.cssText+="flex:0 0 auto;padding:2px 0"; mid.innerHTML=`<div class="vs">VS</div>`; s.appendChild(mid);
@@ -252,9 +261,9 @@ function drawDeal(){
   const btns=el("div","row"); btns.style.cssText+="gap:10px;margin-top:auto;padding-bottom:6px";
   if(!M.meReady){
     const rd=el("button","btn"+(M.redrawn?" dim":""),M.redrawn?"引き直した":"引き直す"); rd.style.cssText+="width:150px";
-    rd.onclick=()=>{ if(M.redrawn) return; M.redrawn=true; M.mine=deal5(); M.fresh=true; keep(); drawDeal(); };
+    rd.onclick=()=>{ if(M.redrawn) return; M.redrawn=true; M.mine=deal5(); M.fresh=true; SND.se("deal"); keep(); drawDeal(); };
     const ok=el("button","btn gold","これで勝負"); ok.style.cssText+="width:150px";
-    ok.onclick=()=>{ M.meReady=true; post("ready",{game:M.game}); keep(); if(M.opReady) goMatch(); else drawDeal(); };
+    ok.onclick=()=>{ SND.se("ready"); M.meReady=true; post("ready",{game:M.game}); keep(); if(M.opReady) goMatch(); else drawDeal(); };
     btns.appendChild(rd); btns.appendChild(ok);
   } else btns.appendChild(el("div","st dots3","相手の支度を待っている"));
   s.appendChild(btns);
@@ -262,6 +271,7 @@ function drawDeal(){
 
 // ---------- 画面：勝負 ----------
 function goMatch(){
+  SND.bgm("match"); setTimeout(()=>SND.se("coin"),150);
   const me=R.side, op=1-me;
   const h=[null,null]; h[me]=M.mine.slice(); h[op]=["?","?","?","?","?"];   // 相手の札は、置かれるまで分からない
   M.G={b:Array(9).fill(null),h,lost:[0,0]}; M.turn=-1; M.busy=true; M.k=0;
@@ -296,7 +306,7 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   const tb=el("div","turnbar "+(M.turn===me?"me":"op"),M.turn<0?"":M.turn===me?"こちらの番":"相手の番"); if(M.turn!==me&&M.turn>=0) tb.classList.add("dots3"); s.appendChild(tb);
   const mr=el("div","row"); mr.style.minHeight="96px";
   const canGo=()=>M&&M.G&&!M.busy&&!M.over&&M.turn===me;
-  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):Math.min(3,(G.lost||[0,0])[me])):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ c.querySelectorAll(".n").forEach(x=>x.classList.add("rg")); if(rg>(M.rageSeen||0)){ c.classList.add("fxpop"); const t=el("div","fxlab","怒り＋"+rg); c.appendChild(t); setTimeout(()=>t.remove(),1100); } } if(canGo()) c.classList.add("ready");
+  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):Math.min(3,(G.lost||[0,0])[me])):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ c.querySelectorAll(".n").forEach(x=>x.classList.add("rg")); if(rg>(M.rageSeen||0)){ c.classList.add("fxpop"); SND.se("up"); const t=el("div","fxlab","怒り＋"+rg); c.appendChild(t); setTimeout(()=>t.remove(),1100); } } if(canGo()) c.classList.add("ready");
     dragOrTap(c,cid,canGo,cell=>{ if(canGo()&&!M.G.b[cell]&&M.G.h[me][i]===cid) myPlay(i,cell); }); mr.appendChild(c); });
   s.appendChild(mr); if(!bo) M.rageSeen=Math.min(3,(G.lost||[0,0])[me]);   // 怒り：手札にあるうちから、上がった数字を見せる
   const bt=el("div","score"); bt.appendChild(el("div","lbl",R.cpu?"CPU・"+CPU_LV[R.lv]:"友だち対戦")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,me)}</b>`)); s.appendChild(bt);
@@ -328,6 +338,7 @@ function apply(side,hi,cid,cell,quiet){
 }
 function drawResult(){
   drawMatch(); const me=R.side, a=score(M.G,me), b=score(M.G,1-me), win=a>b, draw=a===b;
+  if(!M.jingled){ M.jingled=1; SND.jingle(win?"win":draw?"draw":"lose"); setTimeout(()=>SND.bgm("lobby"),1800); }
   const v=el("div","veil");
   v.appendChild(el("div","big",win?"勝ち":draw?"引き分け":"負け"));
   v.appendChild(el("div","",`<span style="color:var(--meL);font-size:22px">${a}</span>　対　<span style="color:var(--opL);font-size:22px">${b}</span>`));
