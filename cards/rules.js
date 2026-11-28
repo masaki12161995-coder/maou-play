@@ -43,7 +43,7 @@ function setc(G,t,o){ G.b[t]=o; }
 // 1枚を裏返す（鉄壁・踏ん張り・祟り・道連れ・執念）
 function flipOne(G,t,side,from,ev,lv,dir){
   const tc=G.b[t];
-  if(dir!==undefined&&tc.w===dir){ if(ev) ev.push({t:"guard",cell:t,lv,wall:1}); return false; }
+  if(dir!==undefined&&(Array.isArray(tc.w)?tc.w.includes(dir):tc.w===dir)){ if(ev) ev.push({t:"guard",cell:t,lv,wall:1}); return false; }   // 鉄壁：いちばん大きい数字の辺（同じ数字が並べば、その全部）から攻められても取られない
   if(tc.g){ setc(G,t,{...tc,g:false}); if(ev) ev.push({t:"guard",cell:t,lv}); return false; }
   const prev=tc.o;
   const nt={...tc,o:side};
@@ -84,7 +84,7 @@ function play(G,side,hi,cell,ev,real){
   const q=qs(cid); let n=eff(cid,cell,G,side,real);
   const tie=q.includes("tie")||q.includes("king"), rev=q.includes("rev");
   if(q.includes("turn")){ let best=n,bk=-1; for(let r=0;r<4;r++){ const m=[0,1,2,3].map(i=>n[(i-r+4)%4]); const k=countFlips(G,cell,side,m,tie,rev); if(k>bk){ bk=k; best=m; } } if(best!==n&&ev) ev.push({t:"turn",cell,lv:0}); n=best; }
-  const pc={cid,o:side,n,q:q.slice(),g:q.includes("guard"),w:q.includes("wall")?n.indexOf(Math.max(...n)):-1,sp:q.includes("spite"),rv:q.includes("revive"),home:side};
+  const pc={cid,o:side,n,q:q.slice(),g:q.includes("guard"),w:q.includes("wall")?n.map((v,i)=>v===Math.max(...n)?i:-1).filter(i=>i>=0):[],sp:q.includes("spite"),rv:q.includes("revive"),home:side};
   setc(G,cell,pc); if(ev) ev.push({t:"put",cell,side});
   // 置いたとき
   for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
@@ -99,7 +99,8 @@ function play(G,side,hi,cell,ev,real){
     const hit=new Set();
     if(q.includes("same")){ const s=ns.filter(x=>x.a===x.d); if(s.length>=2) s.forEach(x=>hit.add(x.t)); }
     if(q.includes("plus")){ const sums={}; ns.forEach(x=>{ (sums[x.a+x.d]=sums[x.a+x.d]||[]).push(x); }); Object.values(sums).forEach(g=>{ if(g.length>=2) g.forEach(x=>hit.add(x.t)); }); }
-    for(const t of hit){ if(G.b[t].o!==side&&flipOne(G,t,side,cell,ev,1)) { flipped.push(t); if(ev) ev.push({t:"combo",cell:t,lv:1}); } }
+    const tiOf={}; ns.forEach(x=>{ tiOf[x.t]=x.ti; });   // 同数・合計で取るときも、向かい合った辺で鉄壁を見る
+    for(const t of hit){ if(G.b[t].o!==side&&flipOne(G,t,side,cell,ev,1,tiOf[t])) { flipped.push(t); if(ev) ev.push({t:"combo",cell:t,lv:1}); } }
   }
   flipped=flipped.concat(attack(G,cell,side,ev,1,tie));
   // 斜め打ち
