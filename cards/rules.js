@@ -56,17 +56,32 @@ function flipOne(G,t,side,from,ev,lv,dir){
   return true;
 }
 // となりと比べる
-function attack(G,cell,side,ev,lv,tie,tag){
+function attack(G,cell,side,ev,lv,tie,tag,src){
   const out=[];
   for(const [t,mi,ti] of adj(cell)){
     const me=G.b[cell]; if(!me||me.o!==side) break;
     const tc=G.b[t]; if(!tc||tc.o===side) continue;
     const a=val(G,cell,mi), d=val(G,t,ti), rev=has(me,"rev");
     const win=rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d));
-    if(win){ E(ev,G,{t:"duel",cell:t,from:cell,mi,ti,a,d,lv,rev,tag}); if(flipOne(G,t,side,cell,ev,lv,ti)) out.push(t); }
-    else E(ev,G,{t:"miss",cell:t,from:cell,mi,ti,a,d,lv,tag});   // 取れなかった組（演出で ✗ を見せるだけ）
+    if(win){ E(ev,G,{t:"duel",cell:t,from:cell,mi,ti,a,d,lv,rev,tag,src}); if(flipOne(G,t,side,cell,ev,lv,ti)) out.push(t); }
+    else E(ev,G,{t:"miss",cell:t,from:cell,mi,ti,a,d,lv,tag,src});   // 取れなかった組（演出で ✗ を見せるだけ）
   }
   return out;
+}
+// その札の「勝負」：勝負が始まるときのくせ（上下左右・逆さ・同点勝・王威 → 斜め撃 → 連鎖）、勝負のあとのくせ（吸収）
+// 置いたときも、号令・仇討ちでもう一度勝負するときも、同じ。置いた瞬間のくせ（角取り・威圧・号令など）は、ここでは働かない
+function fight(G,cell,side,ev,lv,tag){
+  const me=G.b[cell]; if(!me||me.o!==side) return [];
+  const tie=has(me,"tie")||has(me,"king");
+  let got=attack(G,cell,side,ev,lv,tie,tag,cell);
+  if(has(me,"diag")&&G.b[cell].o===side){ for(const t of diag(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
+    const av=[0,1,2,3].map(k=>val(G,cell,k)), dv=[0,1,2,3].map(k=>val(G,t,k)), a=Math.max(...av), d=Math.min(...dv);
+    if(a>d||(tie&&a===d)){ E(ev,G,{t:"duel",cell:t,from:cell,a,d,lv,how:"diag",mi:av.indexOf(a),ti:dv.indexOf(d),tag,src:cell}); if(flipOne(G,t,side,cell,ev,lv)) got.push(t); } } }
+  // 連鎖・王威：取った札が、その札自身のくせ（同点勝など）で、となりと勝負する（1回だけ）
+  if(has(me,"chain")||has(me,"king")) got.slice().forEach(fc=>{ if(G.b[fc].o===side) got=got.concat(attack(G,fc,side,ev,lv+0.5,has(G.b[fc],"tie")||has(G.b[fc],"king"),tag,cell)); });
+  // 吸収：この札の勝負で取った分だけ（号令で動いた味方の分は入らない）
+  if(has(me,"drain")&&got.length&&G.b[cell]&&G.b[cell].o===side){ setc(G,cell,{...G.b[cell],n:G.b[cell].n.map(v=>cl(v+got.length))}); E(ev,G,{t:"drain",cell,v:got.length,lv:lv+0.75,tag}); }
+  return got;
 }
 // 置いて裏返せる数（回転の向きを決めるため）
 function countFlips(G,cell,side,n,tie,rev){
@@ -83,35 +98,19 @@ function play(G,side,hi,cell,ev,real){
   if(q.includes("turn")){ let best=n,bk=-1,br=0; for(let r=0;r<4;r++){ const m=[0,1,2,3].map(i=>n[(i-r+4)%4]); const k=countFlips(G,cell,side,m,tie,rev); if(k>bk){ bk=k; best=m; br=r; } } if(br) info.push(["turn",0]); n=best; }   // 回ったときだけ「回転」
   const pc={cid,o:side,n,q:q.slice(),g:q.includes("guard"),w:q.includes("wall")?n.map((v,i)=>v===Math.max(...n)?i:-1).filter(i=>i>=0):[],sp:q.includes("spite"),rv:q.includes("revive"),home:side};
   setc(G,cell,pc); E(ev,G,{t:"put",cell,side,info});
-  // 置いたとき
-  // 札に書いてある順（左から）に1つずつ働く
-  for(const k of q) for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
-    if(k==="awe"&&tc.o!==side){ setc(G,t,{...G.b[t],n:G.b[t].n.map(v=>cl(v-1))}); E(ev,G,{t:"debuff",q:"awe",cell:t,from:cell,lv:1}); }
-    if(k==="seal"&&tc.o!==side&&(G.b[t].q||[]).length){ setc(G,t,{...G.b[t],q:[],g:false,w:[],sp:false,rv:false,rb:undefined}); E(ev,G,{t:"seal",q:"seal",cell:t,from:cell,lv:1}); }
-  }
+  // 置いた瞬間のくせ：札に書いてある順（左から）に1つずつ働く（威圧・封印）
   let flipped=[];
-  // 同数・合計
-  if(q.includes("same")||q.includes("plus")){
-    const ns=adj(cell).filter(([t])=>G.b[t]&&G.b[t].o!==side).map(([t,mi,ti])=>({t,a:val(G,cell,mi),d:val(G,t,ti),ti}));
-    const hit=new Set();
-    const how={};
-    if(q.includes("same")){ const s=ns.filter(x=>x.a===x.d); if(s.length>=2) s.forEach(x=>{ hit.add(x.t); how[x.t]="same"; }); }
-    if(q.includes("plus")){ const sums={}; ns.forEach(x=>{ (sums[x.a+x.d]=sums[x.a+x.d]||[]).push(x); }); Object.values(sums).forEach(g=>{ if(g.length>=2) g.forEach(x=>{ hit.add(x.t); how[x.t]=how[x.t]||"plus"; }); }); }
-    const byT={}; ns.forEach(x=>{ byT[x.t]=x; });   // 同数・合計で取るときも、向かい合った辺で鉄壁を見る
-    for(const t of hit){ const x=byT[t], mi=(x.ti+2)%4; E(ev,G,{t:"duel",cell:t,from:cell,mi,ti:x.ti,a:x.a,d:x.d,lv:1,how:how[t]}); if(G.b[t].o!==side&&flipOne(G,t,side,cell,ev,1,x.ti)) { flipped.push(t); E(ev,G,{t:"combo",cell:t,lv:1}); } }
+  for(const k of q){
+    if(k==="awe"||k==="seal") for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
+      if(k==="awe"&&tc.o!==side){ setc(G,t,{...G.b[t],n:G.b[t].n.map(v=>cl(v-1))}); E(ev,G,{t:"debuff",q:"awe",cell:t,from:cell,lv:1}); }
+      if(k==="seal"&&tc.o!==side&&(G.b[t].q||[]).length){ setc(G,t,{...G.b[t],q:[],g:false,w:[],sp:false,rv:false,rb:undefined}); E(ev,G,{t:"seal",q:"seal",cell:t,from:cell,lv:1}); } }
   }
-  flipped=flipped.concat(attack(G,cell,side,ev,1,tie));
-  // 号令：となりの味方が、それぞれのとなりの相手ともう一度勝負する（味方自身のくせで）
-  if(q.includes("cheer")&&G.b[cell].o===side) adj(cell).forEach(([t])=>{ const tc=G.b[t]; if(tc&&tc.o===side&&!flipped.includes(t)) flipped=flipped.concat(attack(G,t,side,ev,2,has(tc,"tie")||has(tc,"king"),"cheer")); });
-  // 斜め打ち
-  if(q.includes("diag")&&G.b[cell].o===side){ for(const t of diag(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
-    const av=[0,1,2,3].map(k=>val(G,cell,k)), dv=[0,1,2,3].map(k=>val(G,t,k)), a=Math.max(...av), d=Math.min(...dv); if(a>d||(tie&&a===d)){ E(ev,G,{t:"duel",cell:t,from:cell,a,d,lv:1,how:"diag",mi:av.indexOf(a),ti:dv.indexOf(d)}); if(flipOne(G,t,side,cell,ev,1)) flipped.push(t); } } }
-  // 連鎖・王威（連鎖で取った札は、その札自身のくせで勝負する。置いた札の同点勝は引き継がない）
-  if(q.includes("chain")||q.includes("king")) flipped.slice().forEach(fc=>{ if(G.b[fc].o===side) flipped=flipped.concat(attack(G,fc,side,ev,2,has(G.b[fc],"tie")||has(G.b[fc],"king"))); });
-  // 仇討ち：味方の札が取られたら、取られた側の「仇討ち」の札が、となりの相手ともう一度勝負する（1手に1回。仕返しへの仕返しは起きない）
-  if(flipped.length) G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"avenge")) attack(G,t,c.o,ev,4,has(c,"tie")||has(c,"king"),"avenge"); });
-  // 吸収
-  if(q.includes("drain")&&flipped.length&&G.b[cell].o===side){ setc(G,cell,{...G.b[cell],n:G.b[cell].n.map(v=>cl(v+flipped.length))}); E(ev,G,{t:"buff",q:"drain",v:flipped.length,cell,lv:3}); }
+  // 置いた札の勝負
+  flipped=flipped.concat(fight(G,cell,side,ev,1,null));
+  // 号令：置いた札の勝負のあと、となりの味方が、もう一度勝負する（その味方自身の、勝負のくせで。この手で取ったばかりの札は動かない）
+  if(q.includes("cheer")&&G.b[cell].o===side) adj(cell).forEach(([t])=>{ const tc=G.b[t]; if(tc&&tc.o===side&&!flipped.includes(t)) flipped=flipped.concat(fight(G,t,side,ev,3,"cheer")); });
+  // 仇討ち：味方の札が取られたら、取られた側の「仇討ち」の札が、もう一度勝負する（1手に1回。仕返しへの仕返しは起きない）
+  if(flipped.length) G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"avenge")) fight(G,t,c.o,ev,4,"avenge"); });
   // 成長：相手（こちら）が札を置いたので、相手の成長の札が育つ（勝負が全部終わってから）
   G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"grow")){ setc(G,t,{...c,n:c.n.map(v=>cl(v+1)),gr:(c.gr||0)+1}); E(ev,G,{t:"grow",cell:t,lv:5}); } });
   // 執念（戻ってきたら、数字が全部＋1）：次は相手の番。相手の札で、こちらに取られていたものが戻る（盤が埋まって終わるときは、もう番が来ないので戻らない）

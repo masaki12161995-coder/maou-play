@@ -87,29 +87,30 @@ window.FX={ css:style, bumpN, run(ev,render,done,pre0){
     beats.push({snap:g[g.length-1].snap,wait:750,go(bd){ QS(qk==="seal"?null:g[0].t==="buff"?"up":"down"); const src=g[0].from; const c=card(bd,src); if(c) c.classList.add("fxglow"); lab(bd,src,QN(qk));
       g.forEach(e=>{ const t=card(bd,e.cell); if(t) t.classList.add("fxpop"); if(e.t!=="seal") bump(bd,e.cell,e.t==="buff"?1:-1); }); }}); });
   // 勝負：段ごと（1＝置いた札から、2＝連鎖）。向かい合う2枚が浮く → 比べる数字が光る → 負けた札がひっくり返る
-  for(const lv of [1,2,4]){   // 4＝仇討ち（取られた側の仕返し）
+  // 勝負：起きた順に、ひとかたまりずつ（1＝置いた札、3＝号令で動いた味方、4＝仇討ち、x.5＝その札の連鎖、x.75＝その札の吸収）
+  const LV=[...new Set(ev.filter(e=>e.t==="duel"||e.t==="miss"||e.t==="drain").map(e=>e.lv))];
+  let cheerShown=false;
+  for(const lv of LV){
+    const drs=ev.filter(e=>e.lv===lv&&e.t==="drain");
+    if(drs.length){ beats.push({snap:drs[drs.length-1].snap,wait:650,go(bd){ QS("up"); drs.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fxpop","fxglow"); lab(bd,e.cell,QN("drain")); bump(bd,e.cell,1); }); }}); continue; }
     const all=ev.filter(e=>e.lv===lv&&e.t!=="buff"&&e.t!=="debuff"&&e.t!=="seal");
     const duels=all.filter(e=>e.t==="duel"), miss=all.filter(e=>e.t==="miss"); if(!duels.length&&!miss.length) continue;
     const outs=all.filter(e=>e.t!=="duel"&&e.t!=="miss");
     const flips=outs.filter(e=>e.t==="flip").map(e=>e.cell), guards=outs.filter(e=>e.t==="guard");
-    const head=lv===4?QN("avenge")+"！":lv===2?(all.every(e=>e.tag==="cheer"||(e.t!=="duel"&&e.t!=="miss"))?QN("cheer")+"！":"連鎖！"):duels.some(d=>d.how==="same")?QN("same")+"！":duels.some(d=>d.how==="plus")?QN("plus")+"！":"";
-    const s0=(duels[0]||miss[0]).snap;
-    // 号令・仇討ち：ほかのくせと同じく、くせを持つ札の上に名前を出す（盤のまん中には出さない）。そのあと、動く味方の札が浮いて勝負する
-    // 連鎖・王威も同じ：置いた札（くせを持つ札）の上に名前を出す
-    const pq=put&&put.snap&&put.snap[put.cell]?(put.snap[put.cell].q||[]):[];
-    const tagQ=lv===4?"avenge":lv===2&&all.every(e=>e.tag==="cheer"||(e.t!=="duel"&&e.t!=="miss"))?"cheer":lv===2?(pq.includes("king")?"king":"chain"):null;
-    if(tagQ&&(tagQ!=="chain"&&tagQ!=="king"||duels.length)){ const srcs=tagQ==="avenge"?[...new Set([...duels,...miss].map(d=>d.from))]:(put?[put.cell]:[]);
-      beats.push({snap:s0,wait:650,go(bd){ SE("chain"); srcs.forEach(i=>{ const c=card(bd,i); if(c) c.classList.add("fxglow","fxpop"); lab(bd,i,QN(tagQ)); }); }}); }
-
+    const s0=(duels[0]||miss[0]).snap, base=Math.floor(lv);
+    // くせの名前は、そのくせを持つ札の上に出す（号令＝置いた札、仇討ち＝仕返しする札、連鎖・王威＝その連鎖のもとの札）
+    const labs=[];
+    if(lv!==base){ if(duels.length) [...new Set(duels.map(d=>d.src))].forEach(sc=>{ const q=(s0[sc]&&s0[sc].q)||[]; labs.push([sc,q.includes("king")?"king":"chain"]); }); }
+    else if(base===3&&!cheerShown&&put){ labs.push([put.cell,"cheer"]); cheerShown=true; }
+    else if(base===4) [...new Set([...duels,...miss].map(d=>d.from))].forEach(f=>labs.push([f,"avenge"]));
+    if(labs.length) beats.push({snap:s0,wait:650,go(bd){ SE("chain"); labs.forEach(([i,qk])=>{ const c=card(bd,i); if(c) c.classList.add("fxglow","fxpop"); lab(bd,i,QN(qk)); }); }});
     beats.push({snap:s0,wait:duels.length?760:560,go(bd){
       // 取れなかった組：こちらの数字を灰色にするだけ（札は浮かせない）
       if(!duels.length) SE("miss");
       miss.forEach(d=>{ hit(bd,d.from,d.mi,"miss"); });
       duels.forEach(d=>{ const a=card(bd,d.from), t=card(bd,d.cell); if(a) a.classList.add("lift"); if(t) t.classList.add("lift");
-        if(d.how==="same"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); }          // 同数：同じ数字どうしが光るだけ（見れば同じと分かる）
-        else if(d.how==="plus"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); lab(bd,d.cell,`${d.a}＋${d.d}＝${d.a+d.d}`); }
-        else { hit(bd,d.from,d.mi,"hit","up"); hit(bd,d.cell,d.ti,"lose","dn"); } });
-      if(lv===1&&duels.length){ const from=duels[0].from, qs=[...new Set(duels.map(d=>d.how).filter(h=>h==="diag"))].map(QN); if(qs.length){ lab(bd,from,qs.join("　")); if(!head) QS(); } }
+        hit(bd,d.from,d.mi,"hit","up"); hit(bd,d.cell,d.ti,"lose","dn"); });
+      const dg=[...new Set(duels.filter(d=>d.how==="diag").map(d=>d.from))]; dg.forEach(f=>lab(bd,f,QN("diag"))); if(dg.length&&!labs.length) QS();
     },out(bd){ flips.forEach(()=>SE("flip")); if(guards.length) QS(); flips.forEach(i=>{ const c=card(bd,i); if(c){ c.classList.remove("lift"); c.classList.add("fout"); } }); guards.forEach(g=>{ const c=card(bd,g.cell); if(c) c.classList.add("fxshake"); }); }});
     if(duels.length) beats.push({snap:outs.length?outs[outs.length-1].snap:duels[duels.length-1].snap,wait:620,go(bd){
       flips.forEach(i=>{ const c=card(bd,i); if(c) c.classList.add("fin"); });
@@ -119,8 +120,6 @@ window.FX={ css:style, bumpN, run(ev,render,done,pre0){
         if(e.t==="spite"){ const c=card(bd,e.cell); if(c) c.classList.add("fin"); lab(bd,e.cell,QN("spite")); } });
     }});
   }
-  const dr=ev.find(e=>e.t==="buff"&&e.q==="drain");
-  if(dr) beats.push({snap:dr.snap,wait:650,go(bd){ QS("up"); const c=card(bd,dr.cell); if(c){ c.classList.add("fxpop","fxglow"); } lab(bd,dr.cell,QN("drain")); bump(bd,dr.cell,1); }});
   // 手の終わり：成長の札が育つ → 執念の札が持ち主に戻る
   const gr=ev.filter(e=>e.t==="grow");
   if(gr.length) beats.push({snap:gr[gr.length-1].snap,wait:700,go(bd){ QS("up"); gr.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fxpop"); lab(bd,e.cell,QN("grow")); bump(bd,e.cell,1); }); }});

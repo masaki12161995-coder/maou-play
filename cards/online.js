@@ -186,7 +186,7 @@ function startGame(){ // 部屋を作った人が、そろえた乱数の種と�
 }
 
 // もう二度と働かないくせ（札の下の名前を暗くする）：置いたときだけ働くくせは盤に置いたら役目を終える。一度きりのくせは使ったら終わり
-const ONPUT=["corner","center","edge","lone","pack","early","late","under","kin","rage","cheer","awe","gamble","seal","turn","drain","diag","chain"];
+const ONPUT=["corner","center","edge","lone","pack","early","late","under","kin","rage","cheer","awe","gamble","seal","turn"];   // 斜め撃・連鎖・吸収は、号令・仇討ちでまた働くので暗くしない
 function spent(c){ const q=CARDS[c.cid].q||[]; return q.filter(k=>ONPUT.includes(k)||(k==="guard"&&!c.g)||(k==="spite"&&!c.sp)||(k==="revive"&&!c.rv&&c.rb===undefined)); }
 // ---------- 画面：入口 ----------
 // ---------- 音 ----------
