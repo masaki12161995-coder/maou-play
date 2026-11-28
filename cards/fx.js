@@ -19,7 +19,7 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 @keyframes nup{0%{color:#8dff9a;transform:scale(1.45)}25%{color:#8dff9a;transform:scale(1)}60%{color:#8dff9a}100%{color:#fff}}
 @keyframes ndn{0%{color:#ff6b6b;transform:scale(1.45)}25%{color:#ff6b6b;transform:scale(1)}60%{color:#ff6b6b}100%{color:#fff}}
 .fxar.fxb,.fxar.pva{position:absolute;top:50%;margin:0;transform:translateY(-50%)}.fxar.fxb.up{animation:fxbu .7s ease-out forwards}.fxar.fxb.dn{animation:fxbd .7s ease-out forwards}
-.fxar.k0,.fxar.k2{left:calc(50% + .36em)}.fxar.k1{right:100%}.fxar.k3{left:100%}
+.fxar.k0,.fxar.k2{left:calc(50% + .36em)}.fxar.k1,.fxar.k3{left:50%;top:auto;bottom:92%;margin-left:-.4em}
 .fxar.pva{animation:fxpva .5s ease-in-out infinite alternate}
 @keyframes fxbu{0%{opacity:0;transform:translateY(-10%)}20%,65%{opacity:1;transform:translateY(-70%)}100%{opacity:0;transform:translateY(-90%)}}
 @keyframes fxbd{0%{opacity:0;transform:translateY(-90%)}20%,65%{opacity:1;transform:translateY(-30%)}100%{opacity:0;transform:translateY(-10%)}}
@@ -34,7 +34,7 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 .card.fxshake{animation:fxshake .34s ease-in-out}
 @keyframes fxshake{0%,100%{transform:translateY(-7px) scale(1.07)}25%{transform:translateY(-7px) scale(1.07) translateX(-4px)}75%{transform:translateY(-7px) scale(1.07) translateX(4px)}}
 .card.fxglow{box-shadow:0 0 0 2px #ffe08a,0 0 16px 4px #ffcf5a99}
-.fxlab{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;white-space:nowrap;font-size:13px;font-weight:800;color:#2a1a08;background:linear-gradient(#ffe9a8,#f0c050);border:1px solid #7a5418;border-radius:10px;padding:1px 8px;box-shadow:0 2px 6px #0009;animation:fxlab .28s ease-out;pointer-events:none}
+.fxlab{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;white-space:nowrap;font-size:12px;font-weight:800;color:#2a1a08;background:linear-gradient(#ffe9a8,#f0c050);border:1px solid #7a5418;border-radius:10px;padding:1px 6px;box-shadow:0 2px 6px #0009;animation:fxlab .28s ease-out;pointer-events:none}
 @keyframes fxlab{from{transform:translate(-50%,-50%) scale(.3);opacity:0}70%{transform:translate(-50%,-50%) scale(1.15);opacity:1}to{transform:translate(-50%,-50%) scale(1)}}
 .fxcmp{position:absolute;z-index:9;pointer-events:none;font-family:"Avenir Next",system-ui,sans-serif;font-weight:900;font-size:20px;color:#fff;text-shadow:0 0 6px #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;transform:translate(-50%,-50%);animation:fxlab .25s ease-out;white-space:nowrap}
 .fxcmp b{color:#ffe08a}
