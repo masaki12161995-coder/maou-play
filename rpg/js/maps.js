@@ -7,6 +7,9 @@
 function grid(w, h, ch) { return Array.from({ length: h }, () => Array(w).fill(ch)); }
 function fill(g, ch, x, y, w, h) { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (g[j] && g[j][i] !== undefined) g[j][i] = ch; }
 const S = g => g.flags.s || 0, cut = (g, k) => g.flags.cut === k;
+const GS0 = () => (window.GS && GS.G) || null; // 地図を作るときの記録（まだ無いこともある）
+// 第8章の庵の前：戻ってきた仲間（ムク・ブラム・ジャコ・ミーファ・主人公のほか）の k 番目
+const backMem = (g, k) => (g.roster || []).filter(hi => ![0, 1, 2, 3, 14, 15].includes(hi))[k];
 // 町の会話の段階（骨組み0-4）。0＝序章の朝、0.5＝黒外套が来た後、1＝第1章、2＝第2章（第1章の場面10の後から）
 const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : s < 60 ? 2 : s < 62 ? 3 : s < 81 ? 4 : s < 96 ? 5 : s < 102 ? 6 : 7; }; // 段階6：第6章の終わり（新しい魔王が立った）から // 段階5：第5章の謁見の間（宰相を捕らえた）から // 段階4：第4章の始まり（ザハラを出た後）から // 段階3：第3章の不戦の約定（聖剣の競り）の後から
 root.townStage = townStage;
@@ -15,7 +18,8 @@ root.townStage = townStage;
 function hut() {
   const g = grid(7, 7, "w"); fill(g, "p", 1, 1, 5, 5); g[6][3] = "D";
   return {
-    id: "hut", nm: "渡し小屋", g, tier: 0, bg: null, inside: 1, music: "town",
+    id: "hut", nm: "渡し小屋", g, tier: 0, bg: null, inside: 1, music: "town", noFollow: GS0() && cut(GS0(), "c8s1") ? 1 : 0,
+    auto: [{ when: g => S(g) === 102, run: "c8s1" }],   // 第8章：目を覚ますと、渡し小屋
     objs: [
       { t: "bed", x: 1, y: 1, w: 1, h: 2, talk: "hutBed" },
       { t: "oarRack", x: 4, y: 0, text: ["先に鉄をはめた長い棹。舟を押すにも、身を守るにも使う。"] },
@@ -26,6 +30,10 @@ function hut() {
     npcs: [
       { id: "dona", x: 3, y: 5, img: "person_077", dir: 3, nm: "ドナ", when: g => cut(g, "s1") },
       { id: "lise", x: 4, y: 3, img: "person_002", dir: 1, nm: "リゼット", when: g => cut(g, "s11") },
+      // 第8章 場面1：囲炉裏の向こうのシグ、藁の上で眠るミーファ、戸口のティム
+      { id: "sig8", x: 4, y: 3, img: "person_146", dir: 1, nm: "シグ", when: g => cut(g, "c8s1") || cut(g, "c8s1t") },
+      { id: "mifa8", x: 1, y: 1, img: "person_011", dir: 4, col: 2, head: 1, nm: "ミーファ", when: g => cut(g, "c8s1") || cut(g, "c8s1t") },
+      { id: "tim8", x: 3, y: 5, img: "person_069", dir: 3, nm: "ティム", when: g => cut(g, "c8s1t") },
     ],
     foes: [], chests: [], trigs: [{ x: 3, y: 5, when: g => S(g) === 12, run: "s11" }],
   };
@@ -53,6 +61,7 @@ function ferry() {
       { t: "weir", x: 10, y: 29, w: 3, h: 1, web: 1, when: g => S(g) <= 2 }, { t: "weir", x: 10, y: 29, w: 3, h: 1, when: g => S(g) > 2 },
       { t: "willow", x: 9, y: 27, w: 1, h: 2 },
       { t: "sign", x: 7, y: 26, text: ["この先　簗場"] },
+      { t: "newGrave", x: 9, y: 15, text: ["新しい木の墓標。下手な字で「渡し守カイ　川に還る」。", "毎朝、水をやった跡がある。"], when: g => S(g) >= 103 },   // 第8章：ティムが立てたカイの墓標
     ],
     exits: [{ x: 4, y: 15, to: "hut", tx: 3, ty: 5, dir: 3 }, { x: 0, y: 17, to: "village", tx: 14, ty: 11, dir: 1 }],
     npcs: [
@@ -79,6 +88,7 @@ function ferry() {
       { id: "ka", x: 5, y: 16, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "s12b") || cut(g, "s12c") },
       { id: "kb", x: 4, y: 17, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "s12b") || cut(g, "s12c") },
       { id: "sig11", x: 3, y: 17, img: "person_146", dir: 2, nm: "傷の男", when: g => cut(g, "s12c") },
+      { id: "timG", x: 8, y: 15, img: "person_069", dir: 2, nm: "ティム", when: g => cut(g, "c8s2c") },
     ],
     foes: [
       // 川べりの魔物：1体なら楽、2体はきつい。道の脇に居るので、避けて通れる
@@ -101,8 +111,9 @@ function village() {
   fill(g, "h", 3, 16, 3, 3); fill(g, "h", 11, 16, 3, 3);
   return {
     id: "village", nm: "トルカ村", g, tier: 0, bg: null, music: "town",
+    auto: [{ when: g => S(g) === 103, run: "c8s2" }],   // 第8章：幽霊騒ぎ
     objs: [
-      { t: "house", x: 3, y: 5, w: 4, h: 3, roof: "red", door: 2, chimney: 1 },
+      { t: "house", x: 3, y: 5, w: 4, h: 3, roof: "red", door: 2, chimney: 1, kind: "dona", nm: "ドナの家" },
       { t: "house", x: 10, y: 5, w: 4, h: 3, roof: "blue", door: 1 },
       { t: "house", x: 3, y: 12, w: 3, h: 2, roof: "green", door: 1 },
       { t: "house", x: 11, y: 12, w: 3, h: 2, roof: "brown", door: 1, chimney: 1 },
@@ -115,7 +126,7 @@ function village() {
     ],
     exits: [{ x: 15, y: 11, to: "ferry", tx: 1, ty: 17, dir: 2 }],
     npcs: [
-      { id: "dona", x: 5, y: 9, img: "person_077", dir: 0, nm: "ドナ", talk: "town", when: g => S(g) !== 12 },
+      { id: "dona", x: 5, y: 9, img: "person_077", dir: 0, nm: "ドナ", talk: "town", when: g => S(g) !== 12 && !cut(g, "c8s2") },
       { id: "donaD", x: 5, y: 9, img: "person_077", dir: 0, nm: "ドナ", talk: "town", when: g => S(g) === 12 && !g.flags.cut },
       // 村の人（台詞は TOWNTALK。物語の段階で切り替わる）
       { id: "timV", x: 7, y: 8, img: "person_069", dir: 0, nm: "ティム", talk: "town", card: g => S(g) >= 29, when: g => !g.flags.cut },
@@ -132,6 +143,15 @@ function village() {
       { id: "k2", x: 10, y: 10, mon: "monster_020", face: 1, nm: "黒外套の兵", talk: "town", n: 1, when: g => S(g) === 12 },
       { id: "k3", x: 9, y: 13, mon: "monster_021", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
       { id: "k4", x: 12, y: 11, mon: "monster_018", face: 1, nm: "黒外套の兵", talk: "kuro", when: g => S(g) === 12 },
+      // 第8章 場面2：鍬や棒を持って広場に集まった村人
+      { id: "dona8", x: 10, y: 11, img: "person_077", dir: 2, nm: "ドナ", when: g => cut(g, "c8s2") },
+      { id: "tim8", x: 9, y: 11, img: "person_069", dir: 2, nm: "ティム", when: g => cut(g, "c8s2") },
+      { id: "hop8", x: 8, y: 10, img: "person_071", dir: 2, nm: "ホップ", when: g => cut(g, "c8s2") },
+      { id: "martha8", x: 8, y: 12, img: "person_026", dir: 2, nm: "マーサ", when: g => cut(g, "c8s2") },
+      { id: "vm8", x: 7, y: 10, img: "person_072", dir: 2, nm: "村人の男", when: g => cut(g, "c8s2") },
+      { id: "vw8", x: 7, y: 12, img: "person_070s", dir: 2, nm: "村人の女", when: g => cut(g, "c8s2") },
+      { id: "vc8", x: 7, y: 11, img: "person_022k", dir: 2, nm: "村の子", when: g => cut(g, "c8s2") },
+      { id: "sig8", x: 13, y: 11, img: "person_146", dir: 1, nm: "シグ", when: g => cut(g, "c8s2") },
     ],
     foes: [], chests: [], trigs: [],
   };
@@ -150,6 +170,8 @@ function river() {
       { id: "martha", x: 7, y: 14, img: "person_026", dir: 1, nm: "マーサ", when: g => cut(g, "s2") || cut(g, "s10c") },
       { id: "lise", x: 5, y: 14, img: "person_002", dir: 2, nm: "リゼット", when: g => cut(g, "s4") || cut(g, "s10b") || cut(g, "s12d") },
       { id: "muku", x: 7, y: 14, img: "person_058h", dir: 1, nm: "ムク", when: B("s12d") },
+      { id: "mifa8", x: 5, y: 14, img: "person_011", dir: 2, nm: "ミーファ", when: B("c8s3") },
+      { id: "sig8", x: 7, y: 14, img: "person_146", dir: 1, nm: "シグ", when: B("c8s3") },
     ],
     foes: [], chests: [], trigs: [],
   };
@@ -193,7 +215,7 @@ function forest() {
   g[25][13] = "y"; g[25][16] = "y"; g[25][21] = "y"; g[24][12] = "y";
   path(20, 23, 1, 2);
   return {
-    id: "forest", nm: "ささやきの森", g, tier: 1, bg: "canopy",
+    id: "forest", nm: "ささやきの森", g, tier: GS0() && S(GS0()) >= 107 ? 6 : GS0() && S(GS0()) >= 102 ? 5 : 1, bg: "canopy",   // 第8章からは、森の魔物も手ごわい
     objs: [
       { t: "boat", x: 0, y: 30, w: 3, h: 1, talk: "boat" },
       { t: "kaeri", x: 10, y: 27, talk: "kaeri" },
@@ -201,6 +223,7 @@ function forest() {
       { t: "thorns", x: 11, y: 8, talk: "thorns", when: g => S(g) < 96 }, { t: "thorns", x: 11, y: 7, talk: "thorns", when: g => S(g) < 96 },
       { t: "house", x: 18, y: 10, w: 3, h: 2, roof: "green", door: 1, chimney: 1 },
       { t: "shrineGate", x: 22, y: 18, w: 2, h: 2 },
+      { t: "woodpile", x: 21, y: 13, when: g => S(g) >= 107 },   // 第8章：庵の裏の薪割り場（シグ）
     ],
     exits: [{ x: 19, y: 11, to: "hermit", tx: 3, ty: 5, dir: 3 }, { x: 22, y: 19, to: "shrine", tx: 6, ty: 26, dir: 3 }, ...(kemono ? [{ x: 11, y: 0, to: "kagenohara", tx: 1, ty: 8, dir: 2 }] : [])],
     npcs: [
@@ -219,7 +242,23 @@ function forest() {
       { id: "db", x: 7, y: 16, mon: "monster_130", face: 1, nm: "ドングリ兵", talk: "dongu" },
       // 森の婆の庵の前：見張りのフクロウと、切り株のドングリ兵（序章の三体のうちの一体。町の人の会話）
       { id: "fukuro", x: 17, y: 12, mon: "monster_112", face: 1, nm: "見張りのフクロウ", talk: "tt", tp: "hermit", when: g => S(g) >= 7 && !g.flags.cut },
-      { id: "dongI", x: 21, y: 13, mon: "monster_130", face: -1, nm: "ドングリ兵", talk: "tt", tp: "hermit", when: g => S(g) >= 7 && !g.flags.cut },
+      { id: "dongI", x: 21, y: 13, mon: "monster_130", face: -1, nm: "ドングリ兵", talk: "tt", tp: "hermit", when: g => S(g) >= 7 && S(g) < 107 && !g.flags.cut },
+      { id: "dongI8", x: 18, y: 13, mon: "monster_130", face: -1, nm: "ドングリ兵", talk: "tt", tp: "hermit", when: g => S(g) >= 107 && !g.flags.cut },
+      // 第8章：薪を割るシグ（庵の夜から。仲間にするまで）
+      { id: "sigW", x: 20, y: 13, img: "person_146", dir: 2, nm: "シグ", talk: "sigJoin", when: g => S(g) >= 107 && !(g.roster || []).includes(19) && !g.flags.cut },
+      // 第8章 場面4：木の上から飛び降りてきたドングリ兵
+      { id: "d8a", x: 7, y: 26, mon: "monster_130", face: 1, nm: "ドングリ兵", when: g => cut(g, "c8s4") },
+      { id: "d8b", x: 8, y: 26, mon: "monster_130", face: 1, nm: "ドングリ兵", when: g => cut(g, "c8s4") },
+      { id: "d8c", x: 9, y: 26, mon: "monster_130", face: -1, nm: "ドングリ兵", when: g => cut(g, "c8s4") },
+      // 第8章 場面5：庵の前のネネと、戸口から出てくる仲間
+      { id: "nene8", x: 19, y: 12, img: "person_041", dir: 0, nm: "ネネ", when: g => cut(g, "c8s5") },
+      { id: "nene8b", x: 21, y: 12, img: "person_041", dir: 1, nm: "ネネ", when: g => cut(g, "c8s5b") || cut(g, "c8s5c") },
+      { id: "muku8", x: 19, y: 13, img: "person_058h", dir: 0, nm: "ムク", when: g => cut(g, "c8s5b") || cut(g, "c8s5c") },
+      { id: "bram8", x: 18, y: 12, img: "person_005", dir: 0, nm: "ブラム", when: g => cut(g, "c8s5b") || cut(g, "c8s5c") },
+      { id: "jako8", x: 20, y: 12, img: "person_133", dir: 0, nm: "ジャコ", when: g => cut(g, "c8s5b") || cut(g, "c8s5c") },
+      { id: "mifa8f", x: 18, y: 14, img: "person_011", dir: 3, nm: "ミーファ", when: g => /^c8s5/.test(g.flags.cut || "") },
+      { id: "sig8f", x: 20, y: 15, img: "person_146", dir: 3, nm: "シグ", when: g => /^c8s5/.test(g.flags.cut || "") },
+      ...[[17, 13], [21, 13], [16, 14], [17, 14], [17, 12], [21, 14], [16, 13], [20, 16]].map(([x, y], k) => { const hi = GS0() ? backMem(GS0(), k) : null; return hi == null ? null : { id: "back8_" + k, x, y, img: BT.HEROES[hi].img, psc: BT.HEROES[hi].id === "garm" ? 1.3 : 1, dir: 3, nm: BT.HEROES[hi].nm, when: g => cut(g, "c8s5c") }; }).filter(Boolean),
       { id: "north", x: 14, y: 17, img: "person_040", dir: 1, nm: "北の子", talk: "north" },
       { id: "mukuC", x: 13, y: 17, img: "person_058", dir: 2, nm: "ムク", talk: "mukuC", when: g => S(g) <= 7 },
       // 場面9：沼への道をふさぐ狼の群れ
@@ -240,6 +279,10 @@ function forest() {
       { id: "w5", x: 19, y: 20, k: "moriookami", g: ["moriookami", "moriookami"], when: g => S(g) >= 9 },
       { id: "w2", x: 14, y: 23, k: "koromochi", g: ["koromochi", "koromochi", "donguri"], when: g => S(g) >= 10 },
       { id: "w4", x: 16, y: 24, k: "mizugumo", g: ["mizugumo", "moriookami", "koromochi"], when: g => S(g) >= 10 },
+      // 第8章から：苔の魔物と夜鳴きの梟も出る
+      { id: "w6", x: 9, y: 12, k: "kokedaruma", g: ["kokedaruma", "donguri"], when: g => S(g) >= 102 },
+      { id: "w7", x: 13, y: 15, k: "yonaki", g: ["yonaki", "moriookami"], when: g => S(g) >= 102 },
+      { id: "w8", x: 8, y: 21, k: "kokedaruma", g: ["kokedaruma", "yonaki"], when: g => S(g) >= 105 },
     ],
     chests: [{ id: "c_forest1", x: 6, y: 12, item: "ironspear" }, { id: "c_forest2", x: 22, y: 24, item: "needle" }, { id: "c_forest3", x: 15, y: 11, tool: "book1" }],
     trigs: [
@@ -251,6 +294,7 @@ function forest() {
       { x: 19, y: 19, w: 5, h: 1, when: g => S(g) === 9 && !g.flags.fork, run: "s9b" },
       { x: 20, y: 24, w: 1, h: 1, when: g => S(g) === 9, run: "s9" }, { x: 17, y: 25, when: g => S(g) === 9, run: "s9" }, { x: 16, y: 25, when: g => S(g) === 9, run: "s9" }, { x: 18, y: 25, when: g => S(g) === 9, run: "s9" },
       { x: 20, y: 21, when: g => S(g) === 10, run: "s10" },
+      { x: 16, y: 14, w: 5, h: 1, when: g => S(g) === 105, run: "c8s5" }, { x: 17, y: 12, w: 5, h: 2, when: g => S(g) === 105, run: "c8s5" },
     ],
   };
 }
@@ -259,7 +303,8 @@ function forest() {
 function hermit() {
   const g = grid(7, 7, "w"); fill(g, "p", 1, 1, 5, 5); g[6][3] = "D";
   return {
-    id: "hermit", nm: "森の婆の庵", g, tier: 0, bg: null, inside: 1,
+    id: "hermit", nm: "森の婆の庵", g, tier: 0, bg: null, inside: 1, noFollow: GS0() && cut(GS0(), "c8s6") ? 1 : 0,
+    auto: [{ when: g => S(g) === 106, run: "c8s6" }],   // 第8章：庵の夜
     objs: [
       { t: "bed", x: 1, y: 1, w: 1, h: 2, talk: "rest" },
       { t: "hearth", x: 5, y: 1 },
@@ -274,6 +319,13 @@ function hermit() {
       { id: "mukuIn", x: 4, y: 5, img: "person_058", dir: 3, nm: "ムク", when: g => cut(g, "s8") },
       // 町の人の会話（森の婆の庵）：土間のコロモチ。戦わない継ぐ民
       { id: "koroI", x: 1, y: 5, mon: "m_koromochi", face: 1, nm: "庵のコロモチ", talk: "tt", tp: "hermit", when: g => !g.flags.cut },
+      // 第8章 場面6・7：庵の夜。卓を囲む（埃をかぶった椅子には誰も座らない）
+      { id: "neneN", x: 3, y: 2, img: "person_041", dir: 0, nm: "ネネ", when: g => cut(g, "c8s6") && g.roster.includes(17) },
+      { id: "bramN", x: 2, y: 2, img: "person_005", dir: 0, nm: "ブラム", when: g => cut(g, "c8s6") },
+      { id: "jakoN", x: 4, y: 2, img: "person_133", dir: 0, nm: "ジャコ", when: g => cut(g, "c8s6") },
+      { id: "sigN", x: 5, y: 3, img: "person_146", dir: 1, nm: "シグ", when: g => cut(g, "c8s6") },
+      { id: "mifaN", x: 1, y: 3, img: "person_011", dir: 2, nm: "ミーファ", when: g => cut(g, "c8s6") },
+      { id: "mukuN", x: 2, y: 4, img: "person_058h", dir: 3, nm: "ムク", when: g => cut(g, "c8s6") },
     ],
     foes: [], chests: [], trigs: [{ x: 3, y: 5, when: g => S(g) === 7, run: "s8" }],
   };
@@ -321,7 +373,7 @@ function road1() {
   for (const [x, y] of [[2, 9], [10, 6], [19, 18], [27, 6], [28, 19], [35, 20], [41, 8], [9, 19], [44, 18], [20, 6]]) g[y][x] = "T";
   fill(g, "f", 4, 11, 5, 1); fill(g, "f", 30, 11, 6, 1); fill(g, "f", 12, 15, 6, 1); fill(g, "f", 37, 15, 6, 1);
   return {
-    id: "road1", nm: "西街道", g, tier: 2, bg: "meadow",
+    id: "road1", nm: "西街道", g, tier: GS0() && S(GS0()) >= 102 ? 6 : 2, bg: "meadow",
     objs: [
       { t: "cedar", x: 15, y: 8, w: 1, h: 3 },
       { t: "kaeri", x: 24, y: 11, talk: "roadStone" }, { t: "offering", x: 25, y: 11 },
@@ -477,8 +529,14 @@ function ohashi() {
       { id: "akinS", x: 2, y: 12, img: "person_075", dir: 2, nm: "商人", when: g => cut(g, "c1s10") },
       { id: "totoS", x: 2, y: 14, img: "person_100", dir: 2, nm: "トト", when: g => cut(g, "c1s10") },
       // 夜明けからは、橋のたもとに橋番
-      { id: "garmB", x: 10, y: 11, img: "person_132", dir: 0, psc: 1.5, nm: "ガルム", talk: "garmBridge", card: () => 1, when: g => S(g) >= 28 && !(g.roster || []).includes(13) },
-      { id: "kogarumu", x: 10, y: 11, img: "person_132", dir: 0, psc: 1, nm: "コガルム", talk: "kogarumu", card: () => 1, when: g => S(g) >= 28 && (g.roster || []).includes(13) },  // ガルムの甥（小さめの石の巨人）
+      { id: "garmB", x: 10, y: 11, img: "person_132", dir: 0, psc: 1.5, nm: "ガルム", talk: "garmBridge", card: () => 1, when: g => S(g) >= 28 && !(g.roster || []).includes(13) && !cut(g, "c8s8b") },
+      { id: "kogarumu", x: 10, y: 11, img: "person_132", dir: 0, psc: 1, nm: "コガルム", talk: "kogarumu", card: () => 1, when: g => S(g) >= 28 && (g.roster || []).includes(13) && !cut(g, "c8s8b") },  // ガルムの甥（小さめの石の巨人）
+      // 第8章 場面8：橋のたもとの臨時の関。番人が、兵と棺の間に座りこむ
+      { id: "garm8", x: 10, y: 13, img: "person_132", dir: 1, psc: 1.5, nm: "ガルム", when: g => cut(g, "c8s8b") && !(g.roster || []).includes(13) },
+      { id: "kogar8", x: 10, y: 13, img: "person_132", dir: 1, psc: 1, nm: "コガルム", when: g => cut(g, "c8s8b") && (g.roster || []).includes(13) },
+      { id: "hei8a", x: 11, y: 12, mon: "monster_010", face: 1, nm: "王国兵", when: g => cut(g, "c8s8") || cut(g, "c8s8b") },
+      { id: "hei8b", x: 11, y: 14, mon: "monster_010", face: 1, nm: "王国兵", when: g => cut(g, "c8s8") || cut(g, "c8s8b") },
+      { id: "hei8c", x: 12, y: 13, mon: "monster_010", face: 1, nm: "王国兵", when: g => cut(g, "c8s8") || cut(g, "c8s8b") },
       { id: "sigB", x: 6, y: 13, img: "person_146", dir: 2, nm: "傷の男", when: g => cut(g, "c1s13b") },
       { id: "kb1", x: 5, y: 12, mon: "monster_019", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
       { id: "kb2", x: 5, y: 14, mon: "monster_020", face: 1, nm: "黒外套の兵", when: g => cut(g, "c1s13b") },
@@ -496,6 +554,7 @@ function ohashi() {
       { x: 5, y: 6, when: g => S(g) >= 21, run: "towerIn" },
       { x: 7, y: 12, w: 1, h: 3, when: g => S(g) === 25, run: "c1s10" },
       { x: 21, y: 12, w: 1, h: 3, when: g => S(g) >= 28, run: "tollEast" },
+      { x: 7, y: 12, w: 1, h: 3, when: g => S(g) === 107, run: "c8s8" },   // 第8章：葬列が橋のたもとの関へ
     ],
   };
 }
@@ -566,13 +625,14 @@ function plain() {
   fill(g, "f", 3, 9, 7, 1); fill(g, "f", 24, 10, 8, 1); fill(g, "f", 5, 16, 9, 1);
   fill(g, "=", 0, 24, 5, 1); fill(g, "=", 4, 15, 1, 10);                    // 西：南の山道へ（第5章で開く）
   return {
-    id: "plain", nm: "中央平原", g, tier: 3, bg: "meadow",
+    id: "plain", nm: "中央平原", g, tier: GS0() && S(GS0()) >= 102 ? 6 : 3, bg: "meadow",
     objs: [
       { t: "windmill", x: 33, y: 23, w: 2, h: 3 }, { t: "windmill", x: 36, y: 24, w: 2, h: 3 },
       { t: "kaeri", x: 18, y: 12, talk: "kaeri" },
       { t: "sign", x: 21, y: 13, text: ["北　王都ルクスベル"] }, { t: "sign", x: 32, y: 15, text: ["南　風車の里ミルナ"] }, { t: "sign", x: 37, y: 13, text: ["東　赤麦の丘・東の関所"] },
       { t: "sign", x: 5, y: 23, text: ["道しるべの柱。真新しい貼り紙が二枚。", "王女リゼリアを名乗る偽者あり。見つけ次第、役所へ届け出よ。宰相ヴァルド", "鉄門砦は、軍のほか通行を禁ず。宰相ヴァルド"], when: g => S(g) >= 75 && S(g) < 81 },
       { t: "sign", x: 5, y: 23, text: ["道しるべの柱。「西　南の山道・巡礼の道」", "貼り紙をはがした跡が残っている。"], when: g => S(g) >= 81 },
+      { t: "sign", x: 3, y: 13, text: ["高札。「魔王は勇者アスターに討たれ、王国は救われた」", "「魔物の心を拾う者は、魔王の残党と見なす」"], when: g => S(g) >= 107 },   // 第8章：道ばたの高札
     ],
     exits: [{ x: 20, y: 0, to: "lux", tx: 11, ty: 38, dir: 3 }, { x: 31, y: 29, to: "milna", tx: 8, ty: 1, dir: 0 }, { x: 0, y: 24, to: "yamamichi", tx: 12, ty: 10, dir: 1 }],
     npcs: [
@@ -591,6 +651,7 @@ function plain() {
       { x: 1, y: 14, when: g => S(g) === 28, run: "c2s1" },
       { x: 20, y: 5, w: 1, h: 1, when: g => S(g) === 29, run: "c2s1b" },
       { x: 20, y: 3, w: 1, h: 1, when: g => S(g) <= 30, run: "luxShut" },
+      { x: 20, y: 3, w: 1, h: 1, when: g => S(g) >= 102, run: "luxShut8" },   // 第8章：戴冠まで、王都の門は閉じている
       { x: 0, y: 14, run: "tollWest" },
       { x: 39, y: 14, run: "eastShut" },
       { x: 1, y: 24, w: 4, h: 1, when: g => S(g) === 75, run: "c5s1" }, { x: 20, y: 6, when: g => S(g) === 75, run: "c5s1" },
@@ -618,20 +679,61 @@ function milna() {
       { t: "woodpile", x: 7, y: 3 }, { t: "woodpile", x: 7, y: 2 },
       { t: "house", x: 13, y: 11, w: 3, h: 2, roof: "blue", door: 1, kind: "inn", nm: "ミルナの宿" },               // 宿
       { t: "sign", x: 12, y: 13, text: ["宿"] },
+      { t: "coffinCart", x: 8, y: 12, when: g => cut(g, "c8s10") },   // 第8章：ミーファの棺
     ],
     exits: [{ x: 8, y: 0, to: "plain", tx: 31, ty: 28, dir: 3 }],
     npcs: [
       { id: "morto", x: 6, y: 11, img: "person_019k", dir: 0, nm: "モルト", talk: "morto", card: g => S(g) !== 30 },
       // 町の人（段階2から。台詞は TOWNTALK）
       { id: "hanna", x: 6, y: 4, img: "person_020", dir: 0, nm: "ハンナ", talk: "hanna", when: g => !(g.roster || []).includes(12) },
-      { id: "yado", x: 14, y: 14, img: "person_014y", dir: 0, nm: "宿の主人", talk: "milnaInn" },
+      { id: "yado", x: 14, y: 14, img: "person_014y", dir: 0, nm: "宿の主人", talk: "milnaInn", when: g => !cut(g, "c8s10") },
       { id: "neru", x: 3, y: 13, img: "person_026n", dir: 1, nm: "ネル", talk: "nel", tp: "milna" },
       { id: "fusha", x: 12, y: 9, img: "person_072", dir: 0, nm: "風車番", talk: "tt", tp: "milna" },
       { id: "sentaku", x: 15, y: 7, img: "person_070s", dir: 2, nm: "洗濯の女", talk: "tt", tp: "milna" },
-      { id: "konako", x: 8, y: 13, img: "person_022k", dir: 0, nm: "粉まみれの子", talk: "tt", tp: "milna" },
+      { id: "konako", x: 8, y: 13, img: "person_022k", dir: 0, nm: "粉まみれの子", talk: "tt", tp: "milna", when: g => !cut(g, "c8s10") },
+      // 第8章 場面10：葬列の一行（ミーファは隣の棺の中）
+      { id: "bramM", x: 9, y: 11, img: "person_005", dir: 2, nm: "ブラム", when: g => cut(g, "c8s10") },
+      { id: "jakoM", x: 10, y: 12, img: "person_133", dir: 2, nm: "ジャコ", when: g => cut(g, "c8s10") },
+      { id: "mukuM", x: 8, y: 13, img: "person_058h", dir: 2, nm: "ムク", when: g => cut(g, "c8s10") },
+      { id: "sigM", x: 8, y: 11, img: "person_146", dir: 2, nm: "シグ", when: g => cut(g, "c8s10") },
+      // 第8章 場面10：宿の軒下で札を並べるトトと、宿の前の石段の勇者たち
+      { id: "toto8", x: 11, y: 13, img: "person_100", dir: 2, nm: "トト", when: g => cut(g, "c8s10") },
+      { id: "aster8", x: 14, y: 13, img: "person_013", dir: 1, nm: "アスター", when: g => cut(g, "c8s10") },
+      { id: "elma8", x: 13, y: 13, img: "person_089", dir: 1, nm: "エルマ", when: g => cut(g, "c8s10") },
+      { id: "rokka8", x: 15, y: 13, img: "person_015", dir: 1, nm: "ロッカ", when: g => cut(g, "c8s10") },
+      { id: "vw8", x: 10, y: 14, img: "person_076c", dir: 1, nm: "村の女", when: g => cut(g, "c8s10") },
+      { id: "vm8", x: 10, y: 11, img: "person_072", dir: 1, nm: "村の男", when: g => cut(g, "c8s10") },
+      // 寄り道の仲間エルマ（第8章の一騎打ちの後から。宿の前の石段）
+      { id: "elmaM", x: 13, y: 13, img: "person_089", dir: 0, nm: "エルマ", talk: "elmaJoin", when: g => S(g) >= 109 && !(g.roster || []).includes(20) && !g.flags.cut },
     ],
     foes: [], chests: [],
-    trigs: [{ x: 8, y: 2, when: g => S(g) === 30 && !g.flags.milna, run: "c2s2" }],
+    trigs: [{ x: 8, y: 2, when: g => S(g) === 30 && !g.flags.milna, run: "c2s2" }, { x: 8, y: 2, when: g => S(g) === 108, run: "c8s10" }],
+  };
+}
+// ---------- ミルナの外れ・風車の丘（第8章の一騎打ちの場面だけ） ----------
+function fushaoka() {
+  const W = 12, H = 11, g = grid(W, H, ".");
+  fill(g, "T", 0, 0, W, 1); fill(g, "T", 0, H - 1, W, 1); fill(g, "T", 0, 0, 1, H); fill(g, "T", W - 1, 0, 1, H);
+  for (const [x, y] of [[1, 1], [10, 1], [1, 9], [10, 9], [2, 1]]) g[y][x] = "T";
+  return {
+    id: "fushaoka", nm: "風車の丘", g, tier: 0, bg: "meadow", noFollow: 1,
+    objs: [{ t: "windmill", x: 5, y: 1, w: 2, h: 3 }],
+    exits: [],
+    npcs: [
+      { id: "asterO", x: 4, y: 6, img: "person_013", dir: 2, nm: "アスター", when: g => cut(g, "c8s11") },
+      { id: "asterO2", x: 4, y: 6, img: "person_013", dir: 4, col: 2, nm: "アスター", when: g => cut(g, "c8s11b") },
+      { id: "elmaO", x: 2, y: 8, img: "person_089", dir: 3, nm: "エルマ", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "rokkaO", x: 3, y: 9, img: "person_015", dir: 3, nm: "ロッカ", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "mifaO", x: 9, y: 8, img: "person_011", dir: 3, nm: "ミーファ", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "mukuO", x: 8, y: 9, img: "person_058h", dir: 3, nm: "ムク", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "bramO", x: 9, y: 9, img: "person_005", dir: 3, nm: "ブラム", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "jakoO", x: 10, y: 8, img: "person_133", dir: 3, nm: "ジャコ", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "sigO", x: 10, y: 7, img: "person_146", dir: 1, nm: "シグ", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "vmO", x: 1, y: 4, img: "person_072", dir: 2, nm: "村の男", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "vwO", x: 1, y: 5, img: "person_070s", dir: 2, nm: "村の女", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+      { id: "vcO", x: 10, y: 4, img: "person_022k", dir: 1, nm: "粉まみれの子", when: g => cut(g, "c8s11") || cut(g, "c8s11b") },
+    ],
+    foes: [], chests: [], trigs: [],
   };
 }
 // ---------- 王都ルクスベル（C2）：南に正門、北に城と古い礼拝堂、西に酒場と裏通り ----------
@@ -2175,6 +2277,13 @@ function minka() {
     [3, 4, 5].forEach(x => objs.push({ t: "counter", x: X(x), y: 2 })); objs.push({ t: "hearth", x: X(1), y: 0 });
     objs.push({ t: "table", x: X(2), y: 4 }, { t: "table", x: X(6), y: 4 }); find("shelf", 7, 1);
     who("tea", 4, 1, 0, "茶屋の娘");
+  } else if (d.kind === "dona") { // ドナの家（村長の家）：囲炉裏と寝床。第8章の場面2で、ミーファが目を覚ます
+    objs.push({ t: "hearth", x: X(1), y: 0 }, { t: "bed", x: X(W - 2), y: 1, w: 1, h: 2 }, { t: "table", x: X(2), y: H - 3 }, { t: "chair", x: X(3), y: H - 3 }, { t: "shelf", x: X(W - 3), y: 1, text: ["弁当箱が並んでいる。ふたに名前。「カイ」と書いた箱もある。"] });
+    const G0 = root.GS && GS.G, c = G0 && G0.flags.cut;
+    if (c === "c8s2b" || c === "c8s2b2") {
+      npcs.push({ id: "donaH", x: X(2), y: 2, img: "person_077", dir: 0, nm: "ドナ" });
+      npcs.push({ id: "mifaH", x: X(W - 2), y: 1, img: "person_011", dir: c === "c8s2b" ? 4 : 0, col: c === "c8s2b" ? 2 : 1, head: 1, nm: "ミーファ" });
+    }
   } else if (d.kind === "nel") { // ネルの家：寄り道の仲間トビーを逃したときは、ここにトビーがいる（段階6から）
     objs.push({ t: "shelf", x: X(1), y: 1 }, { t: "bed", x: X(W - 2), y: 1, w: 1, h: 2 }, { t: "table", x: X(2), y: H - 3 }, { t: "chair", x: X(3), y: H - 3 });
     const G0 = root.GS && GS.G; if (G0 && (G0.flags.s || 0) >= 96 && !G0.roster.includes(16)) npcs.push({ id: "tobyH", x: X(dx), y: 2, img: "person_080", dir: 0, nm: "トビー", talk: "tobyHome" });
@@ -2189,12 +2298,12 @@ function minka() {
     if (big && (d.idx || 0) % 2 === 0) who("c", W - 3, H - 2, 1, "子ども");
   }
   return {
-    id: "minka", nm: d.nm || "民家", g, tier: 0, bg: null, inside: 1, music: "town",
+    id: "minka", nm: d.nm || "民家", g, tier: 0, bg: null, inside: 1, music: "town", noFollow: d.kind === "dona" && GS0() && /^c8s2b/.test(GS0().flags.cut || "") ? 1 : 0,
     objs, npcs, foes: [], chests: [], trigs: [],
     exits: [{ x: dx, y: H - 1, to: d.from, tx: d.rx, ty: d.ry, dir: 0 }],
   };
 }
 
 root.MINKA_FOLK = MINKA_FOLK;
-root.MAPS = { uroko, doromiya, tsuno, hyakudan, kagenohara, kuuza, gyokuza, kuriya, jouheki, kiba, tsukihoe, tsubasa, kazakiri, tetsumon, iteno, camp, duga, touge, itadaki, yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+root.MAPS = { fushaoka, uroko, doromiya, tsuno, hyakudan, kagenohara, kuuza, gyokuza, kuriya, jouheki, kiba, tsukihoe, tsubasa, kazakiri, tetsumon, iteno, camp, duga, touge, itadaki, yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

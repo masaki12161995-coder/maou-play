@@ -117,7 +117,7 @@ function syncParty() {
   const ids = M && M.noFollow ? [] : GS.fighters().filter(hi => hi !== LEADER);
   fol = ids.map((hi, i) => fol.find(f => f.hi === hi) || { hi, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
   const gi = G().flags.guest; // 戦いには出ないが、後ろをついてくる人（1人なら絵の名前、何人かなら並べる）
-  if (gi && !(M && M.noFollow)) for (const img of [].concat(gi)) fol.push(fol.find(f => f.img === img) || { hi: -1, img, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
+  if (gi && !(M && M.noFollow)) for (const img of [].concat(gi)) if (!(img === "person_146" && M && ["forest", "hermit"].includes(M.id) && (G().flags.s || 0) >= 107)) fol.push(fol.find(f => f.img === img) || { hi: -1, img, x: P.x, y: P.y, fx: P.x, fy: P.y, from: null, dir: P.dir });
 }
 // ---------- 入る・出る ----------
 function enter(id, x, y, dir) { // x,y は足す前の地図の座標
@@ -131,7 +131,7 @@ function enter(id, x, y, dir) { // x,y は足す前の地図の座標
 }
 async function start() {
   const g = G(); active = true; enter(g.map, g.x, g.y, g.dir);
-  if (!g.flags.s) { fade = 1; fadeTo = 1; await run("s1"); } else fadeIn(); // はじめから：物語の最初の場面
+  if (!g.flags.s) { fade = 1; fadeTo = 1; await run("s1"); } else { fadeIn(); autoRun(); } // はじめから：物語の最初の場面
 }
 // 出来事を1つ流す（流れているあいだは歩けない）
 async function run(name, arg) {
@@ -191,6 +191,12 @@ function arrived() {
   if (route && route.length) { const n = route.shift(); if (!stepTo(dirOf(n.x - P.x, n.y - P.y))) { route = null; talkTarget = null; } }
   else { route = null; if (drag && drag.dir !== null) stepTo(drag.dir); }
 }
+// その地図に入ったとき（続きから始めたときも）に、すぐ起きる出来事
+function autoRun() {
+  const a = (M.auto || []).find(a => a.when(G()));
+  if (!a || busy) return false;
+  route = null; drag = null; talkTarget = null; run(a.run); return true;
+}
 // そのマスに入ると起きる出来事
 function checkTrig() {
   if (busy) return false;
@@ -207,7 +213,7 @@ function touchFoe() {
 async function travel(ex) {
   const after = M.exitRun ? M.exitRun(G()) : null; // その地図を出たときに起きる出来事
   busy = true; drag = null; await fadeOut();
-  enter(ex.to, ex.tx, ex.ty, ex.dir); busy = false; fadeIn(); checkTrig();
+  enter(ex.to, ex.tx, ex.ty, ex.dir); busy = false; fadeIn(); if (!autoRun()) checkTrig();
   if (after) run(after);
 }
 // 道を探す（幅優先）。目的のマスに立てなければ、その隣まで
@@ -413,7 +419,7 @@ function person(img, x, y, dir, moving, now, lift, n) {
   const col = n && n.col != null ? n.col : moving ? [0, 1, 2, 1][Math.floor(now / 130) % 4] : 1; // col＝決まったコマ（dir 4・col 2 で、目を閉じた姿＝眠っている人）
   if (n && n.head) { // 寝ている人：頭だけを枕の上に（横へずらす量＝ox マス）
     const hx = (x + (n.ox || 0)) * TD + TD / 2, hy = y * TD + 4;
-    ctx.drawImage(IM[img], col * 48, 0, 48, 26, Math.round((hx - 12) * 4) / 4, Math.round(hy * 4) / 4, 24, 13); return;
+    ctx.drawImage(IM[img], col * 48, n.dir === 4 ? 240 : 0, 48, 26, Math.round((hx - 12) * 4) / 4, Math.round(hy * 4) / 4, 24, 13); return;
   }
   const px0 = x * TD + TD / 2, py0 = y * TD + TD - 1 - (lift || 0), k = (n && n.psc) || 1;   // psc＝人の型の絵を大きく描く（石の巨人など）
   if (!lift) { ctx.fillStyle = "#0006"; ctx.fillRect(px0 - 6 * k, py0 - 1, 12 * k, 2); }
@@ -458,8 +464,11 @@ function draw(now) {
   const ents = [];
   for (const c of chests) ents.push({ y: c.y, f: () => { ctx.save(); ctx.translate(c.x * TD, c.y * TD); ctx.scale(0.5, 0.5); TL.chest(ctx, c.open); ctx.restore(); } });
   for (const n of npcs) ents.push({ y: n.y, f: () => n.mon ? beast(n.mon, n.x, n.y, n.face || 1, n.sc || (n.big ? 0.42 : 0.5)) : person(n.img, n.x, n.y, n.d, false, now, n.lift, n) });
-  for (const f of fol) { const [x, y] = lerp(f, now); ents.push({ y, f: () => person(f.img || BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); }
-  if (G().flags.cut === "soretsu") ents.push({ y: ly, f: () => { ctx.save(); ctx.translate(Math.round(lx * TD * 4) / 4, Math.round((ly * TD + (P.from ? Math.abs(Math.sin(now / 90)) * -0.6 : 0)) * 4) / 4); ctx.scale(0.5, 0.5); TL.coffinCart(ctx); ctx.restore(); } }); // 葬列のあいだ、カイは棺の中（荷車を描く）
+  const so8 = G().flags.so8 === 1 && !M.inside; // 第8章の葬列：カイとミーファは棺の中（荷車を描く）
+  const cart = (x, y, mv) => () => { ctx.save(); ctx.translate(Math.round(x * TD * 4) / 4, Math.round((y * TD + (mv ? Math.abs(Math.sin(now / 90)) * -0.6 : 0)) * 4) / 4); ctx.scale(0.5, 0.5); TL.coffinCart(ctx); ctx.restore(); };
+  for (const f of fol) { const [x, y] = lerp(f, now); if (!f.from && f.x === P.x && f.y === P.y) continue; ents.push({ y, f: so8 && f.hi === 15 ? cart(x, y, !!f.from) : () => person(f.img || BT.HEROES[f.hi].img, x, y, f.dir, !!f.from, now) }); } // 着いたばかりで、まだ主人公と同じマスに重なっている人は描かない（歩き出すと後ろに並ぶ）
+  if (so8) ents.push({ y: ly, f: cart(lx, ly, !!P.from) });
+  else if (G().flags.cut === "soretsu") ents.push({ y: ly, f: () => { ctx.save(); ctx.translate(Math.round(lx * TD * 4) / 4, Math.round((ly * TD + (P.from ? Math.abs(Math.sin(now / 90)) * -0.6 : 0)) * 4) / 4); ctx.scale(0.5, 0.5); TL.coffinCart(ctx); ctx.restore(); } }); // 葬列のあいだ、カイは棺の中（荷車を描く）
   else if (M.sea) ents.push({ y: ly, f: () => { const bob = Math.sin(now / 420) * 0.6; ctx.save(); ctx.translate(Math.round((lx * TD + TD / 2 - 36) * 4) / 4, Math.round((ly * TD + TD - 64 + bob) * 4) / 4); ctx.scale(0.5, 0.5); TL.ship(ctx, { left: P.dir === 1 }); ctx.restore(); } }); // 海では、一行は船に乗っている
   else if (!M.noLeader) ents.push({ y: ly, f: () => person(BT.HEROES[LEADER].img, lx, ly, P.dir, !!P.from || (drag && drag.dir !== null), now) }); // noLeader＝主人公がその場に居ない場面（外で待っている など）
   for (const f of foes) if (f.alive) {

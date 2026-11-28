@@ -212,6 +212,17 @@ const SKILLS = {
   tooboe:    { nm: "月への遠吠え", bp: 5, rank: "E", tg: "all", at: ["打"], stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
   kazakiri:  { nm: "風切り矢", bp: 5, rank: "D", tg: "row", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
   raiun:     { nm: "雷雲", bp: 6, rank: "D", tg: "all", at: ["雷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  // 第8章：森の魔物と、新しい仲間（アスター・シグ・エルマ）
+  kokeroll:  { nm: "苔玉ころがり", bp: 4, rank: "C", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
+  yonakigoe: { nm: "夜鳴きの声", bp: 5, rank: "D", tg: "all", at: ["陰"], magic: 1, seal: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  as_massugu:{ nm: "まっすぐ斬り", bp: 3, rank: "D", tg: "one", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  as_kaeshi: { nm: "返しの二段", bp: 6, rank: "C", tg: "one", hits: 2, at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
+  as_hikari: { nm: "陽だまり斬り", bp: 10, rank: "A", tg: "one", at: ["斬", "陽"], dist: "近", dir: "直接", kind: "攻撃" },
+  sg_kuroyari:{ nm: "黒槍突き", bp: 3, rank: "D", tg: "one", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  sg_ashidome:{ nm: "足止めの槍", bp: 5, rank: "C", tg: "one", at: ["突"], stun: 50, dist: "近", dir: "直接", kind: "攻撃" },
+  sg_yoban:  { nm: "夜番の薙ぎ", bp: 8, rank: "C", tg: "row", at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  el_raigeki:{ nm: "雷撃", bp: 3, rank: "D", tg: "one", at: ["雷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  el_rakurai:{ nm: "落雷", bp: 10, rank: "B", tg: "one", at: ["雷"], magic: 1, stun: 30, dist: "遠", dir: "間接", kind: "攻撃" },
   // 牙の長フェルガ：とにかく速く、手数が多い
   f_ranga:   { nm: "乱れ牙", bp: 0, rank: "E", tg: "one", hits: 4, at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
   f_tsuki:   { nm: "月咬み", bp: 0, rank: "C", tg: "row", at: ["斬"], dist: "近", dir: "直接", kind: "攻撃" },
@@ -275,6 +286,8 @@ const GEAR = {
   shortbow:  { slot: "weapon", wt: "bow", nm: "狩人の弓", rank: "B", pow: 11, st: { dex: 2 }, price: 120, icon: "eq_bow_01" },
   saibow:    { slot: "weapon", wt: "bow", nm: "賽振りの短弓", rank: "B", pow: 13, st: { cha: 2 }, price: 0, icon: "eq_bow_02" },
   longbow:   { slot: "weapon", wt: "bow", nm: "長弓", rank: "A", pow: 14, st: { dex: 3 }, ps: "w_bp", price: 430, icon: "eq_bow_03" },
+  elmastaff: { slot: "weapon", wt: "staff", nm: "焦げた学院の杖", rank: "A", pow: 6, mp: { 雷: 16 }, st: { int: 3, wil: 1 }, noShop: 1, icon: "eq_staff_03" }, // エルマ
+  kuroyari:  { slot: "weapon", wt: "spear", nm: "黒外套の槍", rank: "A", pow: 15, st: { str: 2, agi: 1 }, noShop: 1, icon: "eq_spear_02" }, // シグ
   ironspear: { slot: "weapon", wt: "spear", nm: "鉄の槍", rank: "B", pow: 13, st: { str: 1 }, ps: "w_bp", price: 130, icon: "eq_spear_02" },
   oldblade:  { slot: "weapon", wt: "sword", nm: "古木の守り刀", rank: "S", pow: 18, st: { str: 3, agi: 2 }, ps: "w_bp", icon: "eq_sword_04" }, // 林の宝箱だけ
   heavybook: { slot: "weapon", wt: "club", nm: "分厚い本", rank: "B", pow: 11, st: { int: 2 }, price: 150, icon: "mat_046" },
@@ -357,6 +370,8 @@ const MATS = {
   kagekessho:{ nm: "影の結晶", icon: "mat_032", fam: "石・結晶", rare: "緑" },
   kurotsume:{ nm: "黒い爪", icon: "mat_030", fam: "骨・牙・爪", rare: "緑" },
   kurokiba: { nm: "月夜の牙", icon: "mat_085", fam: "骨・牙・爪", rare: "青" },
+  kokeishi: { nm: "苔むした丸石", icon: "mat_078", fam: "石・結晶", rare: "白" },
+  yonakibane:{ nm: "夜鳴きの羽", icon: "mat_108", fam: "羽", rare: "白" },
   yamibane: { nm: "紫の夜羽", icon: "mat_063", fam: "羽", rare: "緑" },
   shiroba:  { nm: "白と金の羽根", icon: "mat_050", fam: "羽", rare: "青" },
   dokuuroko:{ nm: "毒蛇の鱗", icon: "mat_039", fam: "皮・鱗・甲羅", rare: "緑" },
@@ -451,6 +466,8 @@ const HEARTS = {
   tsurara:  { nm: "ツララ蜘蛛の心", col: "緑", mul: { str: 98, vit: 98, dex: 112, agi: 108, int: 104, wil: 98, lov: 96, cha: 100 }, sk: "tsurarafu", up: ["dex", "int"] },
   shirokuma:{ nm: "白熊武者の心", col: "青", mul: { str: 116, vit: 114, dex: 100, agi: 94, int: 90, wil: 106, lov: 100, cha: 102 }, sk: "kumabarai", up: ["str", "vit"] },
   hyouga:   { nm: "氷河ムカデの心", col: "金", mul: { str: 106, vit: 112, dex: 104, agi: 100, int: 116, wil: 114, lov: 102, cha: 104 }, sk: "hyougaS", up: ["int", "wil"], ps: "focus" },
+  kokedaruma:{ nm: "コケダルマの心", col: "白", mul: { str: 104, vit: 114, dex: 90, agi: 84, int: 96, wil: 110, lov: 104, cha: 98 }, sk: "kokeroll", up: ["vit", "str"] },
+  yonaki:   { nm: "ヨナキフクロウの心", col: "白", mul: { str: 94, vit: 96, dex: 104, agi: 108, int: 110, wil: 104, lov: 100, cha: 100 }, sk: "yonakigoe", up: ["int", "agi"] },
   kageboushi:{ nm: "カゲボウシの心", col: "緑", mul: { str: 92, vit: 96, dex: 104, agi: 108, int: 114, wil: 104, lov: 98, cha: 100 }, sk: "kagenui", up: ["int", "agi"] },
   yakou:    { nm: "夜光キノコの心", col: "白", mul: { str: 94, vit: 104, dex: 98, agi: 94, int: 106, wil: 108, lov: 108, cha: 100 }, sk: "hikarihoushi", up: ["lov", "wil"] },
   kagee:    { nm: "影絵の鹿の心", col: "青", mul: { str: 110, vit: 100, dex: 108, agi: 114, int: 96, wil: 100, lov: 98, cha: 104 }, sk: "kagezuno", up: ["agi", "str"] },
@@ -529,6 +546,18 @@ const HEROES = [
   { id: "nene", nm: "ネネ", img: "person_041", wt: "staff", rare: "S", side: 1, hp: 200, hpCap: 1000, lp: 8, st: { str: 12, vit: 20, dex: 18, agi: 14, int: 34, wil: 34, lov: 26, cha: 30 },
     cap: { str: 62, vit: 96, dex: 90, agi: 80, int: 132, wil: 132, lov: 110, cha: 120 }, up: ["int", "wil"],
     res: { 冷: 20, 陰: 20 }, sk: ["n_shimo", "n_kage", "n_yuki"], ps: ["focus", "spirit", "healer"], gear: { weapon: "sagestaff", armor: "cloak", sub: null, acc: null } },
+  // 勇者アスター（第8章、風車の丘の一騎打ちの後に加わる）：剣。称号を返し、鉄の剣で
+  { id: "aster", nm: "アスター", img: "person_013", wt: "sword", rare: "S", hp: 560, hpCap: 1250, lp: 9, st: { str: 44, vit: 38, dex: 32, agi: 31, int: 16, wil: 32, lov: 24, cha: 34 },
+    cap: { str: 130, vit: 120, dex: 112, agi: 108, int: 70, wil: 110, lov: 98, cha: 120 }, up: ["str", "vit"],
+    res: { 陽: 10 }, sk: ["as_massugu", "as_kaeshi", "as_hikari"], ps: ["swordway", "spirit", "standfast"], gear: { weapon: "ironsword", armor: "chain", sub: null, acc: null } },
+  // 寄り道の仲間シグ（黒外套の隊長。第8章の庵の夜から。第2章で手を差し出していれば加わる）：槍
+  { id: "sig", nm: "シグ", img: "person_146", wt: "spear", rare: "A", side: 1, hp: 470, hpCap: 1200, lp: 9, st: { str: 40, vit: 36, dex: 34, agi: 30, int: 12, wil: 30, lov: 16, cha: 18 },
+    cap: { str: 122, vit: 118, dex: 112, agi: 106, int: 58, wil: 108, lov: 76, cha: 84 }, up: ["str", "dex"],
+    res: { 陰: 10 }, sk: ["sg_kuroyari", "sg_ashidome", "sg_yoban"], ps: ["spearway", "ironwall", "quickdraw"], gear: { weapon: "kuroyari", armor: "chain", sub: null, acc: null } },
+  // 寄り道の仲間エルマ（勇者一行の魔術師。アスターを5人に入れて、ミルナの宿の前で話すと加わる）：杖（雷）
+  { id: "elma", nm: "エルマ", img: "person_089", wt: "staff", rare: "A", side: 1, hp: 360, hpCap: 1000, lp: 8, st: { str: 12, vit: 22, dex: 26, agi: 30, int: 42, wil: 34, lov: 22, cha: 30 },
+    cap: { str: 56, vit: 90, dex: 96, agi: 104, int: 132, wil: 120, lov: 88, cha: 106 }, up: ["int", "agi"],
+    res: { 雷: 20, 熱: 10 }, sk: ["el_raigeki", "raiun", "el_rakurai"], ps: ["thunder", "focus", "spirit"], gear: { weapon: "elmastaff", armor: "robe", sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -693,6 +722,12 @@ const FOES = {
   // 角の長ゴウラ：一発が重い
   goura:    { nm: "角の長ゴウラ", img: "person_122", person: 1, wt: "fist", pow: 13, hp: 600, boss: 1, st: { str: 38, vit: 32, dex: 18, agi: 14, int: 8, wil: 26, lov: 0, cha: 30 },
               res: { 打: 20, 陽: -30, 冷: -20 }, plan: { 2: "g_shiko", 5: "g_shiko", 8: "g_shiko" }, every: { n: 2, sk: "g_tsuppari" }, rageFrom: 9, rage: "g_tsuppari", stunRes: 1, gold: 0 },
+  // 第8章：ささやきの森（印のなくなったカイと、ミーファの二人で歩く）
+  kokedaruma:{ mat: "kokeishi", nm: "コケダルマ", img: "monster_094", wt: "club", pow: 11, hp: 150, st: { str: 30, vit: 26, dex: 8, agi: 6, int: 6, wil: 18, lov: 0, cha: 8 }, res: { 打: 30, 斬: 20, 熱: -30, 雷: -20 }, every: { n: 3, sk: "kokeroll" }, gold: 14, heart: "kokedaruma" },
+  yonaki:   { mat: "yonakibane", nm: "ヨナキフクロウ", img: "m_yonaki", wt: "fang", sky: 1, pow: 10, hp: 100, mag: 10, st: { str: 18, vit: 12, dex: 20, agi: 26, int: 22, wil: 18, lov: 0, cha: 10 }, res: { 陰: 30, 陽: -30, 雷: -30 }, every: { n: 3, sk: "yonakigoe" }, gold: 12, heart: "yonaki" },
+  // 第8章：風車の丘の一騎打ち（称号を返した勇者。鉄の剣で、迷いなく打ちこんでくる）
+  asterD:   { nm: "アスター", img: "person_013", person: 1, human: 1, wt: "sword", pow: 11, hp: 290, boss: 1, st: { str: 25, vit: 22, dex: 24, agi: 26, int: 12, wil: 24, lov: 0, cha: 26 },
+              res: {}, plan: { 2: "twin", 4: "gale", 6: "twin", 8: "cleave" }, every: { n: 2, sk: "gale" }, rageFrom: 9, rage: "twin", stunRes: 1, gold: 0 },
   // 第7章：先遣隊長ゲルト（城門）と、勇者アスター一行（玉座の間。聖剣は使わず、鉄の剣で）
   gerd:     { nm: "先遣隊長ゲルト", img: "person_088", person: 1, human: 1, wt: "sword", pow: 11, hp: 380, boss: 1, st: { str: 27, vit: 26, dex: 20, agi: 18, int: 8, wil: 22, lov: 0, cha: 24 },
               res: { 冷: 20 }, plan: { 3: "cleave", 6: "cleave" }, every: { n: 2, sk: "twin" }, rageFrom: 9, rage: "cleave", stunRes: 1, gold: 120 },
