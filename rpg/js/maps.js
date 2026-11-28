@@ -8,7 +8,7 @@ function grid(w, h, ch) { return Array.from({ length: h }, () => Array(w).fill(c
 function fill(g, ch, x, y, w, h) { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (g[j] && g[j][i] !== undefined) g[j][i] = ch; }
 const S = g => g.flags.s || 0, cut = (g, k) => g.flags.cut === k;
 // 町の会話の段階（骨組み0-4）。0＝序章の朝、0.5＝黒外套が来た後、1＝第1章、2＝第2章（第1章の場面10の後から）
-const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : s < 60 ? 2 : s < 62 ? 3 : s < 81 ? 4 : s < 96 ? 5 : 6; }; // 段階6：第6章の終わり（新しい魔王が立った）から // 段階5：第5章の謁見の間（宰相を捕らえた）から // 段階4：第4章の始まり（ザハラを出た後）から // 段階3：第3章の不戦の約定（聖剣の競り）の後から
+const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : s < 60 ? 2 : s < 62 ? 3 : s < 81 ? 4 : s < 96 ? 5 : s < 102 ? 6 : 7; }; // 段階6：第6章の終わり（新しい魔王が立った）から // 段階5：第5章の謁見の間（宰相を捕らえた）から // 段階4：第4章の始まり（ザハラを出た後）から // 段階3：第3章の不戦の約定（聖剣の競り）の後から
 root.townStage = townStage;
 
 // ---------- 渡し小屋の中 ----------
@@ -861,6 +861,7 @@ function kakurega() {
 // 第6章：常闇領（影の原・空座城・牙の里と月吠えの谷・翼の高巣と風切りの断崖）
 // ======================================================================
 const chikai = (g, k) => !!((g.flags.chikai || {})[k]);
+const c7walk = () => { const g = window.GS && GS.G; if (!g) return 0; const s = g.flags.s || 0, c = g.flags.cut; return s === 97 || c === "c7s4" || c === "c7s1" ? 1 : 0; }; // 第7章：城の中で仲間が人として立っている間は、後ろをついて歩かない
 // ---------- 影の原：昼でも薄暗い。影絵のような木、青く光る茸。真ん中の十字の道から四方へ ----------
 function kagenohara() {
   const W = 28, H = 24, g = grid(W, H, "L");
@@ -881,7 +882,11 @@ function kagenohara() {
       { x: 0, y: 11, to: "kiba", tx: 16, ty: 8, dir: 1 }, { x: W - 1, y: 11, to: "tsubasa", tx: 1, ty: 12, dir: 2 },
       { x: 0, y: 19, to: "uroko", tx: 16, ty: 8, dir: 1 }, { x: W - 1, y: 19, to: "tsuno", tx: 1, ty: 8, dir: 2 },
       ...(sNow() >= 96 ? [{ x: 0, y: 8, to: "forest", tx: 11, ty: 1, dir: 0 }] : [])],
-    npcs: [],
+    npcs: [
+      ...[["fergaH", 11, 13, "person_086"], ["daraH", 16, 13, "person_062"], ["gouraH", 11, 15, "person_122"]].map(([id, x, y, img]) => ({ id, x, y, img, dir: 3, nm: { fergaH: "フェルガ", daraH: "ダーラ", gouraH: "ゴウラ" }[id], when: g => cut(g, "c7s5") })),
+      { id: "shuriH", x: 16, y: 15, mon: "m_shuri", face: -1, nm: "シュリ", when: g => cut(g, "c7s5") },
+      { id: "totoH", x: 15, y: 20, img: "person_100", dir: 1, nm: "トト", when: g => cut(g, "c7s5") && g.flags.c7toto },
+    ],
     foes: [
       { id: "kg1", x: 13, y: 17, k: "kageboushi", g: ["kageboushi", "yakou", "kageboushi"] },
       { id: "kg2", x: 5, y: 11, k: "kagee", g: ["kagee", "yamibotaru"] },
@@ -892,7 +897,7 @@ function kagenohara() {
     ],
     chests: [{ id: "c_kage1", x: 2, y: 2, gold: 600 }, { id: "c_kage2", x: 25, y: 22, tool: "book2" }],
     trigs: [
-      { x: 13, y: 21, w: 2, h: 1, when: g => S(g) === 90, run: "c6s1" },
+      { x: 13, y: 21, w: 2, h: 1, when: g => S(g) === 90, run: "c6s1" }, { x: 13, y: 14, w: 2, h: 1, when: g => S(g) === 100, run: "c7s5" },
     ],
   };
 }
@@ -902,7 +907,7 @@ function kuuza() {
   fill(g, "d", 1, 2, 13, 9); fill(g, "d", 5, 11, 5, 7); fill(g, "L", 1, 12, 4, 6); fill(g, "L", 10, 12, 4, 6); fill(g, "d", 1, 12, 13, 1);
   g[1][7] = "D";
   return {
-    id: "kuuza", nm: "空座城", g, tier: 0, bg: null, inside: 1, shade: 1,
+    id: "kuuza", nm: "空座城", g, tier: 0, bg: null, inside: 1, shade: 1, noFollow: c7walk(),
     objs: [
       ...[3, 6, 9].map(y => ({ t: "column", x: 3, y })), ...[3, 6, 9].map(y => ({ t: "column", x: 11, y })),
       { t: "tornBanner", x: 5, y: 1, text: ["破れた旗。色あせて、紋が読めない。"] }, { t: "tornBanner", x: 9, y: 1, text: ["破れた旗。色あせて、紋が読めない。"] },
@@ -914,6 +919,18 @@ function kuuza() {
       { id: "tsukaiA", x: 5, y: 8, mon: "m_tsunoko", face: 1, nm: "城の使い走り", talk: "tt", tp: "kuuza", when: g => S(g) >= 96 },
       { id: "tsukaiB", x: 9, y: 8, mon: "monster_132", face: -1, nm: "城の使い走り", talk: "tt", tp: "kuuza", tw: "城の使い走り", when: g => S(g) >= 96 },
       { id: "liseK", x: 7, y: 16, img: "person_002", dir: 0, nm: "リゼット", when: g => cut(g, "c6s12") && g.flags.c6liseOut },
+      // 第7章・場面2：城の中の仲間（話しかけると、場面3へ）
+      { id: "muku7", x: 3, y: 14, img: "person_058h", dir: 2, nm: "ムク", talk: "c7muku", when: g => S(g) === 97 },
+      { id: "kodomo7a", x: 2, y: 15, mon: "m_tsunoko", face: 1, nm: "小鬼", when: g => S(g) === 97 },
+      { id: "kodomo7b", x: 4, y: 15, mon: "m_tsunoko", face: -1, nm: "小鬼", when: g => S(g) === 97 },
+      { id: "bram7", x: 11, y: 13, img: "person_005", dir: 0, nm: "ブラム", talk: "c7bram", when: g => S(g) === 97 },
+      { id: "jako7", x: 5, y: 6, img: "person_133", dir: 2, nm: "ジャコ", talk: "c7jako", when: g => S(g) === 97 },
+      { id: "saikoro7", x: 6, y: 6, mon: "m_kibasen", face: -1, nm: "継ぐ民", when: g => S(g) === 97 },
+      // 第7章・場面3：城門の先遣隊
+      { id: "gerd7", x: 7, y: 15, img: "person_088", dir: 3, nm: "ゲルト", when: g => cut(g, "c7s3b") },
+      { id: "sen7a", x: 6, y: 16, mon: "monster_070", face: 1, nm: "先遣隊の兵", when: g => cut(g, "c7s3b") },
+      { id: "sen7b", x: 8, y: 16, mon: "monster_010", face: -1, nm: "先遣隊の兵", when: g => cut(g, "c7s3b") },
+      { id: "ferga7", x: 8, y: 13, img: "person_086", dir: 2, nm: "フェルガ", when: g => cut(g, "c7s3b") && g.flags.c7gerdWin },
     ],
     foes: [], chests: [],
     trigs: [{ x: 5, y: 15, w: 5, h: 1, when: g => S(g) === 91, run: "c6s2" }],
@@ -923,7 +940,7 @@ function kuuza() {
 function gyokuza() {
   const W = 13, H = 12, g = grid(W, H, "W"); fill(g, "d", 1, 1, 11, 10); g[H - 1][6] = "d"; g[3][W - 1] = "D";
   return {
-    id: "gyokuza", nm: "玉座の間", g, tier: 0, bg: null, inside: 1, shade: 1,
+    id: "gyokuza", nm: "玉座の間", g, tier: 0, bg: null, inside: 1, shade: 1, noFollow: c7walk(),
     objs: [
       { t: "blackThrone", x: 6, y: 1, text: ["黒い石の玉座。埃が厚く積もっている。"] },
       { t: "tornBanner", x: 3, y: 1 }, { t: "tornBanner", x: 9, y: 1 },
@@ -932,7 +949,7 @@ function gyokuza() {
     exits: [{ x: 6, y: H - 1, to: "kuuza", tx: 7, ty: 2, dir: 0 }],
     npcs: [
       { id: "totoG", x: 6, y: 3, img: "person_100", dir: 3, nm: "トト", when: g => cut(g, "c6s3") && !g.flags.c6totoOut },
-      { id: "orgoG", x: 9, y: 9, mon: "monster_005", face: -1, nm: "オルゴ", talk: "orgo", card: g => S(g) >= 96, when: g => S(g) >= 92 && !cut(g, "c6s11") },
+      { id: "orgoG", x: 9, y: 9, mon: "monster_005", face: -1, nm: "オルゴ", talk: "orgo", card: g => S(g) >= 96, when: g => S(g) >= 92 && !cut(g, "c6s11") && !/^c7s[134]$/.test(g.flags.cut || "") },
       { id: "orgoC", x: 9, y: 3, mon: "monster_005", face: -1, nm: "オルゴ", when: g => cut(g, "c6s11") },
       { id: "neneG", x: 6, y: 7, img: "person_041", dir: 0, nm: "ネネ", when: g => cut(g, "c6s3") && g.flags.c6nene },
       { id: "kitanoko", x: 5, y: 7, img: "person_040", dir: 0, nm: "北の子", when: g => cut(g, "c6s3") && g.flags.c6nene },
@@ -944,9 +961,19 @@ function gyokuza() {
       ...[["k1", 3, 6, "m_kibasen"], ["k2", 9, 6, "monster_090"], ["k3", 4, 8, "m_numayamori"], ["k4", 8, 8, "m_tsunoko"], ["k5", 3, 9, "m_tsukihoe"], ["k6", 9, 9, "m_otama"]].map(([id, x, y, mon]) => ({ id, x, y, mon, face: x < 6 ? 1 : -1, nm: "四氏族の者", when: g => cut(g, "c6s11") })),
       { id: "neneC", x: 11, y: 5, img: "person_041", dir: 1, nm: "ネネ", when: g => cut(g, "c6s11") },
       { id: "totoC", x: 1, y: 10, img: "person_100", dir: 2, nm: "トト", when: g => cut(g, "c6s11") && !g.flags.c6toto2 },
+      // 第7章：場面1（奏上）・場面3（鷹兵の知らせ）・場面4（勇者一行を迎える）
+      { id: "orgo7", x: 7, y: 3, mon: "monster_005", face: -1, nm: "オルゴ", when: g => cut(g, "c7s1") || cut(g, "c7s3") },
+      { id: "takahei7", x: 6, y: 5, mon: "monster_090", face: 1, nm: "風切り鷹兵", when: g => cut(g, "c7s3") },
+      ...[["mukuG", 4, 4, "person_058h", "ムク"], ["bramG", 5, 4, "person_005", "ブラム"], ["jakoG", 7, 4, "person_133", "ジャコ"], ["mifaG", 8, 4, "person_011", "ミーファ"]].map(([id, x, y, img, nm]) => ({ id, x, y, img, dir: 3, nm, when: g => cut(g, "c7s4") || cut(g, "c7s3") })),
+      { id: "orgo7d", x: 9, y: 9, mon: "monster_005", face: -1, nm: "オルゴ", when: g => cut(g, "c7s4") },
+      { id: "asterG", x: 6, y: 7, img: "person_013", dir: 3, nm: "アスター", when: g => cut(g, "c7s4") && g.flags.c7aster },
+      { id: "elmaG", x: 5, y: 8, img: "person_089", dir: 3, nm: "エルマ", when: g => cut(g, "c7s4") && g.flags.c7aster },
+      { id: "rokkaG", x: 7, y: 8, img: "person_015", dir: 3, nm: "ロッカ", when: g => cut(g, "c7s4") && g.flags.c7aster },
+      { id: "heiG1", x: 4, y: 9, mon: "monster_070", face: 1, nm: "兵", when: g => cut(g, "c7s4") && g.flags.c7aster },
+      { id: "heiG2", x: 8, y: 9, mon: "monster_070", face: -1, nm: "兵", when: g => cut(g, "c7s4") && g.flags.c7aster },
     ],
     foes: [], chests: [],
-    trigs: [{ x: 5, y: 9, w: 3, h: 1, when: g => S(g) === 92, run: "c6s3" }, { x: 5, y: 9, w: 3, h: 1, when: g => S(g) === 94, run: "c6s11" }],
+    trigs: [{ x: 5, y: 9, w: 3, h: 1, when: g => S(g) === 92, run: "c6s3" }, { x: 5, y: 9, w: 3, h: 1, when: g => S(g) === 94, run: "c6s11" }, { x: 5, y: 2, w: 3, h: 1, when: g => S(g) === 96, run: "c7s1" }],
   };
 }
 // ---------- 空座城の厨（夜）と城壁 ----------
@@ -954,12 +981,13 @@ function kuriya() {
   const W = 9, H = 7, g = grid(W, H, "W"); fill(g, "d", 1, 1, 7, 5); g[H - 1][4] = "d";
   const night = window.GS && GS.G && GS.G.flags.cut === "c6s6";
   return {
-    id: "kuriya", nm: "城の厨", g, tier: 0, bg: null, inside: 1, shade: 1, noLeader: night, noFollow: night,
+    id: "kuriya", nm: "城の厨", g, tier: 0, bg: null, inside: 1, shade: 1, noLeader: night, noFollow: night || c7walk(),
     objs: [{ t: "hearth", x: 4, y: 0 }, { t: "table", x: 2, y: 3 }, { t: "basket", x: 7, y: 1 }, { t: "shelf", x: 1, y: 1 }],
     exits: [{ x: 4, y: H - 1, to: "gyokuza", tx: 11, ty: 3, dir: 1 }],
     npcs: [
       { id: "neneK", x: 4, y: 2, img: "person_041", dir: 0, nm: "ネネ", talk: "neneK", when: g => (S(g) >= 93 && S(g) < 96) || cut(g, "c6s6") },
-      { id: "mifaK", x: 2, y: 4, img: "person_011", dir: 2, nm: "ミーファ", when: g => cut(g, "c6s6") },
+      { id: "mifaK", x: 2, y: 4, img: "person_011", dir: 2, nm: "ミーファ", talk: "c7mifa", when: g => cut(g, "c6s6") || S(g) === 97 },
+      { id: "ko7", x: 3, y: 4, mon: "m_otama", face: -1, nm: "継ぐ民の子", when: g => S(g) === 97 },
     ],
     foes: [], chests: [], trigs: [],
   };
@@ -1156,6 +1184,7 @@ function kazakiri() {
 // 第5章その2：北方（鉄門砦・凍て野・遠征軍の野営地・廃坑の町ドゥーガ・氷壁の峠・峠の頂）
 // ======================================================================
 const sNow = () => (window.GS && GS.G ? GS.G.flags.s || 0 : 0);
+const kaidan = g => cut(g, "c7s6") || cut(g, "c7fall"); // 第7章：氷の橋の会談
 // ---------- 鉄門砦：山の切れ目をふさぐ鉄の門。内側に砦の町 ----------
 function tetsumon() {
   const W = 18, H = 18, g = grid(W, H, "Y"), open = sNow() >= 84;
@@ -1319,15 +1348,31 @@ function itadaki() {
   const W = 14, H = 14, g = grid(W, H, "Y");
   fill(g, "A", 0, 0, 1, H); fill(g, "A", W - 1, 0, 1, H); fill(g, "I", 1, 7, 5, 2); fill(g, "I", 7, 7, 6, 2); // 橋のたもとは1マスだけ（氷河ムカデがふさぐ） fill(g, "I", 1, 12, 4, 2); fill(g, "I", 9, 12, 4, 2);
   fill(g, "G", 1, 2, 12, 5); fill(g, "B", 6, 2, 2, 5);
+  const kaidanNow = window.GS && GS.G && ["c7s6", "c7fall"].includes(GS.G.flags.cut);
   return {
-    id: "itadaki", nm: "峠の頂", g, tier: 6, bg: "snow", snow: 1, noLeader: (window.GS && GS.G && GS.G.flags.cut === "c6end"), noFollow: (window.GS && GS.G && GS.G.flags.cut === "c6end"),
-    objs: [{ t: "sign", x: 9, y: 9, text: ["氷の橋。谷の底を、細い川が流れている。"] }],
+    id: "itadaki", nm: "峠の頂", g, tier: 6, bg: "snow", snow: 1, noLeader: ["c6end", "c7fall"].includes(window.GS && GS.G && GS.G.flags.cut), noFollow: ["c6end", "c7s6", "c7fall"].includes(window.GS && GS.G && GS.G.flags.cut),
+    objs: [{ t: "sign", x: 9, y: 9, text: ["氷の橋。谷の底を、細い川が流れている。"], when: g => !kaidan(g) },
+      { t: "table", x: 6, y: 4, when: kaidan }, { t: "table", x: 7, y: 4, when: kaidan },
+      { t: "banner", x: 5, y: 11, when: kaidan }, { t: "banner", x: 8, y: 11, when: kaidan }, { t: "banner", x: 7, y: 10, when: kaidan }],
     exits: [{ x: 6, y: H - 1, to: "touge", tx: 5, ty: 1, dir: 0 }, { x: 7, y: H - 1, to: "touge", tx: 6, ty: 1, dir: 0 },
       ...(sNow() >= 90 ? [{ x: 6, y: 0, to: "kagenohara", tx: 13, ty: 22, dir: 3 }, { x: 7, y: 0, to: "kagenohara", tx: 14, ty: 22, dir: 3 }] : [])],
     npcs: [{ id: "hyougaN", x: 6, y: 7, mon: "m_hyouga", face: 1, big: 1, nm: "氷河ムカデ", talk: "hyougaN", when: g => S(g) < 90 },
+      // 第7章・場面6〜8：氷の橋の会談
+      ...[["muku8", 7, 3, () => "person_058h", "ムク"], ["bram8", 6, 1, () => "person_005", "ブラム"], ["jako8", 7, 1, () => "person_133", "ジャコ"], ["mifa8", 5, 1, () => "person_011", "ミーファ"]].map(([id, x, y, img, nm]) => ({ id, x, y, img: img(), dir: 0, nm, when: g => kaidan(g) && !(id === "mifa8" && g.flags.c7mifaJump) && !(id !== "mifa8" && g.flags.c7flee) && !(id === "muku8" && g.flags.c7hat) })),
+      { id: "muku8b", x: 7, y: 3, img: "person_058", dir: 0, nm: "ムク", when: g => kaidan(g) && g.flags.c7hat && !g.flags.c7flee },
+      { id: "liseM", x: 6, y: 5, img: "person_002", dir: 3, nm: "リゼリア", when: g => kaidan(g) },
+      { id: "asterM", x: 7, y: 5, img: "person_013", dir: 3, nm: "アスター", when: g => kaidan(g) },
+      { id: "oswaldM", x: 5, y: 9, img: "person_128o", dir: 3, nm: "オズワルド", when: g => kaidan(g) },
+      { id: "margoM", x: 8, y: 9, img: "person_134", dir: 3, nm: "マルゴ", when: g => kaidan(g) },
+      { id: "elmaM", x: 4, y: 10, img: "person_089", dir: 3, nm: "エルマ", when: g => kaidan(g) },
+      { id: "rokkaM", x: 9, y: 10, img: "person_015", dir: 3, nm: "ロッカ", when: g => kaidan(g) },
+      { id: "sekiM", x: 2, y: 9, img: "person_136", dir: 3, nm: "関守", when: g => kaidan(g) },
+      { id: "shokiM", x: 11, y: 9, img: "person_127", dir: 3, nm: "書記", when: g => kaidan(g) },
+      ...[[3, 11], [10, 11], [1, 11], [12, 11]].map(([x, y], i) => ({ id: "heiM" + i, x, y, mon: "monster_070", face: x < 6 ? 1 : -1, nm: "王国兵", when: g => kaidan(g) })),
+      ...[[2, 0], [4, 0], [9, 0], [11, 0]].map(([x, y], i) => ({ id: "fushi" + i, x, y, mon: ["m_kibasen", "monster_090", "m_numayamori", "monster_091"][i], face: 1, nm: "四氏族の戦士", when: g => kaidan(g) && g.flags.c7fushi && !g.flags.c7fall })),
       { id: "liseB", x: 6, y: 4, img: "person_002", dir: 3, nm: "リゼット", when: g => cut(g, "c6end") }],
     foes: [], chests: [],
-    trigs: [{ x: 1, y: 9, w: 12, h: 1, when: g => S(g) === 89, run: "c5s15" }],
+    trigs: [{ x: 1, y: 9, w: 12, h: 1, when: g => S(g) === 89, run: "c5s15" }, { x: 1, y: 1, w: 12, h: 1, when: g => S(g) === 101, run: "c7s6" }],
   };
 }
 

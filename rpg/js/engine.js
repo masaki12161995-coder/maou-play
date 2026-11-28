@@ -693,6 +693,15 @@ const FOES = {
   // 角の長ゴウラ：一発が重い
   goura:    { nm: "角の長ゴウラ", img: "person_122", person: 1, wt: "fist", pow: 13, hp: 600, boss: 1, st: { str: 38, vit: 32, dex: 18, agi: 14, int: 8, wil: 26, lov: 0, cha: 30 },
               res: { 打: 20, 陽: -30, 冷: -20 }, plan: { 2: "g_shiko", 5: "g_shiko", 8: "g_shiko" }, every: { n: 2, sk: "g_tsuppari" }, rageFrom: 9, rage: "g_tsuppari", stunRes: 1, gold: 0 },
+  // 第7章：先遣隊長ゲルト（城門）と、勇者アスター一行（玉座の間。聖剣は使わず、鉄の剣で）
+  gerd:     { nm: "先遣隊長ゲルト", img: "person_088", person: 1, human: 1, wt: "sword", pow: 11, hp: 380, boss: 1, st: { str: 27, vit: 26, dex: 20, agi: 18, int: 8, wil: 22, lov: 0, cha: 24 },
+              res: { 冷: 20 }, plan: { 3: "cleave", 6: "cleave" }, every: { n: 2, sk: "twin" }, rageFrom: 9, rage: "cleave", stunRes: 1, gold: 120 },
+  asterF:   { nm: "勇者アスター", img: "person_013", person: 1, human: 1, wt: "sword", pow: 10, hp: 320, boss: 1, st: { str: 22, vit: 20, dex: 22, agi: 24, int: 12, wil: 24, lov: 0, cha: 26 },
+              res: {}, plan: { 2: "twin", 5: "cleave", 8: "twin" }, every: { n: 2, sk: "gale" }, rageFrom: 10, rage: "cleave", stunRes: 1, gold: 0 },
+  elmaF:    { nm: "魔術師エルマ", img: "person_089", person: 1, human: 1, wt: "staff", pow: 10, hp: 200, mag: 9, st: { str: 12, vit: 14, dex: 20, agi: 22, int: 20, wil: 26, lov: 0, cha: 22 },
+              res: { 熱: 30, 冷: -20 }, plan: { 3: "flamewall", 7: "flamewall" }, every: { n: 2, sk: "fireball" }, gold: 0 },
+  rokkaF:   { nm: "槍騎士ロッカ", img: "person_015", person: 1, human: 1, wt: "spear", pow: 10, hp: 250, st: { str: 19, vit: 24, dex: 20, agi: 16, int: 8, wil: 24, lov: 0, cha: 20 },
+              res: { 斬: 20, 突: 10 }, plan: { 2: "guardcut", 6: "guardcut" }, every: { n: 2, sk: "pierce" }, gold: 0 },
   // 牙の長フェルガ（人の姿の継ぐ民。「参った」で終わり、心は渡さない）
   ferga:    { nm: "牙の長フェルガ", img: "person_086", person: 1, wt: "axe", pow: 12, hp: 460, boss: 1, st: { str: 30, vit: 24, dex: 28, agi: 41, int: 10, wil: 22, lov: 0, cha: 26 },
               res: { 冷: 20, 熱: -20 }, plan: { 2: "f_tsuki", 4: "f_futa", 7: "f_futa" }, every: { n: 2, sk: "f_ranga" }, rageFrom: 9, rage: "f_futa", stunRes: 1, gold: 0 },
