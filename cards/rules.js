@@ -35,7 +35,7 @@ function eff(cid,cell,G,side,real,info){
 }
 // 守護：となりにいる「守護」の味方1枚ごとに＋1（盤にいる間ずっと。盤の数字の表示もこの数で出す）
 function wb(G,cell,o){ let v=0; for(const [t] of adj(cell)){ const w=G.b[t]; if(w&&w.o===o&&has(w,"ward")) v++; } return v; }
-function val(G,cell,i){ const c=G.b[cell]; return c.n[i]+wb(G,cell,c.o); }
+function val(G,cell,i){ const c=G.b[cell]; return Math.min(10,c.n[i]+wb(G,cell,c.o)); }   // 数字は10まで
 function setc(G,t,o){ G.b[t]=o; }
 // 起きたことの記録。演出のために、その時の盤の写しを添える（ev が無いとき＝先読みでは、何もしない）
 function E(ev,G,o){ if(ev){ o.snap=G.b.slice(); ev.push(o); } }
@@ -47,7 +47,7 @@ function flipOne(G,t,side,from,ev,lv,dir){
   if(tc.g){ setc(G,t,{...tc,g:false}); E(ev,G,{t:"guard",cell:t,from,lv}); return false; }
   const prev=tc.o;
   const nt={...tc,o:side};
-  if(tc.rv){ nt.rb=prev; }
+  if(tc.rv&&tc.rb===undefined){ nt.rb=prev; } else if(tc.rb===side){ nt.rb=undefined; }   // 持ち主が自分で取り返したら、戻る予定は消える
   setc(G,t,nt); G.lost[prev]++;
   E(ev,G,{t:"flip",cell:t,from,side,lv});
   const me=G.b[from];
@@ -72,23 +72,17 @@ function attack(G,cell,side,ev,lv,tie,tag){
 function countFlips(G,cell,side,n,tie,rev){
   let k=0;
   for(const [t,mi,ti] of adj(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
-    const d=val(G,t,ti), a=n[mi]+wb(G,cell,side); if(rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d))) k++; }
+    const d=val(G,t,ti), a=Math.min(10,n[mi]+wb(G,cell,side)); if(rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d))) k++; }
   return k;
 }
 function play(G,side,hi,cell,ev,real){
   G.b=G.b.slice(); G.h=[G.h[0],G.h[1]]; G.lost=(G.lost||[0,0]).slice();
-  // 自分の番の始め：執念で戻る札
-  G.b.forEach((c,t)=>{ if(c&&c.rb===side&&c.o!==side){ setc(G,t,{...c,o:side,rb:undefined,rv:false}); E(ev,G,{t:"back",cell:t,side,lv:0}); } });
-  // 相手の成長する札：こちらが札を置いたあと（勝負の前）に育つ
-  const grows=[]; G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"grow")&&(c.gr||0)<3) grows.push(t); });
-  const grown=c=>({...c,n:c.n.map(v=>cl(v+1)),gr:(c.gr||0)+1});
   const cid=G.h[side][hi]; G.h[side]=G.h[side].slice(); G.h[side][hi]=null;
   const q=qs(cid), info=[]; let n=eff(cid,cell,G,side,real,info);
   const tie=q.includes("tie")||q.includes("king"), rev=q.includes("rev");
-  if(q.includes("turn")){ let best=n,bk=-1; for(let r=0;r<4;r++){ const m=[0,1,2,3].map(i=>n[(i-r+4)%4]); const k=countFlips(grows.length?{...G,b:G.b.map((c,t)=>grows.includes(t)?grown(c):c)}:G,cell,side,m,tie,rev); if(k>bk){ bk=k; best=m; } } if(best!==n) info.push(["turn",0]); n=best; }
+  if(q.includes("turn")){ let best=n,bk=-1,br=0; for(let r=0;r<4;r++){ const m=[0,1,2,3].map(i=>n[(i-r+4)%4]); const k=countFlips(G,cell,side,m,tie,rev); if(k>bk){ bk=k; best=m; br=r; } } if(br) info.push(["turn",0]); n=best; }   // 回ったときだけ「回転」
   const pc={cid,o:side,n,q:q.slice(),g:q.includes("guard"),w:q.includes("wall")?n.map((v,i)=>v===Math.max(...n)?i:-1).filter(i=>i>=0):[],sp:q.includes("spite"),rv:q.includes("revive"),home:side};
   setc(G,cell,pc); E(ev,G,{t:"put",cell,side,info});
-  grows.forEach(t=>{ setc(G,t,grown(G.b[t])); E(ev,G,{t:"grow",cell:t,lv:0}); });
   // 置いたとき
   // 札に書いてある順（左から）に1つずつ働く
   for(const k of q) for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
@@ -118,6 +112,10 @@ function play(G,side,hi,cell,ev,real){
   if(flipped.length) G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"avenge")) attack(G,t,c.o,ev,4,has(c,"tie")||has(c,"king"),"avenge"); });
   // 吸収
   if(q.includes("drain")&&flipped.length&&G.b[cell].o===side){ setc(G,cell,{...G.b[cell],n:G.b[cell].n.map(v=>cl(v+flipped.length))}); E(ev,G,{t:"buff",q:"drain",v:flipped.length,cell,lv:3}); }
+  // 成長：相手（こちら）が札を置いたので、相手の成長の札が育つ（勝負が全部終わってから）
+  G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"grow")&&(c.gr||0)<3){ setc(G,t,{...c,n:c.n.map(v=>cl(v+1)),gr:(c.gr||0)+1}); E(ev,G,{t:"grow",cell:t,lv:5}); } });
+  // 執念：次は相手の番。相手の札で、こちらに取られていたものが戻る（盤が埋まって終わるときは、もう番が来ないので戻らない）
+  if(G.b.some(x=>!x)) G.b.forEach((c,t)=>{ if(c&&c.rb===1-side&&c.o===side){ setc(G,t,{...c,o:1-side,rb:undefined,rv:false}); E(ev,G,{t:"back",cell:t,side:1-side,lv:5}); } });
   return flipped.length;
 }
 

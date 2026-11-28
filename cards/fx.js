@@ -73,8 +73,6 @@ function bonusText(info){ // 置いたときに出たくせの名前だけ（上
 window.FX={ css:style, bumpN, run(ev,render,done,pre0){
   style();
   const beats=[];
-  const pre=ev.filter(e=>e.lv===0&&e.t==="back");
-  if(pre.length) beats.push({snap:pre[pre.length-1].snap,wait:700,go(bd){ QS(pre.some(e=>e.t==="back")?"flip":"up"); pre.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add(e.t==="back"?"fin":"fxpop"); lab(bd,e.cell,e.t==="back"?QN("revive"):QN("grow")); if(e.t==="grow") bump(bd,e.cell,1); }); }});
   const put=ev.find(e=>e.t==="put");
   // 自分で置いた札の、置く前から見えていた上がり方（怒りは手札で、角取り・群れなどは重ねたときに見せている）は、置いたときにもう一度は言わない。相手の札・博打・回転は言う
   const SEEN=["corner","center","edge","lone","pack","early","late","under","rage","kin"];
@@ -83,9 +81,6 @@ window.FX={ css:style, bumpN, run(ev,render,done,pre0){
     beats.push({snap:put.snap,wait:shown.length?750:360,go(bd){ SE("put"); const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(shown.length) c.classList.add("fxglow"); }
       if(shown.length){ setTimeout(()=>QS("up"),120); lab(bd,put.cell,bonusText([shown[0]])); if(shown[0][0]!=="turn") bump(bd,put.cell,1); } }});
     shown.slice(1).forEach(sh=>beats.push({snap:put.snap,wait:700,go(bd){ QS("up"); const c=card(bd,put.cell); if(c) c.classList.add("fxglow"); lab(bd,put.cell,bonusText([sh])); if(sh[0]!=="turn") bump(bd,put.cell,1); }})); }
-  // 成長：相手が札を置いたので、こちらの成長の札が育つ
-  const gr=ev.filter(e=>e.t==="grow");
-  if(gr.length) beats.push({snap:gr[gr.length-1].snap,wait:700,go(bd){ QS("up"); gr.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fxpop"); lab(bd,e.cell,QN("grow")); bump(bd,e.cell,1); }); }});
   // 置いたときのくせ（励まし・威圧・封印）
   const on=ev.filter(e=>e.lv===1&&(e.t==="buff"||e.t==="debuff"||e.t==="seal"));
   [...new Set(on.map(e=>e.q))].forEach(qk=>{ const g=on.filter(e=>e.q===qk);
@@ -126,6 +121,11 @@ window.FX={ css:style, bumpN, run(ev,render,done,pre0){
   }
   const dr=ev.find(e=>e.t==="buff"&&e.q==="drain");
   if(dr) beats.push({snap:dr.snap,wait:650,go(bd){ QS("up"); const c=card(bd,dr.cell); if(c){ c.classList.add("fxpop","fxglow"); } lab(bd,dr.cell,QN("drain")); bump(bd,dr.cell,1); }});
+  // 手の終わり：成長の札が育つ → 執念の札が持ち主に戻る
+  const gr=ev.filter(e=>e.t==="grow");
+  if(gr.length) beats.push({snap:gr[gr.length-1].snap,wait:700,go(bd){ QS("up"); gr.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fxpop"); lab(bd,e.cell,QN("grow")); bump(bd,e.cell,1); }); }});
+  const bk=ev.filter(e=>e.t==="back");
+  if(bk.length) beats.push({snap:bk[bk.length-1].snap,wait:700,go(bd){ QS("flip"); bk.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fin"); lab(bd,e.cell,QN("revive")); }); }});
   let i=0, bd=null, last=pre0;
   const mine=put&&window.FX_ME!==undefined&&put.side===window.FX_ME?put.cell:-1;
   const next=()=>{ if(i>=beats.length){ done(); return; } const b=beats[i++];
