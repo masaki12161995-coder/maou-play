@@ -28,7 +28,7 @@ function eff(cid,cell,G,side,real,info){
   if(q.includes("late")&&empty<=3) A("late",2);
   if(q.includes("under")&&cnt(G,side)<=cnt(G,1-side)-2) A("under",3);
   if(q.includes("rage")) A("rage",Math.min(3,(G.lost||[0,0])[side]));
-  if(q.includes("kin")&&fam(cid)&&G.b.some(x=>x&&x.o===side&&fam(x.cid)===fam(cid))) A("kin",2);
+  if(q.includes("kin")&&G.b.some(x=>x&&x.o===side&&CARDS[x.cid]&&CARDS[x.cid].r===CARDS[cid].r)) A("kin",2);   // 絆：盤に同じ★の味方がいる
   n=n.map(v=>cl(v+add));
   if(q.includes("gamble")){ n=n.map(v=>cl(v+(real?Math.floor((typeof RULE_RNG==="function"?RULE_RNG:Math.random)()*6):2))); if(info) info.push(["gamble",0]); } // 友だち対戦では、両方の端末で同じ目が出るよう、そろえた乱数を使う
   return n;
@@ -106,8 +106,8 @@ function play(G,side,hi,cell,ev,real){
     for(const t of hit){ const x=byT[t], mi=(x.ti+2)%4; E(ev,G,{t:"duel",cell:t,from:cell,mi,ti:x.ti,a:x.a,d:x.d,lv:1,how:how[t]}); if(G.b[t].o!==side&&flipOne(G,t,side,cell,ev,1,x.ti)) { flipped.push(t); E(ev,G,{t:"combo",cell:t,lv:1}); } }
   }
   flipped=flipped.concat(attack(G,cell,side,ev,1,tie));
-  // 励まし：となりの味方（★がこの札より2つ以上高い札はのぞく）が、それぞれのとなりの相手ともう一度勝負する（味方自身のくせで）
-  if(q.includes("cheer")&&G.b[cell].o===side) adj(cell).forEach(([t])=>{ const tc=G.b[t]; if(tc&&tc.o===side&&!flipped.includes(t)&&CARDS[tc.cid].r<=CARDS[cid].r+1) flipped=flipped.concat(attack(G,t,side,ev,2,has(tc,"tie")||has(tc,"king"),"cheer")); });
+  // 号令：となりの味方が、それぞれのとなりの相手ともう一度勝負する（味方自身のくせで）
+  if(q.includes("cheer")&&G.b[cell].o===side) adj(cell).forEach(([t])=>{ const tc=G.b[t]; if(tc&&tc.o===side&&!flipped.includes(t)) flipped=flipped.concat(attack(G,t,side,ev,2,has(tc,"tie")||has(tc,"king"),"cheer")); });
   // 斜め打ち
   if(q.includes("diag")&&G.b[cell].o===side){ for(const t of diag(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
     const av=[0,1,2,3].map(k=>val(G,cell,k)), dv=[0,1,2,3].map(k=>val(G,t,k)), a=Math.max(...av), d=Math.min(...dv); if(a>d||(tie&&a===d)){ E(ev,G,{t:"duel",cell:t,from:cell,a,d,lv:1,how:"diag",mi:av.indexOf(a),ti:dv.indexOf(d)}); if(flipOne(G,t,side,cell,ev,1)) flipped.push(t); } } }
