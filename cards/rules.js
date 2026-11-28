@@ -67,6 +67,7 @@ function attack(G,cell,side,ev,lv,tie){
     const a=val(G,cell,mi), d=val(G,t,ti), rev=has(me,"rev");
     const win=rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d));
     if(win){ E(ev,G,{t:"duel",cell:t,from:cell,mi,ti,a,d,lv,rev}); if(flipOne(G,t,side,cell,ev,lv,ti)) out.push(t); }
+    else E(ev,G,{t:"miss",cell:t,from:cell,mi,ti,a,d,lv});   // 取れなかった組（演出で ✗ を見せるだけ）
   }
   return out;
 }
