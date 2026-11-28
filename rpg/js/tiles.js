@@ -556,6 +556,14 @@ function stoneDark(c, x, y) { // 空座城の黒い石の床（歩ける）
   for (let row = 0; row < 3; row++) { const off = (row + y) % 2 ? 12 : 0; for (let i = -1; i < 3; i++) { const bx = i * 24 + off; R(c, ["#33303d", "#2f2c39", "#383443"][(r() * 3) | 0], bx + 1, row * 16 + 1, 22, 14); R(c, "#423e4e", bx + 1, row * 16 + 1, 22, 1); } }
   for (let i = 0; i < 6; i++) R(c, "#8e889840", (r() * 46) | 0, (r() * 46) | 0, 2, 1); // 厚い埃
 }
+function dohyo(c) { // 石舞台の土俵（横3マス×縦3マス）。俵の丸い輪
+  for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) { c.save(); c.translate(x * T, y * T); shade(c, x, y); c.restore(); }
+  blob(c, "#3a2e26", 72, 76, 66, 62); blob(c, "#8a6a48", 72, 72, 64, 60); blob(c, "#a3815a", 72, 72, 56, 52);
+  c.strokeStyle = "#d8c690"; c.lineWidth = 5; c.beginPath(); c.ellipse(72, 72, 46, 42, 0, 0, Math.PI * 2); c.stroke();
+  c.strokeStyle = "#b8a470"; c.lineWidth = 2; c.beginPath(); c.ellipse(72, 72, 46, 42, 0, 0, Math.PI * 2); c.stroke();
+  R(c, "#f0ece0", 60, 66, 6, 2); R(c, "#f0ece0", 78, 66, 6, 2);
+}
+function drum(c) { shade(c, 0, 0); blob(c, "#1a1210", 24, 40, 16, 4); R(c, "#6e3529", 10, 16, 28, 24); R(c, "#8a4535", 10, 16, 28, 4); blob(c, "#d8c690", 24, 16, 14, 5); blob(c, "#efe0b0", 22, 15, 8, 2); for (let i = 0; i < 6; i++) R(c, "#c9a24a", 11 + i * 5, 22, 2, 2); R(c, "#4d3727", 34, 6, 3, 14); } // 鬼太鼓
 function _floorDark(c) { R(c, "#26232e", 0, 0, T, T); for (let i = 0; i < 6; i++) R(c, i % 2 ? "#2c2934" : "#221f2a", 0, i * 8, T, 8); R(c, "#1a1820", 0, 47, T, 1); }
 function tornBanner(c) { R(c, "#2a2632", 0, 0, T, T); R(c, "#4d3727", 22, 0, 3, 40); R(c, "#4a2030", 14, 4, 20, 26); R(c, "#5e2a3c", 14, 4, 20, 3); R(c, "#2a2632", 20, 18, 6, 14); R(c, "#2a2632", 14, 26, 5, 6); R(c, "#7a6a3a", 21, 10, 6, 5); } // 破れた旗
 function windStone(c) { shade(c, 0, 0); R(c, "#1c1a24", 12, 4, 24, 42); R(c, "#4a4458", 14, 6, 20, 38); for (let i = 0; i < 4; i++) R(c, "#cfd6e6", 16 + i * 4, 10 + i * 8, 10, 1); } // 風の刻みのある石柱
@@ -681,5 +689,5 @@ function cage(c) { // 水の中の鉄の檻（2×2マス）
   R(c, "#3d3a44", 6, 12, 84, 6); R(c, "#3d3a44", 6, 84, 84, 6);
 }
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage, itae, starFloor, carpet, throne, chainBox, grate, ledgers, snow, snowPath, snowTreeBase, snowTreeTop, iceWall, tent, banner, ironGate, ironGateOpen, burntPost, brokenStone, wisp, iceBridge, chasm, watchtower, fireSnow, shade, shadePath, shadeTreeBase, shadeTreeTop, shadeRock, glowShroom, furTent, nest, blackThrone, tornBanner, windStone, stoneDark };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage, itae, starFloor, carpet, throne, chainBox, grate, ledgers, snow, snowPath, snowTreeBase, snowTreeTop, iceWall, tent, banner, ironGate, ironGateOpen, burntPost, brokenStone, wisp, iceBridge, chasm, watchtower, fireSnow, shade, shadePath, shadeTreeBase, shadeTreeTop, shadeRock, glowShroom, furTent, nest, blackThrone, tornBanner, windStone, stoneDark, dohyo, drum };
 })(window);

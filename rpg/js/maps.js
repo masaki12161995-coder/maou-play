@@ -8,7 +8,7 @@ function grid(w, h, ch) { return Array.from({ length: h }, () => Array(w).fill(c
 function fill(g, ch, x, y, w, h) { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (g[j] && g[j][i] !== undefined) g[j][i] = ch; }
 const S = g => g.flags.s || 0, cut = (g, k) => g.flags.cut === k;
 // 町の会話の段階（骨組み0-4）。0＝序章の朝、0.5＝黒外套が来た後、1＝第1章、2＝第2章（第1章の場面10の後から）
-const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : s < 60 ? 2 : s < 62 ? 3 : s < 81 ? 4 : 5; }; // 段階5：第5章の謁見の間（宰相を捕らえた）から // 段階4：第4章の始まり（ザハラを出た後）から // 段階3：第3章の不戦の約定（聖剣の競り）の後から
+const townStage = g => { const s = S(g); return s < 12 ? 0 : s < 14 ? 0.5 : s < 26 ? 1 : s < 60 ? 2 : s < 62 ? 3 : s < 81 ? 4 : s < 96 ? 5 : 6; }; // 段階6：第6章の終わり（新しい魔王が立った）から // 段階5：第5章の謁見の間（宰相を捕らえた）から // 段階4：第4章の始まり（ザハラを出た後）から // 段階3：第3章の不戦の約定（聖剣の競り）の後から
 root.townStage = townStage;
 
 // ---------- 渡し小屋の中 ----------
@@ -184,6 +184,7 @@ function forest() {
   open(7, 20, 3, 3); path(8, 20, 1, 3);                                    // 力比べの場所
   open(6, 11, 10, 8); path(8, 17, 1, 2);                                   // 切り株の広場
   path(11, 6, 1, 5); open(10, 5, 3, 2);                                    // 獣道（北へ。茨でふさがっている）
+  const kemono = window.GS && GS.G && (GS.G.flags.s || 0) >= 96; if (kemono) path(11, 0, 1, 6);   // 第6章の終わりに、婆が茨を払った（常闇領の影の原へ）
   path(16, 14, 5, 1); open(17, 12, 5, 2);                                  // 庵への道
   path(20, 14, 1, 10);                                                     // 分かれ目から南へ
   open(19, 16, 3, 2);                                                      // 狼の群れがふさぐ所
@@ -197,11 +198,11 @@ function forest() {
       { t: "boat", x: 0, y: 30, w: 3, h: 1, talk: "boat" },
       { t: "kaeri", x: 10, y: 27, talk: "kaeri" },
       { t: "stump", x: 10, y: 14, w: 2, h: 2 },
-      { t: "thorns", x: 11, y: 8, talk: "thorns" }, { t: "thorns", x: 11, y: 7, talk: "thorns" },
+      { t: "thorns", x: 11, y: 8, talk: "thorns", when: g => S(g) < 96 }, { t: "thorns", x: 11, y: 7, talk: "thorns", when: g => S(g) < 96 },
       { t: "house", x: 18, y: 10, w: 3, h: 2, roof: "green", door: 1, chimney: 1 },
       { t: "shrineGate", x: 22, y: 18, w: 2, h: 2 },
     ],
-    exits: [{ x: 19, y: 11, to: "hermit", tx: 3, ty: 5, dir: 3 }, { x: 22, y: 19, to: "shrine", tx: 6, ty: 26, dir: 3 }],
+    exits: [{ x: 19, y: 11, to: "hermit", tx: 3, ty: 5, dir: 3 }, { x: 22, y: 19, to: "shrine", tx: 6, ty: 26, dir: 3 }, ...(kemono ? [{ x: 11, y: 0, to: "kagenohara", tx: 1, ty: 8, dir: 2 }] : [])],
     npcs: [
       { id: "muku9", x: 5, y: 30, img: "person_058", dir: 1, nm: "ムク", talk: "mukuWait", when: g => S(g) === 11 && !!g.flags.mukuStay },
       { id: "nene10", x: 5, y: 30, img: "person_041", dir: 1, nm: "ネネ", when: g => ["s11c", "s11d", "s11e"].includes(g.flags.cut) },
@@ -269,7 +270,7 @@ function hermit() {
     ],
     exits: [{ x: 3, y: 6, to: "forest", tx: 19, ty: 12, dir: 0 }],
     npcs: [
-      { id: "nene", x: 3, y: 2, img: "person_041", dir: 0, nm: "ネネ", talk: "nene", when: g => !["s11c", "s11d", "s11e"].includes(g.flags.cut) },
+      { id: "nene", x: 3, y: 2, img: "person_041", dir: 0, nm: "ネネ", talk: "nene", when: g => !["s11c", "s11d", "s11e"].includes(g.flags.cut) && !(S(g) >= 92 && S(g) < 96) && !g.roster.includes(17) },
       { id: "mukuIn", x: 4, y: 5, img: "person_058", dir: 3, nm: "ムク", when: g => cut(g, "s8") },
       // 町の人の会話（森の婆の庵）：土間のコロモチ。戦わない継ぐ民
       { id: "koroI", x: 1, y: 5, mon: "m_koromochi", face: 1, nm: "庵のコロモチ", talk: "tt", tp: "hermit", when: g => !g.flags.cut },
@@ -612,7 +613,7 @@ function milna() {
       { t: "sign", x: 9, y: 10, text: ["東の関所、当分のあいだ通行を禁ず。宰相ヴァルド"] },
       { t: "wagon", x: 9, y: 12, w: 2, h: 1, when: g => S(g) <= 30 },
       { t: "kaeri", x: 4, y: 14, talk: "kaeri" },
-      { t: "house", x: 1, y: 11, w: 3, h: 2, roof: "green", door: 1 },                // ネルの家（粉屋の隣）
+      { t: "house", x: 1, y: 11, w: 3, h: 2, roof: "green", door: 1, kind: "nel", nm: "ネルの家" },                // ネルの家（粉屋の隣）
       { t: "house", x: 4, y: 2, w: 3, h: 2, roof: "red", door: 1 },                  // 里の外れの木こり小屋
       { t: "woodpile", x: 7, y: 3 }, { t: "woodpile", x: 7, y: 2 },
       { t: "house", x: 13, y: 11, w: 3, h: 2, roof: "blue", door: 1, kind: "inn", nm: "ミルナの宿" },               // 宿
@@ -867,15 +868,19 @@ function kagenohara() {
   fill(g, "l", 13, 0, 2, H); fill(g, "l", 0, 11, W, 1); fill(g, "l", 0, 19, 13, 1); fill(g, "l", 15, 19, 13, 1);
   for (const [x, y, w, h] of [[3, 3, 3, 3], [20, 2, 4, 3], [8, 14, 2, 3], [19, 14, 3, 2], [3, 21, 4, 1], [22, 21, 3, 1], [9, 4, 2, 2], [17, 7, 2, 2]]) fill(g, "O", x, y, w, h);
   for (const [x, y, w, h] of [[6, 7, 2, 2], [23, 8, 2, 2], [4, 15, 2, 2], [24, 15, 1, 2], [10, 21, 1, 1]]) fill(g, "P", x, y, w, h);
+  if (sNow() >= 96) { fill(g, "l", 0, 8, 6, 1); fill(g, "l", 5, 8, 1, 3); }   // 獣道（ささやきの森へ。第6章の終わりに開く）
   return {
     id: "kagenohara", nm: "影の原", g, tier: 7, bg: "shade", shade: 1, nanori: 1,
     objs: [
       ...[[2, 9], [11, 7], [16, 4], [25, 5], [7, 18], [18, 17], [21, 10], [1, 14], [11, 16]].map(([x, y]) => ({ t: "glowShroom", x, y })),
       { t: "sign", x: 15, y: 12, text: ["北　空座城　／　西　牙の里　／　東　翼の高巣", "南西　鱗の沼　／　南東　角の石舞台"] },
+      { t: "sign", x: 2, y: 7, text: ["獣道　この先、ささやきの森"], when: g => S(g) >= 96 },
     ],
     exits: [{ x: 13, y: H - 1, to: "itadaki", tx: 6, ty: 1, dir: 0 }, { x: 14, y: H - 1, to: "itadaki", tx: 7, ty: 1, dir: 0 },
       { x: 13, y: 0, to: "kuuza", tx: 7, ty: 16, dir: 3 }, { x: 14, y: 0, to: "kuuza", tx: 7, ty: 16, dir: 3 },
-      { x: 0, y: 11, to: "kiba", tx: 16, ty: 8, dir: 1 }, { x: W - 1, y: 11, to: "tsubasa", tx: 1, ty: 12, dir: 2 }],
+      { x: 0, y: 11, to: "kiba", tx: 16, ty: 8, dir: 1 }, { x: W - 1, y: 11, to: "tsubasa", tx: 1, ty: 12, dir: 2 },
+      { x: 0, y: 19, to: "uroko", tx: 16, ty: 8, dir: 1 }, { x: W - 1, y: 19, to: "tsuno", tx: 1, ty: 8, dir: 2 },
+      ...(sNow() >= 96 ? [{ x: 0, y: 8, to: "forest", tx: 11, ty: 1, dir: 0 }] : [])],
     npcs: [],
     foes: [
       { id: "kg1", x: 13, y: 17, k: "kageboushi", g: ["kageboushi", "yakou", "kageboushi"] },
@@ -888,7 +893,6 @@ function kagenohara() {
     chests: [{ id: "c_kage1", x: 2, y: 2, gold: 600 }, { id: "c_kage2", x: 25, y: 22, tool: "book2" }],
     trigs: [
       { x: 13, y: 21, w: 2, h: 1, when: g => S(g) === 90, run: "c6s1" },
-      { x: 1, y: 19, w: 1, h: 1, run: "urokoShut" }, { x: W - 2, y: 19, w: 1, h: 1, run: "tsunoShut" },
     ],
   };
 }
@@ -907,6 +911,9 @@ function kuuza() {
     exits: [{ x: 7, y: H - 1, to: "kagenohara", tx: 13, ty: 1, dir: 0 }, { x: 7, y: 1, to: "gyokuza", tx: 6, ty: 10, dir: 3 }],
     npcs: [
       { id: "orgoK", x: 7, y: 5, mon: "monster_005", face: 1, nm: "オルゴ", when: g => cut(g, "c6s2") && g.flags.c6orgo },
+      { id: "tsukaiA", x: 5, y: 8, mon: "m_tsunoko", face: 1, nm: "城の使い走り", talk: "tt", tp: "kuuza", when: g => S(g) >= 96 },
+      { id: "tsukaiB", x: 9, y: 8, mon: "monster_132", face: -1, nm: "城の使い走り", talk: "tt", tp: "kuuza", tw: "城の使い走り", when: g => S(g) >= 96 },
+      { id: "liseK", x: 7, y: 16, img: "person_002", dir: 0, nm: "リゼット", when: g => cut(g, "c6s12") && g.flags.c6liseOut },
     ],
     foes: [], chests: [],
     trigs: [{ x: 5, y: 15, w: 5, h: 1, when: g => S(g) === 91, run: "c6s2" }],
@@ -925,14 +932,21 @@ function gyokuza() {
     exits: [{ x: 6, y: H - 1, to: "kuuza", tx: 7, ty: 2, dir: 0 }],
     npcs: [
       { id: "totoG", x: 6, y: 3, img: "person_100", dir: 3, nm: "トト", when: g => cut(g, "c6s3") && !g.flags.c6totoOut },
-      { id: "orgoG", x: 9, y: 9, mon: "monster_005", face: -1, nm: "オルゴ", talk: "tt", tp: "kuuza", when: g => S(g) >= 92 },
+      { id: "orgoG", x: 9, y: 9, mon: "monster_005", face: -1, nm: "オルゴ", talk: "orgo", card: g => S(g) >= 96, when: g => S(g) >= 92 && !cut(g, "c6s11") },
+      { id: "orgoC", x: 9, y: 3, mon: "monster_005", face: -1, nm: "オルゴ", when: g => cut(g, "c6s11") },
       { id: "neneG", x: 6, y: 7, img: "person_041", dir: 0, nm: "ネネ", when: g => cut(g, "c6s3") && g.flags.c6nene },
       { id: "kitanoko", x: 5, y: 7, img: "person_040", dir: 0, nm: "北の子", when: g => cut(g, "c6s3") && g.flags.c6nene },
       { id: "moriA", x: 8, y: 7, mon: "m_ookami", face: -1, nm: "森の継ぐ民", when: g => cut(g, "c6s3") && g.flags.c6nene },
       { id: "moriB", x: 4, y: 7, mon: "monster_132", face: 1, nm: "森の継ぐ民", when: g => cut(g, "c6s3") && g.flags.c6nene },
+      // 場面11　戴冠：四人の長と四氏族の者、柱にもたれたネネ、隅のトト
+      ...[["fergaC", 4, 4, "person_086", "フェルガ"], ["daraC", 5, 4, "person_062", "ダーラ"], ["gouraC", 7, 4, "person_122", "ゴウラ"]].map(([id, x, y, img, nm]) => ({ id, x, y, img, dir: 3, nm, when: g => cut(g, "c6s11") })),
+      { id: "shuriC", x: 8, y: 4, mon: "m_shuri", face: -1, nm: "シュリ", when: g => cut(g, "c6s11") },
+      ...[["k1", 3, 6, "m_kibasen"], ["k2", 9, 6, "monster_090"], ["k3", 4, 8, "m_numayamori"], ["k4", 8, 8, "m_tsunoko"], ["k5", 3, 9, "m_tsukihoe"], ["k6", 9, 9, "m_otama"]].map(([id, x, y, mon]) => ({ id, x, y, mon, face: x < 6 ? 1 : -1, nm: "四氏族の者", when: g => cut(g, "c6s11") })),
+      { id: "neneC", x: 11, y: 5, img: "person_041", dir: 1, nm: "ネネ", when: g => cut(g, "c6s11") },
+      { id: "totoC", x: 1, y: 10, img: "person_100", dir: 2, nm: "トト", when: g => cut(g, "c6s11") && !g.flags.c6toto2 },
     ],
     foes: [], chests: [],
-    trigs: [{ x: 5, y: 9, w: 3, h: 1, when: g => S(g) === 92, run: "c6s3" }],
+    trigs: [{ x: 5, y: 9, w: 3, h: 1, when: g => S(g) === 92, run: "c6s3" }, { x: 5, y: 9, w: 3, h: 1, when: g => S(g) === 94, run: "c6s11" }],
   };
 }
 // ---------- 空座城の厨（夜）と城壁 ----------
@@ -944,7 +958,7 @@ function kuriya() {
     objs: [{ t: "hearth", x: 4, y: 0 }, { t: "table", x: 2, y: 3 }, { t: "basket", x: 7, y: 1 }, { t: "shelf", x: 1, y: 1 }],
     exits: [{ x: 4, y: H - 1, to: "gyokuza", tx: 11, ty: 3, dir: 1 }],
     npcs: [
-      { id: "neneK", x: 4, y: 2, img: "person_041", dir: 0, nm: "ネネ", talk: "neneK", when: g => S(g) >= 93 || cut(g, "c6s6") },
+      { id: "neneK", x: 4, y: 2, img: "person_041", dir: 0, nm: "ネネ", talk: "neneK", when: g => (S(g) >= 93 && S(g) < 96) || cut(g, "c6s6") },
       { id: "mifaK", x: 2, y: 4, img: "person_011", dir: 2, nm: "ミーファ", when: g => cut(g, "c6s6") },
     ],
     foes: [], chests: [], trigs: [],
@@ -953,12 +967,103 @@ function kuriya() {
 function jouheki() {
   const W = 11, H = 5, g = grid(W, H, "W"); fill(g, "d", 1, 1, 9, 3);
   return {
-    id: "jouheki", nm: "城壁の上", g, tier: 0, bg: null, inside: 1, shade: 1, noFollow: 1,
+    id: "jouheki", nm: (window.GS && GS.G && GS.G.flags.cut === "c6s12b") ? "城の見張り台" : "城壁の上", g, tier: 0, bg: null, inside: 1, shade: 1, noFollow: 1,
     objs: [...[1, 3, 5, 7, 9].map(x => ({ t: "glowShroom", x, y: 3 }))],
-    exits: [], npcs: [{ id: "mukuJ", x: 6, y: 2, img: "person_058h", dir: 1, nm: "ムク", when: g => cut(g, "c6s6b") }],
+    exits: [], npcs: [{ id: "mukuJ", x: 6, y: 2, img: "person_058h", dir: 1, nm: "ムク", when: g => cut(g, "c6s6b") }, { id: "jakoJ", x: 7, y: 2, img: "person_133", dir: 3, nm: "ジャコ", when: g => cut(g, "c6s12b") }],
     foes: [], chests: [], trigs: [],
   };
 }
+// ---------- 鱗の沼：霧の沼。泥の上に杭の家。沼の真ん中の苔むした大岩（鱗の長ダーラ） ----------
+function uroko() {
+  const W = 18, H = 16, g = grid(W, H, "L");
+  fill(g, "O", 0, 0, W, 1); fill(g, "O", 0, H - 1, W, 1); fill(g, "O", 0, 0, 1, H); fill(g, "O", W - 1, 0, 1, 8); fill(g, "O", W - 1, 9, 1, 7);
+  fill(g, "m", 2, 4, 5, 4); fill(g, "m", 10, 2, 5, 3); fill(g, "m", 6, 9, 6, 3); fill(g, "m", 13, 12, 3, 2);
+  fill(g, "l", 3, 0, 2, 4); fill(g, "l", 3, 8, 15, 1); fill(g, "l", 8, 4, 1, 4); fill(g, "l", 3, 3, 1, 6);
+  g[0][3] = "l"; g[0][4] = "l";
+  return {
+    id: "uroko", nm: "鱗の沼", g, tier: 0, bg: null, music: "town", shade: 1,
+    objs: [
+      { t: "house", x: 13, y: 5, w: 3, h: 2, roof: "green", door: 1 }, { t: "house", x: 10, y: 12, w: 3, h: 2, roof: "brown", door: 1 },
+      { t: "bigStone", x: 8, y: 3, text: ["苔むした大岩。…よく見ると、まぶたがある。"], when: g => !cut(g, "c6s9") && S(g) < 96 },
+      { t: "sign", x: 5, y: 1, text: ["底なしの泥宮"] }, { t: "glowShroom", x: 1, y: 12 }, { t: "glowShroom", x: 16, y: 3 },
+    ],
+    exits: [{ x: W - 1, y: 8, to: "kagenohara", tx: 1, ty: 19, dir: 2 }, { x: 3, y: 0, to: "doromiya", tx: 5, ty: 20, dir: 3 }, { x: 4, y: 0, to: "doromiya", tx: 6, ty: 20, dir: 3 }],
+    npcs: [
+      { id: "daraU", x: 8, y: 3, img: "person_062", dir: 0, nm: "ダーラ", talk: "tt", tp: "uroko", when: g => cut(g, "c6s9") || S(g) >= 96 },
+      { id: "mondou", x: 15, y: 9, mon: "m_mondou", face: -1, nm: "問答好きの蛙", talk: "tt", tp: "uroko" },
+      { id: "watashi", x: 5, y: 9, mon: "m_watashigame", face: 1, nm: "沼の渡し亀", talk: "tt", tp: "uroko" },
+      { id: "otama", x: 9, y: 7, mon: "m_otama", face: 1, nm: "おたまの子", talk: "tt", tp: "uroko" },
+      { id: "doro", x: 12, y: 7, mon: "m_doro", face: -1, nm: "ドロ", talk: "doro", card: () => 1 },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 15, y: 8, w: 2, h: 1, when: g => S(g) >= 93 && !g.flags.c6urokoIn, run: "c6s9a" }],
+  };
+}
+// ---------- 底なしの泥宮（鱗の試練）：泥の迷い道。最奥の泥の広間 ----------
+function doromiya() {
+  const W = 12, H = 22, g = grid(W, H, "W");
+  fill(g, "_", 5, 16, 2, 6); fill(g, "_", 2, 15, 8, 2); fill(g, "_", 2, 10, 2, 6); fill(g, "_", 8, 10, 2, 6); fill(g, "_", 2, 9, 8, 2); fill(g, "_", 5, 6, 2, 4); fill(g, "_", 2, 1, 8, 6);
+  fill(g, "m", 4, 11, 4, 4); fill(g, "m", 3, 3, 2, 2); fill(g, "m", 7, 3, 2, 2);
+  return {
+    id: "doromiya", nm: "底なしの泥宮", g, tier: 7, bg: "shade", inside: 1, shade: 1, nanori: 1, dark: 1,
+    objs: [{ t: "glowShroom", x: 2, y: 1 }, { t: "glowShroom", x: 9, y: 1 }],
+    exits: [{ x: 5, y: H - 1, to: "uroko", tx: 3, ty: 1, dir: 0 }, { x: 6, y: H - 1, to: "uroko", tx: 4, ty: 1, dir: 0 }],
+    npcs: [{ id: "daraD", x: 6, y: 2, img: "person_062", dir: 0, nm: "ダーラ", when: g => S(g) >= 93 && !chikai(g, "uroko") }],
+    foes: [
+      { id: "dm1", x: 5, y: 15, k: "numayamori", g: ["numayamori", "dokuhebi"] },
+      { id: "dm2", x: 2, y: 12, k: "dorogame", g: ["numayamori", "dorogame", "dokuhebi"] },
+      { id: "dm3", x: 9, y: 12, k: "dokuhebi", g: ["dokuhebi", "dokuhebi", "numayamori"] },
+      { id: "dm4", x: 6, y: 8, k: "dorogame", g: ["dorogame", "numayamori"] },
+    ],
+    chests: [{ id: "c_doro1", x: 9, y: 15, gold: 800 }, { id: "c_doro2", x: 2, y: 9, tool: "book2" }],
+    trigs: [{ x: 2, y: 5, w: 8, h: 1, when: g => S(g) >= 93 && !chikai(g, "uroko"), run: "c6s9b" }],
+  };
+}
+// ---------- 角の石舞台：岩山をくりぬいた円い舞台。太鼓。角のある者たちが酒を飲み、相撲を取っている ----------
+function tsuno() {
+  const W = 18, H = 16, g = grid(W, H, "L");
+  fill(g, "P", 0, 0, W, 2); fill(g, "P", 0, H - 2, W, 2); fill(g, "P", 0, 0, 1, 8); fill(g, "P", 0, 9, 1, 7); fill(g, "P", W - 1, 0, 1, H);
+  fill(g, "l", 0, 8, 8, 1); fill(g, "l", 8, 0, 2, 4); g[0][8] = "l"; g[0][9] = "l"; g[1][8] = "l"; g[1][9] = "l";
+  return {
+    id: "tsuno", nm: "角の石舞台", g, tier: 0, bg: null, music: "town", shade: 1,
+    objs: [
+      { t: "dohyo", x: 7, y: 5, w: 3, h: 3 },
+      { t: "drum", x: 11, y: 5 }, { t: "drum", x: 11, y: 7 },
+      { t: "house", x: 13, y: 2, w: 3, h: 2, roof: "red", door: 1, nm: "角の婆の小屋" },
+      { t: "campfire", x: 4, y: 11 }, { t: "sign", x: 10, y: 3, text: ["百段の土俵　この上"] },
+    ],
+    exits: [{ x: 0, y: 8, to: "kagenohara", tx: 26, ty: 19, dir: 1 }, { x: 8, y: 0, to: "hyakudan", tx: 4, ty: 24, dir: 3 }, { x: 9, y: 0, to: "hyakudan", tx: 5, ty: 24, dir: 3 }],
+    npcs: [
+      { id: "gouraT", x: 8, y: 6, img: "person_122", dir: 0, nm: "ゴウラ", talk: "tt", tp: "tsuno", when: g => cut(g, "c6s10") || S(g) >= 96 },
+      { id: "donta", x: 12, y: 6, mon: "m_donta", face: -1, nm: "ドン太", talk: "donta", card: () => 1 },
+      { id: "dohyouoniT", x: 5, y: 7, mon: "monster_091", face: 1, nm: "土俵鬼", talk: "tt", tp: "tsuno" },
+      { id: "tsunobaba", x: 14, y: 4, img: "person_068b", dir: 0, nm: "角の婆", talk: "tt", tp: "tsuno" },
+      { id: "tsunoko", x: 10, y: 11, mon: "m_tsunoko", face: -1, nm: "角の子", talk: "tt", tp: "tsuno" },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 1, y: 8, w: 2, h: 1, when: g => S(g) >= 93 && !g.flags.c6tsunoIn, run: "c6s10a" }],
+  };
+}
+// ---------- 百段の土俵（角の試練）：段ごとに相手が待つ勝ち抜き。てっぺんの土俵でゴウラが取る ----------
+function hyakudan() {
+  const W = 10, H = 26, g = grid(W, H, "P");
+  fill(g, "d", 4, 5, 2, 21); fill(g, "d", 2, 1, 6, 5);
+  for (const y of [21, 17, 13, 9]) g[y][4] = g[y][5] = "S";
+  return {
+    id: "hyakudan", nm: "百段の土俵", g, tier: 7, bg: "shade", shade: 1, nanori: 1,
+    objs: [{ t: "dohyo", x: 3, y: 1, w: 3, h: 3, walk: 1 }, { t: "drum", x: 2, y: 4 }, { t: "drum", x: 7, y: 4 }],
+    exits: [{ x: 4, y: H - 1, to: "tsuno", tx: 8, ty: 1, dir: 0 }, { x: 5, y: H - 1, to: "tsuno", tx: 9, ty: 1, dir: 0 }],
+    npcs: [{ id: "gouraH", x: 4, y: 2, img: "person_122", dir: 0, nm: "ゴウラ", when: g => S(g) >= 93 && !chikai(g, "tsuno") }],
+    foes: [
+      { id: "hd1", x: 4, y: 19, k: "kodaiko", g: ["kodaiko", "kodaiko"] },
+      { id: "hd2", x: 5, y: 15, k: "dohyouoni", g: ["dohyouoni", "kodaiko"] },
+      { id: "hd3", x: 4, y: 11, k: "kodaiko", g: ["kodaiko", "dohyouoni", "kodaiko"] },
+      { id: "hd4", x: 5, y: 7, k: "dohyouoni", g: ["dohyouoni", "dohyouoni"] },
+    ],
+    chests: [], trigs: [{ x: 2, y: 5, w: 6, h: 1, when: g => S(g) >= 93 && !chikai(g, "tsuno"), run: "c6s10b" }],
+  };
+}
+
 // ---------- 牙の里：切り立った谷の入口。骨と毛皮の天幕。遠吠え ----------
 function kiba() {
   const W = 18, H = 16, g = grid(W, H, "L");
@@ -978,7 +1083,7 @@ function kiba() {
       { id: "korou", x: 6, y: 7, mon: "monster_054", face: 1, nm: "牙の古老", talk: "tt", tp: "kiba" },
       { id: "kibako", x: 11, y: 9, mon: "m_ookami", face: -1, nm: "牙の子", talk: "tt", tp: "kiba" },
       { id: "rolo", x: 14, y: 11, mon: "m_rolo", face: 1, nm: "ロロ", talk: "rolo", card: () => 1 },
-      { id: "fergaK", x: 8, y: 2, img: "person_086", dir: 0, nm: "フェルガ", when: g => cut(g, "c6s7") },
+      { id: "fergaK", x: 8, y: 2, img: "person_086", dir: 0, nm: "フェルガ", talk: "tt", tp: "kiba", when: g => cut(g, "c6s7") || S(g) >= 96 },
     ],
     foes: [], chests: [],
     trigs: [{ x: 14, y: 8, w: 2, h: 1, when: g => S(g) >= 93 && !g.flags.c6kibaIn, run: "c6s7a" }],
@@ -1021,7 +1126,7 @@ function tsubasa() {
       { id: "rouchou", x: 12, y: 4, img: "person_054r", dir: 1, nm: "巣守りの老鳥", talk: "tt", tp: "tsubasa" },
       { id: "hina", x: 5, y: 7, mon: "monster_132", face: 1, nm: "雛の子", talk: "tt", tp: "tsubasa" },
       { id: "kana", x: 10, y: 9, img: "person_054", dir: 1, nm: "カナ", talk: "kana", card: () => 1 },
-      { id: "shuriT", x: 8, y: 3, mon: "m_shuri", face: -1, nm: "シュリ", when: g => cut(g, "c6s8") },
+      { id: "shuriT", x: 8, y: 3, mon: "m_shuri", face: -1, nm: "シュリ", talk: "tt", tp: "tsubasa", when: g => cut(g, "c6s8") || S(g) >= 96 },
     ],
     foes: [], chests: [],
     trigs: [{ x: 1, y: 12, w: 2, h: 1, when: g => S(g) >= 93 && !g.flags.c6tsubasaIn, run: "c6s8a" }],
@@ -1215,11 +1320,12 @@ function itadaki() {
   fill(g, "A", 0, 0, 1, H); fill(g, "A", W - 1, 0, 1, H); fill(g, "I", 1, 7, 5, 2); fill(g, "I", 7, 7, 6, 2); // 橋のたもとは1マスだけ（氷河ムカデがふさぐ） fill(g, "I", 1, 12, 4, 2); fill(g, "I", 9, 12, 4, 2);
   fill(g, "G", 1, 2, 12, 5); fill(g, "B", 6, 2, 2, 5);
   return {
-    id: "itadaki", nm: "峠の頂", g, tier: 6, bg: "snow", snow: 1,
+    id: "itadaki", nm: "峠の頂", g, tier: 6, bg: "snow", snow: 1, noLeader: (window.GS && GS.G && GS.G.flags.cut === "c6end"), noFollow: (window.GS && GS.G && GS.G.flags.cut === "c6end"),
     objs: [{ t: "sign", x: 9, y: 9, text: ["氷の橋。谷の底を、細い川が流れている。"] }],
     exits: [{ x: 6, y: H - 1, to: "touge", tx: 5, ty: 1, dir: 0 }, { x: 7, y: H - 1, to: "touge", tx: 6, ty: 1, dir: 0 },
       ...(sNow() >= 90 ? [{ x: 6, y: 0, to: "kagenohara", tx: 13, ty: 22, dir: 3 }, { x: 7, y: 0, to: "kagenohara", tx: 14, ty: 22, dir: 3 }] : [])],
-    npcs: [{ id: "hyougaN", x: 6, y: 7, mon: "m_hyouga", face: 1, big: 1, nm: "氷河ムカデ", talk: "hyougaN", when: g => S(g) < 90 }],
+    npcs: [{ id: "hyougaN", x: 6, y: 7, mon: "m_hyouga", face: 1, big: 1, nm: "氷河ムカデ", talk: "hyougaN", when: g => S(g) < 90 },
+      { id: "liseB", x: 6, y: 4, img: "person_002", dir: 3, nm: "リゼット", when: g => cut(g, "c6end") }],
     foes: [], chests: [],
     trigs: [{ x: 1, y: 9, w: 12, h: 1, when: g => S(g) === 89, run: "c5s15" }],
   };
@@ -2024,6 +2130,9 @@ function minka() {
     [3, 4, 5].forEach(x => objs.push({ t: "counter", x: X(x), y: 2 })); objs.push({ t: "hearth", x: X(1), y: 0 });
     objs.push({ t: "table", x: X(2), y: 4 }, { t: "table", x: X(6), y: 4 }); find("shelf", 7, 1);
     who("tea", 4, 1, 0, "茶屋の娘");
+  } else if (d.kind === "nel") { // ネルの家：寄り道の仲間トビーを逃したときは、ここにトビーがいる（段階6から）
+    objs.push({ t: "shelf", x: X(1), y: 1 }, { t: "bed", x: X(W - 2), y: 1, w: 1, h: 2 }, { t: "table", x: X(2), y: H - 3 }, { t: "chair", x: X(3), y: H - 3 });
+    const G0 = root.GS && GS.G; if (G0 && (G0.flags.s || 0) >= 96 && !G0.roster.includes(16)) npcs.push({ id: "tobyH", x: X(dx), y: 2, img: "person_080", dir: 0, nm: "トビー", talk: "tobyHome" });
   } else {
     const roles = ["w", "o", "g", "m"], r = roles[((d.idx || 0) + [...d.from].reduce((a, c) => a + c.charCodeAt(0), 0)) % 4], nm = { w: "おかみさん", o: "じいさん", g: "娘", m: "亭主" }[r];
     objs.push(d.chimney ? { t: "hearth", x: X(1), y: 0 } : { t: "shelf", x: X(1), y: 1 });
@@ -2042,5 +2151,5 @@ function minka() {
 }
 
 root.MINKA_FOLK = MINKA_FOLK;
-root.MAPS = { kagenohara, kuuza, gyokuza, kuriya, jouheki, kiba, tsukihoe, tsubasa, kazakiri, tetsumon, iteno, camp, duga, touge, itadaki, yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+root.MAPS = { uroko, doromiya, tsuno, hyakudan, kagenohara, kuuza, gyokuza, kuriya, jouheki, kiba, tsukihoe, tsubasa, kazakiri, tetsumon, iteno, camp, duga, touge, itadaki, yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

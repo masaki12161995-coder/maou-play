@@ -146,6 +146,18 @@ const WORLD={
   w_kitanoko:{nm:"北の子",r:1,n:[3,3,3,4],src:"img/c_kitanoko.png",sz:[38,59],k:"人物"},
   w_rolo:{nm:"牙の若衆ロロ",r:2,n:[5,4,3,4],src:"img/m_rolo.png",sz:[76,45],k:"魔物"},
   w_kana:{nm:"翼の語り部カナ",r:2,n:[3,5,4,4],src:"img/c_kana.png",sz:[44,59],k:"人物"},
+  w_numayamori:{nm:"沼ヤモリ兵",r:2,n:[4,4,4,4],src:"img/m_numayamori.png",sz:[53,70],k:"魔物"},
+  w_dokuhebi:{nm:"毒吐き大蛇",r:1,n:[3,3,4,3],src:"img/m_dokuhebi.png",sz:[32,30],k:"魔物"},
+  w_dorogame:{nm:"泥亀の盾持ち",r:2,n:[3,6,5,3],src:"img/m_dorogame.png",sz:[63,40],k:"魔物"},
+  w_kodaiko:{nm:"小鬼太鼓",r:1,n:[4,3,3,3],src:"img/monster_012.png",sz:[38,45],k:"魔物"},
+  w_dohyouoni:{nm:"土俵鬼",r:3,n:[7,5,4,5],src:"img/monster_091.png",sz:[106,90],k:"魔物"},
+  w_dara:{nm:"鱗の長ダーラ",r:4,n:[6,8,7,6],src:"img/c_dara.png",sz:[45,59],k:"人物"},
+  w_goura:{nm:"角の長ゴウラ",r:4,n:[8,7,6,6],src:"img/c_goura.png",sz:[38,59],k:"人物"},
+  w_doro:{nm:"鱗の料理番ドロ",r:2,n:[4,4,4,4],src:"img/m_doro.png",sz:[53,70],k:"魔物"},
+  w_donta:{nm:"角の太鼓打ちドン太",r:2,n:[5,3,4,4],src:"img/m_donta.png",sz:[38,45],k:"魔物"},
+  w_mondou:{nm:"問答好きの蛙",r:2,n:[3,5,5,3],src:"img/m_mondou.png",sz:[89,90],k:"魔物"},
+  w_kuuza:{nm:"空の玉座",r:4,n:[7,7,7,7],src:"img/c_gyokuza.png",sz:[30,40],k:"魔物"},
+  w_saomaou:{nm:"棹の魔王",r:5,n:[9,8,8,9],src:"img/c_saomaou.png",sz:[51,67],k:"人物"},
   w_serinin:{nm:"競り人",r:1,n:[4,3,3,3],src:"img/c_serinin.png",sz:[42,58],k:"人物"},
   w_sunamogu:{nm:"スナモグリ",r:2,n:[6,5,2,3],src:"img/m_sunamogu.png",sz:[131,90],k:"魔物"},
   w_saboten:{nm:"サボテン拳士",r:2,n:[6,2,4,4],src:"img/monster_142.png",sz:[67,45],k:"魔物"},
@@ -180,15 +192,18 @@ OPPS.length=0; OPPS.push(
   {nm:"魔術師エルマ",who:"089",cap:14,depth:3,sig:"w_shimofuri",pool:["w_shimofuri","w_elma","w_rokka","w_gerd","w_aster","w_shirokuma","w_hyouga","w_tsurara","w_tsurara","w_senken","w_senken","w_kogoe","w_shimofuri","w_shimofuri","w_yukidaruma"]},
   {nm:"半鬼の子ニィ",who:"073n",cap:12,depth:2,sig:"w_mogura",pool:["w_mogura","w_nii","w_dag","w_dag","w_yukiusagi","w_yukiusagi","w_yukidaruma","w_yukidaruma","w_shimofuri","w_tsurara","w_kogoe","w_toride","w_bolts"]},
   {nm:"牙の若衆ロロ",who:"m:m_rolo",cap:13,depth:3,sig:"w_ferga",pool:["w_ferga","w_rolo","w_kibasen","w_kibasen","w_tsukihoe","w_tsukihoe","w_kageboushi","w_kagee","w_yamibotaru","w_yakou","w_kitanoko","w_nene"]},
-  {nm:"翼の語り部カナ",who:"054",cap:13,depth:3,sig:"w_shuri",pool:["w_shuri","w_kana","w_takahei","w_takahei","w_raichou","w_yamibotaru","w_yamibotaru","w_kagee","w_yakou","w_kageboushi","w_orgo","w_kitanoko"]});
+  {nm:"翼の語り部カナ",who:"054",cap:13,depth:3,sig:"w_shuri",pool:["w_shuri","w_kana","w_takahei","w_takahei","w_raichou","w_yamibotaru","w_yamibotaru","w_kagee","w_yakou","w_kageboushi","w_orgo","w_kitanoko"]},
+  {nm:"鱗の料理番ドロ",who:"m:m_doro",cap:13,depth:3,sig:"w_dara",pool:["w_dara","w_doro","w_numayamori","w_numayamori","w_dokuhebi","w_dokuhebi","w_dorogame","w_mondou","w_yakou","w_kageboushi","w_kagee","w_yamibotaru"]},
+  {nm:"角の太鼓打ちドン太",who:"m:m_donta",cap:13,depth:3,sig:"w_goura",pool:["w_goura","w_donta","w_kodaiko","w_kodaiko","w_dohyouoni","w_dohyouoni","w_kibasen","w_tsukihoe","w_takahei","w_kitanoko","w_kagee","w_yakou"]},
+  {nm:"留守居のオルゴ",who:"m:monster_005",cap:14,depth:3,sig:"w_kuuza",pool:["w_kuuza","w_orgo","w_nene","w_ferga","w_shuri","w_dara","w_goura","w_raichou","w_dohyouoni","w_dorogame","w_kagee","w_tsukihoe","w_kana","w_rolo"]});
 PRIZES.length=0;
 const SHOP_CARDS=["w_koromochi","w_kawauso","w_mizugumo","w_donguri","w_hane"], SHOP_PRICE=30;
 // お金はRPGの記録にある（同じ端末の保存場所）
 // 物語で出会うまでは相手の札に出さない人（RPGの進みの数）。出会う前の人物の絵を先に見せないため
-const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46,w_aster:51,w_taisho:48,w_mizuuri:50,w_saboten:48,w_hagewashi:53,w_sunaningyo:53,w_rojin:53,w_miira:54,w_tozoku:54,w_koganegai:54,w_sasha:56,w_zazan:56,w_fukumen:59,w_dreg:65,w_kaizoku:64,w_yakunin:63,w_ryoshi:63,w_okamiS:63,w_uouri:63,w_todai:63,w_minarai:63,w_hatch:63,w_suifu:66,w_gaikotsu:64,w_fujitsubo:64,w_yadokahou:64,w_tobiuo:66,w_kurage:66,w_kamome:66,w_utsubo:66,w_mifa:73,w_ordo:68,w_riko:69,w_monso:68,w_kairouso:71,w_junreiM:67,w_junreiF:67,w_hoshigashi:68,w_kanetsukiS:68,w_seitonoko:68,w_junreigani:67,w_shirayuri:67,w_kanetsuki:71,w_irogarasu:71,w_inoriseki:71,w_rouko:71,w_shugozo:73,w_seiei:73,w_tetsuken:78,w_fuurou:78,w_kurohei:78,w_kerbe:80,w_oswald:81,w_kishi:81,w_teishin:81,w_toride:83,w_bolts:83,w_toby:83,w_nel:83,w_yukiusagi:84,w_shimofuri:84,w_yukidaruma:84,w_kogoe:84,w_elma:85,w_rokka:85,w_gerd:85,w_dag:86,w_nii:86,w_senken:87,w_tsurara:88,w_shirokuma:88,w_hyouga:90,w_mogura:88,w_kageboushi:91,w_yakou:91,w_kagee:91,w_yamibotaru:91,w_kibasen:93,w_tsukihoe:93,w_takahei:93,w_raichou:93,w_ferga:93,w_shuri:93,w_orgo:92,w_nene:92,w_kitanoko:92,w_rolo:93,w_kana:93};
+const LATE={w_edmon:41,w_vald:41,w_shoki:44,w_jako:45,w_sekimori:47,w_akamugi:46,w_aster:51,w_taisho:48,w_mizuuri:50,w_saboten:48,w_hagewashi:53,w_sunaningyo:53,w_rojin:53,w_miira:54,w_tozoku:54,w_koganegai:54,w_sasha:56,w_zazan:56,w_fukumen:59,w_dreg:65,w_kaizoku:64,w_yakunin:63,w_ryoshi:63,w_okamiS:63,w_uouri:63,w_todai:63,w_minarai:63,w_hatch:63,w_suifu:66,w_gaikotsu:64,w_fujitsubo:64,w_yadokahou:64,w_tobiuo:66,w_kurage:66,w_kamome:66,w_utsubo:66,w_mifa:73,w_ordo:68,w_riko:69,w_monso:68,w_kairouso:71,w_junreiM:67,w_junreiF:67,w_hoshigashi:68,w_kanetsukiS:68,w_seitonoko:68,w_junreigani:67,w_shirayuri:67,w_kanetsuki:71,w_irogarasu:71,w_inoriseki:71,w_rouko:71,w_shugozo:73,w_seiei:73,w_tetsuken:78,w_fuurou:78,w_kurohei:78,w_kerbe:80,w_oswald:81,w_kishi:81,w_teishin:81,w_toride:83,w_bolts:83,w_toby:83,w_nel:83,w_yukiusagi:84,w_shimofuri:84,w_yukidaruma:84,w_kogoe:84,w_elma:85,w_rokka:85,w_gerd:85,w_dag:86,w_nii:86,w_senken:87,w_tsurara:88,w_shirokuma:88,w_hyouga:90,w_mogura:88,w_kageboushi:91,w_yakou:91,w_kagee:91,w_yamibotaru:91,w_kibasen:93,w_tsukihoe:93,w_takahei:93,w_raichou:93,w_ferga:93,w_shuri:93,w_orgo:92,w_nene:92,w_kitanoko:92,w_rolo:93,w_kana:93,w_numayamori:93,w_dokuhebi:93,w_dorogame:93,w_kodaiko:93,w_dohyouoni:93,w_dara:93,w_goura:93,w_doro:93,w_donta:93,w_mondou:93,w_kuuza:96};
 function rpgStage(){ try{ return JSON.parse(localStorage.getItem("rpgPlay1")).flags.s||0; }catch(e){ return 0; } }
 // 後から足した札（相手の持ち札に、記録が作られた後で加えるもの）
-const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi","w_taisho","w_mizuuri","w_saboten","w_hagewashi","w_sunaningyo","w_rojin","w_miira","w_tozoku","w_koganegai","w_sasha","w_zazan","w_fukumen","w_dreg","w_kaizoku","w_yakunin","w_ryoshi","w_okamiS","w_uouri","w_todai","w_minarai","w_hatch","w_suifu","w_gaikotsu","w_fujitsubo","w_yadokahou","w_tobiuo","w_kurage","w_kamome","w_utsubo","w_mifa","w_ordo","w_riko","w_monso","w_kairouso","w_junreiM","w_junreiF","w_hoshigashi","w_kanetsukiS","w_seitonoko","w_junreigani","w_shirayuri","w_kanetsuki","w_irogarasu","w_inoriseki","w_rouko","w_shugozo","w_seiei","w_tetsuken","w_fuurou","w_kurohei","w_kerbe","w_oswald","w_kishi","w_teishin","w_toride","w_bolts","w_toby","w_nel","w_yukiusagi","w_shimofuri","w_yukidaruma","w_kogoe","w_elma","w_rokka","w_gerd","w_dag","w_nii","w_senken","w_tsurara","w_shirokuma","w_hyouga","w_mogura","w_kageboushi","w_yakou","w_kagee","w_yamibotaru","w_kibasen","w_tsukihoe","w_takahei","w_raichou","w_ferga","w_shuri","w_orgo","w_nene","w_kitanoko","w_rolo","w_kana"];
+const ADDED=["w_sig","w_vald","w_edmon","w_shoki","w_hanna","w_fukuro","w_sekimori","w_tomon","w_akamugi","w_taisho","w_mizuuri","w_saboten","w_hagewashi","w_sunaningyo","w_rojin","w_miira","w_tozoku","w_koganegai","w_sasha","w_zazan","w_fukumen","w_dreg","w_kaizoku","w_yakunin","w_ryoshi","w_okamiS","w_uouri","w_todai","w_minarai","w_hatch","w_suifu","w_gaikotsu","w_fujitsubo","w_yadokahou","w_tobiuo","w_kurage","w_kamome","w_utsubo","w_mifa","w_ordo","w_riko","w_monso","w_kairouso","w_junreiM","w_junreiF","w_hoshigashi","w_kanetsukiS","w_seitonoko","w_junreigani","w_shirayuri","w_kanetsuki","w_irogarasu","w_inoriseki","w_rouko","w_shugozo","w_seiei","w_tetsuken","w_fuurou","w_kurohei","w_kerbe","w_oswald","w_kishi","w_teishin","w_toride","w_bolts","w_toby","w_nel","w_yukiusagi","w_shimofuri","w_yukidaruma","w_kogoe","w_elma","w_rokka","w_gerd","w_dag","w_nii","w_senken","w_tsurara","w_shirokuma","w_hyouga","w_mogura","w_kageboushi","w_yakou","w_kagee","w_yamibotaru","w_kibasen","w_tsukihoe","w_takahei","w_raichou","w_ferga","w_shuri","w_orgo","w_nene","w_kitanoko","w_rolo","w_kana","w_numayamori","w_dokuhebi","w_dorogame","w_kodaiko","w_dohyouoni","w_dara","w_goura","w_doro","w_donta","w_mondou","w_kuuza"];
 function rpgGold(add){ try{ const t=JSON.parse(localStorage.getItem("rpgPlay1")); if(add){ t.gold+=add; localStorage.setItem("rpgPlay1",JSON.stringify(t)); } return t.gold; }catch(e){ return 0; } }
 function goldTag(){ return `<span style="color:var(--text)">${rpgGold().toLocaleString()} G</span>`; }
 
@@ -486,7 +501,7 @@ function quickDeck(pool,cap){ // 上限の中で強い5枚（数字の合計の�
   return h;
 }
 function weight(mine){ return rk(mine); }
-const KEEP=["w_iei"]; // 物語でもらった形見の札：相手は狙わない（賭けで失わない）
+const KEEP=["w_iei","w_saomaou"]; // 物語でもらった形見の札：相手は狙わない（賭けで失わない）
 function oppPick(){ // 相手は、こちらの手札の一番いい札を狙う
   if(P.loan||PRACTICE) return null;
   const c=P.mine.filter(x=>!KEEP.includes(x)); return (c.length?c:P.mine).slice().sort(byCard)[0];

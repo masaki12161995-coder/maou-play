@@ -199,6 +199,10 @@ const SKILLS = {
   t_tooku:   { nm: "遠目の一突き", bp: 3, rank: "D", tg: "one", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
   t_furue:   { nm: "震え突き", bp: 5, rank: "E", tg: "rand", hits: 3, at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
   t_mae:     { nm: "前を見ろ", bp: 9, rank: "B", tg: "one", at: ["突"], stun: 1, dist: "近", dir: "直接", kind: "攻撃" },
+  // 寄り道の仲間ネネ（森の婆）：杖。冷と陰の術
+  n_shimo:   { nm: "霜の息", bp: 4, rank: "D", tg: "row", at: ["冷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  n_kage:    { nm: "影しばり", bp: 5, rank: "D", tg: "one", at: ["陰"], magic: 1, stun: 40, dist: "遠", dir: "間接", kind: "攻撃" },
+  n_yuki:    { nm: "雪おろし", bp: 10, rank: "B", tg: "all", at: ["冷", "陰"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
   // 常闇領（第6章）
   kagenui:   { nm: "影縫い", bp: 4, rank: "D", tg: "one", at: ["陰"], magic: 1, stun: 25, dist: "遠", dir: "間接", kind: "攻撃" },
   hikarihoushi:{ nm: "光る胞子", bp: 4, rank: "E", tg: "all", at: ["陽"], magic: 1, stun: 10, dist: "遠", dir: "間接", kind: "攻撃" },
@@ -215,6 +219,19 @@ const SKILLS = {
   // 翼の長シュリ：空から弓で撃ってくる
   s_yasame:  { nm: "矢の雨", bp: 0, rank: "D", tg: "all", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
   s_kazanari:{ nm: "風鳴り射ち", bp: 0, rank: "B", tg: "one", at: ["突"], stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
+  // 鱗の沼・底なしの泥宮／角の石舞台・百段の土俵
+  yamorizuki:{ nm: "ヤモリ突き", bp: 4, rank: "D", tg: "one", hits: 2, at: ["突"], dist: "近", dir: "直接", kind: "攻撃" },
+  dokueki:   { nm: "毒液", bp: 4, rank: "E", tg: "row", at: ["陰"], magic: 1, poison: 50, dist: "遠", dir: "間接", kind: "攻撃" },
+  doroshibuki:{ nm: "泥しぶき", bp: 4, rank: "E", tg: "all", at: ["打"], dist: "遠", dir: "間接", kind: "攻撃" },
+  taiko:     { nm: "鬼太鼓", bp: 5, rank: "E", tg: "all", at: ["打"], stun: 5, dist: "遠", dir: "間接", kind: "攻撃" },
+  harite:    { nm: "張り手", bp: 6, rank: "B", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // 鱗の長ダーラ：硬くて、毒と眠りを使う
+  d_kiri:    { nm: "毒の霧", bp: 0, rank: "E", tg: "all", at: ["陰"], magic: 1, poison: 40, dist: "遠", dir: "間接", kind: "攻撃" },
+  d_awa:     { nm: "眠りの泡", bp: 0, rank: "E", tg: "row", at: ["冷"], magic: 1, stun: 30, dist: "遠", dir: "間接", kind: "攻撃" },
+  d_shippo:  { nm: "尾打ち", bp: 0, rank: "B", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  // 角の長ゴウラ：一発が重い
+  g_tsuppari:{ nm: "突っ張り", bp: 0, rank: "A", tg: "one", at: ["打"], dist: "近", dir: "直接", kind: "攻撃" },
+  g_shiko:   { nm: "四股踏み", bp: 0, rank: "D", tg: "all", at: ["打"], stun: 30, dist: "遠", dir: "間接", kind: "攻撃" },
 };
 
 // ---------- パッシブ ----------
@@ -342,6 +359,9 @@ const MATS = {
   kurokiba: { nm: "月夜の牙", icon: "mat_085", fam: "骨・牙・爪", rare: "青" },
   yamibane: { nm: "紫の夜羽", icon: "mat_063", fam: "羽", rare: "緑" },
   shiroba:  { nm: "白と金の羽根", icon: "mat_050", fam: "羽", rare: "青" },
+  dokuuroko:{ nm: "毒蛇の鱗", icon: "mat_039", fam: "皮・鱗・甲羅", rare: "緑" },
+  taikogawa:{ nm: "鬼太鼓の皮", icon: "mat_006", fam: "皮・鱗・甲羅", rare: "白" },
+  onitsuno: { nm: "鬼の角", icon: "mat_062", fam: "骨・牙・爪", rare: "青" },
 };
 // 秘伝書：技を「覚醒」させて、使うBPを1つ減らす。1回目は壱、2回目は弐、3回目は参が要る
 const TOOLS = {
@@ -366,6 +386,8 @@ const TOOLS = {
   nelScarf: { nm: "ネルの襟巻き", icon: "mat_006", ds: "手編みの毛糸の襟巻き。トビーに渡す", key: 1 },
   chikaiKiba: { nm: "牙の誓い", icon: "mat_085", ds: "牙の長フェルガの誓い。手の甲に、牙の形の印", key: 1 },
   chikaiTsubasa: { nm: "翼の誓い", icon: "mat_050", ds: "翼の長シュリの誓い。手の甲に、翼の形の印", key: 1 },
+  chikaiUroko: { nm: "鱗の誓い", icon: "mat_039", ds: "鱗の長ダーラの誓い。手の甲に、鱗の形の印", key: 1 },
+  chikaiTsuno: { nm: "角の誓い", icon: "mat_062", ds: "角の長ゴウラの誓い。手の甲に、角の形の印", key: 1 },
 };
 const FOODS = Object.keys(TOOLS).filter(k => TOOLS[k].food); // 弱いものから先に食べる
 // 拾った武器・防具に付く「おまけ」（本家の(力)(体)…と同じ考え。＋付きはさらにまれ）
@@ -437,6 +459,11 @@ const HEARTS = {
   tsukihoe: { nm: "月吠え狼の心", col: "青", mul: { str: 108, vit: 104, dex: 100, agi: 112, int: 96, wil: 108, lov: 100, cha: 102 }, sk: "tooboe", up: ["agi", "wil"] },
   takahei:  { nm: "風切り鷹兵の心", col: "緑", mul: { str: 96, vit: 96, dex: 114, agi: 110, int: 100, wil: 100, lov: 98, cha: 102 }, sk: "kazakiri", up: ["dex", "agi"] },
   raichou:  { nm: "雷鳥の心", col: "青", mul: { str: 94, vit: 98, dex: 104, agi: 108, int: 116, wil: 104, lov: 100, cha: 104 }, sk: "raiun", up: ["int", "dex"] },
+  numayamori:{ nm: "沼ヤモリ兵の心", col: "緑", mul: { str: 106, vit: 104, dex: 108, agi: 104, int: 94, wil: 98, lov: 96, cha: 100 }, sk: "yamorizuki", up: ["dex", "str"] },
+  dokuhebi: { nm: "毒吐き大蛇の心", col: "緑", mul: { str: 98, vit: 100, dex: 104, agi: 104, int: 110, wil: 102, lov: 96, cha: 100 }, sk: "dokueki", up: ["int", "dex"] },
+  dorogame: { nm: "泥亀の盾持ちの心", col: "青", mul: { str: 100, vit: 120, dex: 92, agi: 86, int: 96, wil: 114, lov: 104, cha: 100 }, sk: "doroshibuki", up: ["vit", "wil"] },
+  kodaiko:  { nm: "小鬼太鼓の心", col: "白", mul: { str: 104, vit: 100, dex: 102, agi: 100, int: 96, wil: 100, lov: 106, cha: 108 }, sk: "taiko", up: ["cha", "lov"] },
+  dohyouoni:{ nm: "土俵鬼の心", col: "青", mul: { str: 120, vit: 112, dex: 96, agi: 90, int: 86, wil: 104, lov: 100, cha: 102 }, sk: "harite", up: ["str", "vit"] },
 };
 
 // ---------- 仲間（物語の順。0＝主人公） ----------
@@ -498,6 +525,10 @@ const HEROES = [
   { id: "toby", nm: "トビー", img: "person_080", wt: "spear", rare: "A", side: 1, hp: 220, hpCap: 1050, lp: 8, st: { str: 22, vit: 18, dex: 28, agi: 26, int: 10, wil: 14, lov: 16, cha: 15 },
     cap: { str: 104, vit: 92, dex: 122, agi: 118, int: 60, wil: 84, lov: 96, cha: 90 }, up: ["dex", "agi"],
     res: { 冷: 10 }, sk: ["t_tooku", "t_furue", "t_mae"], ps: ["spearway", "focus", "quickdraw"], gear: { weapon: "ironspear", armor: "tunic", sub: null, acc: null } },
+  // 寄り道の仲間ネネ（森の婆。第6章の終わりから、庵で話すと加わる）：杖（冷・陰）
+  { id: "nene", nm: "ネネ", img: "person_041", wt: "staff", rare: "S", side: 1, hp: 200, hpCap: 1000, lp: 8, st: { str: 12, vit: 20, dex: 18, agi: 14, int: 34, wil: 34, lov: 26, cha: 30 },
+    cap: { str: 62, vit: 96, dex: 90, agi: 80, int: 132, wil: 132, lov: 110, cha: 120 }, up: ["int", "wil"],
+    res: { 冷: 20, 陰: 20 }, sk: ["n_shimo", "n_kage", "n_yuki"], ps: ["focus", "spirit", "healer"], gear: { weapon: "sagestaff", armor: "cloak", sub: null, acc: null } },
 ];
 const START = [0]; // はじめから居るのは主人公だけ
 // 場所の上限（強さの段階ごと）。ここより先は、強い場所で戦わないと伸びない
@@ -649,6 +680,19 @@ const FOES = {
   // 風切りの断崖（翼の試練）。空を飛ぶ敵には、近い攻めが届きにくい
   takahei:  { mat: "shiroba", nm: "風切り鷹兵", img: "monster_090", wt: "bow", sky: 1, pow: 11, hp: 160, st: { str: 16, vit: 16, dex: 29, agi: 32, int: 12, wil: 18, lov: 0, cha: 16 }, res: { 雷: -40, 打: -20 }, every: { n: 2, sk: "kazakiri" }, gold: 34, heart: "takahei" },
   raichou:  { mat: "shiroba", nm: "雷鳥", img: "m_raichou", wt: "fang", sky: 1, pow: 10, hp: 170, mag: 11, st: { str: 20, vit: 18, dex: 24, agi: 30, int: 26, wil: 22, lov: 0, cha: 16 }, res: { 雷: 60, 冷: -40 }, every: { n: 2, sk: "raiun" }, gold: 34, heart: "raichou" },
+  // 底なしの泥宮（鱗の試練）
+  numayamori:{ mat: "doro", nm: "沼ヤモリ兵", img: "m_numayamori", wt: "spear", pow: 12, hp: 200, st: { str: 30, vit: 24, dex: 28, agi: 26, int: 10, wil: 18, lov: 0, cha: 14 }, res: { 冷: 20, 熱: -30, 雷: -20 }, every: { n: 2, sk: "yamorizuki" }, gold: 34, heart: "numayamori" },
+  dokuhebi: { mat: "dokuuroko", nm: "毒吐き大蛇", img: "m_dokuhebi", wt: "fang", pow: 10, hp: 160, mag: 11, st: { str: 22, vit: 18, dex: 24, agi: 28, int: 28, wil: 18, lov: 0, cha: 12 }, res: { 陰: 30, 冷: -30 }, every: { n: 2, sk: "dokueki" }, gold: 30, heart: "dokuhebi" },
+  dorogame: { mat: "doro", nm: "泥亀の盾持ち", img: "m_dorogame", wt: "club", pow: 11, hp: 280, st: { str: 26, vit: 40, dex: 14, agi: 10, int: 12, wil: 30, lov: 0, cha: 14 }, res: { 斬: 30, 突: 30, 打: -30, 雷: -30 }, every: { n: 3, sk: "doroshibuki" }, gold: 36, heart: "dorogame" },
+  // 百段の土俵（角の試練）
+  kodaiko:  { mat: "taikogawa", nm: "小鬼太鼓", img: "monster_012", wt: "club", pow: 10, hp: 160, st: { str: 25, vit: 22, dex: 22, agi: 24, int: 10, wil: 18, lov: 0, cha: 20 }, res: { 打: 20, 陽: -30 }, every: { n: 3, sk: "taiko" }, gold: 32, heart: "kodaiko" },
+  dohyouoni:{ mat: "onitsuno", nm: "土俵鬼", img: "monster_091", wt: "fist", pow: 12, hp: 260, st: { str: 32, vit: 28, dex: 16, agi: 14, int: 8, wil: 22, lov: 0, cha: 18 }, res: { 打: 30, 陽: -30, 冷: -20 }, every: { n: 3, sk: "harite" }, gold: 40, heart: "dohyouoni" },
+  // 鱗の長ダーラ：硬くて、毒と眠りを使う
+  dara:     { nm: "鱗の長ダーラ", img: "person_062", person: 1, wt: "staff", pow: 11, hp: 470, boss: 1, mag: 11, st: { str: 24, vit: 30, dex: 16, agi: 14, int: 24, wil: 30, lov: 0, cha: 24 },
+              res: { 斬: 25, 突: 25, 打: 10, 熱: -30, 雷: -30 }, plan: { 2: "d_kiri", 4: "d_awa", 7: "d_kiri" }, every: { n: 3, sk: "d_shippo" }, rageFrom: 10, rage: "d_kiri", stunRes: 1, gold: 0 },
+  // 角の長ゴウラ：一発が重い
+  goura:    { nm: "角の長ゴウラ", img: "person_122", person: 1, wt: "fist", pow: 13, hp: 600, boss: 1, st: { str: 38, vit: 32, dex: 18, agi: 14, int: 8, wil: 26, lov: 0, cha: 30 },
+              res: { 打: 20, 陽: -30, 冷: -20 }, plan: { 2: "g_shiko", 5: "g_shiko", 8: "g_shiko" }, every: { n: 2, sk: "g_tsuppari" }, rageFrom: 9, rage: "g_tsuppari", stunRes: 1, gold: 0 },
   // 牙の長フェルガ（人の姿の継ぐ民。「参った」で終わり、心は渡さない）
   ferga:    { nm: "牙の長フェルガ", img: "person_086", person: 1, wt: "axe", pow: 12, hp: 460, boss: 1, st: { str: 30, vit: 24, dex: 28, agi: 41, int: 10, wil: 22, lov: 0, cha: 26 },
               res: { 冷: 20, 熱: -20 }, plan: { 2: "f_tsuki", 4: "f_futa", 7: "f_futa" }, every: { n: 2, sk: "f_ranga" }, rageFrom: 9, rage: "f_futa", stunRes: 1, gold: 0 },
