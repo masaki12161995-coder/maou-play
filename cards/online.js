@@ -5,7 +5,7 @@
 //   ?local=1 のときは、同じブラウザの中だけでつなぐ（試し用）
 const RARE=["","#d8d8d8","#d8d8d8","#d8d8d8","#b57cf0","#f2c23c","#fff"];   // 枠：★3までは白、★4は紫、★5は金、★6は虹
 const KIND_NM={"魔物":"魔物の札","色違い":"色違いの札","光る":"光る札","人物":"人物の札","限定":"限定の札"};
-const ALL=Object.keys(CARDS);
+const ALL=Object.keys(CARDS).filter(k=>!CARDS[k].glow);   // 友だち対戦は対戦を楽しむもの。集める楽しみ用の「光る札」は入れない
 const Q=new URLSearchParams(location.search), LOCAL=Q.get("local")==="1";
 const ME_ID=Math.random().toString(36).slice(2,10);
 

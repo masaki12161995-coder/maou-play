@@ -504,7 +504,7 @@ function prep(k){
   for(let i=0;st.pool.filter(ok).length<5&&low.length;i++){ st.pool.push(low[i%low.length]); save(); }
   const opDeck=oppDeck(st.pool.filter(ok),o.cap,o.sig);
   let glow=null; // ごくまれに、伏せ札の中に光る札がまじる
-  if(Math.random()<0.04){ const idx=opDeck.findIndex(x=>x!==o.sig); if(idx>=0){ opDeck[idx]=GLOWS[Math.floor(Math.random()*GLOWS.length)]; glow=idx; } }
+  if(GLOWS.length&&Math.random()<0.04){ const idx=opDeck.findIndex(x=>x!==o.sig); if(idx>=0){ opDeck[idx]=GLOWS[Math.floor(Math.random()*GLOWS.length)]; glow=idx; } }
   let mine=(S.last[k]||[]).slice();
   const pool=owned();
   const can=(()=>{ const c=countOf(pool); for(const x of mine){ if(!c[x]) return false; c[x]--; } return mine.length===5 && rk(mine)<=o.cap; })();
