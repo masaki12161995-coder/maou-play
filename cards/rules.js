@@ -23,11 +23,11 @@ function eff(cid,cell,G,side,real,info){
   if(q.includes("center")&&cell===4) A("center",2);
   if(q.includes("edge")&&!CORNER.includes(cell)&&cell!==4) A("edge",1);
   if(q.includes("lone")&&!adj(cell).some(([t])=>G.b[t]&&G.b[t].o===side)) A("lone",2);
-  if(q.includes("pack")) A("pack",Math.min(3,cnt(G,side)));
+  if(q.includes("pack")) A("pack",cnt(G,side));
   if(q.includes("early")&&empty>=7) A("early",2);
   if(q.includes("late")&&empty<=3) A("late",2);
   if(q.includes("under")&&cnt(G,side)<=cnt(G,1-side)-2) A("under",3);
-  if(q.includes("rage")) A("rage",Math.min(3,(G.lost||[0,0])[side]));
+  if(q.includes("rage")) A("rage",(G.lost||[0,0])[side]);
   if(q.includes("kin")&&G.b.some(x=>x&&x.o===side&&CARDS[x.cid]&&CARDS[x.cid].r===CARDS[cid].r)) A("kin",2);   // 絆：盤に同じ★の味方がいる
   n=n.map(v=>cl(v+add));
   if(q.includes("gamble")){ n=n.map(v=>cl(v+(real?Math.floor((typeof RULE_RNG==="function"?RULE_RNG:Math.random)()*6):2))); if(info) info.push(["gamble",0]); } // 友だち対戦では、両方の端末で同じ目が出るよう、そろえた乱数を使う
@@ -113,6 +113,8 @@ function play(G,side,hi,cell,ev,real){
     const av=[0,1,2,3].map(k=>val(G,cell,k)), dv=[0,1,2,3].map(k=>val(G,t,k)), a=Math.max(...av), d=Math.min(...dv); if(a>d||(tie&&a===d)){ E(ev,G,{t:"duel",cell:t,from:cell,a,d,lv:1,how:"diag",mi:av.indexOf(a),ti:dv.indexOf(d)}); if(flipOne(G,t,side,cell,ev,1)) flipped.push(t); } } }
   // 連鎖・王威（連鎖で取った札は、その札自身のくせで勝負する。置いた札の同点勝は引き継がない）
   if(q.includes("chain")||q.includes("king")) flipped.slice().forEach(fc=>{ if(G.b[fc].o===side) flipped=flipped.concat(attack(G,fc,side,ev,2,has(G.b[fc],"tie")||has(G.b[fc],"king"))); });
+  // 仇討ち：味方の札が取られたら、取られた側の「仇討ち」の札が、となりの相手ともう一度勝負する（1手に1回。仕返しへの仕返しは起きない）
+  if(flipped.length) G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"avenge")) attack(G,t,c.o,ev,4,has(c,"tie")||has(c,"king"),"avenge"); });
   // 吸収
   if(q.includes("drain")&&flipped.length&&G.b[cell].o===side){ setc(G,cell,{...G.b[cell],n:G.b[cell].n.map(v=>cl(v+flipped.length))}); E(ev,G,{t:"buff",q:"drain",v:flipped.length,cell,lv:3}); }
   return flipped.length;

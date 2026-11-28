@@ -134,7 +134,7 @@ function restore(key){ try{ const d=JSON.parse(localStorage.getItem(key||localSt
 // 札を持ってマスの上に重ねたら、そこに置いたときの数字を、持っている札の上に見せる（角取り・群れ・逆境などで変わる数字）
 function clearPvn(){ document.querySelectorAll(".pvn").forEach(e=>e.remove()); document.querySelectorAll(".n.pushed").forEach(e=>{ e.classList.remove("pushed"); e.style.transform=""; }); }
 function showPv(ghost,cid,cell){
-  const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?Math.min(3,(M&&M.G&&M.G.lost||[0,0])[me]):0;
+  const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?(M&&M.G&&M.G.lost||[0,0])[me]:0;
   if(window.FX&&FX.css) FX.css();
   const hand=base.map(v=>cl(v+rg)); let n=hand.slice(), tag="";
   if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); const w=wb(M.G,cell,me); if(w){ n=n.map(v=>v+w); info.push(["ward",w]); } tag=info.filter(([k,v])=>v&&k!=="rage").map(([k])=>QK[k].nm).join("　"); }
@@ -321,8 +321,8 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   const tb=el("div","turnbar "+(M.turn===me?"me":"op"),M.turn<0?"":M.turn===me?"こちらの番":"相手の番"); if(M.turn!==me&&M.turn>=0) tb.classList.add("dots3"); s.appendChild(tb);
   const mr=el("div","row"); mr.style.minHeight="96px";
   const canGo=()=>M&&M.G&&!M.busy&&!M.over&&M.turn===me;
-  if(!bo){ const cur=Math.min(3,(G.lost||[0,0])[me]); if(cur>(M.rageSeen||0)&&!M.rageT){ M.rageT=Date.now(); M.rageFrom=M.rageSeen||0; setTimeout(()=>{ if(M){ M.rageSeen=cur; M.rageT=0; } },1200); } }
-  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):Math.min(3,(G.lost||[0,0])[me])):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ if(!bo&&M.rageT&&Date.now()-M.rageT<250){   // 怒りで上がった：札が少し浮き、数字が前の数から緑の新しい数へ上がる（すぐ描き直されても、最初の一瞬なら演出をやり直す）
+  if(!bo){ const cur=(G.lost||[0,0])[me]; if(cur>(M.rageSeen||0)&&!M.rageT){ M.rageT=Date.now(); M.rageFrom=M.rageSeen||0; setTimeout(()=>{ if(M){ M.rageSeen=cur; M.rageT=0; } },1200); } }
+  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):(G.lost||[0,0])[me]):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ if(!bo&&M.rageT&&Date.now()-M.rageT<250){   // 怒りで上がった：札が少し浮き、数字が前の数から緑の新しい数へ上がる（すぐ描き直されても、最初の一瞬なら演出をやり直す）
       const up=rg-M.rageFrom, ns=c.querySelectorAll(".n"); ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg-up)); });
       c.classList.add("rgup"); SND.se("chain"); if(window.FX&&FX.css) FX.css(); const t=el("div","fxlab",QK.rage.nm); c.appendChild(t);
       setTimeout(()=>{ ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg)); if(window.FX&&FX.bumpN) FX.bumpN(e,k,1); }); },260);
