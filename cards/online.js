@@ -137,7 +137,7 @@ function showPv(ghost,cid,cell){
   const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?Math.min(3,(M&&M.G&&M.G.lost||[0,0])[me]):0;
   if(window.FX&&FX.css) FX.css();
   const hand=base.map(v=>cl(v+rg)); let n=hand.slice(), tag="";
-  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); tag=info.filter(([k,v])=>v&&k!=="rage").map(([k])=>QK[k].nm).join("　"); }
+  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); const w=wb(M.G,cell,me); if(w){ n=n.map(v=>v+w); info.push(["ward",w]); } tag=info.filter(([k,v])=>v&&k!=="rage").map(([k])=>QK[k].nm).join("　"); }
   ghost.querySelectorAll(".n").forEach((e,i)=>{ const up=n[i]>hand[i]; e.innerHTML=N(n[i])+(up?`<i class="fxar pva up k${i}">↑</i>`:""); e.classList.toggle("pv",up); });
   // 指で隠れて見えないので、となりのマスの、こちら寄りのふちにも、その辺の数字を薄く点滅させて見せる（盤の外を向く辺は出さない）
   clearPvn();
@@ -315,7 +315,7 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   for(let i=0;i<9;i++){
     const ce=el("div","cell"); ce.style.width=D.cw+"px"; ce.style.height=D.ch+"px"; ce.dataset.i=i;
     const c=G.b[i];
-    if(c){ const full=CARDS[c.cid].q||[]; const e=cardEl(c.cid,c.o===me?"me":"op",D.cw-4,D.ch-4,{n:c.n,shield:c.g,q:full,sealed:full.length&&!c.q.length}); if(fx&&fx[i]) e.classList.add(fx[i]); e.onclick=()=>{ if(!EAT) detail(c.cid); }; ce.appendChild(e); }
+    if(c){ const full=CARDS[c.cid].q||[]; const e=cardEl(c.cid,c.o===me?"me":"op",D.cw-4,D.ch-4,{n:c.n.map(v=>v+wb(G,i,c.o)),shield:c.g,q:full,sealed:full.length&&!c.q.length}); if(fx&&fx[i]) e.classList.add(fx[i]); e.onclick=()=>{ if(!EAT) detail(c.cid); }; ce.appendChild(e); }
     bd.appendChild(ce);
   }
   s.appendChild(bd);
@@ -333,9 +333,9 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   const bt=el("div","score"); bt.appendChild(el("div","lbl",R.cpu?"CPU・"+CPU_LV[R.lv]:"友だち対戦")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,me)}</b>`)); s.appendChild(bt);
 }
 const EVNM={chainx:"連鎖！",combo:"合計！",seal:"封印",curse:"祟り！",spite:"道連れ！",back:"執念で戻った！",grow:"成長",turn:"回転",debuff:"威圧"};
-function animate(ev,done){
+function animate(ev,done,pre){
   window.FX_ME=R?R.side:0;   // 演出で「自分の札」を見分けるため // 起きたことを、ひと場面ずつ見せる（fx.js）
-  FX.run(ev,b=>{ drawMatch(null,b); return document.querySelector(".board"); },()=>{ drawMatch(); done(); });
+  FX.run(ev,b=>{ drawMatch(null,b); return document.querySelector(".board"); },()=>{ drawMatch(); done(); },pre);
 }
 // 自分の番：置いた札と場所を知らせてから、盤に置く（相手の端末でも、同じ順に同じことが起きる）
 function myPlay(hi,cell){
@@ -353,10 +353,10 @@ function pump(){
 function apply(side,hi,cid,cell,quiet){
   M.G.h[side]=M.G.h[side].slice(); M.G.h[side][hi]=cid; M.k++; M.log.push([side,hi,cid,cell]); keep();
   if(quiet){ play(M.G,side,hi,cid?cell:cell,null,true); return; }
-  const ev=[]; play(M.G,side,hi,cell,ev,true);
+  const ev=[], pre=M.G.b; play(M.G,side,hi,cell,ev,true);
   animate(ev,()=>{ M.busy=false; const nx=1-side;
     if(M.G.b.every(x=>x)||!M.G.h[nx].some(x=>x)){ setTimeout(()=>{ M.over=true; keep(); drawResult(); },500); return; }
-    M.turn=nx; drawMatch(); pump(); });
+    M.turn=nx; drawMatch(); pump(); },pre);
 }
 function drawResult(){
   drawMatch(); const me=R.side, a=score(M.G,me), b=score(M.G,1-me), win=a>b, draw=a===b;

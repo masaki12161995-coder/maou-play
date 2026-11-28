@@ -33,12 +33,9 @@ function eff(cid,cell,G,side,real,info){
   if(q.includes("gamble")){ n=n.map(v=>cl(v+(real?1+Math.floor((typeof RULE_RNG==="function"?RULE_RNG:Math.random)()*4):2))); if(info) info.push(["gamble",0]); } // 友だち対戦では、両方の端末で同じ目が出るよう、そろえた乱数を使う
   return n;
 }
-// 守護：隣の味方の数だけ＋1
-function val(G,cell,i){
-  const c=G.b[cell]; let v=c.n[i];
-  for(const [t] of adj(cell)){ const w=G.b[t]; if(w&&w.o===c.o&&has(w,"ward")) v++; }
-  return v;
-}
+// 守護：となりにいる「守護」の味方1枚ごとに＋1（盤にいる間ずっと。盤の数字の表示もこの数で出す）
+function wb(G,cell,o){ let v=0; for(const [t] of adj(cell)){ const w=G.b[t]; if(w&&w.o===o&&has(w,"ward")) v++; } return v; }
+function val(G,cell,i){ const c=G.b[cell]; return c.n[i]+wb(G,cell,c.o); }
 function setc(G,t,o){ G.b[t]=o; }
 // 起きたことの記録。演出のために、その時の盤の写しを添える（ev が無いとき＝先読みでは、何もしない）
 function E(ev,G,o){ if(ev){ o.snap=G.b.slice(); ev.push(o); } }
@@ -75,21 +72,23 @@ function attack(G,cell,side,ev,lv,tie){
 function countFlips(G,cell,side,n,tie,rev){
   let k=0;
   for(const [t,mi,ti] of adj(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
-    const d=val(G,t,ti), a=n[mi]; if(rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d))) k++; }
+    const d=val(G,t,ti), a=n[mi]+wb(G,cell,side); if(rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d))) k++; }
   return k;
 }
 function play(G,side,hi,cell,ev,real){
   G.b=G.b.slice(); G.h=[G.h[0],G.h[1]]; G.lost=(G.lost||[0,0]).slice();
   // 自分の番の始め：執念で戻る札
   G.b.forEach((c,t)=>{ if(c&&c.rb===side&&c.o!==side){ setc(G,t,{...c,o:side,rb:undefined,rv:false}); E(ev,G,{t:"back",cell:t,side,lv:0}); } });
-  // 相手の成長する札が育つ
-  G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"grow")&&(c.gr||0)<3){ setc(G,t,{...c,n:c.n.map(v=>cl(v+1)),gr:(c.gr||0)+1}); E(ev,G,{t:"grow",cell:t,lv:0}); } });
+  // 相手の成長する札：こちらが札を置いたあと（勝負の前）に育つ
+  const grows=[]; G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"grow")&&(c.gr||0)<3) grows.push(t); });
+  const grown=c=>({...c,n:c.n.map(v=>cl(v+1)),gr:(c.gr||0)+1});
   const cid=G.h[side][hi]; G.h[side]=G.h[side].slice(); G.h[side][hi]=null;
   const q=qs(cid), info=[]; let n=eff(cid,cell,G,side,real,info);
   const tie=q.includes("tie")||q.includes("king"), rev=q.includes("rev");
-  if(q.includes("turn")){ let best=n,bk=-1; for(let r=0;r<4;r++){ const m=[0,1,2,3].map(i=>n[(i-r+4)%4]); const k=countFlips(G,cell,side,m,tie,rev); if(k>bk){ bk=k; best=m; } } if(best!==n) info.push(["turn",0]); n=best; }
+  if(q.includes("turn")){ let best=n,bk=-1; for(let r=0;r<4;r++){ const m=[0,1,2,3].map(i=>n[(i-r+4)%4]); const k=countFlips(grows.length?{...G,b:G.b.map((c,t)=>grows.includes(t)?grown(c):c)}:G,cell,side,m,tie,rev); if(k>bk){ bk=k; best=m; } } if(best!==n) info.push(["turn",0]); n=best; }
   const pc={cid,o:side,n,q:q.slice(),g:q.includes("guard"),w:q.includes("wall")?n.map((v,i)=>v===Math.max(...n)?i:-1).filter(i=>i>=0):[],sp:q.includes("spite"),rv:q.includes("revive"),home:side};
   setc(G,cell,pc); E(ev,G,{t:"put",cell,side,info});
+  grows.forEach(t=>{ setc(G,t,grown(G.b[t])); E(ev,G,{t:"grow",cell:t,lv:0}); });
   // 置いたとき
   for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
     if(q.includes("cheer")&&tc.o===side){ setc(G,t,{...tc,n:tc.n.map(v=>cl(v+1))}); E(ev,G,{t:"buff",q:"cheer",cell:t,from:cell,lv:1}); }
@@ -99,7 +98,7 @@ function play(G,side,hi,cell,ev,real){
   let flipped=[];
   // 同数・合計
   if(q.includes("same")||q.includes("plus")){
-    const ns=adj(cell).filter(([t])=>G.b[t]&&G.b[t].o!==side).map(([t,mi,ti])=>({t,a:G.b[cell].n[mi],d:val(G,t,ti),ti}));
+    const ns=adj(cell).filter(([t])=>G.b[t]&&G.b[t].o!==side).map(([t,mi,ti])=>({t,a:val(G,cell,mi),d:val(G,t,ti),ti}));
     const hit=new Set();
     const how={};
     if(q.includes("same")){ const s=ns.filter(x=>x.a===x.d); if(s.length>=2) s.forEach(x=>{ hit.add(x.t); how[x.t]="same"; }); }
@@ -110,7 +109,7 @@ function play(G,side,hi,cell,ev,real){
   flipped=flipped.concat(attack(G,cell,side,ev,1,tie));
   // 斜め打ち
   if(q.includes("diag")&&G.b[cell].o===side){ for(const t of diag(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
-    const a=Math.max(...G.b[cell].n), d=Math.min(...tc.n); if(a>d||(tie&&a===d)){ E(ev,G,{t:"duel",cell:t,from:cell,a,d,lv:1,how:"diag",mi:G.b[cell].n.indexOf(a),ti:tc.n.indexOf(d)}); if(flipOne(G,t,side,cell,ev,1)) flipped.push(t); } } }
+    const av=[0,1,2,3].map(k=>val(G,cell,k)), dv=[0,1,2,3].map(k=>val(G,t,k)), a=Math.max(...av), d=Math.min(...dv); if(a>d||(tie&&a===d)){ E(ev,G,{t:"duel",cell:t,from:cell,a,d,lv:1,how:"diag",mi:av.indexOf(a),ti:dv.indexOf(d)}); if(flipOne(G,t,side,cell,ev,1)) flipped.push(t); } } }
   // 連鎖・王威（連鎖で取った札は、その札自身のくせで勝負する。置いた札の同点勝は引き継がない）
   if(q.includes("chain")||q.includes("king")) flipped.slice().forEach(fc=>{ if(G.b[fc].o===side) flipped=flipped.concat(attack(G,fc,side,ev,2,has(G.b[fc],"tie")||has(G.b[fc],"king"))); });
   // 吸収

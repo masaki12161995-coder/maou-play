@@ -61,21 +61,26 @@ function cmp(bd,a,b,html){ const ca=bd.querySelectorAll(".cell")[a], cb=bd.query
   if(Math.abs(ra.top-rb.top)<4) y-=ra.height*0.3;          // 横どうし：数字は真ん中の高さにあるので、少し上に
   else if(Math.abs(ra.left-rb.left)<4) x+=ra.width*0.3;     // 縦どうし：数字は真ん中にあるので、少し右に
   e.style.left=x+"px"; e.style.top=y+"px"; bd.appendChild(e); }
-// 守護：となりの味方のおかげで上がった数字は、その場で数字を書きかえて「守護＋1」と見せる
-function ward(bd,i,k,v,snap){ const c=card(bd,i), s=snap&&snap[i]; if(!c||!s||k==null) return; const up=v-s.n[k]; if(up<=0) return;
-  const n=c.querySelectorAll(".n")[k]; if(n){ n.textContent=String(v); bumpN(n,k,1); } lab(bd,i,QN("ward")); }
+// 守護：ひとつ前の場面とくらべて、守護で上がった（下がった）札の数字を光らせる。上がったときは、守護の札に名前を出す
+// skip：自分で置いた札（重ねたときの予告で、もう見せている）
+function wardDiff(bd,a,b,skip){ if(!a||!b||typeof wb!=="function") return; const A={b:a}, B={b:b}, named=new Set();
+  b.forEach((c,i)=>{ if(!c||(i===skip&&!a[i])) return; const nw=wb(B,i,c.o), ow=a[i]&&a[i].cid===c.cid?wb(A,i,a[i].o):0; if(nw===ow) return;
+    bump(bd,i,nw>ow?1:-1); if(nw>ow) adj(i).forEach(([t])=>{ const w=b[t]; if(w&&w.o===c.o&&has(w,"ward")&&!named.has(t)){ named.add(t); lab(bd,t,QN("ward")); } }); }); }
 function bonusText(info){ // 置いたときに出たくせの名前だけ（上がった分は数字の↑で見せる）
   return (info||[]).map(([k])=>k==="turn"?"回転":QN(k)).join("　"); }
 
-window.FX={ css:style, bumpN, run(ev,render,done){
+window.FX={ css:style, bumpN, run(ev,render,done,pre0){
   style();
   const beats=[];
-  const pre=ev.filter(e=>e.lv===0&&(e.t==="back"||e.t==="grow"));
+  const pre=ev.filter(e=>e.lv===0&&e.t==="back");
   if(pre.length) beats.push({snap:pre[pre.length-1].snap,wait:700,go(bd){ QS(pre.some(e=>e.t==="back")?"flip":"up"); pre.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add(e.t==="back"?"fin":"fxpop"); lab(bd,e.cell,e.t==="back"?QN("revive"):QN("grow")); if(e.t==="grow") bump(bd,e.cell,1); }); }});
   const put=ev.find(e=>e.t==="put");
   // 自分で置いた札の、置く前から見えていた上がり方（怒りは手札で、角取り・群れなどは重ねたときに見せている）は、置いたときにもう一度は言わない。相手の札・博打・回転は言う
   const SEEN=["corner","center","edge","lone","pack","early","late","under","rage","kin"];
   if(put){ const mine=window.FX_ME!==undefined&&put.side===window.FX_ME, shown=(put.info||[]).filter(([k])=>!(mine&&SEEN.includes(k))), bt=bonusText(shown); beats.push({snap:put.snap,wait:bt?750:360,go(bd){ SE("put"); if(bt) setTimeout(()=>QS("up"),120); const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(bt) c.classList.add("fxglow"); } lab(bd,put.cell,bt); if(shown.some(([k])=>k!=="turn")) bump(bd,put.cell,1); }}); }
+  // 成長：相手が札を置いたので、こちらの成長の札が育つ
+  const gr=ev.filter(e=>e.t==="grow");
+  if(gr.length) beats.push({snap:gr[gr.length-1].snap,wait:700,go(bd){ QS("up"); gr.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fxpop"); lab(bd,e.cell,QN("grow")); bump(bd,e.cell,1); }); }});
   // 置いたときのくせ（励まし・威圧・封印）
   const on=ev.filter(e=>e.lv===1&&(e.t==="buff"||e.t==="debuff"||e.t==="seal"));
   if(on.length) beats.push({snap:on[on.length-1].snap,wait:750,go(bd){ QS(on.some(e=>e.t==="seal")?null:on[0].t==="buff"?"up":"down"); const src=on[0].from; const c=card(bd,src); if(c) c.classList.add("fxglow"); lab(bd,src,QN(on[0].q));
@@ -92,9 +97,8 @@ window.FX={ css:style, bumpN, run(ev,render,done){
     beats.push({snap:s0,wait:duels.length?760:560,go(bd){
       // 取れなかった組：こちらの数字を灰色にするだけ（札は浮かせない）
       if(!duels.length) SE("miss");
-      miss.forEach(d=>{ ward(bd,d.from,d.mi,d.a,d.snap); ward(bd,d.cell,d.ti,d.d,d.snap); hit(bd,d.from,d.mi,"miss"); });
+      miss.forEach(d=>{ hit(bd,d.from,d.mi,"miss"); });
       duels.forEach(d=>{ const a=card(bd,d.from), t=card(bd,d.cell); if(a) a.classList.add("lift"); if(t) t.classList.add("lift");
-        if(d.how!=="diag"){ ward(bd,d.from,d.mi,d.a,d.snap); ward(bd,d.cell,d.ti,d.d,d.snap); }
         if(d.how==="same"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); }          // 同数：同じ数字どうしが光るだけ（見れば同じと分かる）
         else if(d.how==="plus"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); lab(bd,d.cell,`${d.a}＋${d.d}＝${d.a+d.d}`); }
         else { hit(bd,d.from,d.mi,"hit","up"); hit(bd,d.cell,d.ti,"lose","dn"); } });
@@ -110,9 +114,10 @@ window.FX={ css:style, bumpN, run(ev,render,done){
   }
   const dr=ev.find(e=>e.t==="buff"&&e.q==="drain");
   if(dr) beats.push({snap:dr.snap,wait:650,go(bd){ QS("up"); const c=card(bd,dr.cell); if(c){ c.classList.add("fxpop","fxglow"); } lab(bd,dr.cell,QN("drain")); bump(bd,dr.cell,1); }});
-  let i=0, bd=null;
+  let i=0, bd=null, last=pre0;
+  const mine=put&&window.FX_ME!==undefined&&put.side===window.FX_ME?put.cell:-1;
   const next=()=>{ if(i>=beats.length){ done(); return; } const b=beats[i++];
-    bd=render(b.snap); b.go(bd);
+    bd=render(b.snap); wardDiff(bd,last,b.snap,mine); last=b.snap; b.go(bd);
     setTimeout(()=>{ if(b.out){ b.out(bd); setTimeout(next,180); } else next(); },b.wait); };
   next();
 }};
