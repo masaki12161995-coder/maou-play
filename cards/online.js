@@ -74,7 +74,7 @@ function dragOrTap(d,cid,canDrag,onDrop){
   d.classList.add("drag");
   d.addEventListener("pointerdown",e=>{
     e.preventDefault();
-    const sx=e.clientX, sy=e.clientY; let ghost=null, over=null, ox=0, oy=0;
+    const sx=e.clientX, sy=e.clientY; let ghost=null, over=null, ox=0, oy=0, pvAt=undefined;
     const clearHov=()=>document.querySelectorAll(".cell.hov,.cell.can").forEach(c=>c.classList.remove("hov","can"));
     const move=ev=>{
       if(!ghost){ if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<8||!canDrag()) return;
@@ -87,6 +87,7 @@ function dragOrTap(d,cid,canDrag,onDrop){
       const t=document.elementFromPoint(ev.clientX,ev.clientY), cell=t&&t.closest(".cell");
       document.querySelectorAll(".cell.hov").forEach(c=>c.classList.remove("hov"));
       over=cell&&!cell.firstChild?+cell.dataset.i:null; if(over!==null) cell.classList.add("hov");
+      if(over!==pvAt){ pvAt=over; showPv(ghost,cid,over); }
     };
     const up=ev=>{ removeEventListener("pointermove",move); removeEventListener("pointerup",up); removeEventListener("pointercancel",up);
       if(ghost){ ghost.remove(); d.style.opacity=""; clearHov(); if(over!==null&&ev.type==="pointerup") onDrop(over); return; }
@@ -127,6 +128,15 @@ function keep(){ try{ if(R&&R.cpu) return; if(!R){ const k=localStorage.getItem(
   localStorage.setItem(k,JSON.stringify({room:R.room,host:R.host,side:R.side,peer:R.peer,game:R.game,seed:R.seed,first:R.first,again:R.again,
     m:M?{game:M.game,mine:M.mine,redrawn:M.redrawn,meReady:M.meReady,opReady:M.opReady,log:M.log||[],over:M.over}:null,t:Date.now()})); }catch(_){} }
 function restore(key){ try{ const d=JSON.parse(localStorage.getItem(key||localStorage.getItem(SAVE+"last"))); if(!d||Date.now()-d.t>40*60*1000) return null; return d; }catch(_){ return null; } }
+
+// 札を持ってマスの上に重ねたら、そこに置いたときの数字を、持っている札の上に見せる（角取り・群れ・逆境などで変わる数字）
+function showPv(ghost,cid,cell){
+  const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?Math.min(3,(M&&M.G&&M.G.lost||[0,0])[me]):0;
+  let n=base.map(v=>cl(v+rg)), tag="";
+  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); tag=info.filter(([k,v])=>v).map(([k,v])=>`${QK[k].nm}＋${v}`).join(" "); }
+  ghost.querySelectorAll(".n").forEach((e,i)=>{ e.innerHTML=N(n[i]); e.classList.toggle("pv",n[i]>base[i]); });
+  let t=ghost.querySelector(".pvtag"); if(!t){ t=el("div","pvtag"); ghost.appendChild(t); } t.textContent=tag; t.style.display=tag?"":"none";
+}
 
 // ---------- 部屋 ----------
 // R：部屋の様子。host＝部屋を作った人（盤では0の側）。G：盤と手札（0＝部屋を作った人、1＝入った人）
@@ -286,9 +296,9 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   const tb=el("div","turnbar "+(M.turn===me?"me":"op"),M.turn<0?"":M.turn===me?"こちらの番":"相手の番"); if(M.turn!==me&&M.turn>=0) tb.classList.add("dots3"); s.appendChild(tb);
   const mr=el("div","row"); mr.style.minHeight="96px";
   const canGo=()=>M&&M.G&&!M.busy&&!M.over&&M.turn===me;
-  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const c=cardEl(cid,"me",64,84); if(canGo()) c.classList.add("ready");
+  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):Math.min(3,(G.lost||[0,0])[me])):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ c.querySelectorAll(".n").forEach(x=>x.classList.add("rg")); if(rg>(M.rageSeen||0)){ c.classList.add("fxpop"); const t=el("div","fxlab","怒り＋"+rg); c.appendChild(t); setTimeout(()=>t.remove(),1100); } } if(canGo()) c.classList.add("ready");
     dragOrTap(c,cid,canGo,cell=>{ if(canGo()&&!M.G.b[cell]&&M.G.h[me][i]===cid) myPlay(i,cell); }); mr.appendChild(c); });
-  s.appendChild(mr);
+  s.appendChild(mr); if(!bo) M.rageSeen=Math.min(3,(G.lost||[0,0])[me]);   // 怒り：手札にあるうちから、上がった数字を見せる
   const bt=el("div","score"); bt.appendChild(el("div","lbl",R.cpu?"CPU・"+CPU_LV[R.lv]:"友だち対戦")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,me)}</b>`)); s.appendChild(bt);
 }
 const EVNM={chainx:"連鎖！",combo:"合計！",seal:"封印",curse:"祟り！",spite:"道連れ！",back:"執念で戻った！",grow:"成長",turn:"回転",debuff:"威圧"};
