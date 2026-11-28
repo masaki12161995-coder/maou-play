@@ -887,7 +887,7 @@ async function totoLesson() {
 T.toto = async () => {
   if (S() < 18) return;
   if (!F().cardsOk) { await talk(`トト：そうこなくちゃ。まずは賭けなしの練習だ。`); return totoLesson(); }
-  if (await UI.choose("トト", "いつでもおいで。わしはここで絵を描いとる。", ["札勝負をする", "やめる"]) === 0) await UI.cards("duel", 0);
+  const t = await UI.choose("トト", "いつでもおいで。わしはここで絵を描いとる。", ["札勝負をする", "札を買う", "やめる"]); if (t === 0) await UI.cards("duel", 0); else if (t === 1) await UI.cards("shop");
 };
 T.bela = async () => {
   if (S() < 18) return;
@@ -1699,7 +1699,7 @@ T.niko = async () => {
 };
 T.kyaku = () => talk(`酒場の客：印がなけりゃ東へは行けん。印は城の記録の間だ。`);
 T.totoL = async () => {
-  if (await UI.choose("トト", "古い道は、まっすぐなのさ。", ["札勝負をする", "やめる"]) === 0) await UI.cards("duel", 0);
+  const t = await UI.choose("トト", "古い道は、まっすぐなのさ。", ["札勝負をする", "札を買う", "やめる"]); if (t === 0) await UI.cards("duel", 0); else if (t === 1) await UI.cards("shop");
 };
 
 // ---------- 場面5　王都の裏通り ----------
@@ -3497,7 +3497,7 @@ T.c5s9b = async () => {
 };
 T.totoT = async () => {
   await talk(`トト：北の札はよく売れる。見たことのない魔物の札を欲しがるのさ。`);
-  if (await UI.choose("トト", "", ["札勝負をする", "やめる"]) === 0) await UI.cards("duel", 0);
+  const t = await UI.choose("トト", "", ["札勝負をする", "札を買う", "やめる"]); if (t === 0) await UI.cards("duel", 0); else if (t === 1) await UI.cards("shop");
 };
 T.bolts = async () => {
   await townTalk("toride", "ボルツ", 0);

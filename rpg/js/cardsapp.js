@@ -340,7 +340,8 @@ function collection(page){
   const s=screen(), per=25, pages=Math.max(1,Math.ceil(list.length/per)); page=Math.max(0,Math.min(pages-1,page));
   const have=Object.keys(S.col).length;
   const bar=el("div","bar"); const b=el("button","btn back","✕"); b.onclick=town;
-  bar.appendChild(el("div","title","札帳")); bar.appendChild(el("div","lbl",`持っている札 <b style="color:var(--gold)">${have}</b>種`)); bar.appendChild(b); s.appendChild(bar);
+  const sb=el("button","btn gold","札売り"); sb.style.cssText+="width:auto;padding:6px 10px;font-size:14px"; sb.onclick=shop;   // 札が減っても、ここで買い足せる
+  bar.appendChild(el("div","title","札帳")); bar.appendChild(el("div","lbl",`持っている札 <b style="color:var(--gold)">${have}</b>種`)); bar.appendChild(sb); bar.appendChild(b); s.appendChild(bar);
   const g=el("div","book");
   list.slice(page*per,(page+1)*per).forEach(id=>{
     const box=el("div","bk1");
@@ -511,9 +512,9 @@ function quickDeck(pool,cap){ // 上限の中で強い5枚（数字の合計の�
 }
 function weight(mine){ return rk(mine); }
 const KEEP=["w_iei","w_saomaou","w_shinin"]; // 物語でもらった形見の札：相手は狙わない（賭けで失わない）
-function oppPick(){ // 相手は、こちらの手札の一番いい札を狙う
+function oppPick(){ // 相手も、こちらと同じく伏せた札から1枚をでたらめに選ぶ（勝負が始まるまで見せない）
   if(P.loan||PRACTICE) return null;
-  const c=P.mine.filter(x=>!KEEP.includes(x)); return (c.length?c:P.mine).slice().sort(byCard)[0];
+  const c=P.mine.filter(x=>!KEEP.includes(x)), a=c.length?c:P.mine; return a[Math.floor(Math.random()*a.length)];
 }
 function miniOrEmpty(cid,owner,lab,cls){
   const box=el("div",""); box.style.cssText="display:flex;flex-direction:column;align-items:center;gap:3px;width:64px";
@@ -538,12 +539,11 @@ function drawPrep(){
     or.appendChild(slot); return slot; });
   op.appendChild(or); s.appendChild(op);
   // 賭け
-  const pick=oppPick();
   const vs=el("div","vsband");
   const lb=el("div",""); lb.style.cssText="display:flex;flex-direction:column;align-items:center;gap:3px;width:64px"; lb.appendChild(el("div","lbl","指名")); const q=backEl(40,52); q.querySelector(".bk").innerHTML="<b>？</b>"; lb.appendChild(q); vs.appendChild(lb);
   const mlab=()=>vs.querySelector(".vsmid .lbl");
-  const mid=el("div","vsmid"); mid.innerHTML=`<div class="vs">VS</div><div class="lbl">${P.loan?"貸し札の練習":PRACTICE?"賭けなしの練習":"勝った方が受け取る"}</div>`; vs.appendChild(mid);
-  vs.appendChild(miniOrEmpty(P.loan||PRACTICE?null:pick,"me","狙われる","danger"));
+  const mid=el("div","vsmid"); mid.innerHTML=`<div class="vs">VS</div><div class="lbl">${P.loan?"貸し札：勝てば受け取る":PRACTICE?"賭けなしの練習":"勝った方が受け取る"}</div>`; vs.appendChild(mid);
+  if(P.loan||PRACTICE) vs.appendChild(miniOrEmpty(null,"me","")); else { const rb=el("div",""); rb.style.cssText="display:flex;flex-direction:column;align-items:center;gap:3px;width:64px"; rb.appendChild(el("div","lbl","相手の指名")); const q2=backEl(40,52); q2.querySelector(".bk").innerHTML="<b>？</b>"; rb.appendChild(q2); vs.appendChild(rb); }
   s.appendChild(vs);
   // 自分の手札
   const me=el("div","panel me");
@@ -551,7 +551,7 @@ function drawPrep(){
   const mh=el("div","phead"); mh.appendChild(el("div","",`こちらの手札`));
   const meter=el("div","wmeter"); for(let i=0;i<o.cap;i++){ const d=el("i",""); if(i<r) d.className=r>o.cap?"over":"on"; meter.appendChild(d); } const wl=el("span","",`★${r}/${o.cap}`); meter.appendChild(wl); mh.appendChild(meter); me.appendChild(mh);
   const mr=el("div","row");
-  P.mine.forEach((cid,i)=>{ const c=cardEl(cid,"me",62,80); if(!P.loan&&cid===pick&&P.mine.indexOf(cid)===i) c.classList.add("danger"); c.onclick=()=>{ if(P.loan) return; P.mine.splice(i,1); drawPrep(); say(cid); }; mr.appendChild(c); });
+  P.mine.forEach((cid,i)=>{ const c=cardEl(cid,"me",62,80); c.onclick=()=>{ if(P.loan) return; P.mine.splice(i,1); drawPrep(); say(cid); }; mr.appendChild(c); });
   for(let i=P.mine.length;i<5;i++){ const e=el("div","slot"); mr.appendChild(e); }
   me.appendChild(mr); s.appendChild(me);
   // 手持ち
@@ -598,12 +598,17 @@ let M=null;
 function startMatch(){
   const k=P.k, first=Math.random()<0.5?0:1;
   M={k,G:{b:Array(9).fill(null),h:[P.mine.slice(),P.op.slice()],lost:[0,0]},turn:-1,sel:null,busy:true,
-     wager:(P.target===null||P.loan||PRACTICE)?null:{take:P.op[P.target],give:oppPick()},loan:P.loan,known:P.target};
+     wager:(P.target===null||PRACTICE)?null:{take:P.op[P.target],give:P.loan?null:oppPick()},loan:P.loan,known:P.target};   // 貸し札のときは、こちらは何も失わない
   drawMatch(); tossOnBoard(first);
 }
 function tossOnBoard(first){
   const bd=document.querySelector(".board"); const ov=el("div","toss");
   ov.innerHTML=`<div class="coinwrap"><div class="coin3d ${first?'red':'blue'}"><div class="cf blue">先</div><div class="cf red">後</div></div></div><div class="tosstx"></div>`;
+  if(M.wager&&M.wager.give){ // 勝負が始まってから、相手の指名を見せる
+    const nb=el("div",""); nb.style.cssText="display:flex;align-items:center;gap:8px;margin-top:10px;opacity:0;transition:opacity .4s";
+    nb.appendChild(el("div","lbl","相手の指名")); nb.appendChild(cardEl(M.wager.give,"me",46,60)); ov.appendChild(nb);
+    setTimeout(()=>{ nb.style.opacity="1"; },900);
+  }
   bd.appendChild(ov);
   setTimeout(()=>{ ov.querySelector(".tosstx").textContent=first===0?"こちらの先攻":"相手の先攻"; ov.classList.add("done"); },1500);
   setTimeout(()=>{ ov.remove(); M.turn=first; M.busy=false; drawMatch(); if(first===1) setTimeout(aiTurn,400); },2600);
@@ -634,7 +639,8 @@ function drawMatch(fx){
   s.appendChild(bd);
   const info=el("div","info2",M.sel!==null?desc(G.h[0][M.sel]):(M.turn===1?"相手が考えている…":"")); s.appendChild(info);
   const mr=el("div","row"); mr.style.minHeight="96px";
-  G.h[0].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const c=cardEl(cid,"me",64,84); if(M.sel===i) c.classList.add("sel"); if(M.wager&&base(cid)===M.wager.give) c.classList.add("danger");
+  const dz=M.wager&&M.wager.give?G.h[0].findIndex(x=>x&&base(x)===M.wager.give):-1; // 同じ札が2枚あっても、印は1枚だけ
+  G.h[0].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const c=cardEl(cid,"me",64,84); if(M.sel===i) c.classList.add("sel"); if(i===dz) c.classList.add("danger");
     c.onclick=()=>{ if(M.busy) return; M.sel=M.sel===i?null:i; drawMatch(); }; mr.appendChild(c); });
   s.appendChild(mr);
   const bt=el("div","score"); bt.appendChild(el("div","lbl",M.wager?"賭けの勝負":"賭けなし")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,0)}</b>`)); s.appendChild(bt);
@@ -670,7 +676,7 @@ function result(){
   let got=null,lost=null;
   if(M.wager&&!draw){
     if(win){ got=M.wager.take; const j=st.pool.indexOf(got); if(j>=0) st.pool.splice(j,1); S.col[got]=(S.col[got]||0)+1; S.seen[got]=1; }
-    else { lost=M.wager.give; if(S.col[lost]){ S.col[lost]--; if(!S.col[lost]) delete S.col[lost]; } st.pool.push(lost); }
+    else if(M.wager.give){ lost=M.wager.give; if(S.col[lost]){ S.col[lost]--; if(!S.col[lost]) delete S.col[lost]; } st.pool.push(lost); }
   }
   save();
   drawMatch();
@@ -694,17 +700,127 @@ function awards(){
   if(!due.length) return;
   const id=due[0]; S.gotL=S.gotL||{}; S.gotL[id]=1; gain(id); reveal(id,"限定の札！",()=>awards());
 }
-// 札売り：町の外で見かける魔物の★1の札
+// 札売り：5枚入りのパック（まぜ札）と、★1の1枚売り
+const GIFT_ONLY=["w_kinkoro","w_gonzo"]; // 景品や物語でだけもらえる札は、パックに入れない
+const PACK_PRICE=150, PACK_ODDS=[[1,50],[2,32],[3,13],[4,4.5],[5,0.5]];
+function packPool(){ // 物語でもう出会った魔物と人物の札（形見・限定・光る札は入らない）
+  const st=rpgStage();
+  return Object.keys(CARDS).filter(id=>{ const c=CARDS[id]; return (c.k==="魔物"||c.k==="人物")&&c.r>=1&&c.r<=5&&!c.glow&&!c.only&&!KEEP.includes(id)&&!GIFT_ONLY.includes(id)&&(LATE[id]||0)<=st; });
+}
+function rollPack(){ // 5枚。最後の1枚は★2以上
+  const by={}; packPool().forEach(id=>(by[CARDS[id].r]=by[CARDS[id].r]||[]).push(id));
+  const out=[];
+  for(let i=0;i<5;i++){
+    let r=1;
+    for(let t=0;t<40;t++){ let x=Math.random()*100; r=1; for(const [rr,w] of PACK_ODDS){ if((x-=w)<0){ r=rr; break; } } if(by[r]&&(i<4||r>=2)) break; r=i<4?1:2; }
+    const list=by[r]||by[1]; out.push(list[Math.floor(Math.random()*list.length)]);
+  }
+  return out;
+}
+let packCss=false;
+function packStyle(){ if(packCss) return; packCss=true; const st=document.createElement("style"); st.textContent=`
+.pack{position:relative;border-radius:8px;overflow:hidden;background:linear-gradient(155deg,#8e2a2a,#4a1420 55%,#2a0c16);box-shadow:0 0 0 2px #c79a52,0 0 0 4px #3a2418,0 6px 14px #0009;flex:none}
+.pack::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,#ffffff00 0 14px,#ffffff14 14px 18px);}
+.pack .shine{position:absolute;top:-40%;left:-60%;width:40%;height:180%;background:linear-gradient(90deg,#fff0,#fff6,#fff0);transform:rotate(20deg);animation:shine 2.6s ease-in-out infinite}
+.pack .seal{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:46%;aspect-ratio:1;border-radius:50%;background:radial-gradient(#f3d58a,#b88330);box-shadow:0 0 0 3px #6a4420,0 0 12px #f3d58a88;display:flex;align-items:center;justify-content:center;color:#5a3410;font-weight:900;letter-spacing:.05em}
+.pack .ptx{position:absolute;left:0;right:0;bottom:8%;text-align:center;color:#ffe9b8;font-weight:800;letter-spacing:.2em;text-shadow:0 1px 0 #000}
+.pack .crimp{position:absolute;left:0;right:0;height:7%;background:repeating-linear-gradient(90deg,#c79a52 0 4px,#8a6430 4px 8px)}
+@keyframes shine{0%,40%{left:-60%}100%{left:140%}}
+@keyframes wob{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 2px #c79a52,0 0 0 4px #3a2418,0 0 10px #f3d58a55}50%{box-shadow:0 0 0 2px #c79a52,0 0 0 4px #3a2418,0 0 26px #f3d58acc}}
+@keyframes tear{to{transform:translate(40px,-140px) rotate(28deg);opacity:0}}
+@keyframes sink{to{transform:translateY(90px) scale(.9);opacity:0}}
+@keyframes flyin{from{transform:translate(var(--fx),var(--fy)) scale(.4) rotate(var(--fr));opacity:0}to{transform:none;opacity:1}}
+@keyframes rays{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes ring{from{transform:translate(-50%,-50%) scale(.3);opacity:1}to{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
+@keyframes flash{from{opacity:.9}to{opacity:0}}
+@keyframes hint{0%,100%{box-shadow:0 0 0 2px #0000}50%{box-shadow:0 0 14px 3px var(--hc)}}
+@keyframes newtag{from{transform:translateX(-50%) scale(0)}70%{transform:translateX(-50%) scale(1.25)}to{transform:translateX(-50%) scale(1)}}
+.pslot{position:relative;flex:none}
+.pslot .back{animation:hint 1.1s ease-in-out infinite}
+.rays{position:absolute;left:50%;top:50%;width:190%;aspect-ratio:1;border-radius:50%;pointer-events:none;background:repeating-conic-gradient(var(--rc) 0 8deg,#0000 8deg 20deg);-webkit-mask:radial-gradient(#000 20%,#0000 70%);mask:radial-gradient(#000 20%,#0000 70%);animation:rays 6s linear infinite;z-index:0}
+.ring{position:absolute;left:50%;top:50%;width:100%;aspect-ratio:1;border-radius:50%;border:3px solid var(--rc);pointer-events:none;animation:ring .7s ease-out forwards;z-index:3}
+.newt{position:absolute;left:50%;top:-12px;transform:translateX(-50%);background:#ff5b5b;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:8px;z-index:4;animation:newtag .35s ease-out;white-space:nowrap}
+`; document.head.appendChild(st); }
+function packEl(w,h){ const d=el("div","pack"); d.style.width=w+"px"; d.style.height=h+"px";
+  d.innerHTML=`<div class="crimp" style="top:0"></div><div class="crimp" style="bottom:0"></div><div class="shine"></div><div class="seal" style="font-size:${Math.round(w*0.12)}px">心札</div><div class="ptx" style="font-size:${Math.max(10,Math.round(w*0.09))}px">五枚入り</div>`; return d; }
 function shop(){
+  packStyle();
   const s=screen();
   const bar=el("div","bar"); const b=el("button","btn back","✕"); b.onclick=town; bar.appendChild(el("div","title","札売り")); bar.appendChild(el("div","lbl",goldTag())); bar.appendChild(b); s.appendChild(bar);
-  const g=el("div",""); g.style.cssText="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;justify-items:center";
+  // パック
+  const pk=el("div","frame"); pk.style.cssText+="display:flex;align-items:center;gap:14px;padding:12px";
+  const pv=packEl(96,132); pk.appendChild(pv);
+  const pr=el("div",""); pr.style.cssText="flex:1;display:flex;flex-direction:column;gap:6px;align-items:flex-start";
+  pr.appendChild(el("div","nm","心札のパック")); pr.appendChild(el("div","sub","5枚入り。どれか1枚は★2より上"));
+  const bt=el("button","btn gold",`${PACK_PRICE}G`); bt.style.cssText+="font-size:16px;padding:8px 18px";
+  const buy=()=>{ if(rpgGold()<PACK_PRICE){ toast("お金が足りない"); return; } rpgGold(-PACK_PRICE); const got=rollPack(), was={}; got.forEach(id=>{ was[id]=S.col[id]||0; }); got.forEach(id=>gain(id)); packOpen(got,was); };
+  bt.onclick=buy; pv.onclick=buy; pr.appendChild(bt); pk.appendChild(pr); s.appendChild(pk);
+  // 1枚売り
+  s.appendChild(el("div","lbl","1枚売り"));
+  const g=el("div",""); g.style.cssText="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;justify-items:center";
   SHOP_CARDS.forEach(cid=>{ const w=el("div",""); w.style.cssText="display:flex;flex-direction:column;align-items:center;gap:4px";
-    const c=cardEl(cid,"nb",84,110); w.appendChild(c); w.appendChild(el("div","lbl",`${CARDS[cid].nm}　持っている${S.col[cid]||0}`));
-    const bt=el("button","btn gold",`${SHOP_PRICE}G`); bt.style.cssText+="font-size:14px;padding:6px 12px";
+    const c=cardEl(cid,"nb",60,78,{count:S.col[cid]||0}); w.appendChild(c);
+    const bt=el("button","btn gold",`${SHOP_PRICE}G`); bt.style.cssText+="font-size:13px;padding:4px 8px;width:auto";
     bt.onclick=()=>{ if(rpgGold()<SHOP_PRICE){ toast("お金が足りない"); return; } rpgGold(-SHOP_PRICE); gain(cid); shop(); toast(`${CARDS[cid].nm}の札を買った`); };
     w.appendChild(bt); g.appendChild(w); });
   s.appendChild(g);
+}
+// パックを開ける：袋をタップ→破れて5枚が飛び出す→1枚ずつタップでめくる（★の高い札は、めくる前から光る）
+function packOpen(got,was){
+  packStyle();
+  const s=screen();
+  const bar=el("div","bar"); bar.appendChild(el("div","title","心札のパック")); bar.appendChild(el("div","lbl",goldTag())); s.appendChild(bar);
+  const stage=el("div",""); stage.style.cssText="flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px";
+  s.appendChild(stage);
+  const flashEl=el("div",""); flashEl.style.cssText="position:absolute;inset:0;pointer-events:none;opacity:0;z-index:9"; s.appendChild(flashEl);
+  const flash=(col,ms)=>{ flashEl.style.background=col; flashEl.animate([{opacity:.9},{opacity:0}],{duration:ms,easing:"ease-out"}); };
+  const pw=Math.min(190,s.clientWidth*0.5), ph=Math.round(pw*1.38);
+  const pack=packEl(pw,ph); pack.style.animation="breathe 1.4s ease-in-out infinite"; stage.appendChild(pack);
+  let opened=false;
+  pack.onclick=()=>{ if(opened) return; opened=true; pack.style.animation="wob .12s linear 3";
+    setTimeout(()=>{ const top=el("div",""); top.style.cssText=`position:absolute;left:0;right:0;top:0;height:16%;background:inherit`;
+      flash("#fff3d0",380); pack.style.animation="sink .5s ease-in forwards";
+      const strip=el("div",""); const r=pack.getBoundingClientRect(), sr=s.getBoundingClientRect();
+      strip.style.cssText=`position:absolute;left:${r.left-sr.left}px;top:${r.top-sr.top}px;width:${r.width}px;height:${r.height*0.16}px;background:linear-gradient(155deg,#8e2a2a,#5a1a22);box-shadow:0 0 0 2px #c79a52;border-radius:8px 8px 2px 2px;animation:tear .6s ease-out forwards;z-index:8`;
+      s.appendChild(strip); setTimeout(()=>strip.remove(),650);
+      setTimeout(()=>{ pack.remove(); deal(); },420); },380);
+  };
+  function deal(){
+    const W=s.clientWidth-20, cw=Math.min(78,Math.floor((W-24)/5)), ch=Math.round(cw*1.3);
+    const row=el("div","row"); row.style.cssText+=`gap:6px;margin-top:22px`; stage.appendChild(row);
+    let left=got.length;
+    const summary=el("div",""); summary.style.cssText="min-height:52px;display:flex;flex-direction:column;align-items:center;gap:8px"; stage.appendChild(summary);
+    const big=el("div",""); big.style.cssText="min-height:200px;display:flex;align-items:center;justify-content:center;position:relative"; stage.insertBefore(big,row);
+    got.forEach((cid,i)=>{
+      const r=CARDS[cid].r, slot=el("div","pslot"); slot.style.cssText=`width:${cw}px;height:${ch}px`;
+      const bk=backEl(cw,ch); if(r>=3) bk.style.setProperty("--hc",RARE[r]); else bk.style.animation="none";
+      slot.appendChild(bk); row.appendChild(slot);
+      slot.animate([{transform:`translate(${(2-i)*30}px,-160px) scale(.4) rotate(${(i-2)*25}deg)`,opacity:0},{transform:"none",opacity:1}],{duration:420,delay:i*110,easing:"cubic-bezier(.2,.8,.3,1.2)",fill:"backwards"});
+      let done=false;
+      slot.onclick=()=>{ if(done) return; done=true;
+        bk.animate([{transform:"rotateY(0)"},{transform:"rotateY(90deg)"}],{duration:200,fill:"forwards"});
+        setTimeout(()=>{ slot.innerHTML=""; const c=cardEl(cid,"me",cw,ch); c.style.position="relative"; c.style.zIndex="2"; slot.appendChild(c);
+          c.animate([{transform:"rotateY(90deg)"},{transform:"rotateY(0) scale(1.15)"},{transform:"scale(1)"}],{duration:360});
+          if(!was[cid]){ const n=el("div","newt","NEW"); slot.appendChild(n); }
+          if(r>=3){ const rg=el("div","ring"); rg.style.setProperty("--rc",RARE[r]); slot.appendChild(rg); setTimeout(()=>rg.remove(),720); }
+          // 大きく見せる（★4以上は光の筋と、画面の光）
+          big.innerHTML=""; const bc=cardEl(cid,"me",130,170); bc.style.position="relative"; bc.style.zIndex="2";
+          if(r>=4){ const ry=el("div","rays"); ry.style.setProperty("--rc",r>=5?"#ffe08a88":"#c99af088"); big.appendChild(ry); flash(r>=5?"#fff2b0":"#e9d6ff",r>=5?900:600); if(r>=5) s.animate([{transform:"translate(0,0)"},{transform:"translate(-4px,2px)"},{transform:"translate(4px,-2px)"},{transform:"translate(0,0)"}],{duration:260,iterations:2}); }
+          big.appendChild(bc); bc.animate([{transform:"scale(.6)",opacity:0},{transform:"scale(1.08)",opacity:1},{transform:"scale(1)"}],{duration:420,easing:"ease-out"});
+          const nm=el("div","",`${CARDS[cid].nm}　<span style="color:${RARE[r]}">${"★".repeat(r)}</span>`); nm.style.cssText="position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:14px;font-weight:700;z-index:3"; big.appendChild(nm);
+          if(--left===0) setTimeout(finish,500);
+        },200);
+      };
+    });
+    function finish(){
+      const r2=el("div","row"); r2.style.gap="10px";
+      const a=el("button","btn gold",`もう1パック　${PACK_PRICE}G`); a.style.cssText+="width:auto;padding:10px 14px";
+      a.onclick=()=>{ if(rpgGold()<PACK_PRICE){ toast("お金が足りない"); return; } rpgGold(-PACK_PRICE); const g2=rollPack(), w2={}; g2.forEach(id=>{ w2[id]=S.col[id]||0; }); g2.forEach(id=>gain(id)); packOpen(g2,w2); };
+      const b=el("button","btn","もどる"); b.style.cssText+="width:auto;padding:10px 18px"; b.onclick=shop;
+      r2.appendChild(a); r2.appendChild(b); summary.appendChild(r2);
+    }
+  }
 }
 load();
 (()=>{ const q=new URLSearchParams(location.search), go=q.get("go"), k=+q.get("k");
