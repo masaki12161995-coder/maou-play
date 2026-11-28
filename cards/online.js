@@ -136,7 +136,7 @@ function clearPvn(){ document.querySelectorAll(".pvn").forEach(e=>e.remove()); d
 function showPv(ghost,cid,cell){
   const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?Math.min(3,(M&&M.G&&M.G.lost||[0,0])[me]):0;
   let n=base.map(v=>cl(v+rg)), tag="";
-  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); tag=info.filter(([k,v])=>v).map(([k,v])=>`${QK[k].nm}＋${v}`).join(" "); }
+  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); tag=info.filter(([k,v])=>v&&k!=="rage").map(([k,v])=>`${QK[k].nm}＋${v}`).join(" "); }
   ghost.querySelectorAll(".n").forEach((e,i)=>{ e.innerHTML=N(n[i]); e.classList.toggle("pv",n[i]>base[i]); });
   // 指で隠れて見えないので、となりのマスの、こちら寄りのふちにも、その辺の数字を薄く点滅させて見せる（盤の外を向く辺は出さない）
   clearPvn();
@@ -326,7 +326,8 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   const bt=el("div","score"); bt.appendChild(el("div","lbl",R.cpu?"CPU・"+CPU_LV[R.lv]:"友だち対戦")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,me)}</b>`)); s.appendChild(bt);
 }
 const EVNM={chainx:"連鎖！",combo:"合計！",seal:"封印",curse:"祟り！",spite:"道連れ！",back:"執念で戻った！",grow:"成長",turn:"回転",debuff:"威圧"};
-function animate(ev,done){ // 起きたことを、ひと場面ずつ見せる（fx.js）
+function animate(ev,done){
+  window.FX_ME=R?R.side:0;   // 演出で「自分の札」を見分けるため // 起きたことを、ひと場面ずつ見せる（fx.js）
   FX.run(ev,b=>{ drawMatch(null,b); return document.querySelector(".board"); },()=>{ drawMatch(); done(); });
 }
 // 自分の番：置いた札と場所を知らせてから、盤に置く（相手の端末でも、同じ順に同じことが起きる）

@@ -62,7 +62,9 @@ window.FX={ run(ev,render,done){
   const pre=ev.filter(e=>e.lv===0&&(e.t==="back"||e.t==="grow"));
   if(pre.length) beats.push({snap:pre[pre.length-1].snap,wait:700,go(bd){ QS(pre.some(e=>e.t==="back")?"flip":"up"); pre.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add(e.t==="back"?"fin":"fxpop"); lab(bd,e.cell,e.t==="back"?QN("revive"):`${QN("grow")}＋1`); }); }});
   const put=ev.find(e=>e.t==="put");
-  if(put){ const bt=bonusText(put.info); beats.push({snap:put.snap,wait:bt?750:360,go(bd){ SE("put"); if(bt) setTimeout(()=>QS("up"),120); const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(bt) c.classList.add("fxglow"); } lab(bd,put.cell,bt); }}); }
+  // 自分で置いた札の、置く前から見えていた上がり方（怒りは手札で、角取り・群れなどは重ねたときに見せている）は、置いたときにもう一度は言わない。相手の札・博打・回転は言う
+  const SEEN=["corner","center","edge","lone","pack","early","late","under","rage","kin"];
+  if(put){ const mine=window.FX_ME!==undefined&&put.side===window.FX_ME, bt=bonusText((put.info||[]).filter(([k])=>!(mine&&SEEN.includes(k)))); beats.push({snap:put.snap,wait:bt?750:360,go(bd){ SE("put"); if(bt) setTimeout(()=>QS("up"),120); const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(bt) c.classList.add("fxglow"); } lab(bd,put.cell,bt); }}); }
   // 置いたときのくせ（励まし・威圧・封印）
   const on=ev.filter(e=>e.lv===1&&(e.t==="buff"||e.t==="debuff"||e.t==="seal"));
   if(on.length) beats.push({snap:on[on.length-1].snap,wait:750,go(bd){ QS(on.some(e=>e.t==="seal")?null:on[0].t==="buff"?"up":"down"); const src=on[0].from; const c=card(bd,src); if(c) c.classList.add("fxglow"); lab(bd,src,QN(on[0].q));
