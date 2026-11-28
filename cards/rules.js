@@ -111,8 +111,8 @@ function play(G,side,hi,cell,ev,real){
   // 斜め打ち
   if(q.includes("diag")&&G.b[cell].o===side){ for(const t of diag(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
     const a=Math.max(...G.b[cell].n), d=Math.min(...tc.n); if(a>d||(tie&&a===d)){ E(ev,G,{t:"duel",cell:t,from:cell,a,d,lv:1,how:"diag",mi:G.b[cell].n.indexOf(a),ti:tc.n.indexOf(d)}); if(flipOne(G,t,side,cell,ev,1)) flipped.push(t); } } }
-  // 連鎖・王威
-  if(q.includes("chain")||q.includes("king")) flipped.slice().forEach(fc=>{ if(G.b[fc].o===side) flipped=flipped.concat(attack(G,fc,side,ev,2,tie)); });
+  // 連鎖・王威（連鎖で取った札は、その札自身のくせで勝負する。置いた札の同点勝は引き継がない）
+  if(q.includes("chain")||q.includes("king")) flipped.slice().forEach(fc=>{ if(G.b[fc].o===side) flipped=flipped.concat(attack(G,fc,side,ev,2,has(G.b[fc],"tie")||has(G.b[fc],"king"))); });
   // 吸収
   if(q.includes("drain")&&flipped.length&&G.b[cell].o===side){ setc(G,cell,{...G.b[cell],n:G.b[cell].n.map(v=>cl(v+flipped.length))}); E(ev,G,{t:"buff",q:"drain",v:flipped.length,cell,lv:3}); }
   return flipped.length;
