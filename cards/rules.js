@@ -4,7 +4,7 @@
 const NB=[[-1,0,0,2],[0,1,1,3],[1,0,2,0],[0,-1,3,1]]; // [dy,dx,自分の辺,相手の辺]  上・右・下・左
 const DG=[[-1,-1],[-1,1],[1,-1],[1,1]];
 const CORNER=[0,2,6,8];
-const cl=v=>Math.max(1,Math.min(10,v));
+const cl=v=>Math.max(1,v);   // 数字は1より下がらない（上は10を超えてもよい）
 function qs(cid){ const q=CARDS[cid].q; return q?q:[]; }
 function has(x,q){ return (x.q||[]).includes(q); }
 function adj(cell){ const y=Math.floor(cell/3),x=cell%3,o=[]; for(const [dy,dx,mi,ti] of NB){ const ny=y+dy,nx=x+dx; if(ny<0||ny>2||nx<0||nx>2) continue; o.push([ny*3+nx,mi,ti]); } return o; }
@@ -35,7 +35,7 @@ function eff(cid,cell,G,side,real,info){
 }
 // 守護：となりにいる「守護」の味方1枚ごとに＋1（盤にいる間ずっと。盤の数字の表示もこの数で出す）
 function wb(G,cell,o){ let v=0; for(const [t] of adj(cell)){ const w=G.b[t]; if(w&&w.o===o&&has(w,"ward")) v++; } return v; }
-function val(G,cell,i){ const c=G.b[cell]; return Math.min(10,c.n[i]+wb(G,cell,c.o)); }   // 数字は10まで
+function val(G,cell,i){ const c=G.b[cell]; return c.n[i]+wb(G,cell,c.o); }
 function setc(G,t,o){ G.b[t]=o; }
 // 起きたことの記録。演出のために、その時の盤の写しを添える（ev が無いとき＝先読みでは、何もしない）
 function E(ev,G,o){ if(ev){ o.snap=G.b.slice(); ev.push(o); } }
@@ -72,7 +72,7 @@ function attack(G,cell,side,ev,lv,tie,tag){
 function countFlips(G,cell,side,n,tie,rev){
   let k=0;
   for(const [t,mi,ti] of adj(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
-    const d=val(G,t,ti), a=Math.min(10,n[mi]+wb(G,cell,side)); if(rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d))) k++; }
+    const d=val(G,t,ti), a=n[mi]+wb(G,cell,side); if(rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d))) k++; }
   return k;
 }
 function play(G,side,hi,cell,ev,real){
@@ -114,8 +114,8 @@ function play(G,side,hi,cell,ev,real){
   if(q.includes("drain")&&flipped.length&&G.b[cell].o===side){ setc(G,cell,{...G.b[cell],n:G.b[cell].n.map(v=>cl(v+flipped.length))}); E(ev,G,{t:"buff",q:"drain",v:flipped.length,cell,lv:3}); }
   // 成長：相手（こちら）が札を置いたので、相手の成長の札が育つ（勝負が全部終わってから）
   G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"grow")&&(c.gr||0)<3){ setc(G,t,{...c,n:c.n.map(v=>cl(v+1)),gr:(c.gr||0)+1}); E(ev,G,{t:"grow",cell:t,lv:5}); } });
-  // 執念：次は相手の番。相手の札で、こちらに取られていたものが戻る（盤が埋まって終わるときは、もう番が来ないので戻らない）
-  if(G.b.some(x=>!x)) G.b.forEach((c,t)=>{ if(c&&c.rb===1-side&&c.o===side){ setc(G,t,{...c,o:1-side,rb:undefined,rv:false}); E(ev,G,{t:"back",cell:t,side:1-side,lv:5}); } });
+  // 執念（戻ってきたら、数字が全部＋1）：次は相手の番。相手の札で、こちらに取られていたものが戻る（盤が埋まって終わるときは、もう番が来ないので戻らない）
+  if(G.b.some(x=>!x)) G.b.forEach((c,t)=>{ if(c&&c.rb===1-side&&c.o===side){ setc(G,t,{...c,o:1-side,rb:undefined,rv:false,n:c.n.map(v=>v+1)}); E(ev,G,{t:"back",cell:t,side:1-side,lv:5}); } });
   return flipped.length;
 }
 

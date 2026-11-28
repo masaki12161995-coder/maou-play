@@ -125,7 +125,7 @@ window.FX={ css:style, bumpN, run(ev,render,done,pre0){
   const gr=ev.filter(e=>e.t==="grow");
   if(gr.length) beats.push({snap:gr[gr.length-1].snap,wait:700,go(bd){ QS("up"); gr.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fxpop"); lab(bd,e.cell,QN("grow")); bump(bd,e.cell,1); }); }});
   const bk=ev.filter(e=>e.t==="back");
-  if(bk.length) beats.push({snap:bk[bk.length-1].snap,wait:700,go(bd){ QS("flip"); bk.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fin"); lab(bd,e.cell,QN("revive")); }); }});
+  if(bk.length) beats.push({snap:bk[bk.length-1].snap,wait:700,go(bd){ QS("flip"); bk.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add("fin"); lab(bd,e.cell,QN("revive")); bump(bd,e.cell,1); }); }});
   let i=0, bd=null, last=pre0;
   const mine=put&&window.FX_ME!==undefined&&put.side===window.FX_ME?put.cell:-1;
   const next=()=>{ if(i>=beats.length){ done(); return; } const b=beats[i++];

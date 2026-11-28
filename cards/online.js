@@ -13,7 +13,7 @@ const ME_ID=Math.random().toString(36).slice(2,10);
 if(/iPhone|iPad/.test(navigator.userAgent)&&!navigator.standalone) document.documentElement.style.setProperty("--padb","78px");
 // ---------- 小さな道具 ----------
 const $app=document.getElementById("app");
-const N=v=>v>=10?`<span style="letter-spacing:-.08em">10</span>`:String(v); // 10は「10」と書く
+const N=v=>v>=10?`<span style="letter-spacing:-.08em">${v}</span>`:String(v); // 2けたの数字は字間をつめる
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
 function screen(){ $app.innerHTML=""; const s=el("div","screen"); $app.appendChild(s); return s; }
 function toast(t){ const e=el("div","toast"); e.textContent=t; (document.querySelector(".screen")||document.body).appendChild(e); setTimeout(()=>e.remove(),1300); }
@@ -137,7 +137,7 @@ function showPv(ghost,cid,cell){
   const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?(M&&M.G&&M.G.lost||[0,0])[me]:0;
   if(window.FX&&FX.css) FX.css();
   const hand=base.map(v=>cl(v+rg)); let n=hand.slice(), tag="";
-  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); const w=wb(M.G,cell,me); if(w){ n=n.map(v=>Math.min(10,v+w)); info.push(["ward",w]); }
+  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); const w=wb(M.G,cell,me); if(w){ n=n.map(v=>v+w); info.push(["ward",w]); }
     if((CARDS[cid].q||[]).includes("turn")){ const q=CARDS[cid].q, tie=q.includes("tie")||q.includes("king"), rev=q.includes("rev"); let best=n,bk=-1,br=0; for(let r=0;r<4;r++){ const m=[0,1,2,3].map(i=>n[(i-r+4)%4]); const k=countFlips(M.G,cell,me,m.map(v=>v-w),tie,rev); if(k>bk){ bk=k; best=m; br=r; } } if(br){ n=best; info.push(["turn",1]); } }   // 回転：置いたときの向きで見せる
     tag=info.filter(([k,v])=>v&&k!=="rage").map(([k])=>QK[k].nm).join("　"); }
   ghost.querySelectorAll(".n").forEach((e,i)=>{ const up=n[i]>hand[i]; e.innerHTML=N(n[i])+(up?`<i class="fxar pva up k${i}">↑</i>`:""); e.classList.toggle("pv",up); });
@@ -318,7 +318,7 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   for(let i=0;i<9;i++){
     const ce=el("div","cell"); ce.style.width=D.cw+"px"; ce.style.height=D.ch+"px"; ce.dataset.i=i;
     const c=G.b[i];
-    if(c){ const full=CARDS[c.cid].q||[]; const e=cardEl(c.cid,c.o===me?"me":"op",D.cw-4,D.ch-4,{n:c.n.map(v=>Math.min(10,v+wb(G,i,c.o))),shield:c.g,q:full,sealed:full.length&&!c.q.length}); if(fx&&fx[i]) e.classList.add(fx[i]); e.onclick=()=>{ if(!EAT) detail(c.cid); }; ce.appendChild(e); }
+    if(c){ const full=CARDS[c.cid].q||[]; const e=cardEl(c.cid,c.o===me?"me":"op",D.cw-4,D.ch-4,{n:c.n.map(v=>v+wb(G,i,c.o)),shield:c.g,q:full,sealed:full.length&&!c.q.length}); if(fx&&fx[i]) e.classList.add(fx[i]); e.onclick=()=>{ if(!EAT) detail(c.cid); }; ce.appendChild(e); }
     bd.appendChild(ce);
   }
   s.appendChild(bd);
