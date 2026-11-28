@@ -56,15 +56,15 @@ function flipOne(G,t,side,from,ev,lv,dir){
   return true;
 }
 // となりと比べる
-function attack(G,cell,side,ev,lv,tie){
+function attack(G,cell,side,ev,lv,tie,tag){
   const out=[];
   for(const [t,mi,ti] of adj(cell)){
     const me=G.b[cell]; if(!me||me.o!==side) break;
     const tc=G.b[t]; if(!tc||tc.o===side) continue;
     const a=val(G,cell,mi), d=val(G,t,ti), rev=has(me,"rev");
     const win=rev?(a<d||(tie&&a===d)):(a>d||(tie&&a===d));
-    if(win){ E(ev,G,{t:"duel",cell:t,from:cell,mi,ti,a,d,lv,rev}); if(flipOne(G,t,side,cell,ev,lv,ti)) out.push(t); }
-    else E(ev,G,{t:"miss",cell:t,from:cell,mi,ti,a,d,lv});   // 取れなかった組（演出で ✗ を見せるだけ）
+    if(win){ E(ev,G,{t:"duel",cell:t,from:cell,mi,ti,a,d,lv,rev,tag}); if(flipOne(G,t,side,cell,ev,lv,ti)) out.push(t); }
+    else E(ev,G,{t:"miss",cell:t,from:cell,mi,ti,a,d,lv,tag});   // 取れなかった組（演出で ✗ を見せるだけ）
   }
   return out;
 }
@@ -91,7 +91,6 @@ function play(G,side,hi,cell,ev,real){
   grows.forEach(t=>{ setc(G,t,grown(G.b[t])); E(ev,G,{t:"grow",cell:t,lv:0}); });
   // 置いたとき
   for(const [t] of adj(cell)){ const tc=G.b[t]; if(!tc) continue;
-    if(q.includes("cheer")&&tc.o===side){ setc(G,t,{...tc,n:tc.n.map(v=>cl(v+1))}); E(ev,G,{t:"buff",q:"cheer",cell:t,from:cell,lv:1}); }
     if(q.includes("awe")&&tc.o!==side){ setc(G,t,{...G.b[t],n:G.b[t].n.map(v=>cl(v-1))}); E(ev,G,{t:"debuff",q:"awe",cell:t,from:cell,lv:1}); }
     if(q.includes("seal")&&tc.o!==side&&(G.b[t].q||[]).length){ setc(G,t,{...G.b[t],q:[],g:false,w:[],sp:false,rv:false,rb:undefined}); E(ev,G,{t:"seal",q:"seal",cell:t,from:cell,lv:1}); }
   }
@@ -107,6 +106,8 @@ function play(G,side,hi,cell,ev,real){
     for(const t of hit){ const x=byT[t], mi=(x.ti+2)%4; E(ev,G,{t:"duel",cell:t,from:cell,mi,ti:x.ti,a:x.a,d:x.d,lv:1,how:how[t]}); if(G.b[t].o!==side&&flipOne(G,t,side,cell,ev,1,x.ti)) { flipped.push(t); E(ev,G,{t:"combo",cell:t,lv:1}); } }
   }
   flipped=flipped.concat(attack(G,cell,side,ev,1,tie));
+  // 励まし：となりの味方（★がこの札より2つ以上高い札はのぞく）が、それぞれのとなりの相手ともう一度勝負する（味方自身のくせで）
+  if(q.includes("cheer")&&G.b[cell].o===side) adj(cell).forEach(([t])=>{ const tc=G.b[t]; if(tc&&tc.o===side&&!flipped.includes(t)&&CARDS[tc.cid].r<=CARDS[cid].r+1) flipped=flipped.concat(attack(G,t,side,ev,2,has(tc,"tie")||has(tc,"king"),"cheer")); });
   // 斜め打ち
   if(q.includes("diag")&&G.b[cell].o===side){ for(const t of diag(cell)){ const tc=G.b[t]; if(!tc||tc.o===side) continue;
     const av=[0,1,2,3].map(k=>val(G,cell,k)), dv=[0,1,2,3].map(k=>val(G,t,k)), a=Math.max(...av), d=Math.min(...dv); if(a>d||(tie&&a===d)){ E(ev,G,{t:"duel",cell:t,from:cell,a,d,lv:1,how:"diag",mi:av.indexOf(a),ti:dv.indexOf(d)}); if(flipOne(G,t,side,cell,ev,1)) flipped.push(t); } } }

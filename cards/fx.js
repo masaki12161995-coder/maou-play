@@ -91,7 +91,7 @@ window.FX={ css:style, bumpN, run(ev,render,done,pre0){
     const duels=all.filter(e=>e.t==="duel"), miss=all.filter(e=>e.t==="miss"); if(!duels.length&&!miss.length) continue;
     const outs=all.filter(e=>e.t!=="duel"&&e.t!=="miss");
     const flips=outs.filter(e=>e.t==="flip").map(e=>e.cell), guards=outs.filter(e=>e.t==="guard");
-    const head=lv===2?"連鎖！":duels.some(d=>d.how==="same")?QN("same")+"！":duels.some(d=>d.how==="plus")?QN("plus")+"！":"";
+    const head=lv===2?(all.every(e=>e.tag==="cheer"||(e.t!=="duel"&&e.t!=="miss"))?QN("cheer")+"！":"連鎖！"):duels.some(d=>d.how==="same")?QN("same")+"！":duels.some(d=>d.how==="plus")?QN("plus")+"！":"";
     const s0=(duels[0]||miss[0]).snap;
     if(head&&duels.length) beats.push({snap:s0,wait:650,go(bd){ SE("chain"); ban(bd,head); }});   // 「連鎖！」などは先に出して、数字に重ならないように
     beats.push({snap:s0,wait:duels.length?760:560,go(bd){
