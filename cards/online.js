@@ -21,6 +21,7 @@ function desc(cid){ // 札をタップしたときの説明：名前と、くせ
   const c=CARDS[cid];
   return `<div style="font-weight:700;font-size:14px">${c.nm}</div>`+(c.q?c.q.map(k=>`<div style="font-size:13px;line-height:1.45"><span style="color:var(--gold);font-weight:700">${QK[k].nm}</span>　${QK[k].ds}</div>`).join(""):`<div style="font-size:13px;color:var(--sub)">くせなし</div>`);
 }
+const QF=(w,q)=>{ const t=q.map(k=>QK[k].nm).join("・"); return Math.max(8,Math.min(Math.round(w*0.14),Math.floor(w*0.94/t.length))); };   // くせの字の大きさ（2つでも1行に横並び）
 function cardEl(cid,owner,w,h,o={}){
   const c=CARDS[cid], d=document.createElement("div");
   d.className="card "+owner; d.style.width=w+"px"; d.style.height=h+"px";
@@ -34,9 +35,9 @@ function cardEl(cid,owner,w,h,o={}){
    <div class="stars">★${c.r}</div><div class="shield"></div>
    <div class="n" style="font-size:${fs}px;left:0;right:0;top:${Math.round(h*0.03)}px${WL(0)}">${N(nums[0])}</div>
    <div class="n" style="font-size:${fs}px;right:${Math.round(w*0.04)}px;top:${Math.round(h*0.42)}px${WL(1)}">${N(nums[1])}</div>
-   <div class="n" style="font-size:${fs}px;left:0;right:0;bottom:${q.length?Math.round(h*(q.length>1?0.25:0.155)):Math.round(h*0.04)}px${WL(2)}">${N(nums[2])}</div>
+   <div class="n" style="font-size:${fs}px;left:0;right:0;bottom:${q.length?Math.round(h*0.155):Math.round(h*0.04)}px${WL(2)}">${N(nums[2])}</div>
    <div class="n" style="font-size:${fs}px;left:${Math.round(w*0.04)}px;top:${Math.round(h*0.42)}px${WL(3)}">${N(nums[3])}</div>
-   ${q.length?`<div class="qk" style="font-size:${Math.max(9,Math.round(w*(q.length>1?0.12:0.14)))}px;line-height:1.15">${q.map(k=>QK[k].nm).join("<br>")}</div>`:""}`;
+   ${q.length?`<div class="qk" style="font-size:${QF(w,q)}px;line-height:1.15">${q.map(k=>QK[k].nm).join("・")}</div>`:""}`;
   d.style.borderColor=RARE[Math.min(6,c.r)]; d.style.borderWidth=c.r>=5?"3px":"2px"; if(c.r>=6) d.classList.add("r6"); if(c.glow) d.classList.add("glow");
   if(o.shield) d.classList.add("shielded"); if(o.sealed) d.classList.add("sealed");
   holdToShow(d,cid);
@@ -281,7 +282,7 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   s.appendChild(mr);
   const bt=el("div","score"); bt.appendChild(el("div","lbl",R.cpu?"CPU・"+CPU_LV[R.lv]:"友だち対戦")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,me)}</b>`)); s.appendChild(bt);
 }
-const EVNM={chainx:"連鎖！",combo:"同数・合計！",seal:"封印",curse:"祟り！",spite:"道連れ！",back:"執念で戻った！",grow:"成長",turn:"回転",debuff:"威圧"};
+const EVNM={chainx:"連鎖！",combo:"合計！",seal:"封印",curse:"祟り！",spite:"道連れ！",back:"執念で戻った！",grow:"成長",turn:"回転",debuff:"威圧"};
 function animate(ev,done){ // 起きたことを、ひと場面ずつ見せる（fx.js）
   FX.run(ev,b=>{ drawMatch(null,b); return document.querySelector(".board"); },()=>{ drawMatch(); done(); });
 }
