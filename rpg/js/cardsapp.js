@@ -596,6 +596,32 @@ function aiMove(G,depth){
   return best;
 }
 
+// 札をさわる：押したまま動かすと、つまんで運べる（空いたマスで離すと置く）。動かさずに離すと、くわしく見る
+function dragOrTap(d,cid,canDrag,onDrop){
+  d.classList.add("drag");
+  d.addEventListener("pointerdown",e=>{
+    e.preventDefault();
+    const sx=e.clientX, sy=e.clientY; let ghost=null, over=null, ox=0, oy=0;
+    const clearHov=()=>document.querySelectorAll(".cell.hov,.cell.can").forEach(c=>c.classList.remove("hov","can"));
+    const move=ev=>{
+      if(!ghost){ if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<8||!canDrag()) return;
+        clearTimeout(HOLD);
+        const r=d.getBoundingClientRect(); ox=sx-r.left; oy=sy-r.top;
+        ghost=d.cloneNode(true); ghost.classList.remove("sel"); ghost.style.cssText+=`;position:fixed;left:${r.left}px;top:${r.top}px;margin:0;z-index:50;pointer-events:none;transform:scale(1.1);box-shadow:0 10px 20px #000b`;
+        document.body.appendChild(ghost); d.style.opacity=".25";
+        document.querySelectorAll(".cell").forEach(c=>{ if(!c.firstChild) c.classList.add("can"); }); }
+      ghost.style.left=(ev.clientX-ox)+"px"; ghost.style.top=(ev.clientY-oy)+"px";
+      const t=document.elementFromPoint(ev.clientX,ev.clientY), cell=t&&t.closest(".cell");
+      document.querySelectorAll(".cell.hov").forEach(c=>c.classList.remove("hov"));
+      over=cell&&!cell.firstChild?+cell.dataset.i:null; if(over!==null) cell.classList.add("hov");
+    };
+    const up=ev=>{ removeEventListener("pointermove",move); removeEventListener("pointerup",up); removeEventListener("pointercancel",up);
+      if(ghost){ ghost.remove(); d.style.opacity=""; clearHov(); if(over!==null&&ev.type==="pointerup") onDrop(over); return; }
+      if(ev.type==="pointerup"&&!EAT){ clearTimeout(HOLD); detail(cid); }
+    };
+    addEventListener("pointermove",move); addEventListener("pointerup",up); addEventListener("pointercancel",up);
+  });
+}
 // ---------- 勝負の画面 ----------
 let M=null;
 function startMatch(){
@@ -632,19 +658,18 @@ function drawMatch(fx){
   s.appendChild(or);
   const bd=el("div","frame board"); bd.style.gridTemplateColumns=`repeat(3,${D.cw}px)`;
   for(let i=0;i<9;i++){
-    const ce=el("div","cell"); ce.style.width=D.cw+"px"; ce.style.height=D.ch+"px";
+    const ce=el("div","cell"); ce.style.width=D.cw+"px"; ce.style.height=D.ch+"px"; ce.dataset.i=i;
     const c=G.b[i];
-    if(c){ const full=CARDS[c.cid].q||[]; const e=cardEl(c.cid,c.o===0?"me":"op",D.cw-4,D.ch-4,{n:c.n,shield:c.g,q:full,sealed:full.length&&!c.q.length}); if(fx&&fx[i]) e.classList.add(fx[i]); ce.appendChild(e); }
-    else if(M.sel!==null&&M.turn===0&&!M.busy) ce.classList.add("can");
-    ce.onclick=()=>{ if(M.busy||M.turn!==0||G.b[i]) return; if(M.sel===null){ return; } humanPlay(M.sel,i); };
+    if(c){ const full=CARDS[c.cid].q||[]; const e=cardEl(c.cid,c.o===0?"me":"op",D.cw-4,D.ch-4,{n:c.n,shield:c.g,q:full,sealed:full.length&&!c.q.length}); if(fx&&fx[i]) e.classList.add(fx[i]); e.onclick=()=>{ if(!EAT) detail(c.cid); }; ce.appendChild(e); }
     bd.appendChild(ce);
   }
   s.appendChild(bd);
-  const info=el("div","info2",M.sel!==null?desc(G.h[0][M.sel]):(M.turn===1?"相手が考えている…":"")); s.appendChild(info);
+  const info=el("div","info2",M.turn===1?"相手が考えている…":""); s.appendChild(info);
   const mr=el("div","row"); mr.style.minHeight="96px";
   const dz=M.wager&&M.wager.give?G.h[0].findIndex(x=>x&&base(x)===M.wager.give):-1; // 同じ札が2枚あっても、印は1枚だけ
-  G.h[0].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const c=cardEl(cid,"me",64,84); if(M.sel===i) c.classList.add("sel"); if(i===dz) c.classList.add("danger");
-    c.onclick=()=>{ if(M.busy) return; M.sel=M.sel===i?null:i; drawMatch(); }; mr.appendChild(c); });
+  G.h[0].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const c=cardEl(cid,"me",64,84); if(i===dz) c.classList.add("danger");
+    const canGo=()=>M&&!M.busy&&M.turn===0&&!document.querySelector(".veil"); if(canGo()) c.classList.add("ready");
+    dragOrTap(c,cid,canGo,cell=>{ if(canGo()&&!M.G.b[cell]&&M.G.h[0][i]===cid) humanPlay(i,cell); }); mr.appendChild(c); });   // 押したまま運んで置く。タップでくわしく
   s.appendChild(mr);
   const bt=el("div","score"); bt.appendChild(el("div","lbl",M.wager?"賭けの勝負":"賭けなし")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,0)}</b>`)); s.appendChild(bt);
 }

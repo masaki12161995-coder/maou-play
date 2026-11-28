@@ -91,6 +91,9 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .board{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:6px;margin:0 auto}
 .cell{border-radius:6px;background:#00000040;box-shadow:0 0 0 1px #7a5a3e80 inset;position:relative;display:flex;align-items:center;justify-content:center}
 .cell.can{box-shadow:0 0 0 2px #ffe08a inset;background:#ffe08a14}
+.cell.hov{box-shadow:0 0 0 3px #ffe08a inset!important;background:#ffe08a2a!important}
+.card.drag{touch-action:none}
+.card.ready{animation:lure 1.6s ease-in-out infinite}
 .score{display:flex;align-items:center;justify-content:space-between;font-size:15px}
 .score b{font-family:"Avenir Next",system-ui,sans-serif;font-size:24px}
 .msg{min-height:22px;text-align:center;font-size:13px;color:var(--sub)}
@@ -144,6 +147,6 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 </script>
 <script src="../cards/cards-data.js?v=4"></script>
 <script src="../cards/rules.js?v=4"></script>
-<script src="js/cardsapp.js?v=33"></script>
+<script src="js/cardsapp.js?v=34"></script>
 </body>
 </html>
