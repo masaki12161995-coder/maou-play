@@ -10,7 +10,8 @@
 <link rel="icon" href="data:,">
 <style>
 :root{--bg:#14111a;--panel:#211b26;--line:#7a5a3e;--gold:#e8c27a;--text:#f2e4cb;--sub:#b9a58c;--me:#3d6fb3;--meL:#7fb0ef;--op:#b2484a;--opL:#f08a7e}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+img,svg{-webkit-user-drag:none;user-drag:none;pointer-events:none}   /* 札の絵を長押ししても、画像の保存やドラッグが出ないように */
+*{-webkit-touch-callout:none;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:"Hiragino Mincho ProN","Yu Mincho",serif;overscroll-behavior:none;touch-action:manipulation}
 #app{position:fixed;left:env(safe-area-inset-left);right:env(safe-area-inset-right);top:max(var(--st,0px),env(safe-area-inset-top),52px);bottom:max(var(--sb,0px),env(safe-area-inset-bottom),30px);display:flex;justify-content:center}
 .screen{width:100%;max-width:440px;height:100%;display:flex;flex-direction:column;padding:8px 10px 10px;gap:8px;position:relative}
