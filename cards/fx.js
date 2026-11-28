@@ -1,0 +1,93 @@
+"use strict";
+// ===== 札の勝負の演出（ゲームの中の札勝負と、友だち対戦で共通） =====
+// 決まり（rules.js）が残した「起きたこと」と、その時の盤の写しを、ひと場面ずつ見せる。
+//   置く → 置いたときのくせ → 向かい合う2枚が浮いて、比べる数字が光る → 負けた札がひっくり返る → 連鎖 …
+// FX.run(ev, render, done)
+//   render(board) … その盤で画面を描き直し、盤の入れ物（9つの .cell を持つ）を返す
+(function(){
+const QN=k=>(typeof QK!=="undefined"&&QK[k])?QK[k].nm:k;
+let css=false;
+function style(){ if(css) return; css=true; const s=document.createElement("style"); s.textContent=`
+.cell{overflow:visible}
+.card.lift{transform:translateY(-7px) scale(1.07);box-shadow:0 12px 18px #000c;z-index:4;transition:transform .16s ease-out,box-shadow .16s}
+.card .n.hit{color:#ffe08a!important;transform:scale(1.45);transition:transform .16s;text-shadow:0 0 6px #ffb020,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000!important;z-index:3}
+.card .n.lose{color:#9aa0b0!important}
+.card.fout{animation:fxout .17s ease-in forwards}
+@keyframes fxout{from{transform:translateY(-7px) scale(1.07) rotateY(0)}to{transform:translateY(-7px) scale(1.07) rotateY(90deg)}}
+.card.fin{animation:fxin .26s ease-out}
+@keyframes fxin{from{transform:translateY(-7px) scale(1.07) rotateY(90deg)}to{transform:none}}
+.card.fxpop{animation:fxpop .3s ease-out}
+@keyframes fxpop{from{transform:scale(1.28)}to{transform:none}}
+.card.fxshake{animation:fxshake .34s ease-in-out}
+@keyframes fxshake{0%,100%{transform:translateY(-7px) scale(1.07)}25%{transform:translateY(-7px) scale(1.07) translateX(-4px)}75%{transform:translateY(-7px) scale(1.07) translateX(4px)}}
+.card.fxglow{box-shadow:0 0 0 2px #ffe08a,0 0 16px 4px #ffcf5a99}
+.fxlab{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);z-index:8;white-space:nowrap;font-size:13px;font-weight:800;color:#2a1a08;background:linear-gradient(#ffe9a8,#f0c050);border:1px solid #7a5418;border-radius:10px;padding:1px 8px;box-shadow:0 2px 6px #0009;animation:fxlab .28s ease-out;pointer-events:none}
+.fxlab.bad{background:linear-gradient(#e7c6ff,#a77ad8);color:#24102e;border-color:#4e2a6e}
+.fxlab.def{background:linear-gradient(#d9e6ff,#8fb0e6);color:#0e1a30;border-color:#2a4470}
+@keyframes fxlab{from{transform:translate(-50%,-50%) scale(.3);opacity:0}70%{transform:translate(-50%,-50%) scale(1.15);opacity:1}to{transform:translate(-50%,-50%) scale(1)}}
+.fxcmp{position:absolute;z-index:9;pointer-events:none;font-family:"Avenir Next",system-ui,sans-serif;font-weight:900;font-size:20px;color:#fff;text-shadow:0 0 6px #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;transform:translate(-50%,-50%);animation:fxlab .25s ease-out;white-space:nowrap}
+.fxcmp b{color:#ffe08a}
+.fxban{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;pointer-events:none;font-size:30px;font-weight:900;letter-spacing:.12em;color:#ffe9a8;text-shadow:0 0 12px #ff9a20,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,0 -2px 0 #000;animation:fxban .7s ease-out forwards;white-space:nowrap}
+@keyframes fxban{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}75%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+`; document.head.appendChild(s); }
+const card=(bd,i)=>{ const c=bd&&bd.querySelectorAll(".cell")[i]; return c&&c.querySelector(".card"); };
+function lab(bd,i,txt,cls){ const c=bd.querySelectorAll(".cell")[i]; if(!c||!txt) return; const e=document.createElement("div"); e.className="fxlab"+(cls?" "+cls:""); e.textContent=txt; c.appendChild(e); }
+function ban(bd,txt){ if(!txt) return; const e=document.createElement("div"); e.className="fxban"; e.textContent=txt; bd.appendChild(e); }
+function hit(bd,i,k,cls){ const c=card(bd,i); if(!c||k==null||k<0) return; const n=c.querySelectorAll(".n")[k]; if(n) n.classList.add(cls||"hit"); }
+// 2枚のあいだに「7＞5」
+function cmp(bd,a,b,html){ const ca=bd.querySelectorAll(".cell")[a], cb=bd.querySelectorAll(".cell")[b]; if(!ca||!cb) return;
+  const r=bd.getBoundingClientRect(), ra=ca.getBoundingClientRect(), rb=cb.getBoundingClientRect();
+  const e=document.createElement("div"); e.className="fxcmp"; e.innerHTML=html;
+  let x=(ra.left+ra.width/2+rb.left+rb.width/2)/2-r.left, y=(ra.top+ra.height/2+rb.top+rb.height/2)/2-r.top;
+  if(Math.abs(ra.top-rb.top)<4) y-=ra.height*0.3;          // 横どうし：数字は真ん中の高さにあるので、少し上に
+  else if(Math.abs(ra.left-rb.left)<4) x+=ra.width*0.3;     // 縦どうし：数字は真ん中にあるので、少し右に
+  e.style.left=x+"px"; e.style.top=y+"px"; bd.appendChild(e); }
+// 守護：となりの味方のおかげで上がった数字は、その場で数字を書きかえて「守護＋1」と見せる
+function ward(bd,i,k,v,snap){ const c=card(bd,i), s=snap&&snap[i]; if(!c||!s||k==null) return; const up=v-s.n[k]; if(up<=0) return;
+  const n=c.querySelectorAll(".n")[k]; if(n) n.textContent=String(v); lab(bd,i,`${QN("ward")}＋${up}`,"def"); }
+function bonusText(info){ // 置いたときに上がった数字：「角取り＋1」など
+  return (info||[]).map(([k,v])=>k==="turn"?"回転":k==="gamble"?QN("gamble"):`${QN(k)}＋${v}`).join("　"); }
+
+window.FX={ run(ev,render,done){
+  style();
+  const beats=[];
+  const pre=ev.filter(e=>e.lv===0&&(e.t==="back"||e.t==="grow"));
+  if(pre.length) beats.push({snap:pre[pre.length-1].snap,wait:700,go(bd){ pre.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add(e.t==="back"?"fin":"fxpop"); lab(bd,e.cell,e.t==="back"?QN("revive"):`${QN("grow")}＋1`); }); }});
+  const put=ev.find(e=>e.t==="put");
+  if(put){ const bt=bonusText(put.info); beats.push({snap:put.snap,wait:bt?750:360,go(bd){ const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(bt) c.classList.add("fxglow"); } lab(bd,put.cell,bt); }}); }
+  // 置いたときのくせ（励まし・威圧・封印）
+  const on=ev.filter(e=>e.lv===1&&(e.t==="buff"||e.t==="debuff"||e.t==="seal"));
+  if(on.length) beats.push({snap:on[on.length-1].snap,wait:750,go(bd){ const src=on[0].from; const c=card(bd,src); if(c) c.classList.add("fxglow"); lab(bd,src,QN(on[0].q));
+    on.forEach(e=>{ const t=card(bd,e.cell); if(t) t.classList.add("fxpop"); lab(bd,e.cell,e.t==="buff"?"＋1":e.t==="debuff"?"−1":QN("seal"),e.t==="buff"?"":"bad"); }); }});
+  // 勝負：段ごと（1＝置いた札から、2＝連鎖）。向かい合う2枚が浮く → 比べる数字が光る → 負けた札がひっくり返る
+  for(const lv of [1,2]){
+    const all=ev.filter(e=>e.lv===lv&&e.t!=="buff"&&e.t!=="debuff"&&e.t!=="seal");
+    const duels=all.filter(e=>e.t==="duel"); if(!duels.length) continue;
+    const outs=all.filter(e=>e.t!=="duel");
+    const flips=outs.filter(e=>e.t==="flip").map(e=>e.cell), guards=outs.filter(e=>e.t==="guard");
+    const head=lv===2?"連鎖！":duels.some(d=>d.how==="same")?QN("same")+"！":duels.some(d=>d.how==="plus")?QN("plus")+"！":"";
+    beats.push({snap:duels[0].snap,wait:head?900:720,go(bd){
+      ban(bd,head);
+      duels.forEach(d=>{ const a=card(bd,d.from), t=card(bd,d.cell); if(a) a.classList.add("lift"); if(t) t.classList.add("lift");
+        hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti,d.how==="same"||d.how==="plus"?"hit":"lose");
+        if(d.how!=="diag"){ ward(bd,d.from,d.mi,d.a,d.snap); ward(bd,d.cell,d.ti,d.d,d.snap); }
+        const sym=d.how==="same"?"＝":d.how==="plus"?"":d.rev?"＜":(d.a===d.d?"＝":"＞");
+        cmp(bd,d.from,d.cell,d.how==="plus"?`<b>${d.a}＋${d.d}</b>`:`<b>${d.a}</b>${sym}${d.d}`); });
+      if(lv===1){ const from=duels[0].from, qs=[...new Set(duels.map(d=>d.how).filter(h=>h==="diag"))].map(QN); if(qs.length) lab(bd,from,qs.join("　")); }
+    },out(bd){ flips.forEach(i=>{ const c=card(bd,i); if(c){ c.classList.remove("lift"); c.classList.add("fout"); } }); guards.forEach(g=>{ const c=card(bd,g.cell); if(c) c.classList.add("fxshake"); }); }});
+    beats.push({snap:outs.length?outs[outs.length-1].snap:duels[duels.length-1].snap,wait:620,go(bd){
+      flips.forEach(i=>{ const c=card(bd,i); if(c) c.classList.add("fin"); });
+      guards.forEach(g=>{ const c=card(bd,g.cell); if(c) c.classList.add("fxglow"); lab(bd,g.cell,g.wall?QN("wall")+"！":QN("guard")+"！","def"); });
+      outs.forEach(e=>{ if(e.t==="curse"){ const c=card(bd,e.cell); if(c) c.classList.add("fxpop"); lab(bd,e.cell,QN("curse")+"　−2","bad"); }
+        if(e.t==="spite"){ const c=card(bd,e.cell); if(c) c.classList.add("fin"); lab(bd,e.cell,QN("spite")+"！","bad"); } });
+    }});
+  }
+  const dr=ev.find(e=>e.t==="buff"&&e.q==="drain");
+  if(dr) beats.push({snap:dr.snap,wait:650,go(bd){ const c=card(bd,dr.cell); if(c){ c.classList.add("fxpop","fxglow"); } lab(bd,dr.cell,`${QN("drain")}＋${dr.v}`); }});
+  let i=0, bd=null;
+  const next=()=>{ if(i>=beats.length){ done(); return; } const b=beats[i++];
+    bd=render(b.snap); b.go(bd);
+    setTimeout(()=>{ if(b.out){ b.out(bd); setTimeout(next,180); } else next(); },b.wait); };
+  next();
+}};
+})();

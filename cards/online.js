@@ -109,10 +109,10 @@ function connect(room,onMsg){
   const send=(m,tries=0)=>fetch(base,{method:"POST",body:JSON.stringify(m)}).then(r=>{ if(!r.ok) throw 0; }).catch(()=>{ if(tries<4) setTimeout(()=>send(m,tries+1),800*(tries+1)); else toast("つながりが悪い…"); });
   return { send, close:()=>{ closed=true; try{ es.close(); }catch(_){} } };
 }
-function post(t,extra={}){ const m={r:R.room,u:ME_ID,n:++SEQ,t,...extra}; NET.send(m); }
+function post(t,extra={}){ if(!NET) return; const m={r:R.room,u:ME_ID,n:++SEQ,t,...extra}; NET.send(m); }
 // 記録：スマホがほかのアプリに切りかえた間に画面を読み直しても、同じ部屋の続きから戻れるように、今の様子を残す
 const SAVE="fudaOnline1", skey=(room,host)=>SAVE+":"+room+":"+(host?"h":"g");
-function keep(){ try{ if(!R){ const k=localStorage.getItem(SAVE+"last"); if(k) localStorage.removeItem(k); localStorage.removeItem(SAVE+"last"); return; }
+function keep(){ try{ if(R&&R.cpu) return; if(!R){ const k=localStorage.getItem(SAVE+"last"); if(k) localStorage.removeItem(k); localStorage.removeItem(SAVE+"last"); return; }
   const k=skey(R.room,R.host); localStorage.setItem(SAVE+"last",k);
   localStorage.setItem(k,JSON.stringify({room:R.room,host:R.host,side:R.side,peer:R.peer,game:R.game,seed:R.seed,first:R.first,again:R.again,
     m:M?{game:M.game,mine:M.mine,redrawn:M.redrawn,meReady:M.meReady,opReady:M.opReady,log:M.log||[],over:M.over}:null,t:Date.now()})); }catch(_){} }
@@ -163,7 +163,32 @@ function lobby(){
   go.onclick=()=>{ const c=(inp.value||"").toUpperCase().replace(/[^A-Z0-9]/g,""); if(c.length!==6){ toast("合言葉は6文字"); return; } newRoom(c,false); };
   inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go.onclick(); });
   box.appendChild(inp); box.appendChild(go);
+  box.appendChild(el("div","lbl","CPUと勝負"));
+  const cr=el("div","row"); cr.style.cssText+="gap:8px";
+  CPU_LV.forEach((nm,lv)=>{ const b=el("button","btn",nm); b.style.cssText+="width:71px;padding-left:0;padding-right:0"; b.onclick=()=>cpuStart(lv); cr.appendChild(b); });
+  box.appendChild(cr);
   s.appendChild(box);
+}
+// ---------- CPUと勝負（つながずに、この端末だけで） ----------
+const CPU_LV=["よわい","ふつう","つよい"];
+function cpuStart(lv){
+  if(NET){ NET.close(); NET=null; }
+  R={room:null,host:true,side:0,peer:true,game:0,again:[false,false],first:0,seed:0,cpu:true,lv};
+  history.replaceState(null,"",location.pathname+(LOCAL?"?local=1":""));
+  startGame();
+}
+// CPUの手札：星の合計が少ないときは、引き直す（よわいは気まぐれ）
+function cpuDeal(){ const sum=h=>h.reduce((a,c)=>a+CARDS[c].r,0); let h=deal5();
+  if(R.lv===0?Math.random()<0.3:sum(h)<14){ h=deal5(); } return h; }
+// あなたの手札は見えないので、残りの枚数だけ分かったつもりで、でたらめな手札を何通りか考えて読む
+function cpuMove(){
+  const depth=R.lv+1, mine=M.cpu, G={b:M.G.b,h:[M.G.h[0],mine],lost:M.G.lost};
+  const ms=moves(G,1); if(R.lv===0&&Math.random()<0.35) return ms[Math.floor(Math.random()*ms.length)];
+  const m=M.G.h[0].filter(x=>x).length, hands=[];
+  for(let k=0;k<(depth>1?3:1);k++){ const p=ALL.slice(), h=[]; for(let j=0;j<m;j++) h.push(p.splice(Math.floor(Math.random()*p.length),1)[0]); hands.push(h); }
+  let best=ms[0],bv=-1e9;
+  for(const [i,c] of ms){ let v=0; for(const h of hands){ const g={b:G.b,h:[h,mine],lost:G.lost}; play(g,1,i,c,null); v+=search(g,0,depth-1,-1e9,1e9); } v=v/hands.length+Math.random()*(R.lv===0?3:0.6); if(v>bv){ bv=v; best=[i,c]; } }
+  return best;
 }
 function waitRoom(){
   const s=screen(); const box=el("div","lobby");
@@ -189,6 +214,7 @@ function joining(){
 function beginDeal(seed,first,game){
   R.seed=seed; R.first=first; R.game=game; R.again=[false,false];
   M={game,mine:deal5(),redrawn:false,meReady:false,opReady:false,G:null,turn:-1,sel:null,busy:true,inbox:{},k:0,over:false,log:[]};
+  if(R.cpu){ M.cpu=cpuDeal(); M.opReady=true; }
   keep(); drawDeal();
 }
 function drawDeal(){
@@ -233,9 +259,9 @@ function dims(){
   if(cw*3+24>W-20){ cw=Math.floor((W-44)/3); ch=Math.round(cw*1.27); }
   return {cw:Math.floor(cw),ch:Math.floor(ch)};
 }
-function drawMatch(fx){
-  const s=screen(), G=M.G, D=dims(), me=R.side, op=1-me;
-  const top=el("div","score"); top.appendChild(el("div","",`<span style="font-size:14px">相手</span>`)); top.appendChild(el("div","",`<b style="color:var(--opL)">${score(G,op)}</b>`)); s.appendChild(top);
+function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤）
+  const s=screen(), G=bo?{b:bo,h:M.G.h,lost:M.G.lost}:M.G, D=dims(), me=R.side, op=1-me;
+  const top=el("div","score"); top.appendChild(el("div","",`<span style="font-size:14px">${R.cpu?"CPU":"相手"}</span>`)); top.appendChild(el("div","",`<b style="color:var(--opL)">${score(G,op)}</b>`)); s.appendChild(top);
   const or=el("div","row"); or.style.minHeight="70px";
   G.h[op].forEach(cid=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:50px;height:65px"; or.appendChild(e); return; } or.appendChild(backEl(50,65)); });
   s.appendChild(or);
@@ -253,17 +279,11 @@ function drawMatch(fx){
   G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const c=cardEl(cid,"me",64,84); if(canGo()) c.classList.add("ready");
     dragOrTap(c,cid,canGo,cell=>{ if(canGo()&&!M.G.b[cell]&&M.G.h[me][i]===cid) myPlay(i,cell); }); mr.appendChild(c); });
   s.appendChild(mr);
-  const bt=el("div","score"); bt.appendChild(el("div","lbl","友だち対戦")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,me)}</b>`)); s.appendChild(bt);
+  const bt=el("div","score"); bt.appendChild(el("div","lbl",R.cpu?"CPU・"+CPU_LV[R.lv]:"友だち対戦")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,me)}</b>`)); s.appendChild(bt);
 }
 const EVNM={chainx:"連鎖！",combo:"同数・合計！",seal:"封印",curse:"祟り！",spite:"道連れ！",back:"執念で戻った！",grow:"成長",turn:"回転",debuff:"威圧"};
-function animate(ev,done){
-  const steps=[], say=(list)=>{ const t=[...new Set(list.map(e=>e.t==="guard"?(e.wall?"鉄壁！":"踏ん張った！"):EVNM[e.t]).filter(Boolean))]; if(t.length) setTimeout(()=>toast(t.join("　")),50); };
-  const pre=ev.filter(e=>e.lv===0), put=ev.filter(e=>e.t==="put"), l1=ev.filter(e=>e.lv===1), l2=ev.filter(e=>e.lv===2);
-  if(pre.length) steps.push(()=>{ const fx={}; pre.forEach(e=>fx[e.cell]=e.t==="back"?"flip":"pop"); say(pre); return fx; });
-  steps.push(()=>{ const fx={}; put.forEach(e=>fx[e.cell]="pop"); return fx; });
-  if(l1.length) steps.push(()=>{ const fx={}; l1.forEach(e=>{ fx[e.cell]=e.t==="flip"||e.t==="spite"?"flip":"pop"; }); say(l1); return fx; });
-  if(l2.length) steps.push(()=>{ const fx={}; l2.forEach(e=>{ fx[e.cell]=e.t==="flip"?"flip":"pop"; }); if(l2.some(e=>e.t==="flip")) l2.push({t:"chainx"}); say(l2); return fx; });
-  let i=0; const next=()=>{ if(i>=steps.length){ done(); return; } const fx=steps[i++](); drawMatch(fx); setTimeout(next,i===1?300:480); }; next();
+function animate(ev,done){ // 起きたことを、ひと場面ずつ見せる（fx.js）
+  FX.run(ev,b=>{ drawMatch(null,b); return document.querySelector(".board"); },()=>{ drawMatch(); done(); });
 }
 // 自分の番：置いた札と場所を知らせてから、盤に置く（相手の端末でも、同じ順に同じことが起きる）
 function myPlay(hi,cell){
@@ -274,6 +294,7 @@ function myPlay(hi,cell){
 // 相手の手：届いた順ではなく、手の番号の順に置く
 function pump(){
   if(!M||!M.G||M.busy||M.turn!==1-R.side) return;
+  if(R.cpu){ M.busy=true; const g=M.game; setTimeout(()=>{ if(!M||M.game!==g||!R||!R.cpu||M.turn!==1||M.over) return; const [hi,cell]=cpuMove(), cid=M.cpu[hi]; M.cpu=M.cpu.slice(); M.cpu[hi]=null; apply(1,hi,cid,cell); },700); return; }
   const m=M.inbox[M.k]; if(!m) return; delete M.inbox[M.k];
   M.busy=true; apply(1-R.side,m.hi,m.cid,m.cell);
 }
@@ -291,7 +312,8 @@ function drawResult(){
   v.appendChild(el("div","big",win?"勝ち":draw?"引き分け":"負け"));
   v.appendChild(el("div","",`<span style="color:var(--meL);font-size:22px">${a}</span>　対　<span style="color:var(--opL);font-size:22px">${b}</span>`));
   const r=el("div","row"); r.style.gap="10px";
-  if(R.again[me]) r.appendChild(el("div","st dots3",R.again[1-me]?"配っている":"相手を待っている"));
+  if(R.cpu){ const a2=el("button","btn gold","もう一勝負"); a2.style.cssText+="width:auto"; a2.onclick=()=>startGame(); r.appendChild(a2); }
+  else if(R.again[me]) r.appendChild(el("div","st dots3",R.again[1-me]?"配っている":"相手を待っている"));
   else { const a2=el("button","btn gold",R.again[1-me]?"もう一勝負（相手は待っている）":"もう一勝負"); a2.style.cssText+="width:auto";
     a2.onclick=()=>{ R.again[me]=true; post("again",{game:M.game}); keep(); if(R.again[1-me]&&R.host) startGame(); else drawResult(); };
     r.appendChild(a2); }

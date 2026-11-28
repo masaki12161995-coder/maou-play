@@ -649,8 +649,8 @@ function dims(){
   if(cw*3+24>W-20){ cw=Math.floor((W-44)/3); ch=Math.round(cw*1.27); }
   return {cw:Math.floor(cw),ch:Math.floor(ch)};
 }
-function drawMatch(fx){
-  const o=OPPS[M.k], s=screen(), G=M.G, D=dims();
+function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤）
+  const o=OPPS[M.k], s=screen(), G=bo?{b:bo,h:M.G.h,lost:M.G.lost}:M.G, D=dims();
   const top=el("div","score");
   const ow=el("div",""); ow.style.cssText="display:flex;align-items:center;gap:6px"; const w=el("div",""); w.style.cssText="width:36px;height:40px;overflow:hidden"; w.appendChild(who(o.who,[36,60])); ow.appendChild(w); ow.appendChild(el("div","",`<span style="font-size:13px">${o.nm}</span>`));
   top.appendChild(ow); top.appendChild(el("div","",`<b style="color:var(--opL)">${score(G,1)}</b>`)); s.appendChild(top);
@@ -675,16 +675,9 @@ function drawMatch(fx){
   const bt=el("div","score"); bt.appendChild(el("div","lbl",M.wager?"賭けの勝負":"賭けなし")); bt.appendChild(el("div","",`<b style="color:var(--meL)">${score(G,0)}</b>`)); s.appendChild(bt);
 }
 const EVNM={chainx:"連鎖！",combo:"同数・合計！",seal:"封印",curse:"祟り！",spite:"道連れ！",back:"執念で戻った！",grow:"成長",turn:"回転",debuff:"威圧"};
-function animate(ev,done){
-  // 番の始め（執念・成長） → 置く（回転） → 置いたとき・裏返る → 連鎖
+function animate(ev,done){ // 起きたことを、ひと場面ずつ見せる（fx.js）
   ev.forEach(e=>{ if(e.cell!==undefined&&M.G.b[e.cell]) S.seen[M.G.b[e.cell].cid]=1; });
-  const steps=[], say=(list)=>{ const t=[...new Set(list.map(e=>e.t==="guard"?(e.wall?"鉄壁！":"踏ん張った！"):EVNM[e.t]).filter(Boolean))]; if(t.length) setTimeout(()=>toast(t.join("　")),50); };
-  const pre=ev.filter(e=>e.lv===0), put=ev.filter(e=>e.t==="put"), l1=ev.filter(e=>e.lv===1), l2=ev.filter(e=>e.lv===2);
-  if(pre.length) steps.push(()=>{ const fx={}; pre.forEach(e=>fx[e.cell]=e.t==="back"?"flip":"pop"); say(pre); return fx; });
-  steps.push(()=>{ const fx={}; put.forEach(e=>fx[e.cell]="pop"); return fx; });
-  if(l1.length) steps.push(()=>{ const fx={}; l1.forEach(e=>{ fx[e.cell]=e.t==="flip"||e.t==="spite"?"flip":"pop"; }); say(l1); return fx; });
-  if(l2.length) steps.push(()=>{ const fx={}; l2.forEach(e=>{ fx[e.cell]=e.t==="flip"?"flip":"pop"; }); if(l2.some(e=>e.t==="flip")) l2.push({t:"chainx"}); say(l2); return fx; });
-  let i=0; const next=()=>{ if(i>=steps.length){ done(); return; } const fx=steps[i++](); drawMatch(fx); setTimeout(next,i===1?300:480); }; next();
+  FX.run(ev,b=>{ drawMatch(null,b); return document.querySelector(".board"); },()=>{ drawMatch(); done(); });
 }
 function humanPlay(hi,cell){
   M.busy=true; M.sel=null; const ev=[]; play(M.G,0,hi,cell,ev,true);
