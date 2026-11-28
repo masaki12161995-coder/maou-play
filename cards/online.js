@@ -286,7 +286,8 @@ function drawDeal(){
 
 // ---------- 画面：勝負 ----------
 function goMatch(){
-  SND.bgm("lobby");   // 対戦中も、入口と同じ曲のまま setTimeout(()=>SND.se("coin"),150);
+  SND.bgm("lobby");   // 対戦中も、入口と同じ曲のまま
+  setTimeout(()=>SND.se("coin"),960);   // コインの録音は鳴りはじめから約0.54秒で着地。着地が「先攻／後攻」の文字（1.5秒）と重なるように
   const me=R.side, op=1-me;
   const h=[null,null]; h[me]=M.mine.slice(); h[op]=["?","?","?","?","?"];   // 相手の札は、置かれるまで分からない
   M.G={b:Array(9).fill(null),h,lost:[0,0]}; M.turn=-1; M.busy=true; M.k=0;

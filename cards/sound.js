@@ -9,9 +9,9 @@
   const JINGLE_LENGTH = 1.52;
   const RESUME_EVENTS = ['pointerdown', 'touchstart', 'pointerup', 'touchend', 'click', 'keydown'];
   const has = (object, name) => Object.prototype.hasOwnProperty.call(object, name);
-  // 本物の札の録音（CC0。flip：Splashdust「flipCard.wav」、deal：el_boss「Playing Card Deal Variation 2」、put：filmfan87「card placed on table」、すべて freesound.org）
+  // 本物の札の録音（CC0。flip：Splashdust「flipCard.wav」、deal：el_boss「Playing Card Deal Variation 2」、put：filmfan87「card placed on table」、tap：stevielematt「SOFT TAPPING」、coin：Firecat_the_potato_YT「coin flip.wav」＋HoseNoseSounds「Coin dropped on table 2」、すべて freesound.org）
   const SAMPLE_BASE = (document.currentScript && document.currentScript.src || location.href).replace(/[^/]*$/, '') + 'snd/';
-  const SAMPLE_FILES = { flip: ['flip.mp3', 0.6], deal: ['deal.mp3', 0.45], put: ['put.mp3', 0.6] };   // [ファイル, 大きさ]
+  const SAMPLE_FILES = { flip: ['flip.mp3', 0.6], deal: ['deal.mp3', 0.45], put: ['put.mp3', 0.6], tap: ['tap.mp3', 0.35], coin: ['coin.mp3', 0.55] };   // [ファイル, 大きさ]
   const samples = {};
   function loadSamples() {
     for (const name of Object.keys(SAMPLE_FILES)) {
@@ -482,6 +482,7 @@
       effectNoise(bus, time + 0.019, 0.196, 1080, 640, 0.65, 0.105, 0.017);
     },
     coin(bus, time) {
+      if (playSample('coin', bus, time)) return;
       effectTone(bus, time, 0.212, 524, 0.117, 520, 0.005);
       effectTone(bus, time + 0.002, 0.141, 907, 0.047);
       effectTone(bus, time + 0.003, 0.064, 1560, 0.028);
@@ -502,6 +503,7 @@
       effectNoise(bus, time, 0.047, 680, 430, 0.8, 0.064);
     },
     tap(bus, time) {
+      if (playSample('tap', bus, time)) return;
       effectWood(bus, time, 389, 0.094);
       effectNoise(bus, time, 0.041, 1290, 880, 0.75, 0.105);
     },
