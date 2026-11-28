@@ -9,6 +9,25 @@
   const JINGLE_LENGTH = 1.52;
   const RESUME_EVENTS = ['pointerdown', 'touchstart', 'pointerup', 'touchend', 'click', 'keydown'];
   const has = (object, name) => Object.prototype.hasOwnProperty.call(object, name);
+  // 本物の札の録音（CC0。flip：Splashdust「flipCard.wav」、deal：el_boss「Playing Card Deal Variation 2」、どちらも freesound.org）
+  const SAMPLE_BASE = (document.currentScript && document.currentScript.src || location.href).replace(/[^/]*$/, '') + 'snd/';
+  const SAMPLE_FILES = { flip: ['flip.mp3', 0.6], deal: ['deal.mp3', 0.45] };   // [ファイル, 大きさ]
+  const samples = {};
+  function loadSamples() {
+    for (const name of Object.keys(SAMPLE_FILES)) {
+      fetch(SAMPLE_BASE + SAMPLE_FILES[name][0]).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+        .then(b => new Promise((ok, ng) => ctx.decodeAudioData(b, ok, ng))).then(buf => { samples[name] = buf; }, () => {});
+    }
+  }
+  // 録音を鳴らす。毎回ほんの少し高さを変えて、続けて鳴っても同じ音に聞こえないようにする。読めなかったときは false（作った音で代わりに鳴らす）
+  function playSample(name, bus, time) {
+    const buf = samples[name]; if (!buf) return false;
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf; src.playbackRate.value = 0.94 + Math.random() * 0.12;
+    g.gain.value = SAMPLE_FILES[name][1];
+    src.connect(g); g.connect(bus); src.onended = () => { src.disconnect(); g.disconnect(); };
+    src.start(time); return true;
+  }
 
   let enabled = true;
   try {
@@ -417,6 +436,7 @@
       effectNoise(bus, time + 0.006, 0.054, 1380, 590, 0.6, 0.16);
     },
     flip(bus, time) {
+      if (playSample('flip', bus, time)) return;
       effectPaper(bus, time, 0.105, 0.31);
       effectNoise(bus, time + 0.034, 0.063, 670, 390, 0.7, 0.19);
     },
@@ -468,6 +488,7 @@
       effectTone(bus, time + 0.105, 0.070, 1194, 0.029);
     },
     deal(bus, time) {
+      if (playSample('deal', bus, time)) return;
       effectPaper(bus, time, 0.079, 0.22);
       effectPaper(bus, time + 0.063, 0.078, 0.23);
       effectPaper(bus, time + 0.122, 0.09, 0.26);
@@ -508,6 +529,7 @@
     foreground = bus(master, 1);
     if (enabled) effectsBus = bus(foreground, 1);
     ctx.addEventListener('statechange', syncAudio);
+    loadSamples();
   }
 
   function fadeOut(node, timeConstant) {
