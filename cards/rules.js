@@ -26,11 +26,11 @@ function eff(cid,cell,G,side,real,info){
   if(q.includes("pack")) A("pack",Math.min(3,cnt(G,side)));
   if(q.includes("early")&&empty>=7) A("early",2);
   if(q.includes("late")&&empty<=3) A("late",2);
-  if(q.includes("under")&&cnt(G,side)<cnt(G,1-side)) A("under",2);
+  if(q.includes("under")&&cnt(G,side)<=cnt(G,1-side)-2) A("under",3);
   if(q.includes("rage")) A("rage",Math.min(3,(G.lost||[0,0])[side]));
   if(q.includes("kin")&&fam(cid)&&G.b.some(x=>x&&x.o===side&&fam(x.cid)===fam(cid))) A("kin",2);
   n=n.map(v=>cl(v+add));
-  if(q.includes("gamble")){ n=n.map(v=>cl(v+(real?1+Math.floor((typeof RULE_RNG==="function"?RULE_RNG:Math.random)()*4):2))); if(info) info.push(["gamble",0]); } // 友だち対戦では、両方の端末で同じ目が出るよう、そろえた乱数を使う
+  if(q.includes("gamble")){ n=n.map(v=>cl(v+(real?Math.floor((typeof RULE_RNG==="function"?RULE_RNG:Math.random)()*6):2))); if(info) info.push(["gamble",0]); } // 友だち対戦では、両方の端末で同じ目が出るよう、そろえた乱数を使う
   return n;
 }
 // 守護：となりにいる「守護」の味方1枚ごとに＋1（盤にいる間ずっと。盤の数字の表示もこの数で出す）
