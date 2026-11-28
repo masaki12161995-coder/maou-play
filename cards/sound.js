@@ -13,15 +13,20 @@
   const SAMPLE_BASE = (document.currentScript && document.currentScript.src || location.href).replace(/[^/]*$/, '') + 'snd/';
   const SAMPLE_FILES = { flip: ['flip.mp3', 0.6], deal: ['deal.mp3', 0.45], put: ['put.mp3', 0.6], tap: ['tap.mp3', 0.35], coin: ['coin.mp3', 0.55] };   // [ファイル, 大きさ]
   const samples = {};
+  // 録音のファイルは、ページを開いた時点で先に取りに行く（最初のタップで音の準備を始めてからでは、最初の数回に間に合わない）
+  const raw = {};
+  for (const name of Object.keys(SAMPLE_FILES)) {
+    raw[name] = fetch(SAMPLE_BASE + SAMPLE_FILES[name][0]).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).catch(() => null);
+  }
   function loadSamples() {
     for (const name of Object.keys(SAMPLE_FILES)) {
-      fetch(SAMPLE_BASE + SAMPLE_FILES[name][0]).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
-        .then(b => new Promise((ok, ng) => ctx.decodeAudioData(b, ok, ng))).then(buf => { samples[name] = buf; }, () => {});
+      raw[name].then(b => b && new Promise((ok, ng) => ctx.decodeAudioData(b, ok, ng))).then(buf => { if (buf) samples[name] = buf; }, () => {});
     }
   }
-  // 録音を鳴らす。毎回ほんの少し高さを変えて、続けて鳴っても同じ音に聞こえないようにする。読めなかったときは false（作った音で代わりに鳴らす）
+  // 録音を鳴らす。毎回ほんの少し高さを変えて、続けて鳴っても同じ音に聞こえないようにする。
+  // まだ読み終わっていないときは、何も鳴らさない（前の作った音が混ざって、違う音に聞こえないように）。true を返すので、作った音には行かない
   function playSample(name, bus, time) {
-    const buf = samples[name]; if (!buf) return false;
+    const buf = samples[name]; if (!buf) return has(SAMPLE_FILES, name);
     const src = ctx.createBufferSource(), g = ctx.createGain();
     src.buffer = buf; src.playbackRate.value = 0.94 + Math.random() * 0.12;
     g.gain.value = SAMPLE_FILES[name][1];
