@@ -3,7 +3,7 @@
 // 240枚の札から、お互いでたらめに5枚。引き直しは1回だけ。お互いの手札は見えない。
 // つなぎ方：合言葉（部屋の名前）ごとに、ntfy.sh の公開の通り道を使って、短い知らせをやりとりする（自分たちのサーバーは要らない）。
 //   ?local=1 のときは、同じブラウザの中だけでつなぐ（試し用）
-const RARE=["","#d8d8d8","#5ad07e","#5ec4ff","#b57cf0","#f2c23c","#fff"];
+const RARE=["","#d8d8d8","#d8d8d8","#d8d8d8","#b57cf0","#f2c23c","#fff"];   // 枠：★3までは白、★4は紫、★5は金、★6は虹
 const KIND_NM={"魔物":"魔物の札","色違い":"色違いの札","光る":"光る札","人物":"人物の札","限定":"限定の札"};
 const ALL=Object.keys(CARDS);
 const Q=new URLSearchParams(location.search), LOCAL=Q.get("local")==="1";
@@ -39,7 +39,7 @@ function cardEl(cid,owner,w,h,o={}){
    <div class="n" style="font-size:${fs}px;left:0;right:0;bottom:${q.length?Math.round(h*0.155):Math.round(h*0.04)}px${WL(2)}">${N(nums[2])}</div>
    <div class="n" style="font-size:${fs}px;left:${Math.round(w*0.04)}px;top:${Math.round(h*0.42)}px${WL(3)}">${N(nums[3])}</div>
    ${q.length?`<div class="qk" style="font-size:${QF(w,q)}px;line-height:1.15">${q.map(k=>QK[k].nm).join("・")}</div>`:""}`;
-  d.style.borderColor=RARE[Math.min(6,c.r)]; d.style.borderWidth=c.r>=5?"3px":"2px"; if(c.r>=6) d.classList.add("r6"); if(c.glow) d.classList.add("glow");
+  d.style.borderColor=RARE[Math.min(6,c.r)]; d.style.borderWidth=c.r>=5?"3px":"2px"; if(c.r>=6) d.classList.add("r6"); if(c.r===5) d.classList.add("glow");   // ★5はどれも光が流れる（光る札も同じ）
   if(o.shield) d.classList.add("shielded"); if(o.sealed) d.classList.add("sealed");
   holdToShow(d,cid);
   return d;

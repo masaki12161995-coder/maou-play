@@ -1,6 +1,6 @@
 "use strict";
 // ===== 札の卓（試作） =====
-const RARE=["","#d8d8d8","#5ad07e","#5ec4ff","#b57cf0","#f2c23c","#fff"];
+const RARE=["","#d8d8d8","#d8d8d8","#d8d8d8","#b57cf0","#f2c23c","#fff"];   // 枠：★3までは白、★4は紫、★5は金、★6は虹
 const base=id=>String(id).split("|")[0];
 const KIND_NM={"魔物":"魔物の札","色違い":"色違いの札","光る":"光る札","人物":"人物の札","限定":"限定の札"};
 const KEY="rpgCards1";
@@ -260,7 +260,7 @@ function cardEl(cid,owner,w,h,o={}){
    <div class="n" style="font-size:${fs}px;left:${Math.round(w*0.04)}px;top:${Math.round(h*0.42)}px${WL(3)}">${N(nums[3])}</div>
    ${q.length?`<div class="qk" style="font-size:${QF(w,q)}px;line-height:1.15">${q.map(k=>QK[k].nm).join("・")}</div>`:""}`;
   if(o.mini) d.querySelectorAll(".n").forEach(x=>x.remove());
-  d.style.borderColor=RARE[c.r]; d.style.borderWidth=c.r>=5?"3px":"2px"; if(c.r>=6) d.classList.add("r6"); if(c.glow) d.classList.add("glow");
+  d.style.borderColor=RARE[c.r]; d.style.borderWidth=c.r>=5?"3px":"2px"; if(c.r>=6) d.classList.add("r6"); if(c.r===5) d.classList.add("glow");   // ★5はどれも光が流れる（光る札も同じ）
   if(o.shield) d.classList.add("shielded");
   if(o.sealed) d.classList.add("sealed");
   holdToShow(d,cid);
