@@ -293,9 +293,12 @@ function holdToShow(d,cid){
   d.addEventListener("contextmenu",e=>e.preventDefault());
 }
 document.addEventListener("click",e=>{ if(EAT){ EAT=false; e.stopPropagation(); e.preventDefault(); } },true);
+// 札をくわしく見るとき、さわった札と同じ色（青＝こちら・赤＝相手）で見せる
+let LASTOWN="nb";
+addEventListener("pointerdown",e=>{ const c=e.target.closest&&e.target.closest(".card"); LASTOWN=c?(c.classList.contains("op")?"op":c.classList.contains("me")?"me":"nb"):"nb"; },true);
 function detail(cid){
   const c=CARDS[cid]; const v=el("div","veil"); v.style.zIndex=40;
-  const k=cardEl(cid,"nb",150,196); k.classList.add("pop"); v.appendChild(k);
+  const k=cardEl(cid,LASTOWN,150,196); k.classList.add("pop"); v.appendChild(k);
   v.appendChild(el("div","",`<div style="font-size:20px;font-weight:700;text-align:center">${c.nm}</div><div style="text-align:center;color:${RARE[c.r]==="#fff"?"#ffe08a":RARE[c.r]};letter-spacing:2px">${"★".repeat(c.r)}</div>`));
   const q=el("div","frame",""); q.style.cssText+="padding:10px 14px;max-width:320px;text-align:center;line-height:1.6";
   q.innerHTML=`<div style="font-size:12px;color:var(--sub);margin-bottom:4px">No.${String(c.no).padStart(3,"0")}　${KIND_NM[c.k]}</div>`+
