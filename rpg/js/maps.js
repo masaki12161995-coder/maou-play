@@ -624,6 +624,8 @@ function plain() {
   for (const [x, y] of [[12, 3], [13, 9], [2, 11], [15, 16], [27, 17], [36, 9], [38, 4], [11, 25], [26, 26], [2, 23]]) g[y][x] = "T";
   fill(g, "f", 3, 9, 7, 1); fill(g, "f", 24, 10, 8, 1); fill(g, "f", 5, 16, 9, 1);
   fill(g, "=", 0, 24, 5, 1); fill(g, "=", 4, 15, 1, 10);                    // 西：南の山道へ（第5章で開く）
+  const kan = GS0() && S(GS0()) >= 109;                                        // 第8章：外壁沿いの古道（棺の門へ）
+  if (kan) { fill(g, "=", 33, 0, 1, 14); g[9][33] = "="; }
   return {
     id: "plain", nm: "中央平原", g, tier: GS0() && S(GS0()) >= 102 ? 6 : 3, bg: "meadow",
     objs: [
@@ -633,8 +635,9 @@ function plain() {
       { t: "sign", x: 5, y: 23, text: ["道しるべの柱。真新しい貼り紙が二枚。", "王女リゼリアを名乗る偽者あり。見つけ次第、役所へ届け出よ。宰相ヴァルド", "鉄門砦は、軍のほか通行を禁ず。宰相ヴァルド"], when: g => S(g) >= 75 && S(g) < 81 },
       { t: "sign", x: 5, y: 23, text: ["道しるべの柱。「西　南の山道・巡礼の道」", "貼り紙をはがした跡が残っている。"], when: g => S(g) >= 81 },
       { t: "sign", x: 3, y: 13, text: ["高札。「魔王は勇者アスターに討たれ、王国は救われた」", "「魔物の心を拾う者は、魔王の残党と見なす」"], when: g => S(g) >= 107 },   // 第8章：道ばたの高札
+      { t: "sign", x: 34, y: 13, text: ["北　外壁沿いの古道（棺の門）"], when: g => S(g) >= 109 },
     ],
-    exits: [{ x: 20, y: 0, to: "lux", tx: 11, ty: 38, dir: 3 }, { x: 31, y: 29, to: "milna", tx: 8, ty: 1, dir: 0 }, { x: 0, y: 24, to: "yamamichi", tx: 12, ty: 10, dir: 1 }],
+    exits: [{ x: 20, y: 0, to: "lux", tx: 11, ty: 38, dir: 3 }, { x: 31, y: 29, to: "milna", tx: 8, ty: 1, dir: 0 }, { x: 0, y: 24, to: "yamamichi", tx: 12, ty: 10, dir: 1 }, ...(kan ? [{ x: 33, y: 0, to: "kanmon", tx: 7, ty: 12, dir: 3 }] : [])],
     npcs: [
       { id: "gyoshoP", x: 12, y: 13, img: "person_075", dir: 1, nm: "行商人", when: g => cut(g, "c2s1") },
     ],
@@ -656,6 +659,101 @@ function plain() {
       { x: 39, y: 14, run: "eastShut" },
       { x: 1, y: 24, w: 4, h: 1, when: g => S(g) === 75, run: "c5s1" }, { x: 20, y: 6, when: g => S(g) === 75, run: "c5s1" },
       { x: 20, y: 3, when: g => S(g) === 76, run: "c5s2" },
+    ],
+  };
+}
+// ---------- 第8章：棺の門（王都の北、外壁の外の斜面） ----------
+function kanmon() {
+  const W = 15, H = 14, g = grid(W, H, ".");
+  fill(g, "Q", 0, 0, W, 3); fill(g, "T", 0, 3, 2, H - 3); fill(g, "T", W - 2, 3, 2, H - 3); fill(g, "T", 2, H - 1, 5, 1); fill(g, "T", 8, H - 1, 5, 1);
+  fill(g, "=", 7, 4, 1, 10); fill(g, "h", 2, 8, 3, 3); fill(g, "h", 10, 10, 3, 2); fill(g, "h", 3, 4, 2, 2);
+  for (const [x, y] of [[2, 12], [12, 4], [4, 11]]) g[y][x] = "T";
+  const open = GS0() && S(GS0()) >= 110;
+  if (open) g[2][7] = "_";
+  return {
+    id: "kanmon", nm: "棺の門", g, tier: 0, bg: "meadow",
+    objs: [
+      { t: "coffinGate", x: 6, y: 1, w: 3, h: 2, open, walk: open ? 1 : 0 },
+      { t: "house", x: 9, y: 5, w: 3, h: 2, roof: "blue", door: 1, kind: "hakamori", nm: "墓守の小屋" },
+      { t: "sign", x: 6, y: 4, text: ["碑。「死者は関を選ばず。王といえども、その葬列を止むるなかれ」"] },
+    ],
+    exits: [{ x: 7, y: 13, to: "plain", tx: 33, ty: 1, dir: 0 }, ...(open ? [{ x: 7, y: 2, to: "crypt1", tx: 1, ty: 15, dir: 2 }] : [])],
+    npcs: [
+      { id: "hakamoriM", x: 11, y: 7, img: "person_019h", dir: 0, nm: "墓守", talk: "hakamoriM", card: () => 1 },
+    ],
+    foes: [], chests: [],
+    trigs: [{ x: 6, y: 6, w: 3, h: 1, when: g => S(g) === 109, run: "c8s12" }],
+  };
+}
+// ---------- 第8章：城の地下牢（墓所の東の通路から） ----------
+function rouya() {
+  const W = 15, H = 20, g = grid(W, H, "W");
+  fill(g, "d", 1, 16, 12, 3);                 // 入口の廊下
+  fill(g, "d", 6, 4, 2, 12);                  // まん中の廊下
+  fill(g, "d", 2, 6, 4, 2); fill(g, "d", 2, 10, 4, 2); fill(g, "d", 8, 6, 4, 2); fill(g, "d", 8, 10, 4, 2);   // 牢（格子の所まで床）
+  fill(g, "d", 2, 1, 8, 3);                   // 看守の詰所
+  fill(g, "d", 11, 1, 2, 3); g[2][10] = "d";  // いちばん奥の牢
+  g[17][0] = "d";
+  const S0 = GS0() ? S(GS0()) : 0;
+  return {
+    id: "rouya", nm: "城の地下牢", g, tier: S0 >= 102 ? 7 : 3, bg: "stone", dark: 1, inside: 1,
+    objs: [
+      ...[6, 10, 11].map(y => ({ t: "bars", x: 5, y })), ...[6, 7, 10].map(y => ({ t: "bars", x: 8, y })),   // 二つの牢は、格子の戸が開いたまま
+      { t: "straw", x: 2, y: 6 }, { t: "straw", x: 11, y: 10 }, { t: "straw", x: 9, y: 7 }, { t: "chainBox", x: 3, y: 11, w: 2, h: 1, text: ["錆びた鉄枷が、床の輪につないである。"] },
+      { t: "table", x: 3, y: 2 }, { t: "chair", x: 4, y: 2 }, { t: "shelf", x: 8, y: 1, text: ["鍵の掛かっていた釘。鍵束は、もうない。"] }, { t: "candle", x: 2, y: 1 }, { t: "candle", x: 1, y: 16 },
+      ...(S0 < 112 ? [{ t: "bars", x: 10, y: 2 }] : []),   // いちばん奥の牢の格子（看守長の鍵束で開く）
+      { t: "straw", x: 12, y: 3 },
+    ],
+    exits: [{ x: 0, y: 17, to: "crypt1", tx: 13, ty: 4, dir: 1 }],
+    npcs: [
+      { id: "eiheiA", x: 9, y: 17, img: "person_138c", dir: 1, nm: "衛兵", when: g => cut(g, "c8s13b") },
+      { id: "eiheiB", x: 10, y: 17, img: "person_138c", dir: 1, nm: "衛兵", when: g => cut(g, "c8s13b") },
+      { id: "kanshuN", x: 6, y: 2, img: "person_145", dir: 0, nm: "看守長", when: g => S(g) <= 111 },
+      { id: "shojoN", x: 7, y: 1, mon: "monster_152", face: 1, big: 1, nm: "鉄の拷問具", when: g => S(g) <= 111 },
+      { id: "valdR", x: 12, y: 2, img: "person_123", dir: 4, col: 2, nm: "やせた長身の男", when: g => S(g) <= 112 },
+      { id: "mukuB", x: 6, y: 5, img: "person_058h", dir: 3, nm: "ムク", when: g => cut(g, "c8s13c") },
+      // 第8章 場面14：いちばん奥の牢
+      ...[["sigV", 11, 1, "person_146", 2, "シグ"], ["mifaV", 11, 3, "person_011", 2, "ミーファ"], ["jakoV", 9, 1, "person_133", 2, "ジャコ"], ["bramV", 9, 2, "person_005", 2, "ブラム"], ["mukuV", 9, 3, "person_058h", 2, "ムク"], ["asterV", 8, 2, "person_013", 2, "アスター"]]
+        .map(([id, x, y, img, dir, nm]) => ({ id, x, y, img, dir, nm, when: g => cut(g, "c8s14") })),
+    ],
+    foes: [
+      { id: "ry1", x: 7, y: 12, k: "goumon", g: ["goumon", "eihei"], when: g => S(g) >= 111 },
+      { id: "ry2", x: 4, y: 17, k: "eihei", g: ["eihei", "eihei", "eihei"], when: g => S(g) >= 111 && S(g) < 113 },
+      { id: "ry3", x: 6, y: 8, k: "goumon", g: ["goumon", "goumon"], when: g => S(g) >= 111 },
+    ],
+    chests: [{ id: "c_rouya1", x: 2, y: 7, gold: 600 }, { id: "c_rouya2", x: 11, y: 11, tool: "onigiri" }],
+    trigs: [
+      { x: 1, y: 16, w: 2, h: 3, when: g => S(g) === 111 && !g.flags.c8guard, run: "c8s13b" },
+      { x: 6, y: 4, w: 2, h: 1, when: g => S(g) === 111, run: "c8s13c" },
+      { x: 10, y: 2, w: 1, h: 1, when: g => S(g) === 112, run: "c8s14" },
+    ],
+  };
+}
+// ---------- 第8章：墓所の深層（建国王の間の床の下。封の間へ下りる） ----------
+function shinsou() {
+  const W = 15, H = 21, g = grid(W, H, "W");
+  fill(g, "_", 6, 17, 3, 3); fill(g, "_", 2, 15, 11, 2); fill(g, "_", 2, 10, 2, 5); fill(g, "_", 2, 10, 9, 2);
+  fill(g, "_", 9, 6, 2, 4); fill(g, "_", 4, 5, 7, 2); fill(g, "_", 4, 3, 2, 2); fill(g, "_", 5, 3, 5, 1); fill(g, "_", 11, 15, 2, -0);
+  fill(g, "_", 11, 12, 2, 3); fill(g, "_", 6, 2, 3, 1);
+  return {
+    id: "shinsou", nm: "墓所の深層", g, tier: 8, bg: "stone", dark: 1, inside: 1,
+    objs: [
+      { t: "sealDoor", x: 6, y: 0, w: 3, h: 2 },
+      { t: "candle", x: 2, y: 16 }, { t: "candle", x: 12, y: 16 }, { t: "candle", x: 10, y: 10 }, { t: "candle", x: 4, y: 5 },
+      { t: "stele", x: 3, y: 10, text: ["壁に、びっしりと名が彫られている。王たちの名。", "ひとつひとつの名の下に、小さな数。"] },
+    ],
+    exits: [{ x: 7, y: 19, to: "crypt2", tx: 9, ty: 14, dir: 0 }],
+    npcs: [],
+    foes: [
+      { id: "sh1", x: 5, y: 15, k: "sasayaki", g: ["sasayaki", "sasayaki"] },
+      { id: "sh2", x: 3, y: 12, k: "sasayaki", g: ["sasayaki", "hakamori", "rousoku"] },
+      { id: "sh3", x: 9, y: 8, k: "sasayaki", g: ["sasayaki", "honeban", "honeban"] },
+      { id: "sh4", x: 12, y: 13, k: "sasayaki", g: ["sasayaki", "sasayaki"] },
+    ],
+    chests: [{ id: "c_shinsou1", x: 12, y: 12, item: "knightswd" }, { id: "c_shinsou2", x: 4, y: 3, gold: 1200 }],
+    trigs: [
+      { x: 6, y: 17, w: 3, h: 1, when: g => S(g) === 113 && !g.flags.c8whis, run: "c8whis" },
+      { x: 6, y: 2, w: 3, h: 1, when: g => S(g) >= 113, run: "sealDoor8" },
     ],
   };
 }
@@ -846,17 +944,26 @@ function crypt1() {
   fill(g, "_", 6, 9, 3, 3);
   fill(g, "_", 2, 2, 11, 7);                              // 壁画の間
   g[2][7] = "S";
+  const c8 = GS0() && S(GS0()) >= 110;                     // 第8章：棺の門からの古い通路（西）と、城の地下牢への通路（東）
+  if (c8) { g[15][0] = "_"; g[15][1] = "_"; g[4][13] = "_"; g[4][14] = "_"; }
   return {
-    id: "crypt1", nm: "王家の地下墓所", g, tier: 3, bg: "stone", dark: 1, inside: 1,
+    id: "crypt1", nm: "王家の地下墓所", g, tier: GS0() && S(GS0()) >= 102 ? 7 : 3, bg: "stone", dark: 1, inside: 1,
     objs: [
       ...[13, 16, 19].map(y => ({ t: "coffin", x: 3, y, w: 1, h: 2 })), ...[13, 16].map(y => ({ t: "coffin", x: 11, y, w: 1, h: 2 })),
       { t: "coffin", x: 11, y: 19, w: 1, h: 2, wheat: 1, text: ["麦の穂の彫りのある、新しい石棺。"] },
       { t: "candle", x: 5, y: 23 }, { t: "candle", x: 9, y: 23 }, { t: "candle", x: 5, y: 12 }, { t: "candle", x: 9, y: 12 },
       { t: "mural", x: 4, y: 2, w: 3, h: 2, text: ["剣を持つ人と、角のある大きな影。", "二人の顔だけが、削り取られている。"] },
       { t: "candle", x: 2, y: 2 }, { t: "candle", x: 12, y: 2 },
+      { t: "coffin", x: 5, y: 14, w: 1, h: 2, text: ["まだ名の彫られていない、新しい石棺。"], when: g => S(g) >= 110 },
+      { t: "coffinCart", x: 2, y: 14, when: g => S(g) >= 110 }, { t: "coffinCart", x: 2, y: 16, when: g => S(g) >= 110 },   // 葬列はここまで。棺は門の内側に置いていく
     ],
-    exits: [{ x: 7, y: 29, to: "lux", tx: 4, ty: 6, dir: 0 }, { x: 7, y: 2, to: "crypt2", tx: 7, ty: 17, dir: 3 }],
-    npcs: [],
+    exits: [{ x: 7, y: 29, to: "lux", tx: 4, ty: 6, dir: 0 }, { x: 7, y: 2, to: "crypt2", tx: 7, ty: 17, dir: 3 },
+      ...(c8 ? [{ x: 0, y: 15, to: "kanmon", tx: 7, ty: 4, dir: 0 }, { x: 14, y: 4, to: "rouya", tx: 1, ty: 17, dir: 2 }] : [])],
+    npcs: [
+      // 第8章 場面13：新しい石棺と、王妃の墓
+      ...[["sigC", 6, 16, "person_146", 1, "シグ"], ["asterC", 4, 17, "person_013", 3, "アスター"], ["mifaC", 10, 21, "person_011", 3, "ミーファ"], ["mukuC", 8, 17, "person_058h", 1, "ムク"], ["bramC", 7, 18, "person_005", 3, "ブラム"], ["jakoC", 9, 18, "person_133", 3, "ジャコ"]]
+        .map(([id, x, y, img, dir, nm]) => ({ id, x, y, img, dir, nm, when: g => cut(g, "c8s13") })),
+    ],
     foes: [
       { id: "cr1", x: 7, y: 17, k: "hakamori", g: ["hakamori", "honeban", "hakamori"] },
       { id: "cr2", x: 4, y: 21, k: "rousoku", g: ["rousoku", "sekkan", "rousoku"] },
@@ -867,6 +974,7 @@ function crypt1() {
       { x: 7, y: 27, when: g => S(g) === 34, run: "c2s6" },
       { x: 9, y: 19, w: 2, h: 2, when: g => S(g) === 35, run: "c2s6b" },
       { x: 2, y: 6, w: 11, h: 1, when: g => S(g) === 36, run: "c2s6c" },
+      { x: 2, y: 15, w: 2, h: 1, when: g => S(g) === 110, run: "c8s13" },   // 第8章：墓所に入ったところで
     ],
   };
 }
@@ -875,14 +983,16 @@ function crypt2() {
   const W = 15, H = 19, g = grid(W, H, "W");
   fill(g, "_", 3, 6, 9, 11); g[17][7] = "_"; g[18][7] = "_";
   fill(g, "_", 6, 2, 3, 4); g[2][7] = "S";
+  const deep = GS0() && S(GS0()) >= 113;   // 第8章：床の敷石が外され、下へ続く螺旋の階段
   return {
     id: "crypt2", nm: "建国王の間", g, tier: 3, bg: "stone", dark: 1, inside: 1,
     objs: [
       { t: "bigCoffin", x: 7, y: 10, w: 1, h: 2, talk: "kenkoku" },
+      ...(deep ? [{ t: "spiral", x: 9, y: 13, walk: 1 }] : []),
       { t: "stele", x: 3, y: 6, talk: "hibun" }, { t: "stele", x: 4, y: 6, talk: "hibun" },
       { t: "candle", x: 3, y: 15 }, { t: "candle", x: 11, y: 15 }, { t: "candle", x: 11, y: 7 },
     ],
-    exits: [{ x: 7, y: 18, to: "crypt1", tx: 7, ty: 3, dir: 0 }, { x: 7, y: 2, to: "kiroku", tx: 5, ty: 8, dir: 3 }],
+    exits: [{ x: 7, y: 18, to: "crypt1", tx: 7, ty: 3, dir: 0 }, { x: 7, y: 2, to: "kiroku", tx: 5, ty: 8, dir: 3 }, ...(deep ? [{ x: 9, y: 13, to: "shinsou", tx: 7, ty: 19, dir: 3 }] : [])],
     npcs: [
       { id: "shishiN", x: 7, y: 4, mon: "monster_139", face: 1, big: 1, nm: "石獅子", when: g => S(g) <= 38 },
     ],
@@ -918,12 +1028,19 @@ function shinjo() {
       { t: "portrait", x: 5, y: 0, text: ["王妃の肖像画。栗色の髪に、麦の穂の髪飾り。"] },
       { t: "candleStand", x: 1, y: 1 }, { t: "candleStand", x: 7, y: 1 },
       { t: "table", x: 6, y: 5 }, { t: "chair", x: 5, y: 5 },
-      { t: "veiled", x: 10, y: 2, text: ["布をかけた台座。"] },
+      { t: "veiled", x: 10, y: 2, text: GS0() && S(GS0()) >= 110 ? ["布だけが残って、台座は空になっている。"] : ["布をかけた台座。"] },
     ],
     exits: [],
-    npcs: [{ id: "edmon", x: 2, y: 1, ox: 0.5, head: 1, img: "person_021", dir: 0, nm: "エドモン" }],
+    npcs: [
+      { id: "edmon", x: 2, y: 1, ox: 0.5, head: 1, img: "person_021", dir: 0, nm: "エドモン", when: g => !cut(g, "c8s15b") },
+      { id: "edmonZ", x: 2, y: 1, ox: 0.5, head: 1, img: "person_021", dir: 4, col: 2, nm: "エドモン", when: g => cut(g, "c8s15b") },
+      // 第8章 場面15：寝台を囲む
+      ...[["valdK", 4, 2, "person_123", 1, "ヴァルド"], ["mifaK", 1, 3, "person_011", 2, "ミーファ"], ["asterK", 2, 5, "person_013", 3, "アスター"], ["bramK", 4, 5, "person_005", 3, "ブラム"], ["jakoK", 5, 4, "person_133", 1, "ジャコ"], ["sigK", 5, 3, "person_146", 1, "シグ"], ["mukuK", 3, 6, "person_058h", 3, "ムク"]]
+        .map(([id, x, y, img, dir, nm]) => ({ id, x, y, img, dir, nm, when: g => cut(g, "c8s15") || cut(g, "c8s15b") })),
+    ],
+    noFollow: GS0() && /^c8s15/.test(GS0().flags.cut || "") ? 1 : 0,
     foes: [], chests: [],
-    trigs: [{ x: 4, y: 8, when: g => S(g) >= 41, run: "toNiwa" }],
+    trigs: [{ x: 4, y: 8, when: g => S(g) >= 41 && S(g) < 102, run: "toNiwa" }],
   };
 }
 // ---------- 城の中庭（月夜） ----------
@@ -2305,5 +2422,5 @@ function minka() {
 }
 
 root.MINKA_FOLK = MINKA_FOLK;
-root.MAPS = { fushaoka, uroko, doromiya, tsuno, hyakudan, kagenohara, kuuza, gyokuza, kuriya, jouheki, kiba, tsukihoe, tsubasa, kazakiri, tetsumon, iteno, camp, duga, touge, itadaki, yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
+root.MAPS = { kanmon, rouya, shinsou, fushaoka, uroko, doromiya, tsuno, hyakudan, kagenohara, kuuza, gyokuza, kuriya, jouheki, kiba, tsukihoe, tsubasa, kazakiri, tetsumon, iteno, camp, duga, touge, itadaki, yamamichi, yakatagai, yakata, kura, ekken, kairoJ, kyakuma, junrei, seito, shoko, kairou, hoshinoma, seirena, funasaka, kaizoku, kaizoku2, uchiumi, kareta, gankutsu, gankutsu2, kyobai, zroof, minka, kinsa, zahara, shokan, casino, arena, zinn, tsuya, akamugi, hoshimi, shinjo, nakaniwa, kakurega, yakuba, crypt1, crypt2, kiroku, plain, milna, lux, sakaba, hut, ferry, village, river, sandbar, forest, hermit, shrine, road0, road1, harune, kawauso, toiya, ohashi, tower1, tower2, towerTop };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -691,6 +691,36 @@ function cage(c) { // 水の中の鉄の檻（2×2マス）
   R(c, "#1f2a36", 8, 18, 80, 70); for (let x = 10; x < 90; x += 10) { R(c, "#55525c", x, 14, 4, 76); R(c, "#8a8494", x, 14, 1, 76); }
   R(c, "#3d3a44", 6, 12, 84, 6); R(c, "#3d3a44", 6, 84, 84, 6);
 }
+// ---- 第8章：棺の門・城の地下牢・墓所の深層 ----
+function coffinGate(c, o) { // 棺の門（横3マス×縦2マス）。外壁にうがった古い石の門。open でないときは錆びた鎖
+  R(c, "#4a4652", 0, 0, 144, 96); for (let y = 0; y < 96; y += 16) for (let x = (y / 16) % 2 ? 0 : 12; x < 144; x += 24) R(c, "#3c3944", x, y, 2, 16);
+  for (let y = 16; y < 96; y += 16) R(c, "#3c3944", 0, y, 144, 2);
+  R(c, "#2e2b34", 36, 14, 72, 82); R(c, "#57525e", 40, 18, 64, 4);
+  R(c, "#0c0b10", 44, 22, 56, 74); blob(c, "#0c0b10", 72, 24, 28, 10);
+  R(c, "#8a8494", 64, 4, 16, 8); R(c, "#2e2b34", 70, 6, 4, 4);   // 要石の髑髏の彫り（小さく）
+  if (!o || !o.open) {
+    for (let i = 0; i < 4; i++) { R(c, "#7a4a2a", 44, 34 + i * 16, 56, 4); R(c, "#a0643a", 44, 34 + i * 16, 56, 1); }
+    R(c, "#5a3a22", 66, 44, 12, 14); R(c, "#a0643a", 69, 48, 6, 6);  // 錠前
+  } else { R(c, "#1c2a3a", 52, 30, 40, 66); blob(c, "#2f4a66", 72, 56, 10, 6); }   // 開いた門：奥に青い蝋燭の火
+}
+function bars(c) { // 牢の鉄格子（1マス）
+  for (let i = 0; i < 6; i++) { R(c, "#2a2a30", 3 + i * 8, 0, 4, 48); R(c, "#6a6a74", 3 + i * 8, 0, 2, 48); }
+  R(c, "#2a2a30", 0, 6, 48, 4); R(c, "#6a6a74", 0, 6, 48, 2); R(c, "#2a2a30", 0, 38, 48, 4); R(c, "#6a6a74", 0, 38, 48, 2);
+}
+function straw(c) { // 牢の寝藁（1マス）
+  blob(c, "#6a5a2a", 24, 30, 18, 10); blob(c, "#9a8442", 24, 28, 15, 8);
+  for (let i = 0; i < 9; i++) R(c, i % 2 ? "#c8b060" : "#a8903e", 10 + i * 3, 24 + (i * 5) % 9, 7, 1);
+}
+function spiral(c) { // 床の下へ続く螺旋の階段（1マス）。外された敷石
+  R(c, "#3a3640", 2, 2, 44, 44); R(c, "#0a090e", 6, 6, 36, 36);
+  for (let i = 0; i < 6; i++) { const a = i * 0.9, x = 24 + Math.cos(a) * 12, y = 24 + Math.sin(a) * 12; R(c, i % 2 ? "#5a5462" : "#6a6472", Math.round(x) - 5, Math.round(y) - 3, 10, 5); }
+  R(c, "#57525e", 36, 40, 10, 6); R(c, "#57525e", 2, 40, 8, 6);   // 外された敷石
+}
+function sealDoor(c) { // 封の間の扉（横3マス×縦2マス）。四つの紋
+  R(c, "#2a2632", 0, 0, 144, 96); R(c, "#3c3646", 8, 6, 128, 90); R(c, "#14121a", 70, 10, 4, 86);
+  const em = [["#c04a3a", 36, 34], ["#4a7ac0", 108, 34], ["#3a9a5a", 36, 70], ["#c0a03a", 108, 70]];
+  for (const [col, x, y] of em) { blob(c, "#14121a", x, y, 12, 12); blob(c, col, x, y, 9, 9); blob(c, "#14121a", x, y, 3, 3); }
+}
 root.TL = { T, P, hash, rng, R, blob, grass, dirt, cobble, water, bridge, stones, rockWall, caveWall, caveFloor, rail, fence, treeBase, treeTop, house, well, sign, chest, stall, mineGate, rubble,
-  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage, itae, starFloor, carpet, throne, chainBox, grate, ledgers, snow, snowPath, snowTreeBase, snowTreeTop, iceWall, tent, banner, ironGate, ironGateOpen, burntPost, brokenStone, wisp, iceBridge, chasm, watchtower, fireSnow, shade, shadePath, shadeTreeBase, shadeTreeTop, shadeRock, glowShroom, furTent, nest, blackThrone, tornBanner, windStone, stoneDark, dohyo, drum };
+  floor, wall, voidT, door, marsh, crops, herb, boat, kaeri, stump, thorns, shrineGate, bed, table, chair, shelf, oarRack, pillar, hatWall, hearth, basket, post, statue, willow, weir, wagon, gatePost, offering, cedar, canyon, fallen, bridgeEnd, plaque, bigStone, towerFar, coffinGate, bars, straw, spiral, sealDoor, counter, futon, stairs, campfire, bell, desk, windmill, castle, townWall, coffin, bigCoffin, mural, stele, candle, chest2, scroll, kingBed, portrait, veiled, column, candleStand, fountain, woodpile, redWheat, woodCoffin, openCoffin, lantern, diceBowl, kanmon, grave, newGrave, coffinCart, sand, sandRock, palm, cactus, slotMachine, scorpionSign, ship, storm, winch, cage, itae, starFloor, carpet, throne, chainBox, grate, ledgers, snow, snowPath, snowTreeBase, snowTreeTop, iceWall, tent, banner, ironGate, ironGateOpen, burntPost, brokenStone, wisp, iceBridge, chasm, watchtower, fireSnow, shade, shadePath, shadeTreeBase, shadeTreeTop, shadeRock, glowShroom, furTent, nest, blackThrone, tornBanner, windStone, stoneDark, dohyo, drum };
 })(window);

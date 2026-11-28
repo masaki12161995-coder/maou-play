@@ -212,6 +212,11 @@ const SKILLS = {
   tooboe:    { nm: "月への遠吠え", bp: 5, rank: "E", tg: "all", at: ["打"], stun: 20, dist: "遠", dir: "間接", kind: "攻撃" },
   kazakiri:  { nm: "風切り矢", bp: 5, rank: "D", tg: "row", at: ["突"], dist: "遠", dir: "間接", kind: "攻撃" },
   raiun:     { nm: "雷雲", bp: 6, rank: "D", tg: "all", at: ["雷"], magic: 1, dist: "遠", dir: "間接", kind: "攻撃" },
+  // 第8章：墓所と地下牢、墓所の深層
+  shimetsuke:{ nm: "締めつけ", bp: 4, rank: "C", tg: "one", at: ["打"], stun: 40, dist: "近", dir: "直接", kind: "攻撃" },
+  sasayaki:  { nm: "千の囁き", bp: 5, rank: "C", tg: "all", at: ["陰"], magic: 1, seal: 30, dist: "遠", dir: "間接", kind: "攻撃" },
+  kagikaze:  { nm: "鍵束打ち", bp: 4, rank: "C", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
+  tojikome:  { nm: "閉じこめ", bp: 8, rank: "B", tg: "row", at: ["打"], stun: 40, dist: "近", dir: "直接", kind: "攻撃" },
   // 第8章：森の魔物と、新しい仲間（アスター・シグ・エルマ）
   kokeroll:  { nm: "苔玉ころがり", bp: 4, rank: "C", tg: "one", at: ["打"], stun: 30, dist: "近", dir: "直接", kind: "攻撃" },
   yonakigoe: { nm: "夜鳴きの声", bp: 5, rank: "D", tg: "all", at: ["陰"], magic: 1, seal: 20, dist: "遠", dir: "間接", kind: "攻撃" },
@@ -370,6 +375,9 @@ const MATS = {
   kagekessho:{ nm: "影の結晶", icon: "mat_032", fam: "石・結晶", rare: "緑" },
   kurotsume:{ nm: "黒い爪", icon: "mat_030", fam: "骨・牙・爪", rare: "緑" },
   kurokiba: { nm: "月夜の牙", icon: "mat_085", fam: "骨・牙・爪", rare: "青" },
+  sabikugi: { nm: "錆びた鉄枷", icon: "mat_012", fam: "金属", rare: "緑" },
+  kanmuri:  { nm: "囁く黒金", icon: "mat_053", fam: "金属", rare: "青" },
+  shojo:    { nm: "鉄の処女の扉", icon: "mat_073", fam: "金属", rare: "紫" },
   kokeishi: { nm: "苔むした丸石", icon: "mat_078", fam: "石・結晶", rare: "白" },
   yonakibane:{ nm: "夜鳴きの羽", icon: "mat_108", fam: "羽", rare: "白" },
   yamibane: { nm: "紫の夜羽", icon: "mat_063", fam: "羽", rare: "緑" },
@@ -466,6 +474,9 @@ const HEARTS = {
   tsurara:  { nm: "ツララ蜘蛛の心", col: "緑", mul: { str: 98, vit: 98, dex: 112, agi: 108, int: 104, wil: 98, lov: 96, cha: 100 }, sk: "tsurarafu", up: ["dex", "int"] },
   shirokuma:{ nm: "白熊武者の心", col: "青", mul: { str: 116, vit: 114, dex: 100, agi: 94, int: 90, wil: 106, lov: 100, cha: 102 }, sk: "kumabarai", up: ["str", "vit"] },
   hyouga:   { nm: "氷河ムカデの心", col: "金", mul: { str: 106, vit: 112, dex: 104, agi: 100, int: 116, wil: 114, lov: 102, cha: 104 }, sk: "hyougaS", up: ["int", "wil"], ps: "focus" },
+  goumon:   { nm: "拷問具ゴーレムの心", col: "緑", mul: { str: 110, vit: 118, dex: 92, agi: 82, int: 88, wil: 106, lov: 96, cha: 98 }, sk: "shimetsuke", up: ["vit", "str"] },
+  sasayaki: { nm: "冠の囁きの心", col: "青", mul: { str: 90, vit: 94, dex: 100, agi: 108, int: 120, wil: 112, lov: 96, cha: 104 }, sk: "sasayaki", up: ["int", "wil"] },
+  tetsushojo:{ nm: "鉄の処女の心", col: "金", mul: { str: 116, vit: 124, dex: 96, agi: 86, int: 92, wil: 114, lov: 108, cha: 100 }, sk: "tojikome", up: ["vit", "wil"], ps: "ironwall" },
   kokedaruma:{ nm: "コケダルマの心", col: "白", mul: { str: 104, vit: 114, dex: 90, agi: 84, int: 96, wil: 110, lov: 104, cha: 98 }, sk: "kokeroll", up: ["vit", "str"] },
   yonaki:   { nm: "ヨナキフクロウの心", col: "白", mul: { str: 94, vit: 96, dex: 104, agi: 108, int: 110, wil: 104, lov: 100, cha: 100 }, sk: "yonakigoe", up: ["int", "agi"] },
   kageboushi:{ nm: "カゲボウシの心", col: "緑", mul: { str: 92, vit: 96, dex: 104, agi: 108, int: 114, wil: 104, lov: 98, cha: 100 }, sk: "kagenui", up: ["int", "agi"] },
@@ -722,6 +733,16 @@ const FOES = {
   // 角の長ゴウラ：一発が重い
   goura:    { nm: "角の長ゴウラ", img: "person_122", person: 1, wt: "fist", pow: 13, hp: 600, boss: 1, st: { str: 38, vit: 32, dex: 18, agi: 14, int: 8, wil: 26, lov: 0, cha: 30 },
               res: { 打: 20, 陽: -30, 冷: -20 }, plan: { 2: "g_shiko", 5: "g_shiko", 8: "g_shiko" }, every: { n: 2, sk: "g_tsuppari" }, rageFrom: 9, rage: "g_tsuppari", stunRes: 1, gold: 0 },
+  // 第8章：王家の地下墓所から、城の地下牢へ
+  goumon:   { mat: "sabikugi", nm: "拷問具ゴーレム", img: "m_goumon", wt: "club", pow: 13, hp: 230, st: { str: 36, vit: 34, dex: 12, agi: 8, int: 6, wil: 24, lov: 0, cha: 10 }, res: { 打: 20, 斬: 30, 突: 10, 雷: -40, 熱: -10 }, every: { n: 3, sk: "shimetsuke" }, gold: 30, heart: "goumon" },
+  eihei:    { nm: "王都の衛兵", img: "person_138c", person: 1, human: 1, wt: "spear", pow: 13, hp: 180, st: { str: 33, vit: 26, dex: 24, agi: 22, int: 8, wil: 18, lov: 0, cha: 12 }, res: { 突: 10, 雷: -20 }, every: { n: 3, sk: "gale" }, gold: 40 },
+  // 墓所の深層（冠からもれる声）
+  sasayaki: { mat: "kanmuri", nm: "冠の囁き", img: "monster_141", wt: "fang", sky: 1, pow: 10, hp: 140, mag: 9, st: { str: 16, vit: 18, dex: 22, agi: 30, int: 24, wil: 26, lov: 0, cha: 20 }, res: { 陰: 50, 打: 20, 陽: -40, 熱: -20 }, every: { n: 3, sk: "sasayaki" }, gold: 36, heart: "sasayaki" },
+  // 第8章のボス：看守長と鉄の処女ゴーレム。看守長が倒れるとゴーレムは命令が止まって鈍り、ゴーレムが倒れると看守長は逃げ腰になる
+  kanshu:   { nm: "看守長", img: "person_145", person: 1, human: 1, boss: 1, wt: "club", pow: 13, hp: 220, st: { str: 42, vit: 28, dex: 20, agi: 22, int: 10, wil: 22, lov: 0, cha: 18 }, res: { 打: 10 },
+              plan: { 2: "kagikaze", 5: "kagikaze" }, every: { n: 3, sk: "kagikaze" }, fallFx: { k: "tetsushojo", st: { agi: 0.5, str: 0.8, dex: 0.7 }, nm: "命令が止まった" }, gold: 160 },
+  tetsushojo:{ mat: "shojo", nm: "鉄の処女ゴーレム", img: "monster_152", big: 1, boss: 1, wt: "club", pow: 14, hp: 340, st: { str: 48, vit: 38, dex: 14, agi: 10, int: 8, wil: 30, lov: 0, cha: 14 }, res: { 打: 25, 斬: 35, 突: 15, 雷: -40, 熱: -10 },
+              plan: { 3: "tojikome", 6: "tojikome" }, every: { n: 3, sk: "shimetsuke" }, rageFrom: 9, rage: "tojikome", stunRes: 1, fallFx: { k: "kanshu", st: { vit: 0.6, wil: 0.6, agi: 0.85 }, nm: "逃げ腰になった" }, gold: 0, heart: "tetsushojo" },
   // 第8章：ささやきの森（印のなくなったカイと、ミーファの二人で歩く）
   kokedaruma:{ mat: "kokeishi", nm: "コケダルマ", img: "monster_094", wt: "club", pow: 11, hp: 150, st: { str: 30, vit: 26, dex: 8, agi: 6, int: 6, wil: 18, lov: 0, cha: 8 }, res: { 打: 30, 斬: 20, 熱: -30, 雷: -20 }, every: { n: 3, sk: "kokeroll" }, gold: 14, heart: "kokedaruma" },
   yonaki:   { mat: "yonakibane", nm: "ヨナキフクロウ", img: "m_yonaki", wt: "fang", sky: 1, pow: 10, hp: 100, mag: 10, st: { str: 18, vit: 12, dex: 20, agi: 26, int: 22, wil: 18, lov: 0, cha: 10 }, res: { 陰: 30, 陽: -30, 雷: -30 }, every: { n: 3, sk: "yonakigoe" }, gold: 12, heart: "yonaki" },
@@ -946,6 +967,9 @@ function fall(st, d) {
   if (d.down) return;
   d.down = true; d.downAt = st.turn; d.lp = Math.max(0, d.lp - 1); d.poison = 0; d.stun = 0; d.cover = 0;
   log(st, { t: "down", d: d.id, lp: d.lp });
+  // 対になった敵：片方が倒れると、残った方の能力が下がる（看守長とゴーレムなど）
+  const fx = d.side === 1 && d.fallFx;
+  if (fx) for (const o of alive(st.foes)) if (o.key === fx.k) { for (const [k, m] of Object.entries(fx.st)) o.st[k] = Math.round(o.st[k] * m); log(st, { t: "passive", u: o.id, nm: fx.nm }); }
 }
 
 // ---------- オートの選び方 ----------
