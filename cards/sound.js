@@ -9,9 +9,9 @@
   const JINGLE_LENGTH = 1.52;
   const RESUME_EVENTS = ['pointerdown', 'touchstart', 'pointerup', 'touchend', 'click', 'keydown'];
   const has = (object, name) => Object.prototype.hasOwnProperty.call(object, name);
-  // 本物の札の録音（CC0。flip：Splashdust「flipCard.wav」、deal：el_boss「Playing Card Deal Variation 2」、どちらも freesound.org）
+  // 本物の札の録音（CC0。flip：Splashdust「flipCard.wav」、deal：el_boss「Playing Card Deal Variation 2」、put：filmfan87「card placed on table」、すべて freesound.org）
   const SAMPLE_BASE = (document.currentScript && document.currentScript.src || location.href).replace(/[^/]*$/, '') + 'snd/';
-  const SAMPLE_FILES = { flip: ['flip.mp3', 0.6], deal: ['deal.mp3', 0.45] };   // [ファイル, 大きさ]
+  const SAMPLE_FILES = { flip: ['flip.mp3', 0.6], deal: ['deal.mp3', 0.45], put: ['put.mp3', 0.6] };   // [ファイル, 大きさ]
   const samples = {};
   function loadSamples() {
     for (const name of Object.keys(SAMPLE_FILES)) {
@@ -432,6 +432,7 @@
 
   const EFFECTS = {
     put(bus, time) {
+      if (playSample('put', bus, time)) return;
       effectWood(bus, time, 251, 0.132);
       effectNoise(bus, time + 0.006, 0.054, 1380, 590, 0.6, 0.16);
     },
