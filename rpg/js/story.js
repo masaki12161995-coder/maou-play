@@ -815,7 +815,7 @@ T.c1stop = async () => {
   await UI.say("", ["この先は、次の更新で。"]);
   A.enter("ohashi", 7, A.pos().y - A.map().padTop, 1);
 };
-T.towerLater = async () => { await talk(`カイ：日が落ちる。行くのは明日の朝だ。`); A.enter("ohashi", 5, 7, 0); };
+T.towerLater = async () => { await talk(`カイ：日が落ちる。行くのは明日の朝だ。`); A.enter("ohashi", 6, 7, 0); };
 T.towerIn = async () => { await A.fadeOut(); A.enter("tower1", 6, 14, 3); A.fadeIn(); if (S() === 21) { await wait(300); return T.c1s7(); } };
 
 // ---------- 場面3　かわうそ亭 ----------

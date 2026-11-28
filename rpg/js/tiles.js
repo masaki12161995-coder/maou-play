@@ -434,8 +434,11 @@ function bridgeEnd(c) { // 橋の切れ目（欠けた石組み）
 }
 function plaque(c) { cobble(c, 0, 0, () => "c"); R(c, "#3a3640", 8, 14, 32, 24); R(c, "#8a7a52", 10, 16, 28, 20); R(c, "#c9b06a", 10, 16, 28, 2); for (const yy of [22, 27, 31]) R(c, "#5a4c2c", 14, yy, 20, 1); } // 銘板
 function bigStone(c) { blob(c, "#2a3a26", 24, 42, 22, 5); blob(c, "#3a3640", 24, 28, 22, 17); blob(c, "#625c68", 22, 24, 19, 13); blob(c, "#7a7380", 17, 19, 9, 5); } // 落ちてきた大きな石
-function towerFar(c) { // 丘の上の古い塔（遠くに見える。横2×縦3マス）
-  blob(c, "#34503a", 48, 136, 52, 12);
+function towerFar(c) { // 丘の上の古い塔（横2×縦3マス。右のマスの真ん中に入口が来るように描く）
+  c.save(); c.translate(24, 0); towerFar0(c); c.restore();
+}
+function towerFar0(c) {
+  blob(c, "#34503a", 48, 136, 26, 10);
   R(c, "#4f4a55", 26, 28, 44, 108); R(c, "#6d6670", 30, 28, 14, 108); R(c, "#3a3640", 62, 28, 8, 108);
   for (let i = 0; i < 5; i++) R(c, "#3a3640", 26, 46 + i * 20, 44, 2);
   for (let i = 0; i < 4; i++) R(c, "#4f4a55", 24 + i * 13, 18, 9, 12);

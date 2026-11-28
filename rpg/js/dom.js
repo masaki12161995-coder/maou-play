@@ -17,7 +17,8 @@ M.fit = () => {
   const ios = /iPhone/.test(navigator.userAgent), full = navigator.standalone || matchMedia("(display-mode: standalone)").matches, sh = Math.max(screen.width, screen.height);
   if (ios && full && innerHeight > innerWidth && sh >= 812) { if (st < 20) st = sh >= 874 ? 62 : sh >= 852 ? 59 : 47; if (sb < 10) sb = 34; }
   M.safeKey = [c.paddingTop, c.paddingBottom, c.paddingLeft, c.paddingRight].join();
-  const vw = innerWidth, vh = innerHeight, aw = vw - sl - sr, ah = vh - st - sb;
+  // ホーム画面から開いたiPhoneで、画面の高さが実際より短く返り、下に暗い帯が残ることがある。縦向きなら画面ぜんぶの高さを使う
+  const vw = innerWidth, vh = ios && full && innerHeight > innerWidth ? Math.max(innerHeight, screen.height) : innerHeight, aw = vw - sl - sr, ah = vh - st - sb;
   const K = Math.min(aw / W, ah / H), bw = W * K, bh = H * K, bx = sl + (aw - bw) / 2, by = st + (ah - bh) / 2;
   M.K = K; M.safePx = { t: st, b: sb, l: sl, r: sr };
   stage.style.width = vw + "px"; stage.style.height = vh + "px";

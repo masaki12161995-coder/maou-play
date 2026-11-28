@@ -508,15 +508,15 @@ function ohashi() {
   if (fixed) fill(g, "c", 11, 12, 11, 3);
   else { fill(g, "c", 11, 12, 3, 3); fill(g, "E", 14, 12, 1, 3); fill(g, "c", 17, 12, 5, 3); } // 橋（真ん中が抜けている）
   for (const [x, y] of [[12, 17], [14, 18], [15, 16], [13, 20], [16, 19], [15, 9], [13, 8]]) g[y][x] = "X"; // 谷底に散らばる石
-  fill(g, "=", 5, 6, 1, 6);                             // 北の丘への小道
+  fill(g, "=", 6, 6, 1, 6);                             // 北の丘への小道（塔の入口の真下まで）
   for (const [x, y] of [[3, 9], [8, 8], [9, 17], [4, 18], [7, 20]]) g[y][x] = "T";
   return {
     id: "ohashi", nm: "ガルム大橋", g, tier: 0, bg: null,
     objs: [
-      { t: "towerFar", x: 6, y: 3, w: 2, h: 3 },
+      { t: "towerFar", x: 5, y: 3, w: 2, h: 3 },   // 入口が小道（x=6）の真上に来るように描く
       { t: "plaque", x: 10, y: 11, text: ["ガルム大橋。建国の年、これを架く。", "名の由来は伝わっていない。"] },
       { t: "bigStone", x: 9, y: 15, text: ["切り口がない。割れたのではないらしい。"], when: g => S(g) >= 20 },
-      { t: "sign", x: 4, y: 11, text: ["北　古い見張り塔"] },
+      { t: "sign", x: 5, y: 11, text: ["北　古い見張り塔"] },
       { t: "house", x: 18, y: 7, w: 3, h: 3, roof: "red", door: 1, kind: "tea", nm: "たもとの茶屋" },                 // 東のたもとの茶屋
     ],
     exits: [{ x: 0, y: 13, to: "harune", tx: 17, ty: 14, dir: 1 }],
@@ -550,8 +550,8 @@ function ohashi() {
     foes: [], chests: [],
     trigs: [
       { x: 8, y: 12, w: 1, h: 3, when: g => S(g) === 19, run: "c1s5" },
-      { x: 5, y: 6, when: g => S(g) === 20, run: "towerLater" },
-      { x: 5, y: 6, when: g => S(g) >= 21, run: "towerIn" },
+      { x: 6, y: 6, when: g => S(g) === 20, run: "towerLater" },
+      { x: 6, y: 6, when: g => S(g) >= 21, run: "towerIn" },
       { x: 7, y: 12, w: 1, h: 3, when: g => S(g) === 25, run: "c1s10" },
       { x: 21, y: 12, w: 1, h: 3, when: g => S(g) >= 28, run: "tollEast" },
       { x: 7, y: 12, w: 1, h: 3, when: g => S(g) === 107, run: "c8s8" },   // 第8章：葬列が橋のたもとの関へ
@@ -569,7 +569,7 @@ function tower1() {
       { t: "desk", x: 3, y: 2, talk: "nisshi" },
       { t: "bell", x: 7, y: 2, text: ["鳴らす者のいない警鐘。"] },
     ],
-    exits: [{ x: 6, y: 15, to: "ohashi", tx: 5, ty: 7, dir: 0 }, { x: 10, y: 2, to: "tower2", tx: 2, ty: 17, dir: 3 }],
+    exits: [{ x: 6, y: 15, to: "ohashi", tx: 6, ty: 7, dir: 0 }, { x: 10, y: 2, to: "tower2", tx: 2, ty: 17, dir: 3 }],
     npcs: [
       { id: "i1", x: 5, y: 8, mon: "monster_133", face: 1, nm: "イシコロ小僧", when: g => S(g) <= 22 },
       { id: "i2", x: 6, y: 8, mon: "monster_133", face: 1, nm: "イシコロ小僧", when: g => S(g) <= 22 },
