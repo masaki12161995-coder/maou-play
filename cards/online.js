@@ -43,7 +43,7 @@ function cardEl(cid,owner,w,h,o={}){
    <div class="n" style="font-size:${fs}px;right:${Math.round(w*0.04)}px;top:${Math.round(h*0.42)}px${WL(1)}">${N(nums[1])}</div>
    <div class="n" style="font-size:${fs}px;left:0;right:0;bottom:${q.length?Math.round(h*0.155):Math.round(h*0.04)}px${WL(2)}">${N(nums[2])}</div>
    <div class="n" style="font-size:${fs}px;left:${Math.round(w*0.04)}px;top:${Math.round(h*0.42)}px${WL(3)}">${N(nums[3])}</div>
-   ${q.length?`<div class="qk" style="font-size:${QF(w,q)}px;line-height:1.15">${q.map(k=>QK[k].nm).join("・")}</div>`:""}`;
+   ${q.length?`<div class="qk" style="font-size:${QF(w,q)}px;line-height:1.15">${q.map(k=>(o.dim||[]).includes(k)?`<span class="qd">${QK[k].nm}</span>`:QK[k].nm).join("・")}</div>`:""}`;
   d.style.borderColor=RARE[Math.min(6,c.r)]; d.style.borderWidth=c.r>=5?"3px":"2px"; if(c.r>=6) d.classList.add("r6"); if(c.r===5) d.classList.add("glow");   // ★5はどれも光が流れる（光る札も同じ）
   if(o.shield) d.classList.add("shielded"); if(o.sealed) d.classList.add("sealed");
   if(!o.sealed) wl.forEach((on,i)=>{ if(!on) return; const sh=document.createElement("i"); sh.className="wl"+(i===2?" side":""); sh.innerHTML='<svg viewBox="0 0 12 14"><path d="M6 1 11 3v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V3z" fill="#d8e6ff" stroke="#1b2333" stroke-width="1.4"/></svg>'; d.querySelectorAll(".n")[i].appendChild(sh); });
@@ -185,6 +185,9 @@ function startGame(){ // 部屋を作った人が、そろえた乱数の種と�
   post("start",{seed,first,game:R.game}); beginDeal(seed,first,R.game);
 }
 
+// もう二度と働かないくせ（札の下の名前を暗くする）：置いたときだけ働くくせは盤に置いたら役目を終える。一度きりのくせは使ったら終わり
+const ONPUT=["corner","center","edge","lone","pack","early","late","under","kin","rage","cheer","awe","gamble","seal","turn","drain","diag","chain"];
+function spent(c){ const q=CARDS[c.cid].q||[]; return q.filter(k=>ONPUT.includes(k)||(k==="guard"&&!c.g)||(k==="spite"&&!c.sp)||(k==="revive"&&!c.rv&&c.rb===undefined)); }
 // ---------- 画面：入口 ----------
 // ---------- 音 ----------
 const SND={ bgm:n=>{ try{ window.FUDA_SND&&FUDA_SND.bgm(n); }catch(_){} }, se:n=>{ try{ window.FUDA_SND&&FUDA_SND.se(n); }catch(_){} }, jingle:n=>{ try{ window.FUDA_SND&&FUDA_SND.jingle(n); }catch(_){} } };
@@ -318,7 +321,7 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   for(let i=0;i<9;i++){
     const ce=el("div","cell"); ce.style.width=D.cw+"px"; ce.style.height=D.ch+"px"; ce.dataset.i=i;
     const c=G.b[i];
-    if(c){ const full=CARDS[c.cid].q||[]; const e=cardEl(c.cid,c.o===me?"me":"op",D.cw-4,D.ch-4,{n:c.n.map(v=>v+wb(G,i,c.o)),shield:c.g,q:full,sealed:full.length&&!c.q.length}); if(fx&&fx[i]) e.classList.add(fx[i]); e.onclick=()=>{ if(!EAT) detail(c.cid); }; ce.appendChild(e); }
+    if(c){ const full=CARDS[c.cid].q||[]; const e=cardEl(c.cid,c.o===me?"me":"op",D.cw-4,D.ch-4,{n:c.n.map(v=>v+wb(G,i,c.o)),shield:c.g,q:full,sealed:full.length&&!c.q.length,dim:spent(c)}); if(fx&&fx[i]) e.classList.add(fx[i]); e.onclick=()=>{ if(!EAT) detail(c.cid); }; ce.appendChild(e); }
     bd.appendChild(ce);
   }
   s.appendChild(bd);
@@ -326,7 +329,7 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   const mr=el("div","row"); mr.style.minHeight="96px";
   const canGo=()=>M&&M.G&&!M.busy&&!M.over&&M.turn===me;
   if(!bo){ const cur=(G.lost||[0,0])[me]; if(cur>(M.rageSeen||0)&&!M.rageT){ M.rageT=Date.now(); M.rageFrom=M.rageSeen||0; setTimeout(()=>{ if(M){ M.rageSeen=cur; M.rageT=0; } },1200); } }
-  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):(G.lost||[0,0])[me]):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ if(!bo&&M.rageT&&Date.now()-M.rageT<250){   // 怒りで上がった：札が少し浮き、数字が前の数から緑の新しい数へ上がる（すぐ描き直されても、最初の一瞬なら演出をやり直す）
+  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):(G.lost||[0,0])[me]):0, c=cardEl(cid,"me",64,84,{...(rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}),dim:G.b.filter(x=>!x).length<7?["early"]:[]}); if(rg){ if(!bo&&M.rageT&&Date.now()-M.rageT<250){   // 怒りで上がった：札が少し浮き、数字が前の数から緑の新しい数へ上がる（すぐ描き直されても、最初の一瞬なら演出をやり直す）
       const up=rg-M.rageFrom, ns=c.querySelectorAll(".n"); ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg-up)); });
       c.classList.add("rgup"); SND.se("chain"); if(window.FX&&FX.css) FX.css(); const t=el("div","fxlab",QK.rage.nm); c.appendChild(t);
       setTimeout(()=>{ ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg)); if(window.FX&&FX.bumpN) FX.bumpN(e,k,1); }); },260);
