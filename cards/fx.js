@@ -10,7 +10,7 @@ let css=false;
 function style(){ if(css) return; css=true; const s=document.createElement("style"); s.textContent=`
 .cell{overflow:visible}
 .card.lift{transform:translateY(-7px) scale(1.07);box-shadow:0 12px 18px #000c;z-index:4;transition:transform .16s ease-out,box-shadow .16s}
-.card .n.hit{color:#fff!important;transform:scale(1.45);transition:transform .16s;text-shadow:0 0 6px #fff,0 0 12px #ffffffb0,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000!important;z-index:3}
+.card .n.hit{color:#ffe08a!important;transform:scale(1.45);transition:transform .16s;text-shadow:0 0 6px #ffb020,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000!important;z-index:3}
 .card .n.lose{color:#aab0c0!important}
 .card .n.miss{color:#7b8296!important;transition:color .15s}
 .fxar{display:inline-block;font-size:.82em;font-weight:900;margin:0 .04em;vertical-align:.04em;animation:fxar .5s ease-in-out infinite alternate;text-shadow:0 0 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 0 6px #000}
@@ -97,7 +97,7 @@ window.FX={ css:style, bumpN, run(ev,render,done){
         if(d.how!=="diag"){ ward(bd,d.from,d.mi,d.a,d.snap); ward(bd,d.cell,d.ti,d.d,d.snap); }
         if(d.how==="same"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); }          // 同数：同じ数字どうしが光るだけ（見れば同じと分かる）
         else if(d.how==="plus"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); lab(bd,d.cell,`${d.a}＋${d.d}＝${d.a+d.d}`); }
-        else { hit(bd,d.from,d.mi,"hit"); hit(bd,d.cell,d.ti,"lose"); } });
+        else { hit(bd,d.from,d.mi,"hit","up"); hit(bd,d.cell,d.ti,"lose","dn"); } });
       if(lv===1&&duels.length){ const from=duels[0].from, qs=[...new Set(duels.map(d=>d.how).filter(h=>h==="diag"))].map(QN); if(qs.length){ lab(bd,from,qs.join("　")); if(!head) QS(); } }
     },out(bd){ flips.forEach(()=>SE("flip")); if(guards.length) QS(); flips.forEach(i=>{ const c=card(bd,i); if(c){ c.classList.remove("lift"); c.classList.add("fout"); } }); guards.forEach(g=>{ const c=card(bd,g.cell); if(c) c.classList.add("fxshake"); }); }});
     if(duels.length) beats.push({snap:outs.length?outs[outs.length-1].snap:duels[duels.length-1].snap,wait:620,go(bd){
