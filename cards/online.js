@@ -135,15 +135,16 @@ function restore(key){ try{ const d=JSON.parse(localStorage.getItem(key||localSt
 function clearPvn(){ document.querySelectorAll(".pvn").forEach(e=>e.remove()); document.querySelectorAll(".n.pushed").forEach(e=>{ e.classList.remove("pushed"); e.style.transform=""; }); }
 function showPv(ghost,cid,cell){
   const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?Math.min(3,(M&&M.G&&M.G.lost||[0,0])[me]):0;
-  let n=base.map(v=>cl(v+rg)), tag="";
-  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); tag=info.filter(([k,v])=>v&&k!=="rage").map(([k,v])=>`${QK[k].nm}＋${v}`).join(" "); }
-  ghost.querySelectorAll(".n").forEach((e,i)=>{ e.innerHTML=N(n[i]); e.classList.toggle("pv",n[i]>base[i]); });
+  if(window.FX&&FX.css) FX.css();
+  const hand=base.map(v=>cl(v+rg)); let n=hand.slice(), tag="";
+  if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); tag=info.filter(([k,v])=>v&&k!=="rage").map(([k])=>QK[k].nm).join("　"); }
+  ghost.querySelectorAll(".n").forEach((e,i)=>{ const up=n[i]>hand[i]; e.innerHTML=N(n[i])+(up?`<i class="fxar pva up k${i}">↑</i>`:""); e.classList.toggle("pv",up); });
   // 指で隠れて見えないので、となりのマスの、こちら寄りのふちにも、その辺の数字を薄く点滅させて見せる（盤の外を向く辺は出さない）
   clearPvn();
   if(cell!==null){ const cells=document.querySelectorAll(".board .cell"), y=Math.floor(cell/3), x=cell%3;
     [[0,-1,0,"bottom:3px;left:0;right:0"],[1,0,1,"left:4px;top:50%;transform:translateY(-50%)"],[2,1,0,"top:3px;left:0;right:0"],[3,0,-1,"right:4px;top:50%;transform:translateY(-50%)"]].forEach(([i,dy,dx,pos])=>{
       const ny=y+dy, nx=x+dx; if(ny<0||ny>2||nx<0||nx>2) return;
-      const m=el("div","pvn"+(n[i]>base[i]?" up":"")); m.innerHTML=N(n[i]); m.style.cssText=pos; cells[ny*3+nx].appendChild(m);
+      const m=el("div","pvn"+(n[i]>hand[i]?" up":"")); m.innerHTML=N(n[i]); m.style.cssText=pos; cells[ny*3+nx].appendChild(m);
       // となりに札があって、その札の向かい合う数字と重なるときだけ、その数字を向こう側へ少し押し出す
       const nb=cells[ny*3+nx].querySelector(".card"), fn=nb&&nb.querySelectorAll(".n")[(i+2)%4];
       if(fn){ const a=m.getBoundingClientRect(), b=fn.getBoundingClientRect();
@@ -321,10 +322,10 @@ function drawMatch(fx,bo){ // bo：演出の途中の盤（無ければ今の盤
   const mr=el("div","row"); mr.style.minHeight="96px";
   const canGo=()=>M&&M.G&&!M.busy&&!M.over&&M.turn===me;
   if(!bo){ const cur=Math.min(3,(G.lost||[0,0])[me]); if(cur>(M.rageSeen||0)&&!M.rageT){ M.rageT=Date.now(); M.rageFrom=M.rageSeen||0; setTimeout(()=>{ if(M){ M.rageSeen=cur; M.rageT=0; } },1200); } }
-  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):Math.min(3,(G.lost||[0,0])[me])):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ c.querySelectorAll(".n").forEach(x=>x.classList.add("rg")); if(!bo&&M.rageT&&Date.now()-M.rageT<250){   // 怒りで上がった：札が少し浮き、数字が前の数から緑の新しい数へ上がる（すぐ描き直されても、最初の一瞬なら演出をやり直す）
-      const up=rg-M.rageFrom, ns=c.querySelectorAll(".n"); ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg-up)); e.classList.remove("rg"); });
-      c.classList.add("rgup"); SND.se("chain"); const t=el("div","fxlab","怒り＋"+rg); c.appendChild(t);
-      setTimeout(()=>{ ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg)); e.classList.add("rg","rgpop"); }); },260);
+  G.h[me].forEach((cid,i)=>{ if(!cid){ const e=el("div",""); e.style.cssText="width:64px;height:84px"; mr.appendChild(e); return; } const rg=(CARDS[cid].q||[]).includes("rage")?(bo?(M.rageSeen||0):Math.min(3,(G.lost||[0,0])[me])):0, c=cardEl(cid,"me",64,84,rg?{n:CARDS[cid].n.map(v=>cl(v+rg))}:{}); if(rg){ if(!bo&&M.rageT&&Date.now()-M.rageT<250){   // 怒りで上がった：札が少し浮き、数字が前の数から緑の新しい数へ上がる（すぐ描き直されても、最初の一瞬なら演出をやり直す）
+      const up=rg-M.rageFrom, ns=c.querySelectorAll(".n"); ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg-up)); });
+      c.classList.add("rgup"); SND.se("chain"); if(window.FX&&FX.css) FX.css(); const t=el("div","fxlab",QK.rage.nm); c.appendChild(t);
+      setTimeout(()=>{ ns.forEach((e,k)=>{ e.innerHTML=N(cl(CARDS[cid].n[k]+rg)); if(window.FX&&FX.bumpN) FX.bumpN(e,k,1); }); },260);
       setTimeout(()=>{ t.remove(); c.classList.remove("rgup"); },1100); } } if(canGo()) c.classList.add("ready");
     dragOrTap(c,cid,canGo,cell=>{ if(canGo()&&!M.G.b[cell]&&M.G.h[me][i]===cid) myPlay(i,cell); }); mr.appendChild(c); });
   s.appendChild(mr);   // 怒り：手札にあるうちから、上がった数字を見せる
