@@ -28,7 +28,8 @@ function cardEl(cid,owner,w,h,o={}){
   const nums=o.n||c.n, q=o.q||c.q||[], fs=Math.max(11,Math.round(w*0.19));
   const wl=(o.q||c.q||[]).includes("wall")?nums.map(v=>v===Math.max(...nums)):[], WL=i=>wl[i]?";color:#ffe08a;text-shadow:0 0 4px #ffb020,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000":"";   // 鉄壁が守っている辺の数字は金色
   const [iw,ih]=IMG[c.im], bw=w*0.88, bh=h*0.66;
-  const fit=iw<=bw&&ih<=bh, sc=fit?Math.max(1,Math.floor(Math.min(bw/iw,bh/ih))):(iw>bw*1.7&&ih>bh*1.3?0.5:1);
+  const fr=(typeof SIZE!=="undefined"&&SIZE[c.im])||0, DPR=window.devicePixelRatio||1;   // 魔物：大きさの区分に合わせて枠のこの割合まで大きく（小さい生き物は小さめのまま）。人物：今までどおり
+  const fit=iw<=bw&&ih<=bh, sc=!fit?(iw>bw*1.7&&ih>bh*1.3?0.5:1):fr?Math.max(1,Math.floor(Math.min(bw/iw,bh*fr/ih)*DPR)/DPR):Math.max(1,Math.floor(Math.min(bw/iw,bh/ih)));
   const top=ih*sc<=bh?(bh-ih*sc)/2:0;
   d.innerHTML=`<div class="face"></div>
    <div class="art"><img src="img/c/${c.im}.png" style="width:${iw*sc}px;height:${ih*sc}px;top:${top}px"></div>
