@@ -410,6 +410,13 @@
     effectTone(bus, time, duration * 0.47, pitch * 2.01, level * 0.23, pitch * 2.01, 0.005);
   }
 
+  // 小さな鈴のような音：基音＋鐘らしいずれた倍音。すぐ立ち上がって、ゆっくり消える
+  function effectBell(bus, time, pitch, level, duration) {
+    effectTone(bus, time, duration, pitch, level, pitch, 0.003);
+    effectTone(bus, time, duration * 0.45, pitch * 2.76, level * 0.22, pitch * 2.76, 0.002);
+    effectTone(bus, time, duration * 0.22, pitch * 5.4, level * 0.07, pitch * 5.4, 0.002);
+  }
+
   function effectNumberSlide(bus, time, start, end) {
     const source = ctx.createOscillator();
     const envelope = ctx.createGain();
@@ -505,6 +512,19 @@
       effectPaper(bus, time + 0.063, 0.078, 0.23);
       effectPaper(bus, time + 0.122, 0.09, 0.26);
       effectWood(bus, time + 0.157, 242, 0.065);
+    },
+    // 金（★5）の札が配られた：ピ・コ・リン
+    rare5(bus, time) {
+      effectBell(bus, time, 1567.98, 0.095, 0.16);
+      effectBell(bus, time + 0.075, 2093.0, 0.1, 0.18);
+      effectBell(bus, time + 0.15, 2637.02, 0.11, 0.75);
+    },
+    // 虹（★6）の札が配られた：もう1音、高くきらめく
+    rare6(bus, time) {
+      effectBell(bus, time, 1567.98, 0.095, 0.16);
+      effectBell(bus, time + 0.075, 2093.0, 0.1, 0.18);
+      effectBell(bus, time + 0.15, 2637.02, 0.11, 0.3);
+      effectBell(bus, time + 0.24, 3135.96, 0.1, 0.95);
     },
     ready(bus, time) {
       effectNote(bus, time, 329.63, 0.114, 0.121);
