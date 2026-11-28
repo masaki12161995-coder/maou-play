@@ -35,6 +35,7 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 @keyframes fxban{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}75%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
 `; document.head.appendChild(s); }
 const SE=n=>{ try{ if(window.FX_SND) window.FX_SND(n); }catch(_){} };   // 音（友だち対戦のページだけ鳴る。無ければ何もしない）
+const QS=(then)=>{ SE("chain"); if(then) setTimeout(()=>SE(then),110); };   // くせが発動したら、どのくせも同じ音。数字が動くときは、すぐあとに上がる・下がる音
 const card=(bd,i)=>{ const c=bd&&bd.querySelectorAll(".cell")[i]; return c&&c.querySelector(".card"); };
 function lab(bd,i,txt,cls){ const c=bd.querySelectorAll(".cell")[i]; if(!c||!txt) return; const e=document.createElement("div"); e.className="fxlab"+(cls?" "+cls:""); e.textContent=txt; c.appendChild(e); }
 function ban(bd,txt){ if(!txt) return; const e=document.createElement("div"); e.className="fxban"; e.textContent=txt; bd.appendChild(e); }
@@ -59,12 +60,12 @@ window.FX={ run(ev,render,done){
   style();
   const beats=[];
   const pre=ev.filter(e=>e.lv===0&&(e.t==="back"||e.t==="grow"));
-  if(pre.length) beats.push({snap:pre[pre.length-1].snap,wait:700,go(bd){ SE(pre.some(e=>e.t==="back")?"flip":"up"); pre.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add(e.t==="back"?"fin":"fxpop"); lab(bd,e.cell,e.t==="back"?QN("revive"):`${QN("grow")}＋1`); }); }});
+  if(pre.length) beats.push({snap:pre[pre.length-1].snap,wait:700,go(bd){ QS(pre.some(e=>e.t==="back")?"flip":"up"); pre.forEach(e=>{ const c=card(bd,e.cell); if(c) c.classList.add(e.t==="back"?"fin":"fxpop"); lab(bd,e.cell,e.t==="back"?QN("revive"):`${QN("grow")}＋1`); }); }});
   const put=ev.find(e=>e.t==="put");
-  if(put){ const bt=bonusText(put.info); beats.push({snap:put.snap,wait:bt?750:360,go(bd){ SE("put"); if((put.info||[]).some(x=>x[0]==="gamble")) setTimeout(()=>SE("gamble"),120); else if(bt) setTimeout(()=>SE("up"),140); const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(bt) c.classList.add("fxglow"); } lab(bd,put.cell,bt); }}); }
+  if(put){ const bt=bonusText(put.info); beats.push({snap:put.snap,wait:bt?750:360,go(bd){ SE("put"); if(bt) setTimeout(()=>QS("up"),120); const c=card(bd,put.cell); if(c){ c.classList.add("fxpop"); if(bt) c.classList.add("fxglow"); } lab(bd,put.cell,bt); }}); }
   // 置いたときのくせ（励まし・威圧・封印）
   const on=ev.filter(e=>e.lv===1&&(e.t==="buff"||e.t==="debuff"||e.t==="seal"));
-  if(on.length) beats.push({snap:on[on.length-1].snap,wait:750,go(bd){ SE(on.some(e=>e.t==="seal")?"seal":on[0].t==="buff"?"up":"down"); const src=on[0].from; const c=card(bd,src); if(c) c.classList.add("fxglow"); lab(bd,src,QN(on[0].q));
+  if(on.length) beats.push({snap:on[on.length-1].snap,wait:750,go(bd){ QS(on.some(e=>e.t==="seal")?null:on[0].t==="buff"?"up":"down"); const src=on[0].from; const c=card(bd,src); if(c) c.classList.add("fxglow"); lab(bd,src,QN(on[0].q));
     on.forEach(e=>{ const t=card(bd,e.cell); if(t) t.classList.add("fxpop"); lab(bd,e.cell,e.t==="buff"?"＋1":e.t==="debuff"?"−1":QN("seal"),e.t==="buff"?"":"bad"); }); }});
   // 勝負：段ごと（1＝置いた札から、2＝連鎖）。向かい合う2枚が浮く → 比べる数字が光る → 負けた札がひっくり返る
   for(const lv of [1,2]){
@@ -84,18 +85,18 @@ window.FX={ run(ev,render,done){
         if(d.how==="same"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); }          // 同数：同じ数字どうしが光るだけ（見れば同じと分かる）
         else if(d.how==="plus"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); lab(bd,d.cell,`${d.a}＋${d.d}＝${d.a+d.d}`); }
         else { hit(bd,d.from,d.mi,"hit","up"); hit(bd,d.cell,d.ti,"lose","dn"); } });
-      if(lv===1&&duels.length){ const from=duels[0].from, qs=[...new Set(duels.map(d=>d.how).filter(h=>h==="diag"))].map(QN); if(qs.length) lab(bd,from,qs.join("　")); }
-    },out(bd){ flips.forEach(()=>SE("flip")); if(guards.length) SE("guard"); flips.forEach(i=>{ const c=card(bd,i); if(c){ c.classList.remove("lift"); c.classList.add("fout"); } }); guards.forEach(g=>{ const c=card(bd,g.cell); if(c) c.classList.add("fxshake"); }); }});
+      if(lv===1&&duels.length){ const from=duels[0].from, qs=[...new Set(duels.map(d=>d.how).filter(h=>h==="diag"))].map(QN); if(qs.length){ lab(bd,from,qs.join("　")); if(!head) QS(); } }
+    },out(bd){ flips.forEach(()=>SE("flip")); if(guards.length) QS(); flips.forEach(i=>{ const c=card(bd,i); if(c){ c.classList.remove("lift"); c.classList.add("fout"); } }); guards.forEach(g=>{ const c=card(bd,g.cell); if(c) c.classList.add("fxshake"); }); }});
     if(duels.length) beats.push({snap:outs.length?outs[outs.length-1].snap:duels[duels.length-1].snap,wait:620,go(bd){
       flips.forEach(i=>{ const c=card(bd,i); if(c) c.classList.add("fin"); });
       guards.forEach(g=>{ const c=card(bd,g.cell); if(c) c.classList.add("fxglow"); lab(bd,g.cell,g.wall?QN("wall")+"！":QN("guard")+"！","def"); });
-      if(outs.some(e=>e.t==="curse"||e.t==="spite")) SE("curse");
+      if(outs.some(e=>e.t==="curse"||e.t==="spite")) QS(outs.some(e=>e.t==="curse")?"down":null);
       outs.forEach(e=>{ if(e.t==="curse"){ const c=card(bd,e.cell); if(c) c.classList.add("fxpop"); lab(bd,e.cell,QN("curse")+"　−2","bad"); }
         if(e.t==="spite"){ const c=card(bd,e.cell); if(c) c.classList.add("fin"); lab(bd,e.cell,QN("spite")+"！","bad"); } });
     }});
   }
   const dr=ev.find(e=>e.t==="buff"&&e.q==="drain");
-  if(dr) beats.push({snap:dr.snap,wait:650,go(bd){ SE("up"); const c=card(bd,dr.cell); if(c){ c.classList.add("fxpop","fxglow"); } lab(bd,dr.cell,`${QN("drain")}＋${dr.v}`); }});
+  if(dr) beats.push({snap:dr.snap,wait:650,go(bd){ QS("up"); const c=card(bd,dr.cell); if(c){ c.classList.add("fxpop","fxglow"); } lab(bd,dr.cell,`${QN("drain")}＋${dr.v}`); }});
   let i=0, bd=null;
   const next=()=>{ if(i>=beats.length){ done(); return; } const b=beats[i++];
     bd=render(b.snap); b.go(bd);
