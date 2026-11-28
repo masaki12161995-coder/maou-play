@@ -9,9 +9,9 @@
   const JINGLE_LENGTH = 1.52;
   const RESUME_EVENTS = ['pointerdown', 'touchstart', 'pointerup', 'touchend', 'click', 'keydown'];
   const has = (object, name) => Object.prototype.hasOwnProperty.call(object, name);
-  // 本物の札の録音（CC0。flip：Splashdust「flipCard.wav」、deal：el_boss「Playing Card Deal Variation 2」、put：filmfan87「card placed on table」、tap：stevielematt「SOFT TAPPING」、coin：Firecat_the_potato_YT「coin flip.wav」＋HoseNoseSounds「Coin dropped on table 2」、すべて freesound.org）
+  // 本物の札の録音（CC0。flip：Splashdust「flipCard.wav」、deal：el_boss「Playing Card Deal Variation 2」、put：filmfan87「card placed on table」、tap：stevielematt「SOFT TAPPING」、land（コインが止まる音）：HoseNoseSounds「Coin dropped on table 2」、すべて freesound.org）
   const SAMPLE_BASE = (document.currentScript && document.currentScript.src || location.href).replace(/[^/]*$/, '') + 'snd/';
-  const SAMPLE_FILES = { flip: ['flip.mp3', 0.6], deal: ['deal.mp3', 0.45], put: ['put.mp3', 0.6], tap: ['tap.mp3', 0.35], coin: ['coin.mp3', 0.55] };   // [ファイル, 大きさ]
+  const SAMPLE_FILES = { flip: ['flip.mp3', 0.6], deal: ['deal.mp3', 0.45], put: ['put.mp3', 0.6], tap: ['tap.mp3', 0.35], land: ['land.mp3', 0.6] };   // [ファイル, 大きさ]
   const samples = {};
   // 録音のファイルは、ページを開いた時点で先に取りに行く（最初のタップで音の準備を始めてからでは、最初の数回に間に合わない）
   const raw = {};
@@ -25,11 +25,11 @@
   }
   // 録音を鳴らす。毎回ほんの少し高さを変えて、続けて鳴っても同じ音に聞こえないようにする。
   // まだ読み終わっていないときは、何も鳴らさない（前の作った音が混ざって、違う音に聞こえないように）。true を返すので、作った音には行かない
-  function playSample(name, bus, time) {
+  function playSample(name, bus, time, vol = 1) {
     const buf = samples[name]; if (!buf) return has(SAMPLE_FILES, name);
     const src = ctx.createBufferSource(), g = ctx.createGain();
     src.buffer = buf; src.playbackRate.value = 0.94 + Math.random() * 0.12;
-    g.gain.value = SAMPLE_FILES[name][1];
+    g.gain.value = SAMPLE_FILES[name][1] * vol;
     src.connect(g); g.connect(bus); src.onended = () => { src.disconnect(); g.disconnect(); };
     src.start(time); return true;
   }
@@ -486,13 +486,18 @@
       effectWood(bus, time + 0.217, 265, 0.062);
       effectNoise(bus, time + 0.019, 0.196, 1080, 640, 0.65, 0.105, 0.017);
     },
+    // コイントス（画面のコインの動きに合わせる。鳴らすのは、コインが飛び上がる瞬間）
+    // 回っている間：半回転ごとに風を切る音。はじめは速く高く、回転がゆるむほど間があいて、低く弱くなる
+    // 1.17秒：机に落ちる（録音）／1.5秒：小さく跳ねて止まる（同じ録音を小さく）
     coin(bus, time) {
-      if (playSample('coin', bus, time)) return;
-      effectTone(bus, time, 0.212, 524, 0.117, 520, 0.005);
-      effectTone(bus, time + 0.002, 0.141, 907, 0.047);
-      effectTone(bus, time + 0.003, 0.064, 1560, 0.028);
-      effectTone(bus, time + 0.104, 0.134, 781, 0.084);
-      effectTone(bus, time + 0.105, 0.070, 1194, 0.029);
+      const T = [0, 0.05, 0.101, 0.152, 0.208, 0.271, 0.347, 0.441, 0.571, 0.777, 0.97];
+      for (let k = 0; k < T.length - 1; k++) {
+        const d = T[k + 1] - T[k], f = 2600 * Math.pow(0.87, k);
+        effectNoise(bus, time + T[k], Math.max(0.05, d * 1.1), f * 1.25, f * 0.8, 1.2, 0.19 * (1 - k * 0.07), Math.min(0.03, d * 0.4));
+      }
+      effectNoise(bus, time, 0.95, 1900, 600, 0.7, 0.05, 0.08);
+      playSample('land', bus, time + 1.17);
+      playSample('land', bus, time + 1.5, 0.3);
     },
     deal(bus, time) {
       if (playSample('deal', bus, time)) return;

@@ -287,7 +287,6 @@ function drawDeal(){
 // ---------- 画面：勝負 ----------
 function goMatch(){
   SND.bgm("lobby");   // 対戦中も、入口と同じ曲のまま
-  setTimeout(()=>SND.se("coin"),960);   // コインの録音は鳴りはじめから約0.54秒で着地。着地が「先攻／後攻」の文字（1.5秒）と重なるように
   const me=R.side, op=1-me;
   const h=[null,null]; h[me]=M.mine.slice(); h[op]=["?","?","?","?","?"];   // 相手の札は、置かれるまで分からない
   M.G={b:Array(9).fill(null),h,lost:[0,0]}; M.turn=-1; M.busy=true; M.k=0;
@@ -295,7 +294,7 @@ function goMatch(){
   drawMatch();
   const bd=document.querySelector(".board"), ov=el("div","toss"), meFirst=R.first===me;
   ov.innerHTML=`<div class="coinwrap"><div class="coin3d ${meFirst?'blue':'red'}"><div class="cf blue">先</div><div class="cf red">後</div></div></div><div class="tosstx"></div>`;
-  bd.appendChild(ov);
+  bd.appendChild(ov); SND.se("coin");   // コインが飛び上がるのと同時に鳴らす（風を切る音 → 1.17秒で机に落ちる → 1.5秒で止まる。止まると同時に「先攻／後攻」の文字）
   setTimeout(()=>{ ov.querySelector(".tosstx").textContent=meFirst?"こちらの先攻":"相手の先攻"; },1500);
   setTimeout(()=>{ ov.remove(); M.turn=R.first; M.busy=false; drawMatch(); pump(); },2600);
 }
