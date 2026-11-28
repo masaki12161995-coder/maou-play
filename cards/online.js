@@ -271,8 +271,8 @@ function drawDeal(){
   const mid=el("div","vsmid"); mid.style.cssText+="flex:0 0 auto;padding:2px 0"; mid.innerHTML=`<div class="vs">VS</div>`; s.appendChild(mid);
   const me=el("div","panel me"); const mh=el("div","phead"); mh.appendChild(el("div","","こちらの手札")); mh.appendChild(el("div","lbl",`★${M.mine.reduce((a,c)=>a+CARDS[c].r,0)}`)); me.appendChild(mh);
   const hand=el("div","hand5"); const W=Math.min(440,$app.clientWidth)-40, cw=Math.min(104,Math.floor((W-24)/3)), ch=Math.round(cw*1.3); hand.style.cssText=`max-width:${cw*3+24}px;margin:0 auto`;   // 大きく、3枚と2枚の2段で
-  const top=Math.max(...M.mine.map(c=>CARDS[c].r));
-  M.mine.forEach((cid,i)=>{ const c=cardEl(cid,"me",cw,ch); c.onclick=()=>{ if(!EAT) detail(cid); }; if(M.fresh){ c.classList.add("flip"); if(CARDS[cid].r>=5) c.classList.add("rattle"); } hand.appendChild(c); });
+  const top=Math.max(...M.mine.map(c=>CARDS[c].r));   // 金と虹がいっしょなら、揺れるのは虹だけ（音も虹）
+  M.mine.forEach((cid,i)=>{ const c=cardEl(cid,"me",cw,ch); c.onclick=()=>{ if(!EAT) detail(cid); }; if(M.fresh){ c.classList.add("flip"); if(CARDS[cid].r>=5&&CARDS[cid].r===top) c.classList.add("rattle"); } hand.appendChild(c); });
   if(M.fresh&&top>=5) setTimeout(()=>SND.se(top>=6?"rare6":"rare5"),450);   // 金・虹が出たら、めくれ終わりにピコリン（札は小さくコトコト揺れる）
   M.fresh=false;
   me.appendChild(hand); s.appendChild(me);

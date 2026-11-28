@@ -113,7 +113,7 @@ function play(G,side,hi,cell,ev,real){
   // 吸収
   if(q.includes("drain")&&flipped.length&&G.b[cell].o===side){ setc(G,cell,{...G.b[cell],n:G.b[cell].n.map(v=>cl(v+flipped.length))}); E(ev,G,{t:"buff",q:"drain",v:flipped.length,cell,lv:3}); }
   // 成長：相手（こちら）が札を置いたので、相手の成長の札が育つ（勝負が全部終わってから）
-  G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"grow")&&(c.gr||0)<3){ setc(G,t,{...c,n:c.n.map(v=>cl(v+1)),gr:(c.gr||0)+1}); E(ev,G,{t:"grow",cell:t,lv:5}); } });
+  G.b.forEach((c,t)=>{ if(c&&c.o!==side&&has(c,"grow")){ setc(G,t,{...c,n:c.n.map(v=>cl(v+1)),gr:(c.gr||0)+1}); E(ev,G,{t:"grow",cell:t,lv:5}); } });
   // 執念（戻ってきたら、数字が全部＋1）：次は相手の番。相手の札で、こちらに取られていたものが戻る（盤が埋まって終わるときは、もう番が来ないので戻らない）
   if(G.b.some(x=>!x)) G.b.forEach((c,t)=>{ if(c&&c.rb===1-side&&c.o===side){ setc(G,t,{...c,o:1-side,rb:undefined,rv:false,n:c.n.map(v=>v+1)}); E(ev,G,{t:"back",cell:t,side:1-side,lv:5}); } });
   return flipped.length;
