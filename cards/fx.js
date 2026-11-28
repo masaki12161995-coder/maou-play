@@ -12,6 +12,7 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 .card.lift{transform:translateY(-7px) scale(1.07);box-shadow:0 12px 18px #000c;z-index:4;transition:transform .16s ease-out,box-shadow .16s}
 .card .n.hit{color:#ffe08a!important;transform:scale(1.45);transition:transform .16s;text-shadow:0 0 6px #ffb020,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000!important;z-index:3}
 .card .n.lose{color:#aab0c0!important}
+.card .n.miss{color:#7b8296!important;transition:color .15s}
 .fxar{display:inline-block;font-size:.82em;font-weight:900;margin:0 .04em;vertical-align:.04em;animation:fxar .5s ease-in-out infinite alternate;text-shadow:0 0 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 0 6px #000}
 .fxar.up{color:#6dff7c}.fxar.x{position:relative;width:.8em;height:.8em;margin:0 .06em;vertical-align:-.02em;animation:none}.fxar.x::before,.fxar.x::after{content:"";position:absolute;left:-.02em;right:-.02em;top:50%;height:.22em;margin-top:-.11em;background:#eef0f6;border:1px solid #000;border-radius:2px;transform:rotate(45deg)}.fxar.x::after{transform:rotate(-45deg)}.fxar.dn{color:#ff5b5b;animation-name:fxdn}.fxar.eq{color:#ffe08a;animation:none}
 @keyframes fxar{from{transform:translateY(1px)}to{transform:translateY(-3px)}}@keyframes fxdn{from{transform:translateY(-1px)}to{transform:translateY(3px)}}
@@ -74,8 +75,8 @@ window.FX={ run(ev,render,done){
     const s0=(duels[0]||miss[0]).snap;
     if(head&&duels.length) beats.push({snap:s0,wait:650,go(bd){ ban(bd,head); }});   // 「連鎖！」などは先に出して、数字に重ならないように
     beats.push({snap:s0,wait:duels.length?760:560,go(bd){
-      // 取れなかった組：こちらの数字を灰色にして ✕（札は浮かせない）
-      miss.forEach(d=>{ ward(bd,d.from,d.mi,d.a,d.snap); ward(bd,d.cell,d.ti,d.d,d.snap); hit(bd,d.from,d.mi,"lose","x"); });
+      // 取れなかった組：こちらの数字を灰色にするだけ（札は浮かせない）
+      miss.forEach(d=>{ ward(bd,d.from,d.mi,d.a,d.snap); ward(bd,d.cell,d.ti,d.d,d.snap); hit(bd,d.from,d.mi,"miss"); });
       duels.forEach(d=>{ const a=card(bd,d.from), t=card(bd,d.cell); if(a) a.classList.add("lift"); if(t) t.classList.add("lift");
         if(d.how!=="diag"){ ward(bd,d.from,d.mi,d.a,d.snap); ward(bd,d.cell,d.ti,d.d,d.snap); }
         if(d.how==="same"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); }          // 同数：同じ数字どうしが光るだけ（見れば同じと分かる）
