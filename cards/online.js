@@ -3,7 +3,7 @@
 // 240枚の札から、お互いでたらめに5枚。引き直しは1回だけ。お互いの手札は見えない。
 // つなぎ方：合言葉（部屋の名前）ごとに、ntfy.sh の公開の通り道を使って、短い知らせをやりとりする（自分たちのサーバーは要らない）。
 //   ?local=1 のときは、同じブラウザの中だけでつなぐ（試し用）
-const RARE=["","#cfcfcf","#56b35a","#4a90e2","#a66ad8","#e8b93c","#fff"];
+const RARE=["","#d8d8d8","#5ad07e","#5ec4ff","#b57cf0","#f2c23c","#fff"];
 const KIND_NM={"魔物":"魔物の札","色違い":"色違いの札","光る":"光る札","人物":"人物の札","限定":"限定の札"};
 const ALL=Object.keys(CARDS);
 const Q=new URLSearchParams(location.search), LOCAL=Q.get("local")==="1";

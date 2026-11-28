@@ -1,6 +1,6 @@
 "use strict";
 // ===== 札の卓（試作） =====
-const RARE=["","#cfcfcf","#56b35a","#4a90e2","#a66ad8","#e8b93c","#fff"];
+const RARE=["","#d8d8d8","#5ad07e","#5ec4ff","#b57cf0","#f2c23c","#fff"];
 const base=id=>String(id).split("|")[0];
 const KIND_NM={"魔物":"魔物の札","色違い":"色違いの札","光る":"光る札","人物":"人物の札","限定":"限定の札"};
 const KEY="rpgCards1";
