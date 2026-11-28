@@ -131,7 +131,7 @@ function keep(){ try{ if(R&&R.cpu) return; if(!R){ const k=localStorage.getItem(
 function restore(key){ try{ const d=JSON.parse(localStorage.getItem(key||localStorage.getItem(SAVE+"last"))); if(!d||Date.now()-d.t>40*60*1000) return null; return d; }catch(_){ return null; } }
 
 // 札を持ってマスの上に重ねたら、そこに置いたときの数字を、持っている札の上に見せる（角取り・群れ・逆境などで変わる数字）
-function clearPvn(){ document.querySelectorAll(".pvn").forEach(e=>e.remove()); }
+function clearPvn(){ document.querySelectorAll(".pvn").forEach(e=>e.remove()); document.querySelectorAll(".n.pushed").forEach(e=>{ e.classList.remove("pushed"); e.style.transform=""; }); }
 function showPv(ghost,cid,cell){
   const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?Math.min(3,(M&&M.G&&M.G.lost||[0,0])[me]):0;
   let n=base.map(v=>cl(v+rg)), tag="";
@@ -142,7 +142,13 @@ function showPv(ghost,cid,cell){
   if(cell!==null){ const cells=document.querySelectorAll(".board .cell"), y=Math.floor(cell/3), x=cell%3;
     [[0,-1,0,"bottom:3px;left:0;right:0"],[1,0,1,"left:4px;top:50%;transform:translateY(-50%)"],[2,1,0,"top:3px;left:0;right:0"],[3,0,-1,"right:4px;top:50%;transform:translateY(-50%)"]].forEach(([i,dy,dx,pos])=>{
       const ny=y+dy, nx=x+dx; if(ny<0||ny>2||nx<0||nx>2) return;
-      const m=el("div","pvn"+(n[i]>base[i]?" up":"")); m.innerHTML=N(n[i]); m.style.cssText=pos; cells[ny*3+nx].appendChild(m); }); }
+      const m=el("div","pvn"+(n[i]>base[i]?" up":"")); m.innerHTML=N(n[i]); m.style.cssText=pos; cells[ny*3+nx].appendChild(m);
+      // となりに札があって、その札の向かい合う数字と重なるときだけ、その数字を向こう側へ少し押し出す
+      const nb=cells[ny*3+nx].querySelector(".card"), fn=nb&&nb.querySelectorAll(".n")[(i+2)%4];
+      if(fn){ const a=m.getBoundingClientRect(), b=fn.getBoundingClientRect();
+        if(a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom){
+          const d=i===0?-(b.bottom-a.top+2):i===2?(a.bottom-b.top+2):i===1?(a.right-b.left+2):-(b.right-a.left+2);
+          fn.classList.add("pushed"); fn.style.transform=(i===0||i===2)?`translateY(${d}px)`:`translateX(${d}px)`; } } }); }
   let t=ghost.querySelector(".pvtag"); if(!t){ t=el("div","pvtag"); ghost.appendChild(t); } t.textContent=tag; t.style.display=tag?"":"none";
 }
 
