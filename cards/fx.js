@@ -11,7 +11,10 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 .cell{overflow:visible}
 .card.lift{transform:translateY(-7px) scale(1.07);box-shadow:0 12px 18px #000c;z-index:4;transition:transform .16s ease-out,box-shadow .16s}
 .card .n.hit{color:#ffe08a!important;transform:scale(1.45);transition:transform .16s;text-shadow:0 0 6px #ffb020,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000!important;z-index:3}
-.card .n.lose{color:#9aa0b0!important}
+.card .n.lose{color:#aab0c0!important}
+.fxar{display:inline-block;font-size:.82em;font-weight:900;margin:0 .04em;vertical-align:.04em;animation:fxar .5s ease-in-out infinite alternate;text-shadow:0 0 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 0 6px #000}
+.fxar.up{color:#6dff7c}.fxar.dn{color:#ff5b5b;animation-name:fxdn}.fxar.eq{color:#ffe08a;animation:none}
+@keyframes fxar{from{transform:translateY(1px)}to{transform:translateY(-3px)}}@keyframes fxdn{from{transform:translateY(-1px)}to{transform:translateY(3px)}}
 .card.fout{animation:fxout .17s ease-in forwards}
 @keyframes fxout{from{transform:translateY(-7px) scale(1.07) rotateY(0)}to{transform:translateY(-7px) scale(1.07) rotateY(90deg)}}
 .card.fin{animation:fxin .26s ease-out}
@@ -33,7 +36,9 @@ function style(){ if(css) return; css=true; const s=document.createElement("styl
 const card=(bd,i)=>{ const c=bd&&bd.querySelectorAll(".cell")[i]; return c&&c.querySelector(".card"); };
 function lab(bd,i,txt,cls){ const c=bd.querySelectorAll(".cell")[i]; if(!c||!txt) return; const e=document.createElement("div"); e.className="fxlab"+(cls?" "+cls:""); e.textContent=txt; c.appendChild(e); }
 function ban(bd,txt){ if(!txt) return; const e=document.createElement("div"); e.className="fxban"; e.textContent=txt; bd.appendChild(e); }
-function hit(bd,i,k,cls){ const c=card(bd,i); if(!c||k==null||k<0) return; const n=c.querySelectorAll(".n")[k]; if(n) n.classList.add(cls||"hit"); }
+// 比べる数字を光らせ、横に矢印（勝つ数字は↑、負ける数字は↓）。右の辺の数字だけ、矢印を左に置く（札からはみ出さないよう）
+function hit(bd,i,k,cls,ar){ const c=card(bd,i); if(!c||k==null||k<0) return; const n=c.querySelectorAll(".n")[k]; if(!n) return; n.classList.add(cls||"hit");
+  if(!ar||n.querySelector(".fxar")) return; const a=document.createElement("i"); a.className="fxar "+ar; a.textContent=ar==="up"?"↑":ar==="dn"?"↓":"＝"; if(k===1) n.prepend(a); else n.appendChild(a); }
 // 2枚のあいだに「7＞5」
 function cmp(bd,a,b,html){ const ca=bd.querySelectorAll(".cell")[a], cb=bd.querySelectorAll(".cell")[b]; if(!ca||!cb) return;
   const r=bd.getBoundingClientRect(), ra=ca.getBoundingClientRect(), rb=cb.getBoundingClientRect();
@@ -66,13 +71,13 @@ window.FX={ run(ev,render,done){
     const outs=all.filter(e=>e.t!=="duel");
     const flips=outs.filter(e=>e.t==="flip").map(e=>e.cell), guards=outs.filter(e=>e.t==="guard");
     const head=lv===2?"連鎖！":duels.some(d=>d.how==="same")?QN("same")+"！":duels.some(d=>d.how==="plus")?QN("plus")+"！":"";
-    beats.push({snap:duels[0].snap,wait:head?900:720,go(bd){
-      ban(bd,head);
+    if(head) beats.push({snap:duels[0].snap,wait:650,go(bd){ ban(bd,head); }});   // 「連鎖！」などは先に出して、数字に重ならないように
+    beats.push({snap:duels[0].snap,wait:760,go(bd){
       duels.forEach(d=>{ const a=card(bd,d.from), t=card(bd,d.cell); if(a) a.classList.add("lift"); if(t) t.classList.add("lift");
-        hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti,d.how==="same"||d.how==="plus"?"hit":"lose");
         if(d.how!=="diag"){ ward(bd,d.from,d.mi,d.a,d.snap); ward(bd,d.cell,d.ti,d.d,d.snap); }
-        const sym=d.how==="same"?"＝":d.how==="plus"?"":d.rev?"＜":(d.a===d.d?"＝":"＞");
-        cmp(bd,d.from,d.cell,d.how==="plus"?`<b>${d.a}＋${d.d}</b>`:`<b>${d.a}</b>${sym}${d.d}`); });
+        if(d.how==="same"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); }          // 同数：同じ数字どうしが光るだけ（見れば同じと分かる）
+        else if(d.how==="plus"){ hit(bd,d.from,d.mi); hit(bd,d.cell,d.ti); lab(bd,d.cell,`${d.a}＋${d.d}＝${d.a+d.d}`); }
+        else { hit(bd,d.from,d.mi,"hit","up"); hit(bd,d.cell,d.ti,"lose","dn"); } });
       if(lv===1){ const from=duels[0].from, qs=[...new Set(duels.map(d=>d.how).filter(h=>h==="diag"))].map(QN); if(qs.length) lab(bd,from,qs.join("　")); }
     },out(bd){ flips.forEach(i=>{ const c=card(bd,i); if(c){ c.classList.remove("lift"); c.classList.add("fout"); } }); guards.forEach(g=>{ const c=card(bd,g.cell); if(c) c.classList.add("fxshake"); }); }});
     beats.push({snap:outs.length?outs[outs.length-1].snap:duels[duels.length-1].snap,wait:620,go(bd){
