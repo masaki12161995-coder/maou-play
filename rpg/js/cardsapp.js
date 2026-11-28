@@ -239,7 +239,7 @@ function sum(n){ return n[0]+n[1]+n[2]+n[3]; }
 function rk(list){ return list.reduce((s,c)=>s+CARDS[c].r,0); }
 
 // ---------- 札の絵 ----------
-const N=v=>v>=10?"A":String(v);
+const N=v=>v>=10?`<span style="letter-spacing:-.08em">10</span>`:String(v); // 10は「10」と書く
 function cardEl(cid,owner,w,h,o={}){
   const c=CARDS[cid], d=document.createElement("div");
   d.className="card "+owner; d.style.width=w+"px"; d.style.height=h+"px";
@@ -273,7 +273,10 @@ function who(id,box){ // 人物の正面の立ち姿（2倍、上半身で切る
   d.style.cssText=`width:${box[0]}px;height:${box[1]}px;background-image:url(img/person_${id}.png);background-size:288px 600px;background-position:${-(96)+(box[0]-96)/2}px ${box[1]>=120?0:-4}px`;
   return d;
 }
-function desc(cid){ const c=CARDS[cid]; return `${c.nm}　${"★".repeat(c.r)}`+(c.q?"　"+c.q.map(k=>`${QK[k].nm}：${QK[k].ds}`).join("　"):"")+(c.only?`　（${c.only}）`:""); }
+function desc(cid){ // 札をタップしたときの説明：名前と、くせ（名前の色を変えて、言葉で）
+  const c=CARDS[cid];
+  return `<div style="font-weight:700;font-size:14px">${c.nm}</div>`+(c.q?c.q.map(k=>`<div style="font-size:13px;line-height:1.45"><span style="color:var(--gold);font-weight:700">${QK[k].nm}</span>　${QK[k].ds}</div>`).join(""):`<div style="font-size:13px;color:var(--sub)">くせなし</div>`);
+}
 function toast(t){ const e=document.createElement("div"); e.className="toast"; e.textContent=t; document.querySelector(".screen").appendChild(e); setTimeout(()=>e.remove(),1300); }
 const $app=document.getElementById("app");
 function screen(){ $app.innerHTML=""; const s=document.createElement("div"); s.className="screen"; $app.appendChild(s); return s; }
@@ -388,7 +391,7 @@ function casino(){
   PRIZES.forEach(([cid,price])=>{ const w=el("div",""); w.style.cssText="display:flex;flex-direction:column;align-items:center;gap:6px";
     const c=cardEl(cid,"nb",52,68); w.appendChild(c);
     const p=el("div","",`<span style="color:var(--gold);font-size:13px">◎${price}</span>`); p.style.minHeight="30px"; w.appendChild(p);
-    c.onclick=()=>{ info.textContent=desc(cid); r.querySelectorAll(".card").forEach(x=>x.classList.remove("target")); c.classList.add("target");
+    c.onclick=()=>{ info.innerHTML=desc(cid); r.querySelectorAll(".card").forEach(x=>x.classList.remove("target")); c.classList.add("target");
       r.querySelectorAll(".buy").forEach(x=>{ x.outerHTML=`<span style="color:var(--gold);font-size:13px">◎${x.dataset.p}</span>`; });
       const bt=el("button","btn gold buy",`交換 ◎${price}`); bt.dataset.p=price; bt.style.cssText+="font-size:12px;padding:5px 6px"; p.innerHTML=""; p.appendChild(bt);
       bt.onclick=()=>{ if(S.coin<price){ toast("コインが足りない"); return; } S.coin-=price; gain(cid); reveal(cid,"交換した！",casino); }; };
@@ -527,7 +530,7 @@ function drawPrep(){
   const o=OPPS[P.k], s=screen();
   const bar=el("div","bar"); const b=el("button","btn back","✕"); b.onclick=town;
   const t=el("div",""); t.style.cssText="display:flex;align-items:center;gap:8px"; const w=el("div",""); w.style.cssText="width:40px;height:44px;overflow:hidden"; w.appendChild(who(o.who,[40,60])); t.appendChild(w); t.appendChild(el("div","title",o.nm)); bar.appendChild(t); bar.appendChild(b); s.appendChild(bar);
-  const say=(x)=>setTimeout(()=>{ const i=document.querySelector(".tray .info2"); if(i) i.textContent=desc(x); });
+  const say=(x)=>setTimeout(()=>{ const i=document.querySelector(".tray .info2"); if(i) i.innerHTML=desc(x); });
   // 相手（伏せたまま）
   const op=el("div","panel op");
   const oh=el("div","phead"); oh.appendChild(el("div","",`相手の手札`)); oh.appendChild(el("div","",`持ち札 ${S.op[P.k].pool.length}枚`)); op.appendChild(oh);

@@ -11,11 +11,14 @@ const ME_ID=Math.random().toString(36).slice(2,10);
 
 // ---------- 小さな道具 ----------
 const $app=document.getElementById("app");
-const N=v=>v>=10?"A":String(v);
+const N=v=>v>=10?`<span style="letter-spacing:-.08em">10</span>`:String(v); // 10は「10」と書く
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
 function screen(){ $app.innerHTML=""; const s=el("div","screen"); $app.appendChild(s); return s; }
 function toast(t){ const e=el("div","toast"); e.textContent=t; (document.querySelector(".screen")||document.body).appendChild(e); setTimeout(()=>e.remove(),1300); }
-function desc(cid){ const c=CARDS[cid]; return `${c.nm}　${"★".repeat(c.r)}`+(c.q?"　"+c.q.map(k=>`${QK[k].nm}：${QK[k].ds}`).join("　"):""); }
+function desc(cid){ // 札をタップしたときの説明：名前と、くせ（名前の色を変えて、言葉で）
+  const c=CARDS[cid];
+  return `<div style="font-weight:700;font-size:14px">${c.nm}</div>`+(c.q?c.q.map(k=>`<div style="font-size:13px;line-height:1.45"><span style="color:var(--gold);font-weight:700">${QK[k].nm}</span>　${QK[k].ds}</div>`).join(""):`<div style="font-size:13px;color:var(--sub)">くせなし</div>`);
+}
 function cardEl(cid,owner,w,h,o={}){
   const c=CARDS[cid], d=document.createElement("div");
   d.className="card "+owner; d.style.width=w+"px"; d.style.height=h+"px";
@@ -157,7 +160,7 @@ function drawDeal(){
   const mid=el("div","vsmid"); mid.style.cssText+="flex:0 0 auto;padding:2px 0"; mid.innerHTML=`<div class="vs">VS</div>`; s.appendChild(mid);
   const me=el("div","panel me"); const mh=el("div","phead"); mh.appendChild(el("div","","こちらの手札")); mh.appendChild(el("div","lbl",`★${M.mine.reduce((a,c)=>a+CARDS[c].r,0)}`)); me.appendChild(mh);
   const hand=el("div","hand5"); const W=Math.min(440,$app.clientWidth)-40, cw=Math.min(104,Math.floor((W-24)/3)), ch=Math.round(cw*1.3); hand.style.cssText=`max-width:${cw*3+24}px;margin:0 auto`;   // 大きく、3枚と2枚の2段で
-  M.mine.forEach((cid,i)=>{ const c=cardEl(cid,"me",cw,ch); c.onclick=()=>{ info.textContent=desc(cid); }; if(M.fresh){ c.classList.add("flip"); } hand.appendChild(c); });
+  M.mine.forEach((cid,i)=>{ const c=cardEl(cid,"me",cw,ch); c.onclick=()=>{ info.innerHTML=desc(cid); }; if(M.fresh){ c.classList.add("flip"); } hand.appendChild(c); });
   M.fresh=false;
   me.appendChild(hand); s.appendChild(me);
   const info=el("div","info2",""); s.appendChild(info);
