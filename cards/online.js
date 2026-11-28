@@ -91,7 +91,7 @@ function dragOrTap(d,cid,canDrag,onDrop){
       if(over!==pvAt){ pvAt=over; showPv(ghost,cid,over); }
     };
     const up=ev=>{ removeEventListener("pointermove",move); removeEventListener("pointerup",up); removeEventListener("pointercancel",up);
-      if(ghost){ ghost.remove(); d.style.opacity=""; clearHov(); if(over!==null&&ev.type==="pointerup") onDrop(over); return; }
+      if(ghost){ ghost.remove(); d.style.opacity=""; clearHov(); clearPvn(); if(over!==null&&ev.type==="pointerup") onDrop(over); return; }
       if(ev.type==="pointerup"&&!EAT){ clearTimeout(HOLD); detail(cid); }
     };
     addEventListener("pointermove",move); addEventListener("pointerup",up); addEventListener("pointercancel",up);
@@ -131,11 +131,18 @@ function keep(){ try{ if(R&&R.cpu) return; if(!R){ const k=localStorage.getItem(
 function restore(key){ try{ const d=JSON.parse(localStorage.getItem(key||localStorage.getItem(SAVE+"last"))); if(!d||Date.now()-d.t>40*60*1000) return null; return d; }catch(_){ return null; } }
 
 // 札を持ってマスの上に重ねたら、そこに置いたときの数字を、持っている札の上に見せる（角取り・群れ・逆境などで変わる数字）
+function clearPvn(){ document.querySelectorAll(".pvn").forEach(e=>e.remove()); }
 function showPv(ghost,cid,cell){
   const base=CARDS[cid].n, me=R?R.side:0, rg=(CARDS[cid].q||[]).includes("rage")?Math.min(3,(M&&M.G&&M.G.lost||[0,0])[me]):0;
   let n=base.map(v=>cl(v+rg)), tag="";
   if(cell!==null&&M&&M.G&&!(CARDS[cid].q||[]).includes("gamble")){ const info=[]; n=eff(cid,cell,M.G,me,false,info); tag=info.filter(([k,v])=>v).map(([k,v])=>`${QK[k].nm}＋${v}`).join(" "); }
   ghost.querySelectorAll(".n").forEach((e,i)=>{ e.innerHTML=N(n[i]); e.classList.toggle("pv",n[i]>base[i]); });
+  // 指で隠れて見えないので、となりのマスの、こちら寄りのふちにも、その辺の数字を薄く点滅させて見せる（盤の外を向く辺は出さない）
+  clearPvn();
+  if(cell!==null){ const cells=document.querySelectorAll(".board .cell"), y=Math.floor(cell/3), x=cell%3;
+    [[0,-1,0,"bottom:3px;left:0;right:0"],[1,0,1,"left:4px;top:50%;transform:translateY(-50%)"],[2,1,0,"top:3px;left:0;right:0"],[3,0,-1,"right:4px;top:50%;transform:translateY(-50%)"]].forEach(([i,dy,dx,pos])=>{
+      const ny=y+dy, nx=x+dx; if(ny<0||ny>2||nx<0||nx>2) return;
+      const m=el("div","pvn"+(n[i]>base[i]?" up":"")); m.innerHTML=N(n[i]); m.style.cssText=pos; cells[ny*3+nx].appendChild(m); }); }
   let t=ghost.querySelector(".pvtag"); if(!t){ t=el("div","pvtag"); ghost.appendChild(t); } t.textContent=tag; t.style.display=tag?"":"none";
 }
 
