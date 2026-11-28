@@ -31,8 +31,12 @@ function cardEl(cid,owner,w,h,o={}){
   const fr=(typeof SIZE!=="undefined"&&SIZE[c.im])||0, DPR=window.devicePixelRatio||1;   // 魔物：大きさの区分に合わせて枠のこの割合まで大きく（小さい生き物は小さめのまま）。人物：今までどおり
   const fit=iw<=bw&&ih<=bh, sc=!fit?(iw>bw*1.7&&ih>bh*1.3?0.5:1):fr?Math.max(1,Math.floor(Math.min(bw/iw,bh*fr/ih)*DPR)/DPR):Math.max(1,Math.floor(Math.min(bw/iw,bh/ih)));
   const top=ih*sc<=bh?(bh-ih*sc)/2:0;
+  // はみ出す絵は、顔が枠の中（横は真ん中・縦は上から4割）に来るようにずらす。しっぽなどが切れるのはかまわない
+  const fc=!fit&&typeof FACE!=="undefined"&&FACE[c.im], cl=(v,lo)=>Math.min(0,Math.max(lo,v));
+  const ix=fc?cl(bw/2-fc[0]*iw*sc,bw-iw*sc):null, iy=fc&&ih*sc>bh?cl(bh*0.4-fc[1]*ih*sc,bh-ih*sc):top;
+  const pos=fc?`left:${ix}px;transform:none;top:${iy}px`:`top:${top}px`;
   d.innerHTML=`<div class="face"></div>
-   <div class="art"><img src="img/c/${c.im}.png" style="width:${iw*sc}px;height:${ih*sc}px;top:${top}px"></div>
+   <div class="art"><img src="img/c/${c.im}.png" style="width:${iw*sc}px;height:${ih*sc}px;${pos}"></div>
    ${c.r>=6?`<div class="holo"><i style="left:18%;top:30%"></i><i style="left:70%;top:22%;animation-delay:.6s"></i><i style="left:30%;top:62%;animation-delay:1.2s"></i><i style="left:78%;top:58%;animation-delay:.3s"></i><i style="left:52%;top:40%;animation-delay:.9s"></i></div>`:""}
    <div class="stars">★${c.r}</div><div class="shield"></div>
    <div class="n" style="font-size:${fs}px;left:0;right:0;top:${Math.round(h*0.03)}px${WL(0)}">${N(nums[0])}</div>
